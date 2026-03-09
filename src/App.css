@@ -47,29 +47,42 @@ body {
 }
 
 .logo {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: var(--primary);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.search-bar {
   display: flex;
-  background: #f0f0f0;
-  border-radius: 20px;
-  padding: 0.5rem 1rem;
-  width: 100%;
-  max-width: 400px;
-  margin: 0 1.5rem;
+  align-items: center;
+  text-decoration: none;
+  height: 40px;
 }
 
-.search-bar input {
-  border: none;
-  background: transparent;
-  width: 100%;
-  outline: none;
-  padding: 0 10px;
+.logo img {
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+}
+
+.footer-logo {
+  height: 35px;
+  width: auto;
+  margin-bottom: 1.5rem;
+  object-fit: contain;
+}
+
+.nav-desktop {
+  display: flex;
+  gap: 2rem;
+}
+
+.nav-desktop a {
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+  transition: var(--transition);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nav-desktop a:hover {
+  color: var(--primary);
 }
 
 .menu-toggle {
@@ -81,27 +94,40 @@ body {
   padding: 5px;
 }
 
-.nav {
-  display: flex;
-  justify-content: center;
+.nav-mobile {
+  display: none;
+  position: fixed;
+  top: 70px;
+  left: -100%;
+  width: 100%;
+  height: calc(100vh - 70px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 3rem;
   gap: 2rem;
-  padding: 1rem;
+  z-index: 999;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
   background: var(--white);
-  transition: var(--transition);
+  transition: 0.4s ease-in-out;
 }
 
-.nav a {
+.nav-mobile.active {
+  display: flex;
+  left: 0;
+}
+
+.nav-mobile a {
   text-decoration: none;
   color: var(--text);
   font-weight: 600;
-  transition: var(--transition);
-  font-size: 0.85rem;
+  font-size: 1.1rem;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
-.nav a:hover {
-  color: var(--primary);
+.nav-mobile .social-links {
+  display: flex;
+  margin-top: 2rem;
 }
 
 /* Hero Slider */
@@ -345,7 +371,7 @@ body {
     display: none;
   }
 
-  .nav {
+  .nav-mobile {
     position: fixed;
     top: 60px; /* Alinhado com a altura do header-top aprox */
     left: -100%;
@@ -362,11 +388,11 @@ body {
     transition: 0.4s ease-in-out;
   }
 
-  .nav.active {
+  .nav-mobile.active {
     left: 0;
   }
 
-  .nav a {
+  .nav-mobile a {
     font-size: 1.1rem;
   }
 

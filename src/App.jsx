@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, Link } from 'react-router-dom';
 import { 
   Search, 
   Box, 
@@ -50,11 +50,16 @@ function App() {
         {/* Header */}
         <header className="header">
           <div className="header-top">
-            <a href="/" className="logo">TALMAX</a>
-            <div className="search-bar">
-              <Search size={20} color="#666" />
-              <input type="text" placeholder="Pesquisar produtos..." />
-            </div>
+            <Link to="/" className="logo">
+              <img src="/img/Talmaxlogo.webp" alt="TALMAX" />
+            </Link>
+            <nav className="nav-desktop hide-mobile">
+              <Link to="/">Home</Link>
+              <Link to="/talmax">Talmax</Link>
+              <Link to="/produtos">Produtos</Link>
+              <Link to="/downloads">Downloads</Link>
+              <Link to="/contatos">Contatos</Link>
+            </nav>
             <div className="social-links hide-mobile">
               <Facebook size={20} />
               <Instagram size={20} />
@@ -64,19 +69,17 @@ function App() {
               {menuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
           </div>
-          <nav className={`nav ${menuOpen ? 'active' : ''}`}>
-            <a href="/" onClick={() => setMenuOpen(false)}>Home</a>
-            <a href="/talmax" onClick={() => setMenuOpen(false)}>Talmax</a>
-            <a href="/produtos" onClick={() => setMenuOpen(false)}>Produtos</a>
-            <a href="/downloads" onClick={() => setMenuOpen(false)}>Downloads</a>
-            <a href="/contatos" onClick={() => setMenuOpen(false)}>Contatos</a>
-            {menuOpen && (
-              <div className="social-links mobile-only">
-                <Facebook size={24} />
-                <Instagram size={24} />
-                <Youtube size={24} />
-              </div>
-            )}
+          <nav className={`nav-mobile ${menuOpen ? 'active' : ''}`}>
+            <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
+            <Link to="/talmax" onClick={() => setMenuOpen(false)}>Talmax</Link>
+            <Link to="/produtos" onClick={() => setMenuOpen(false)}>Produtos</Link>
+            <Link to="/downloads" onClick={() => setMenuOpen(false)}>Downloads</Link>
+            <Link to="/contatos" onClick={() => setMenuOpen(false)}>Contatos</Link>
+            <div className="social-links">
+              <Facebook size={24} />
+              <Instagram size={24} />
+              <Youtube size={24} />
+            </div>
           </nav>
         </header>
 
@@ -119,10 +122,10 @@ function App() {
             {categories.map((cat) => {
               const IconComponent = iconMap[cat.icon];
               return (
-                <a key={cat.id} href={`/categoria/${cat.id}`} className="category-card" style={{ backgroundColor: cat.bg }}>
+                <Link key={cat.id} to={`/categoria/${cat.id}`} className="category-card" style={{ backgroundColor: cat.bg }}>
                   <IconComponent size={32} color="#004a99" />
                   <h3>{cat.name}</h3>
-                </a>
+                </Link>
               );
             })}
           </div>
@@ -131,9 +134,9 @@ function App() {
         {/* Service Banners */}
         <section className="service-banners">
           {services.map((service) => (
-            <a key={service.id} href="#" className="service-banner" style={{ backgroundColor: service.color }}>
+            <Link key={service.id} to="#" className="service-banner" style={{ backgroundColor: service.color }}>
               <span>{service.name}</span>
-            </a>
+            </Link>
           ))}
         </section>
 
@@ -141,7 +144,7 @@ function App() {
         <footer className="footer">
           <div className="footer-grid">
             <div className="footer-section">
-              <h4>TALMAX</h4>
+              <img src="/img/Talmaxlogo.webp" alt="TALMAX" className="footer-logo" />
               <p>Inovação e qualidade em produtos odontológicos.</p>
               <div className="social-links">
                 <Facebook size={20} />
@@ -161,7 +164,7 @@ function App() {
             </div>
           </div>
           <div className="footer-bottom">
-            <p>&copy; {new Date().getFullYear()} Talmax. Todos os direitos reservados. | <a href="/privacidade">Política de Privacidade</a></p>
+            <p>&copy; {new Date().getFullYear()} Talmax. Todos os direitos reservados. | <Link to="/privacidade">Política de Privacidade</Link></p>
           </div>
         </footer>
       </div>
