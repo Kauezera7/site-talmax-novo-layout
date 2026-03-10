@@ -16,21 +16,45 @@ export const categories = [
 export const slides = [
   {
     id: 1,
-    title: 'Fresadoras B42 e A53',
-    subtitle: 'Tecnologia de ponta para o seu laboratório.',
-    image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=1920',
+    title: 'B42 - Fresadora de Precisão',
+    subtitle: 'Tecnologia avançada para o seu laboratório.',
+    image: '/img/BANNER_B42.webp',
   },
   {
     id: 2,
-    title: 'Sistema Ceramotion',
-    subtitle: 'Estética e durabilidade incomparáveis.',
-    image: 'https://images.unsplash.com/photo-1606811971618-4486d14f3f99?auto=format&fit=crop&q=80&w=1920',
+    title: 'A53 - Performance e Agilidade',
+    subtitle: 'O próximo nível em fresagem digital.',
+    image: '/img/BANNER-A53.webp',
   },
   {
     id: 3,
-    title: 'Impressão 3D Odontológica',
-    subtitle: 'Precisão e agilidade no seu fluxo digital.',
-    image: 'https://images.unsplash.com/photo-1531746790731-6c087fecd05a?auto=format&fit=crop&q=80&w=1920',
+    title: 'Aoralscan 3',
+    subtitle: 'Escaneamento intraoral de alta precisão.',
+    image: '/img/BANNER-AORALSCAN-3.webp',
+  },
+  {
+    id: 4,
+    title: 'Sistema Ceramotion',
+    subtitle: 'Estética e durabilidade incomparáveis.',
+    image: '/img/BANNER-CERAMOTION.webp',
+  },
+  {
+    id: 5,
+    title: 'MicroFit',
+    subtitle: 'Precisão microscópica em cada detalhe.',
+    image: '/img/BANNER-microFit.webp',
+  },
+  {
+    id: 6,
+    title: 'Atendimento via Chatbot',
+    subtitle: 'Suporte rápido e inteligente para você.',
+    image: '/img/BANNERchat_bot.webp',
+  },
+  {
+    id: 7,
+    title: 'Suporte Técnico Especializado',
+    subtitle: 'Manutenção e assistência para seu equipamento.',
+    image: '/img/BANNERSUPORTE.MAQUINA.webp',
   },
 ];
 
