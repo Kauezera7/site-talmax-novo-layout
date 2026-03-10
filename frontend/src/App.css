@@ -200,60 +200,62 @@ body {
   margin-top: 2rem;
 }
 
-/* Hero Slider */
-.hero {
+/* Hero Slider - Container Geral do Carrossel */
+.hero-slider-container {
+  width: 100%;
+  margin: 0;
+  overflow: hidden;             /* Esconde o que sai dos limites da tela */
   position: relative;
-  width: 100%;
-  aspect-ratio: 1920 / 650; /* Proporção comum de banners */
-  min-height: 250px;
-  overflow: hidden;
-  background-color: #f0f0f0;
+  background-color: #f0f0f0;    /* Cor de fundo enquanto a imagem carrega */
 }
 
-.slide {
-  position: absolute;
-  top: 0;
-  left: 0;
+/* Ajusta o componente Swiper para ocupar a largura total */
+.hero-swiper {
   width: 100%;
-  height: 100%;
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-  display: flex;
-  align-items: center;
-  padding: 0 10%;
-  color: var(--text); /* Texto agora escuro para aparecer sobre o fundo claro se necessário */
+  height: auto;
 }
 
-/* Removi o slide::after que escurecia a imagem */
-
+/* Container interno de cada slide */
 .slide-content {
   position: relative;
-  z-index: 2;
-  max-width: 600px;
-  background: rgba(255, 255, 255, 0.8); /* Fundo leve para o texto ser legível */
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  display: none; /* Ocultar textos se os banners já tiverem as informações escritas neles */
+  width: 100%;
+  height: auto;
 }
 
+/* Configuração da Imagem do Banner */
+.banner-img {
+  width: 100%;                  /* Ocupa toda a largura */
+  height: auto;                 /* Mantém a proporção da imagem original */
+  display: block;
+  object-fit: cover;            /* Ajusta a imagem sem distorcer */
+}
+
+/* Customização das Setas (Próximo/Anterior) */
+.swiper-button-next, .swiper-button-prev {
+  color: var(--primary) !important; /* Cor azul Talmax */
+  transform: scale(0.7);            /* Diminui um pouco as setas para ficarem discretas */
+  transition: var(--transition);    /* Efeito suave ao passar o mouse */
+}
+
+/* Efeito ao passar o mouse nas setas */
+.swiper-button-next:hover, .swiper-button-prev:hover {
+  transform: scale(0.8);
+}
+
+/* Cor da Bolinha de Paginação Ativa */
+.swiper-pagination-bullet-active {
+  background: var(--primary) !important;
+}
+
+/* Ajustes para Celular */
 @media (max-width: 768px) {
-  .hero {
-    aspect-ratio: 16 / 9; /* Formato mais quadrado para mobile */
-    height: auto;
+  .hero-slider-container {
+    margin-top: 0;              /* Garante que o slider comece no topo em mobile */
   }
-}
-
-.slide h2 {
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  margin-bottom: 1rem;
-  line-height: 1.1;
-}
-
-.slide p {
-  font-size: clamp(1rem, 2vw, 1.25rem);
-  opacity: 0.9;
+  
+  .swiper-button-next, .swiper-button-prev {
+    display: none !important;    /* Remove as setas no celular para o design ficar mais limpo */
+  }
 }
 
 /* Categories */

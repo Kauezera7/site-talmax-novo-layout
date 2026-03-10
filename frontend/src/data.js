@@ -1,3 +1,7 @@
+/**
+ * CATEGORIAS: Lista de cards exibidos abaixo do banner.
+ * Cada categoria tem um ID, Nome, Ícone (da biblioteca lucide-react) e uma cor de fundo (bg).
+ */
 export const categories = [
   { id: 1, name: 'Gesso e Troquelização', icon: 'Box', bg: '#f4f4f4' },
   { id: 2, name: 'Duplicadores', icon: 'Layers', bg: '#eef2f3' },
@@ -13,51 +17,53 @@ export const categories = [
   { id: 12, name: 'T-Lithium', icon: 'Battery', bg: '#e8eaf6' },
 ];
 
+/**
+ * SLIDES (BANNERS): Lista de imagens que aparecem no slider principal.
+ * Para adicionar um novo banner:
+ * 1. Coloque a imagem em /public/img/
+ * 2. Adicione um novo objeto {} abaixo com o caminho da imagem.
+ */
 export const slides = [
   {
     id: 1,
     title: 'B42 - Fresadora de Precisão',
-    subtitle: 'Tecnologia avançada para o seu laboratório.',
     image: '/img/BANNER_B42.webp',
   },
   {
     id: 2,
     title: 'A53 - Performance e Agilidade',
-    subtitle: 'O próximo nível em fresagem digital.',
     image: '/img/BANNER-A53.webp',
   },
   {
     id: 3,
     title: 'Aoralscan 3',
-    subtitle: 'Escaneamento intraoral de alta precisão.',
     image: '/img/BANNER-AORALSCAN-3.webp',
   },
   {
     id: 4,
     title: 'Sistema Ceramotion',
-    subtitle: 'Estética e durabilidade incomparáveis.',
     image: '/img/BANNER-CERAMOTION.webp',
   },
   {
     id: 5,
     title: 'MicroFit',
-    subtitle: 'Precisão microscópica em cada detalhe.',
     image: '/img/BANNER-microFit.webp',
   },
   {
     id: 6,
     title: 'Atendimento via Chatbot',
-    subtitle: 'Suporte rápido e inteligente para você.',
     image: '/img/BANNERchat_bot.webp',
   },
   {
     id: 7,
     title: 'Suporte Técnico Especializado',
-    subtitle: 'Manutenção e assistência para seu equipamento.',
     image: '/img/BANNERSUPORTE.MAQUINA.webp',
   },
 ];
 
+/**
+ * SERVIÇOS: Banners coloridos fixos no final da página Home.
+ */
 export const services = [
   { id: 1, name: 'Moby Work', color: '#1a237e' },
   { id: 2, name: 'Talmax Digital', color: '#01579b' },
