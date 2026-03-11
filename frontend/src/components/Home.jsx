@@ -13,7 +13,11 @@ const Home = () => {
         <h2 className="section-title">Categorias de Produtos</h2>
         <div className="category-grid">
           {categories.map((cat) => (
-            <Link key={cat.id} to={`/categoria/${cat.id}`} className="category-card">
+            <Link 
+              key={cat.id} 
+              to={`/categoria/${cat.name.toLowerCase().replace(/\s+/g, '-')}`} 
+              className="category-card"
+            >
               {/* Agora usamos uma imagem personalizada em vez de ícone genérico */}
               <div className="category-icon-wrapper">
                 <img src={cat.image} alt={cat.name} className="category-custom-icon" />

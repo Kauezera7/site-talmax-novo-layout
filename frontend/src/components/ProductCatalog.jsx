@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { products } from '../products';
 import { 
   Search, 
@@ -10,10 +11,184 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import './ProductCatalog.css';
 
+const ProductCard = ({ product, onClick }) => {
+  const [activeImage, setActiveImage] = React.useState(product.image);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="product-card"
+      onClick={() => onClick(product)}
+    >
+      <div className="product-image-container">
+        <div className="product-image">
+          <img 
+            src={activeImage} 
+            alt={product.name} 
+            onError={(e) => e.target.src = '/img/placeholder.webp'} 
+          />
+        </div>
+        {product.images && product.images.length > 1 && (
+          <div className="product-thumbnails" onClick={(e) => e.stopPropagation()}>
+            {product.images.map((img, idx) => (
+              <img 
+                key={idx} 
+                src={img} 
+                alt={`${product.name} thumbnail ${idx}`} 
+                className={activeImage === img ? 'active' : ''}
+                onClick={() => setActiveImage(img)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="product-info">
+        <span className="product-category-tag">{product.category}</span>
+        <h2>{product.name}</h2>
+        <p className="product-description">{product.description.substring(0, 150)}...</p>
+      </div>
+    </motion.div>
+  );
+};
+
+const ProductImmersiveView = ({ product, onClose }) => {
+  const [activeImage, setActiveImage] = useState(product.image);
+
+  if (!product) return null;
+
+  return (
+    <motion.div 
+      initial={{ y: '100%' }}
+      animate={{ y: 0 }}
+      exit={{ y: '100%' }}
+      transition={{ type: 'spring', damping: 30, stiffness: 200 }}
+      className="immersive-view"
+    >
+      <header className="immersive-header">
+        <button className="btn-back" onClick={onClose}>
+          <ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} />
+          <span>Voltar para o Catálogo</span>
+        </button>
+        <div className="immersive-logo">
+          <img src="/img/Talmaxlogo.webp" alt="Talmax" />
+        </div>
+        <button className="immersive-close" onClick={onClose}>
+          <X size={24} />
+        </button>
+      </header>
+
+      <div className="immersive-content">
+        <div className="immersive-grid">
+          {/* Lado Esquerdo: Galeria e CTA fixo */}
+          <div className="immersive-gallery">
+            <motion.div 
+              key={activeImage}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="immersive-main-image"
+            >
+              <img src={activeImage} alt={product.name} />
+            </motion.div>
+            
+            {product.images && product.images.length > 1 && (
+              <div className="immersive-thumbnails">
+                {product.images.map((img, idx) => (
+                  <button 
+                    key={idx} 
+                    className={activeImage === img ? 'active' : ''} 
+                    onClick={() => setActiveImage(img)}
+                  >
+                    <img src={img} alt="thumb" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="immersive-sidebar-actions">
+              <a 
+                href={`https://wa.me/554130123456?text=Olá! Desejo informações sobre o produto: ${product.name}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="btn-immersive-quote"
+              >
+                Solicitar Cotação Comercial
+              </a>
+              <p className="quote-hint">Fale agora com um especialista Talmax</p>
+            </div>
+          </div>
+
+          {/* Lado Direito: Tudo Exposto (Sem Scroll Interno) */}
+          <div className="immersive-info-full">
+            <div className="info-main-header">
+              <span className="info-category">{product.category}</span>
+              <h1 className="info-title">{product.name}</h1>
+              <p className="info-description-large">{product.description}</p>
+            </div>
+
+            {/* Diferenciais Visíveis de Cara */}
+            {product.features && (
+              <div className="exposure-group">
+                <h3 className="section-label">Diferenciais do Produto</h3>
+                <ul className="feature-tags-large">
+                  {product.features.map((f, i) => <li key={i}>{f}</li>)}
+                </ul>
+              </div>
+            )}
+
+            {/* Especificações Técnicas Diretas */}
+            {product.techInfo && (
+              <div className="exposure-group">
+                <h3 className="section-label">Especificações Técnicas</h3>
+                <div className="tech-specs-grid-exposed">
+                  {Object.entries(product.techInfo).map(([key, val]) => (
+                    <div className="spec-item-exposed" key={key}>
+                      <span className="spec-label">{key}</span>
+                      <span className="spec-value">{val}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tabela de Modelos Totalmente Aberta */}
+            {product.models && (
+              <div className="exposure-group">
+                <h3 className="section-label">Modelos e Referências</h3>
+                <div className="table-exposed-container">
+                  <table className="table-exposed">
+                    <thead>
+                      <tr>
+                        {Object.keys(product.models[0]).map(key => (
+                          <th key={key}>{key.replace('code', 'Cód. ')}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {product.models.map((m, i) => (
+                        <tr key={i}>
+                          {Object.values(m).map((val, j) => <td key={j}>{val}</td>)}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 const ProductCatalog = () => {
+  const { slug } = useParams();
+  
   // Estados para controle de busca e filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todas');
+  const [selectedProduct, setSelectedProduct] = useState(null);
   
   // Estados de Interface (UI)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -23,6 +198,22 @@ const ProductCatalog = () => {
   const categoriesList = useMemo(() => {
     return ['Todas', ...new Set(products.map(p => p.category))];
   }, []);
+
+  // Efeito para lidar com slug da URL (ex: /categoria/talmax-digital)
+  useEffect(() => {
+    if (slug) {
+      // Mapeamento simples de slug para nome da categoria
+      const categoryFromSlug = categoriesList.find(
+        cat => cat.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase()
+      );
+      
+      if (categoryFromSlug) {
+        setActiveCategory(categoryFromSlug);
+      }
+    } else {
+      setActiveCategory('Todas');
+    }
+  }, [slug, categoriesList]);
 
   // Efeito para simular carregamento suave
   useEffect(() => {
@@ -47,8 +238,8 @@ const ProductCatalog = () => {
     });
   }, [searchTerm, activeCategory]);
 
-  // Se o usuário não pesquisou nada e não filtrou categoria, mostramos a GRADE DE CATEGORIAS
-  const showCategoryGrid = searchTerm === '' && activeCategory === 'Todas';
+  // Se o usuário não pesquisou nada, não filtrou categoria e NÃO VEM via URL (slug), mostramos a GRADE
+  const showCategoryGrid = searchTerm === '' && activeCategory === 'Todas' && !slug;
 
   const resetFilters = () => {
     setSearchTerm('');
@@ -156,32 +347,34 @@ const ProductCatalog = () => {
         {/* VIEW 1: GRADE DE CATEGORIAS (Início) */}
         {showCategoryGrid ? (
           <div className="category-selection-grid">
-            {categoriesList.filter(c => c !== 'Todas').map(cat => {
-              const firstProduct = products.find(p => p.category === cat);
-              return (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  key={cat} 
-                  className="category-select-card" 
-                  onClick={() => handleCategoryClick(cat)}
-                >
-                  <div className="category-product-preview">
-                    <img 
-                      src={firstProduct?.image || '/img/placeholder.webp'} 
-                      alt={cat} 
-                    />
-                  </div>
-                  <div className="category-select-info">
-                    <span className="category-label">{cat}</span>
-                    <h3>{firstProduct?.name}</h3>
-                    <div className="category-card-footer">
-                      Ver Produtos <ChevronRight size={16} />
+            {categoriesList
+              .filter(c => c !== 'Todas' && c !== 'Talmax Digital')
+              .map(cat => {
+                const firstProduct = products.find(p => p.category === cat);
+                return (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    key={cat} 
+                    className="category-select-card" 
+                    onClick={() => handleCategoryClick(cat)}
+                  >
+                    <div className="category-product-preview">
+                      <img 
+                        src={firstProduct?.image || '/img/placeholder.webp'} 
+                        alt={cat} 
+                      />
                     </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+                    <div className="category-select-info">
+                      <span className="category-label">{cat}</span>
+                      <h3>{firstProduct?.name}</h3>
+                      <div className="category-card-footer">
+                        Ver Produtos <ChevronRight size={16} />
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
           </div>
         ) : (
           /* VIEW 2: LISTA DETALHADA DE PRODUTOS (Após filtro ou busca) */
@@ -199,67 +392,11 @@ const ProductCatalog = () => {
                 <AnimatePresence>
                   {filteredProducts.length > 0 ? (
                     filteredProducts.map((product) => (
-                      <motion.div 
-                        key={product.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="product-card"
-                      >
-                        <div className="product-image">
-                          <img src={product.image} alt={product.name} onError={(e) => e.target.src = '/img/placeholder.webp'} />
-                        </div>
-                        <div className="product-info">
-                          <span className="product-category-tag">{product.category}</span>
-                          <h2>{product.name}</h2>
-                          <p className="product-description">{product.description}</p>
-                          
-                          {product.features && (
-                            <ul className="product-features">
-                              {product.features.map((f, i) => <li key={i}>{f}</li>)}
-                            </ul>
-                          )}
-
-                          {product.techInfo && (
-                            <div className="tech-info-box">
-                              <div className="tech-grid">
-                                {Object.entries(product.techInfo).map(([key, val]) => (
-                                  <div key={key}><strong>{key}:</strong> {val}</div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {product.models && (
-                            <div className="models-table-container">
-                              <table className="models-table">
-                                <thead>
-                                  <tr>
-                                    {Object.keys(product.models[0]).map(key => (
-                                      <th key={key}>{key.replace('code', 'Código ')}</th>
-                                    ))}
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {product.models.map((m, i) => (
-                                    <tr key={i}>
-                                      {Object.values(m).map((val, j) => <td key={j}>{val}</td>)}
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
-
-                          <a 
-                            href={`https://wa.me/554130123456?text=Olá! Gostaria de mais informações sobre o produto: ${product.name}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="btn-quote"
-                          >
-                            Solicitar Orçamento
-                          </a>
-                        </div>
-                      </motion.div>
+                      <ProductCard 
+                        key={product.id} 
+                        product={product} 
+                        onClick={(p) => setSelectedProduct(p)}
+                      />
                     ))
                   ) : (
                     <div className="empty-lux" style={{ textAlign: 'center', padding: '100px 0' }}>
@@ -274,6 +411,16 @@ const ProductCatalog = () => {
           </div>
         )}
       </main>
+
+      {/* Visão Imersiva do Produto (Full Screen) */}
+      <AnimatePresence>
+        {selectedProduct && (
+          <ProductImmersiveView 
+            product={selectedProduct} 
+            onClose={() => setSelectedProduct(null)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

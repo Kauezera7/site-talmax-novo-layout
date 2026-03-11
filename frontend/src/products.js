@@ -38,6 +38,10 @@ export const products = [
       'Embalagem com 10 peças'
     ],
     image: '/img/CTLG-CERAS-Flex-Grampos.webp',
+    images: [
+      '/img/CTLG-CERAS-Flex-Grampos.webp',
+      '/img/CTLG01-CERAS-Flex-Grampos1.webp'
+    ],
     models: [
       { type: 'Molares', code: '5013' },
       { type: 'Pré-Molares', code: '5014' },
@@ -171,8 +175,21 @@ export const products = [
       'Restaurações em até 90 minutos',
       'Baixa dureza para fresagem',
       'Blocos BL com alta fluorescência',
-      'Caixa com 5 blocos'
+      'Caixa com 5 blocks'
     ],
     image: '/img/CTLG-T-LITHIUM.webp'
+  },
+  {
+    id: 13,
+    name: 'Frizadora Talmax Digital',
+    category: 'Talmax Digital',
+    description: 'Equipamento de alta precisão para fresagem e acabamento de próteses digitais.',
+    features: [
+      'Alta precisão de corte',
+      'Compatível com sistemas CAD/CAM',
+      'Design ergonômico',
+      'Fácil operação'
+    ],
+    image: '/img/CTLG-FRIZADORA-TALMAX-DIGITAL.webp'
   }
 ];

@@ -96,7 +96,7 @@ function App() {
               </div>
 
               <div className="nav-item">
-                <Link to="/portal-cliente">Portal do Cliente</Link>
+                <Link to="https://talmax.com.br/portalcliente/" target="_blank" rel="noopener noreferrer">Portal do Cliente</Link>
               </div>
 
               <div className="nav-item">
