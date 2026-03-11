@@ -17,6 +17,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import CookieBanner from './components/CookieBanner';
 import PagePlaceholder from './components/PagePlaceholder';
 import ProductCatalog from './components/ProductCatalog';
+import ProductDetail from './components/ProductDetail';
 import './App.css';
 
 // Scroll to Top helper
@@ -157,6 +158,7 @@ function App() {
             {/* Produtos */}
             <Route path="/produtos" element={<ProductCatalog />} />
             <Route path="/categoria/:slug" element={<ProductCatalog />} />
+            <Route path="/produto/:id" element={<ProductDetail />} />
             
             {/* Blog */}
             <Route path="/blog" element={<PagePlaceholder title="Blog" />} />
