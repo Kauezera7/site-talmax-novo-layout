@@ -16,6 +16,7 @@ import Home from './components/Home';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import CookieBanner from './components/CookieBanner';
 import PagePlaceholder from './components/PagePlaceholder';
+import ProductCatalog from './components/ProductCatalog';
 import './App.css';
 
 // Scroll to Top helper
@@ -57,6 +58,8 @@ function App() {
               <div className="nav-item">
                 <span>Produtos <ChevronDown size={14} /></span>
                 <div className="dropdown">
+                  <Link to="/produtos" className="highlight-link">Ver Todos os Produtos</Link>
+                  <hr />
                   <Link to="/categoria/talmax-digital">Talmax Digital</Link>
                   <Link to="/categoria/protese-dentaria">Prótese Dentária</Link>
                   <Link to="/categoria/nail-podologia">Nail e Podologia</Link>
@@ -104,11 +107,6 @@ function App() {
                 </div>
               </div>
             </nav>
-            <div className="social-links hide-mobile">
-              <Facebook size={18} />
-              <Instagram size={18} />
-              <Youtube size={18} />
-            </div>
             <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
               {menuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
@@ -127,6 +125,7 @@ function App() {
             <div className="nav-mobile-item">
               <span>Produtos</span>
               <div className="nav-mobile-sub">
+                <Link to="/produtos" onClick={() => setMenuOpen(false)} style={{fontWeight: 'bold', color: 'var(--primary)'}}>Ver Todos os Produtos</Link>
                 <Link to="/categoria/talmax-digital" onClick={() => setMenuOpen(false)}>Talmax Digital</Link>
                 <Link to="/categoria/protese-dentaria" onClick={() => setMenuOpen(false)}>Prótese Dentária</Link>
                 <Link to="/categoria/nail-podologia" onClick={() => setMenuOpen(false)}>Nail e Podologia</Link>
@@ -156,9 +155,8 @@ function App() {
             <Route path="/depoimentos" element={<PagePlaceholder title="Depoimentos" />} />
             
             {/* Produtos */}
-            <Route path="/categoria/talmax-digital" element={<PagePlaceholder title="Talmax Digital" />} />
-            <Route path="/categoria/protese-dentaria" element={<PagePlaceholder title="Prótese Dentária" />} />
-            <Route path="/categoria/nail-podologia" element={<PagePlaceholder title="Nail e Podologia" />} />
+            <Route path="/produtos" element={<ProductCatalog />} />
+            <Route path="/categoria/:slug" element={<ProductCatalog />} />
             
             {/* Blog */}
             <Route path="/blog" element={<PagePlaceholder title="Blog" />} />

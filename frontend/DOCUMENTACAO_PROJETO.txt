@@ -1,0 +1,77 @@
+=======================================================================
+GUIA DE NAVEGACAO E MANUTENCAO - SITE TALMAX
+=======================================================================
+Data de Atualizacao: Marco de 2026
+Desenvolvedor: Gemini CLI
+
+Este documento explica a estrutura do projeto 'frontend' e como realizar 
+alteracoes de forma profissional.
+
+---
+1. ESTRUTURA DE PASTAS PRINCIPAIS
+---
+/src
+  /components
+    - HeroSlider.jsx     -> O banner principal que desliza no topo.
+    - Home.jsx           -> A pagina inicial (organiza as seções).
+    - CookieBanner.jsx   -> Aviso de privacidade (LGPD).
+  /data.js               -> O "CEREBRO" do site (onde ficam os textos e imagens).
+  - App.jsx              -> O arquivo mestre que controla as rotas e o Header/Footer.
+  - App.css              -> Todo o visual, cores e animacoes do site.
+
+/public
+  /img                   -> Onde voce deve salvar TODAS as novas imagens.
+
+---
+2. COMO ADICIONAR OU MUDAR UM BANNER (SLIDER)
+---
+O slider usa a biblioteca Swiper. Para mudar os banners:
+1. Salve a imagem em /public/img/
+2. Abra o arquivo /src/data.js
+3. Encontre a lista 'export const slides'.
+4. Adicione um novo objeto seguindo o padrão:
+   { id: 4, title: 'Nome do Produto', image: '/img/seu-novo-banner.webp' }
+
+---
+3. COMO ADICIONAR UMA NOVA CATEGORIA DE PRODUTO
+---
+As categorias agora sao profissionais, com icones personalizados e bordas azuis.
+1. Salve o icone (PNG com fundo transparente) em /public/img/ (ex: CAT-icon-teste.png)
+2. Abra o arquivo /src/data.js
+3. Encontre a lista 'export const categories'.
+4. Adicione o item:
+   { id: 13, name: 'Nome da Categoria', image: '/img/CAT-icon-teste.png' }
+
+DICA: O sistema centraliza automaticamente a ultima linha se ela nao estiver cheia.
+
+---
+4. ENTENDENDO O VISUAL (CSS)
+---
+As cores e estilos estao centralizados no App.css:
+
+- CORES PRINCIPAIS: Definidas no :root (topo do arquivo). 
+  --primary: #004a99 (Azul Talmax)
+  
+- HEADER (CABECALHO): 
+  O menu tem 10 itens e esta centralizado. Se precisar adicionar mais um link, 
+  va no App.jsx. O visual "Premium" (linha azul no hover) esta no App.css.
+
+- CATEGORIAS (CARDS): 
+  - Usam Flexbox para alinhamento.
+  - Têm um efeito de "elevação" (Hover) que faz o card subir 8px.
+  - A borda azul so aparece quando o mouse esta em cima.
+
+- FOOTER (RODAPE):
+  Agora e totalmente BRANCO com textos em cinza e titulos em azul.
+
+---
+5. REGRAS PARA MANTER O SITE PROFISSIONAL
+---
+1. Nomes de Imagem: Evite espaços. Use "banner-promocao.jpg" em vez de "Banner 01 .jpg".
+2. Tamanho de Imagem: Tente usar imagens .webp, elas sao mais leves e o site carrega mais rapido.
+3. Menu: O menu desktop esta no limite de espaco (10 itens). Se adicionar mais, 
+   o texto pode comecar a apertar em telas menores.
+
+=======================================================================
+FIM DO DOCUMENTO
+=======================================================================

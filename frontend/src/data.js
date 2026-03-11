@@ -1,27 +1,24 @@
 /**
  * CATEGORIAS: Lista de cards exibidos abaixo do banner.
- * Cada categoria tem um ID, Nome, Ícone (da biblioteca lucide-react) e uma cor de fundo (bg).
+ * Cada categoria tem um ID, Nome e Imagem (ícone personalizado).
  */
 export const categories = [
-  { id: 1, name: 'Gesso e Troquelização', icon: 'Box', bg: '#f4f4f4' },
-  { id: 2, name: 'Duplicadores', icon: 'Layers', bg: '#eef2f3' },
-  { id: 3, name: 'Ceras', icon: 'Droplets', bg: '#f9f9f9' },
-  { id: 4, name: 'Revestimentos', icon: 'Shield', bg: '#f0f4f8' },
-  { id: 5, name: 'Zirkon Ice', icon: 'Snowflake', bg: '#e0f7fa' },
-  { id: 6, name: 'Ligas Metálicas', icon: 'Zap', bg: '#eceff1' },
-  { id: 7, name: 'Soldas', icon: 'Hammer', bg: '#fafafa' },
-  { id: 8, name: 'Corte e Acabamento', icon: 'Scissors', bg: '#f5f5f5' },
-  { id: 9, name: 'Microscópio e Lupa', icon: 'Search', bg: '#f1f8e9' },
-  { id: 10, name: 'Equipamentos', icon: 'Monitor', bg: '#e3f2fd' },
-  { id: 11, name: 'Acessórios para Cerâmica', icon: 'Palette', bg: '#fff3e0' },
-  { id: 12, name: 'T-Lithium', icon: 'Battery', bg: '#e8eaf6' },
+  { id: 1, name: 'Gesso e Troquelização', image: '/img/CAT-icon-gesso.png' },
+  { id: 2, name: 'Duplicadores', image: '/img/CAT-icon-duplicadores.png' },
+  { id: 3, name: 'Ceras', image: '/img/CATicon-ceras.png' },
+  { id: 4, name: 'Revestimentos', image: '/img/CAT-icon-revestimentos-1.png' },
+  { id: 5, name: 'Zirkon Ice', image: '/img/CAT-icon-zirkon-ice-1.png' },
+  { id: 6, name: 'Ligas Metálicas', image: '/img/CAT-icon-ligas-metalicas-1.png' },
+  { id: 7, name: 'Soldas', image: '/img/CAT-icon-soldas-1.png' },
+  { id: 8, name: 'Corte e Acabamento', image: '/img/CAT-icon-acabamentos-1.png' },
+  { id: 9, name: 'Microscópio e Lupa', image: '/img/CAT-icon-microscopio-lupa-1.png' },
+  { id: 10, name: 'Equipamentos', image: '/img/CAT-icon-equipamentos-1.png' },
+  { id: 11, name: 'Acessórios para Cerâmica', image: '/img/CAT-icon-ceramica-1.png' },
+  { id: 12, name: 'T-Lithium', image: '/img/CAT.icon-tilithium-1.png' },
 ];
 
 /**
  * SLIDES (BANNERS): Lista de imagens que aparecem no slider principal.
- * Para adicionar um novo banner:
- * 1. Coloque a imagem em /public/img/
- * 2. Adicione um novo objeto {} abaixo com o caminho da imagem.
  */
 export const slides = [
   {

@@ -27,10 +27,10 @@ body {
   width: 100%;
 }
 
-/* Header */
+/* Header - Layout Profissional */
 .header {
   background: var(--white);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05); /* Sombra mais suave e moderna */
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -39,100 +39,131 @@ body {
 
 .header-top {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 1rem 5%;
-  border-bottom: 1px solid #eee;
-  background: var(--white);
+  padding: 0 5%;
+  height: 70px;           /* Reduzido de 90px para um visual mais clean */
+  max-width: 1600px;      
+  margin: 0 auto;
+  position: relative;
 }
 
 .logo {
   display: flex;
   align-items: center;
   text-decoration: none;
-  height: 40px;
+  height: 32px;           /* Reduzido de 40px para não ocupar muito espaço */
+  flex-shrink: 0;
 }
 
 .logo img {
   height: 100%;
   width: auto;
-  object-fit: contain;
+  object-fit: contain;    
 }
 
-.footer-logo {
-  height: 35px;
-  width: auto;
-  margin-bottom: 1.5rem;
-  object-fit: contain;
-}
-
+/* Navegação Desktop Centralizada */
 .nav-desktop {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;              /* Espaçamento reduzido para caber os 10 itens */
   align-items: center;
+  margin-left: auto;      /* Empurra para o centro */
+  margin-right: auto;     /* Empurra para o centro */
+  height: 100%;
 }
 
 .nav-item {
   position: relative;
-  padding: 1rem 0;
+  height: 100%;           /* Ocupa a altura total para o hover funcionar bem */
+  display: flex;
+  align-items: center;
 }
 
 .nav-item > a, .nav-item > span {
   text-decoration: none;
-  color: var(--text);
+  color: #4b5563;         /* Cinza profissional (Slate 600) */
   font-weight: 600;
-  transition: var(--transition);
-  font-size: 0.8rem;
+  transition: all 0.3s ease;
+  font-size: 0.75rem;     /* Tamanho ligeiramente menor para elegância */
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  cursor: pointer;
+  letter-spacing: 0.8px;
+  padding: 0 10px;
+  height: 100%;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  white-space: nowrap;    /* Impede o texto de quebrar linha */
+}
+
+/* Efeito de Linha Azul no Hover (Estilo Premium) */
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 3px;
+  background: var(--primary);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.nav-item:hover::after {
+  width: 80%;             /* Linha cresce no hover */
 }
 
 .nav-item:hover > a, .nav-item:hover > span {
   color: var(--primary);
 }
 
-/* Dropdown Menu */
+/* Dropdown Menu Refinado */
 .dropdown {
   position: absolute;
-  top: 100%;
-  left: 0;
+  top: 100%;              /* Gruda exatamente embaixo do header */
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
   background: white;
   min-width: 220px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  border-radius: 8px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+  border-radius: 0 0 12px 12px; /* Arredondado só embaixo */
   padding: 1rem 0;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(10px);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1001;
-  border: 1px solid #eee;
+  border: 1px solid #f3f4f6;
+  border-top: 3px solid var(--primary); /* Detalhe azul no topo do dropdown */
 }
 
 .nav-item:hover .dropdown {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
+  transform: translateX(-50%) translateY(0);
 }
 
 .dropdown a {
   display: block;
-  padding: 0.75rem 1.5rem;
+  padding: 0.8rem 1.5rem;
   text-decoration: none;
-  color: #555;
-  font-size: 0.85rem;
+  color: #4b5563;
+  font-size: 0.8rem;
   font-weight: 500;
-  transition: 0.3s;
+  transition: 0.2s;
 }
 
 .dropdown a:hover {
-  background: var(--bg-light);
+  background: #f8fbff;
   color: var(--primary);
-  padding-left: 1.75rem;
+  padding-left: 1.8rem;   /* Efeito de recuo no hover */
+}
+
+.menu-toggle {
+  display: none;          /* Escondido no desktop */
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--primary);
+  padding: 5px;
+  flex-shrink: 0;
 }
 
 /* Mobile Nav Adjustments for Submenus */
@@ -286,38 +317,82 @@ body {
 }
 
 .category-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1.5rem;
-  max-width: 1200px;
+  display: flex;
+  flex-wrap: wrap;       /* Permite que os cards quebrem para a próxima linha */
+  justify-content: center; /* CENTRALIZA a última linha (e todas as outras) */
+  gap: 2rem;             /* Espaçamento entre os cards */
+  max-width: 1280px;
   margin: 0 auto;
 }
 
 .category-card {
+  position: relative;
   padding: 2.5rem 1.5rem;
-  border-radius: 16px;
-  transition: all 0.4s ease;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 1.25rem;
   text-decoration: none;
-  color: inherit;
-  background: var(--white);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  color: var(--text);
+  
+  /* Ajuste para Flexbox: */
+  flex: 0 1 240px;       /* O card tenta ter 240px, mas pode encolher se necessário */
+  min-width: 200px;      /* Largura mínima para não ficar muito espremido */
+  
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
 }
 
+/* Estado de Hover Premium */
 .category-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 20px 30px rgba(0,0,0,0.08);
+  transform: translateY(-8px);
+  border-color: var(--primary); /* A borda se revela azul */
+  box-shadow: 0 12px 24px -10px rgba(0, 74, 153, 0.15), 
+              0 4px 8px -4px rgba(0, 74, 153, 0.1); /* Sombra azulada difusa e elegante */
+}
+
+/* Wrapper do Ícone - Simples e Minimalista */
+.category-icon-wrapper {
+  width: 100%;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  transition: transform 0.3s ease;
+}
+
+.category-card:hover .category-icon-wrapper {
+  transform: translateY(-5px); /* O ícone sobe levemente no hover */
+}
+
+.category-custom-icon {
+  width: 55px;
+  height: 55px;
+  object-fit: contain;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); /* Efeito elástico sutil */
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+}
+
+.category-card:hover .category-custom-icon {
+  transform: scale(1.1) rotate(3deg); /* Leve movimento orgânico */
 }
 
 .category-card h3 {
-  font-size: 0.95rem;
-  font-weight: 700;
-  line-height: 1.3;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151; /* Cinza escuro profissional, não preto puro */
+  line-height: 1.4;
+  transition: color 0.3s ease;
+  margin: 0;
+}
+
+.category-card:hover h3 {
+  color: var(--primary); /* Texto assume a cor da marca */
 }
 
 /* Service Banners */
@@ -365,30 +440,39 @@ body {
   z-index: 2;
 }
 
-/* Footer */
+/* Rodapé (Footer) - Tema Claro e Profissional Compacto */
 .footer {
-  background: #0a0a0a;
-  color: #999;
-  padding: 5rem 5% 2rem;
+  background: var(--white);
+  color: #666;                   
+  padding: 3rem 5% 1.5rem;       /* Reduzido de 5rem para 3rem */
   width: 100%;
+  border-top: 1px solid #eee;   
 }
 
 .footer-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 4rem;
-  margin-bottom: 4rem;
+  gap: 2rem;                     /* Reduzido de 4rem para 2rem */
+  margin-bottom: 2rem;           /* Reduzido de 4rem para 2rem */
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
 }
 
+.footer-logo {
+  height: 25px;                  /* Logo do rodapé bem pequena */
+  width: auto;
+  margin-bottom: 1.5rem;
+  display: block;
+}
+
 .footer-section h4 {
-  color: var(--white);
-  margin-bottom: 2rem;
+  color: var(--primary);         
+  margin-bottom: 1rem;           /* Reduzido de 2rem para 1rem */
   font-size: 1.1rem;
   text-transform: uppercase;
   letter-spacing: 1px;
+  font-weight: 700;
 }
 
 .footer-section p {
@@ -397,6 +481,12 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  color: #555;
+}
+
+/* Ícones dentro do parágrafo do rodapé */
+.footer-section p svg {
+  color: var(--primary);         /* Ícones (email, telefone, mapa) em azul */
 }
 
 .social-links {
@@ -408,22 +498,26 @@ body {
 .social-links svg {
   cursor: pointer;
   transition: 0.3s;
+  color: #555;                  /* Ícones sociais em cinza escuro */
 }
 
 .social-links svg:hover {
-  color: var(--white);
+  color: var(--primary);        /* Ficam azuis no hover */
   transform: translateY(-3px);
 }
 
-.mobile-only {
-  display: none;
-}
-
 .footer-bottom {
-  border-top: 1px solid #222;
+  border-top: 1px solid #eee;   /* Linha divisória clara */
   padding-top: 2.5rem;
   text-align: center;
   font-size: 0.85rem;
+  color: #888;
+}
+
+.footer-bottom a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
 }
 
 /* Responsive Styles */
