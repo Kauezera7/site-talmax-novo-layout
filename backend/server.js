@@ -74,7 +74,7 @@ app.get('/api/products/:id', async (req, res) => {
     }
 });
 
-// 3. Rota para Salvar Novo Produto (Incluindo Foto e Modelos em JSON)
+// 3. Rota para Salvar Novo Produto
 app.post('/api/products', upload.single('image'), async (req, res) => {
     try {
         const { name, category_id, description, extra_data } = req.body;
@@ -90,10 +90,43 @@ app.post('/api/products', upload.single('image'), async (req, res) => {
             category_id, 
             description, 
             main_image, 
-            extra_data // O extra_data já deve vir como string JSON do React
+            extra_data 
         ]);
 
         res.status(201).json({ id: result.insertId, message: "Produto criado com sucesso!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 4. Rota para ATUALIZAR Produto (Editar)
+app.put('/api/products/:id', upload.single('image'), async (req, res) => {
+    try {
+        const { name, category_id, description, extra_data } = req.body;
+        let query = `UPDATE products SET name=?, category_id=?, description=?, extra_data=?`;
+        let params = [name, category_id, description, extra_data];
+
+        // Se uma nova imagem foi enviada, atualizamos o caminho
+        if (req.file) {
+            query += `, main_image=?`;
+            params.push(`/img/${req.file.filename}`);
+        }
+
+        query += ` WHERE id=?`;
+        params.push(req.params.id);
+
+        await db.execute(query, params);
+        res.json({ message: "Produto atualizado com sucesso!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 5. Rota para EXCLUIR Produto
+app.delete('/api/products/:id', async (req, res) => {
+    try {
+        await db.execute('DELETE FROM products WHERE id = ?', [req.params.id]);
+        res.json({ message: "Produto excluído com sucesso!" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

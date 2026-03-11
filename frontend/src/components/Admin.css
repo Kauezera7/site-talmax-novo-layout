@@ -142,11 +142,59 @@
   flex-direction: column;
 }
 
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.card-header h2 {
+  margin-bottom: 0 !important;
+}
+
+.btn-cancel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.item-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-edit {
+  color: #2563eb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.btn-edit:hover {
+  background: #eff6ff;
+}
+
 .btn-delete {
   color: #ef4444;
   background: none;
   border: none;
   cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.btn-delete:hover {
+  background: #fef2f2;
 }
 
 @media (max-width: 900px) {

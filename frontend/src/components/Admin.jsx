@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Trash2, Save, Image as ImageIcon, List } from 'lucide-react';
+import { Package, Plus, Trash2, Save, Image as ImageIcon, List, Edit, X } from 'lucide-react';
 import './Admin.css';
 
 const Admin = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   
   // Estado do Formulário
   const [formData, setFormData] = useState({
@@ -38,7 +40,86 @@ const Admin = () => {
     }
   };
 
-  // Funções para lidar com o formulário
+  const resetForm = () => {
+    setFormData({
+      name: '', category_id: '', description: '', image: null,
+      features: [''], models: [{ type: '', code: '' }]
+    });
+    setIsEditing(false);
+    setEditingId(null);
+  };
+
+  // Preenche o formulário para editar
+  const handleEdit = (product) => {
+    let extra = {};
+    try {
+      extra = typeof product.extra_data === 'string' ? JSON.parse(product.extra_data) : product.extra_data;
+    } catch(e) { extra = {}; }
+
+    setFormData({
+      name: product.name,
+      category_id: product.category_id,
+      description: product.description,
+      image: null, // Mantém a imagem atual se não subir outra
+      features: extra.features || [''],
+      models: extra.models || [{ type: '', code: '' }]
+    });
+    setIsEditing(true);
+    setEditingId(product.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Tem certeza que deseja excluir este produto?")) {
+      try {
+        const res = await fetch(`http://localhost:5000/api/products/${id}`, {
+          method: 'DELETE'
+        });
+        if (res.ok) {
+          alert("Produto excluído!");
+          fetchData();
+        }
+      } catch (err) {
+        alert("Erro ao excluir");
+      }
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const data = new FormData();
+    data.append('name', formData.name);
+    data.append('category_id', formData.category_id);
+    data.append('description', formData.description);
+    if (formData.image) data.append('image', formData.image);
+    
+    const extraData = {
+      features: formData.features.filter(f => f !== ''),
+      models: formData.models.filter(m => m.type !== '' || m.code !== '')
+    };
+    data.append('extra_data', JSON.stringify(extraData));
+
+    const url = isEditing 
+      ? `http://localhost:5000/api/products/${editingId}` 
+      : 'http://localhost:5000/api/products';
+    
+    const method = isEditing ? 'PUT' : 'POST';
+
+    try {
+      const res = await fetch(url, {
+        method: method,
+        body: data
+      });
+      if (res.ok) {
+        alert(isEditing ? "Produto atualizado!" : "Produto cadastrado!");
+        resetForm();
+        fetchData();
+      }
+    } catch (err) {
+      alert("Erro ao salvar produto");
+    }
+  };
+
   const handleAddFeature = () => setFormData({...formData, features: [...formData.features, '']});
   const handleRemoveFeature = (index) => {
     const newFeatures = formData.features.filter((_, i) => i !== index);
@@ -51,39 +132,6 @@ const Admin = () => {
     setFormData({...formData, models: newModels});
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const data = new FormData();
-    data.append('name', formData.name);
-    data.append('category_id', formData.category_id);
-    data.append('description', formData.description);
-    if (formData.image) data.append('image', formData.image);
-    
-    // Organiza os dados extras (JSON)
-    const extraData = {
-      features: formData.features.filter(f => f !== ''),
-      models: formData.models.filter(m => m.type !== '' || m.code !== '')
-    };
-    data.append('extra_data', JSON.stringify(extraData));
-
-    try {
-      const res = await fetch('http://localhost:5000/api/products', {
-        method: 'POST',
-        body: data
-      });
-      if (res.ok) {
-        alert("Produto cadastrado com sucesso!");
-        setFormData({
-          name: '', category_id: '', description: '', image: null,
-          features: [''], models: [{ type: '', code: '' }]
-        });
-        fetchData();
-      }
-    } catch (err) {
-      alert("Erro ao salvar produto");
-    }
-  };
-
   if (loading) return <div className="admin-loading">Carregando Painel...</div>;
 
   return (
@@ -93,9 +141,15 @@ const Admin = () => {
       </header>
 
       <div className="admin-grid">
-        {/* Formulário de Cadastro */}
         <section className="admin-card">
-          <h2><Plus size={20} /> Novo Produto</h2>
+          <div className="card-header">
+            <h2>{isEditing ? <Edit size={20} /> : <Plus size={20} />} {isEditing ? 'Editar Produto' : 'Novo Produto'}</h2>
+            {isEditing && (
+              <button className="btn-cancel" onClick={resetForm}>
+                <X size={18} /> Cancelar
+              </button>
+            )}
+          </div>
           <form onSubmit={handleSubmit} className="admin-form">
             <div className="form-group">
               <label>Nome do Produto</label>
@@ -103,7 +157,6 @@ const Admin = () => {
                 type="text" required 
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                placeholder="Ex: Pedras Ninja para Metal"
               />
             </div>
 
@@ -131,14 +184,13 @@ const Admin = () => {
             </div>
 
             <div className="form-group">
-              <label><ImageIcon size={16} /> Foto do Produto</label>
+              <label><ImageIcon size={16} /> Foto {isEditing ? '(Deixe vazio para manter a atual)' : ''}</label>
               <input 
                 type="file" 
                 onChange={(e) => setFormData({...formData, image: e.target.files[0]})}
               />
             </div>
 
-            {/* Seção de Características */}
             <div className="admin-section">
               <label>Características Principais</label>
               {formData.features.map((feature, index) => (
@@ -150,7 +202,6 @@ const Admin = () => {
                       newFeatures[index] = e.target.value;
                       setFormData({...formData, features: newFeatures});
                     }}
-                    placeholder="Ex: Caixa com 10 unidades"
                   />
                   <button type="button" onClick={() => handleRemoveFeature(index)}><Trash2 size={16}/></button>
                 </div>
@@ -158,13 +209,12 @@ const Admin = () => {
               <button type="button" className="btn-add" onClick={handleAddFeature}>+ Adicionar Linha</button>
             </div>
 
-            {/* Seção de Modelos / Opções */}
             <div className="admin-section">
               <label>Modelos / Códigos</label>
               {formData.models.map((model, index) => (
                 <div key={index} className="dynamic-input-group">
                   <input 
-                    placeholder="Tipo (Ex: W2)"
+                    placeholder="Tipo"
                     value={model.type}
                     onChange={(e) => {
                       const newModels = [...formData.models];
@@ -173,7 +223,7 @@ const Admin = () => {
                     }}
                   />
                   <input 
-                    placeholder="Código (Ex: 19120)"
+                    placeholder="Código"
                     value={model.code}
                     onChange={(e) => {
                       const newModels = [...formData.models];
@@ -187,11 +237,12 @@ const Admin = () => {
               <button type="button" className="btn-add" onClick={handleAddModel}>+ Adicionar Modelo</button>
             </div>
 
-            <button type="submit" className="btn-submit"><Save size={18} /> SALVAR NO SITE</button>
+            <button type="submit" className="btn-submit">
+              <Save size={18} /> {isEditing ? 'ATUALIZAR PRODUTO' : 'SALVAR NO SITE'}
+            </button>
           </form>
         </section>
 
-        {/* Lista de Produtos Atuais */}
         <section className="admin-card">
           <h2><List size={20} /> Produtos no Banco</h2>
           <div className="admin-list">
@@ -202,7 +253,10 @@ const Admin = () => {
                   <strong>{p.name}</strong>
                   <span>{p.category_name}</span>
                 </div>
-                <button className="btn-delete"><Trash2 size={18} /></button>
+                <div className="item-actions">
+                  <button className="btn-edit" onClick={() => handleEdit(p)}><Edit size={18} /></button>
+                  <button className="btn-delete" onClick={() => handleDelete(p.id)}><Trash2 size={18} /></button>
+                </div>
               </div>
             ))}
           </div>
