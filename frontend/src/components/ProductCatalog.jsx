@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { products } from '../products';
 import { 
   Search, 
   ChevronRight, 
@@ -18,10 +17,47 @@ const ProductCatalog = () => {
   const [activeCategory, setActiveCategory] = useState('Todas');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [products, setProducts] = useState([]); // Agora vem do Banco!
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('http://localhost:5000/api/products');
+        const data = await response.json();
+        
+        // Formata os dados do banco para o formato que o React espera
+        const formattedProducts = data.map(p => {
+          let extra = {};
+          try {
+            // Se o extra_data for string (MySQL), converte para objeto
+            extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data;
+          } catch(e) { extra = {}; }
+
+          return {
+            id: p.id,
+            name: p.name,
+            category: p.category_name, // Nome da categoria que vem do JOIN no MySQL
+            description: p.description,
+            image: p.main_image || '/img/placeholder.png',
+            ...extra
+          };
+        });
+        
+        setProducts(formattedProducts);
+      } catch (err) {
+        console.error("Erro ao carregar produtos do banco:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const categoriesList = useMemo(() => {
     return ['Todas', ...new Set(products.map(p => p.category))];
-  }, []);
+  }, [products]);
 
   useEffect(() => {
     if (slug) {
@@ -44,7 +80,7 @@ const ProductCatalog = () => {
       const matchesCategory = activeCategory === 'Todas' || product.category === activeCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [searchTerm, activeCategory]);
+  }, [searchTerm, activeCategory, products]);
 
   const resetFilters = () => {
     setSearchTerm('');

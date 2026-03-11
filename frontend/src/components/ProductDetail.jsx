@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { products } from '../products';
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -21,16 +20,61 @@ const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
+  const [allProducts, setAllProducts] = useState([]);
   const [activeImage, setActiveImage] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const foundProduct = products.find(p => p.id === parseInt(id));
-    if (foundProduct) {
-      setProduct(foundProduct);
-      setActiveImage(foundProduct.image);
-    } else {
-      navigate('/produtos');
-    }
+    const fetchProductData = async () => {
+      setLoading(true);
+      try {
+        const [prodRes, allRes] = await Promise.all([
+          fetch(`http://localhost:5000/api/products/${id}`),
+          fetch('http://localhost:5000/api/products')
+        ]);
+        
+        if (!prodRes.ok) {
+          navigate('/produtos');
+          return;
+        }
+
+        const data = await prodRes.json();
+        const others = await allRes.json();
+        
+        // Formata o produto atual
+        let extra = {};
+        try {
+          extra = typeof data.extra_data === 'string' ? JSON.parse(data.extra_data) : data.extra_data;
+        } catch(e) { extra = {}; }
+
+        const formattedProduct = {
+          id: data.id,
+          name: data.name,
+          category: data.category_name,
+          description: data.description,
+          image: data.main_image || '/img/placeholder.png',
+          ...extra
+        };
+
+        setProduct(formattedProduct);
+        setActiveImage(formattedProduct.image);
+        
+        // Formata a lista completa para os relacionados
+        setAllProducts(others.map(p => ({
+          id: p.id,
+          name: p.name,
+          category: p.category_name,
+          image: p.main_image || '/img/placeholder.png'
+        })));
+
+      } catch (err) {
+        console.error("Erro ao carregar detalhes:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductData();
     window.scrollTo(0, 0);
   }, [id, navigate]);
 
@@ -50,11 +94,12 @@ const ProductDetail = () => {
 
   const relatedProducts = useMemo(() => {
     if (!product) return [];
-    return products
+    return allProducts
       .filter(p => p.category === product.category && p.id !== product.id)
       .slice(0, 4);
-  }, [product]);
+  }, [product, allProducts]);
 
+  if (loading) return <div className="detail-loader">Carregando...</div>;
   if (!product) return null;
 
   const whatsappMessage = encodeURIComponent(`Olá! Gostaria de mais informações sobre o produto: ${product.name}`);

@@ -18,6 +18,7 @@ import CookieBanner from './components/CookieBanner';
 import PagePlaceholder from './components/PagePlaceholder';
 import ProductCatalog from './components/ProductCatalog';
 import ProductDetail from './components/ProductDetail';
+import Admin from './components/Admin';
 import './App.css';
 
 // Scroll to Top helper
@@ -148,6 +149,7 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="/privacidade" element={<PrivacyPolicy />} />
             
             {/* Institucional */}
