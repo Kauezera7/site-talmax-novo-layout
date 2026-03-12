@@ -41,7 +41,6 @@ const ProductDetail = () => {
         const data = await prodRes.json();
         const others = await allRes.json();
         
-        // Formata o produto atual
         let extra = {};
         try {
           extra = typeof data.extra_data === 'string' ? JSON.parse(data.extra_data) : data.extra_data;
@@ -53,13 +52,12 @@ const ProductDetail = () => {
           category: data.category_name,
           description: data.description,
           image: data.main_image || '/img/placeholder.png',
+          modelHeaders: extra.modelHeaders || ['Tipo / Referência', 'Código'],
           ...extra
         };
 
         setProduct(formattedProduct);
         setActiveImage(formattedProduct.image);
-        
-        // Formata a lista completa para os relacionados
         setAllProducts(others.map(p => ({
           id: p.id,
           name: p.name,
@@ -108,7 +106,6 @@ const ProductDetail = () => {
   return (
     <div className="product-detail-container">
       <div className="container-inner">
-        {/* Breadcrumbs */}
         <nav className="breadcrumb">
           <Link to="/produtos">Produtos</Link>
           <ChevronRight size={14} />
@@ -123,7 +120,6 @@ const ProductDetail = () => {
         </button>
 
         <div className="product-detail-grid">
-          {/* ... (resto da estrutura do grid permanece igual até o final da seção de info) ... */}
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -131,28 +127,18 @@ const ProductDetail = () => {
           >
             <div className="main-image-card">
               <img src={activeImage} alt={product.name} />
-              
               {product.images && product.images.length > 1 && (
                 <>
-                  <button className="img-nav-btn prev" onClick={handlePrevImage}>
-                    <ChevronLeft size={24} />
-                  </button>
-                  <button className="img-nav-btn next" onClick={handleNextImage}>
-                    <ChevronRight size={24} />
-                  </button>
+                  <button className="img-nav-btn prev" onClick={handlePrevImage}><ChevronLeft size={24} /></button>
+                  <button className="img-nav-btn next" onClick={handleNextImage}><ChevronRight size={24} /></button>
                 </>
               )}
             </div>
-            
             {product.images && product.images.length > 1 && (
               <div className="thumbnail-grid">
                 {product.images.map((img, idx) => (
-                  <div 
-                    key={idx} 
-                    className={`thumb-item ${activeImage === img ? 'active' : ''}`}
-                    onClick={() => setActiveImage(img)}
-                  >
-                    <img src={img} alt={`${product.name} thumbnail ${idx}`} />
+                  <div key={idx} className={`thumb-item ${activeImage === img ? 'active' : ''}`} onClick={() => setActiveImage(img)}>
+                    <img src={img} alt={`${product.name} ${idx}`} />
                   </div>
                 ))}
               </div>
@@ -166,9 +152,16 @@ const ProductDetail = () => {
           >
             <span className="product-category-tag">{product.category}</span>
             <h1 className="product-title">{product.name}</h1>
-            
             <div className="product-description">
-              <p>{product.description}</p>
+              {product.descriptionAsList ? (
+                <ul className="description-list">
+                  {product.description.split('\n').filter(line => line.trim() !== '').map((line, idx) => (
+                    <li key={idx}><CheckCircle2 size={16} className="text-primary" /> {line}</li>
+                  ))}
+                </ul>
+              ) : (
+                product.description
+              )}
             </div>
 
             {product.features && product.features.length > 0 && (
@@ -176,60 +169,83 @@ const ProductDetail = () => {
                 <h3><Info size={18} /> Características Principais</h3>
                 <ul>
                   {product.features.map((feature, idx) => (
-                    <li key={idx}>
-                      <CheckCircle2 size={16} className="text-primary" />
-                      <span>{feature}</span>
-                    </li>
+                    <li key={idx}><CheckCircle2 size={16} className="text-primary" /><span>{feature}</span></li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {product.techInfo && (
-              <div className="tech-info-card">
-                <h3><Settings size={18} /> Informações Técnicas</h3>
-                <div className="tech-specs">
-                  {Object.entries(product.techInfo).map(([key, value]) => (
-                    <div key={key} className="spec-item">
-                      <span className="spec-label">{key}:</span>
-                      <span className="spec-value">{value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {product.models && product.models.length > 0 && (
-              <div className="product-models">
-                <h3><Package size={18} /> Modelos / Opções</h3>
-                <div className="models-list">
-                  {product.models.map((model, idx) => (
-                    <div key={idx} className="model-item">
-                      <Layers size={14} />
-                      {Object.entries(model).map(([key, value]) => (
-                        <span key={key}><strong>{key}:</strong> {value}</span>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <div className="product-actions">
-              <a 
-                href={whatsappUrl} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="btn-whatsapp-quote"
-              >
-                <MessageCircle size={20} />
-                Solicitar Orçamento
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp-quote">
+                <MessageCircle size={20} /> Solicitar Orçamento
               </a>
             </div>
           </motion.div>
         </div>
 
-        {/* Seção de Produtos Relacionados */}
+        {/* TABELA DE MODELOS - LARGURA TOTAL */}
+        {((product.models && product.models.length > 0) || product.modelTable) && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="full-width-models-section"
+          >
+            <div className="section-title-group">
+              <Package size={24} className="text-primary" />
+              <h2>{product.modelTitle || "Modelos / Códigos"}</h2>
+            </div>
+
+            <div className="table-container">
+              <table className={`models-table ${product.hideModelData ? 'strip-mode' : ''}`}>
+                {product.modelTable ? (
+                  <>
+                    <thead>
+                      <tr>
+                        {product.modelTable.headers.map((h, i) => <th key={i}>{h}</th>)}
+                      </tr>
+                    </thead>
+                    {!product.hideModelData && (
+                      <tbody>
+                        {product.modelTable.rows.map((row, ri) => (
+                          <tr key={ri}>
+                            {row.map((cell, ci) => <td key={ci}>{cell}</td>)}
+                          </tr>
+                        ))}
+                      </tbody>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <thead>
+                      <tr>
+                        {product.modelHeaders.map((h, i) => <th key={i}>{h}</th>)}
+                      </tr>
+                    </thead>
+                    {!product.hideModelData && (
+                      <tbody>
+                        {product.models.map((m, i) => (
+                          <tr key={i}>
+                            {Array.isArray(m) ? (
+                              m.map((cell, ci) => <td key={ci}>{cell}</td>)
+                            ) : (
+                              <>
+                                <td>{m.type}</td>
+                                <td>{m.code}</td>
+                              </>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    )}
+                  </>
+                )}
+              </table>
+            </div>
+
+          </motion.div>
+        )}
+
         {relatedProducts.length > 0 && (
           <div className="related-products-section">
             <div className="section-header">

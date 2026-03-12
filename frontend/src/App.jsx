@@ -36,8 +36,19 @@ function App() {
   return (
     <Router>
       <ScrollToTop />
-      <div className="app">
-        {/* Header */}
+      <AppContent menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+    </Router>
+  );
+}
+
+const AppContent = ({ menuOpen, setMenuOpen }) => {
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin');
+
+  return (
+    <div className="app">
+      {/* Header */}
+      {!isAdmin && (
         <header className="header">
           <div className="header-top">
             <Link to="/" className="logo">
@@ -145,43 +156,45 @@ function App() {
             </div>
           </nav>
         </header>
+      )}
 
-        <main>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/privacidade" element={<PrivacyPolicy />} />
-            
-            {/* Institucional */}
-            <Route path="/quem-somos" element={<PagePlaceholder title="Quem Somos" />} />
-            <Route path="/historia-diretoria" element={<PagePlaceholder title="História & Diretoria" />} />
-            <Route path="/depoimentos" element={<PagePlaceholder title="Depoimentos" />} />
-            
-            {/* Produtos */}
-            <Route path="/produtos" element={<ProductCatalog />} />
-            <Route path="/categoria/:slug" element={<ProductCatalog />} />
-            <Route path="/produto/:id" element={<ProductDetail />} />
-            
-            {/* Blog */}
-            <Route path="/blog" element={<PagePlaceholder title="Blog" />} />
-            
-            {/* Serviços */}
-            <Route path="/suporte" element={<PagePlaceholder title="Suporte" />} />
-            <Route path="/assistencia-tecnica" element={<PagePlaceholder title="Assistência Técnica" />} />
-            
-            {/* Contato */}
-            <Route path="/contato" element={<PagePlaceholder title="Formulário de Contato" />} />
-            <Route path="/comercial-comex" element={<PagePlaceholder title="Comercial / Comex" />} />
-            
-            {/* Outros */}
-            <Route path="/cursos" element={<PagePlaceholder title="Cursos" />} />
-            <Route path="/portal-cliente" element={<PagePlaceholder title="Portal do Cliente" />} />
-            <Route path="/sac" element={<PagePlaceholder title="SAC - Fale Conosco" />} />
-            <Route path="/politicas-troca" element={<PagePlaceholder title="Políticas de Troca" />} />
-          </Routes>
-        </main>
+      <main>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/privacidade" element={<PrivacyPolicy />} />
+          
+          {/* Institucional */}
+          <Route path="/quem-somos" element={<PagePlaceholder title="Quem Somos" />} />
+          <Route path="/historia-diretoria" element={<PagePlaceholder title="História & Diretoria" />} />
+          <Route path="/depoimentos" element={<PagePlaceholder title="Depoimentos" />} />
+          
+          {/* Produtos */}
+          <Route path="/produtos" element={<ProductCatalog />} />
+          <Route path="/categoria/:slug" element={<ProductCatalog />} />
+          <Route path="/produto/:id" element={<ProductDetail />} />
+          
+          {/* Blog */}
+          <Route path="/blog" element={<PagePlaceholder title="Blog" />} />
+          
+          {/* Serviços */}
+          <Route path="/suporte" element={<PagePlaceholder title="Suporte" />} />
+          <Route path="/assistencia-tecnica" element={<PagePlaceholder title="Assistência Técnica" />} />
+          
+          {/* Contato */}
+          <Route path="/contato" element={<PagePlaceholder title="Formulário de Contato" />} />
+          <Route path="/comercial-comex" element={<PagePlaceholder title="Comercial / Comex" />} />
+          
+          {/* Outros */}
+          <Route path="/cursos" element={<PagePlaceholder title="Cursos" />} />
+          <Route path="/portal-cliente" element={<PagePlaceholder title="Portal do Cliente" />} />
+          <Route path="/sac" element={<PagePlaceholder title="SAC - Fale Conosco" />} />
+          <Route path="/politicas-troca" element={<PagePlaceholder title="Políticas de Troca" />} />
+        </Routes>
+      </main>
 
-        {/* Footer */}
+      {/* Footer */}
+      {!isAdmin && (
         <footer className="footer">
           <div className="footer-grid">
             <div className="footer-section">
@@ -208,12 +221,12 @@ function App() {
             <p>&copy; {new Date().getFullYear()} Talmax. Todos os direitos reservados. | <Link to="/privacidade">Política de Privacidade</Link></p>
           </div>
         </footer>
+      )}
 
-        {/* LGPD Cookie Banner */}
-        <CookieBanner />
-      </div>
-    </Router>
+      {/* LGPD Cookie Banner */}
+      {!isAdmin && <CookieBanner />}
+    </div>
   );
-}
+};
 
 export default App;

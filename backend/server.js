@@ -8,26 +8,22 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Configuração do CORS (para o React conseguir falar com o Node)
 app.use(cors());
 app.use(express.json());
 
-// Configuração do Multer (Para salvar as FOTOS na pasta /img)
+// Configuração do Multer (Salva fotos em frontend/public/img)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        // As fotos vão para a pasta public/img do seu frontend
         cb(null, path.join(__dirname, '../frontend/public/img'));
     },
     filename: (req, file, cb) => {
-        // Nome da foto: timestamp + nome original (ex: 123456-pedra-ninja.jpg)
         cb(null, Date.now() + '-' + file.originalname);
     }
 });
 const upload = multer({ storage });
 
-// --- ROTAS DO BANCO DE DADOS ---
+// --- ROTAS ---
 
-// 1. Rota para Buscar TODAS as Categorias
 app.get('/api/categories', async (req, res) => {
     try {
         const [rows] = await db.query('SELECT * FROM categories ORDER BY display_order');
@@ -37,7 +33,6 @@ app.get('/api/categories', async (req, res) => {
     }
 });
 
-// 2. Rota para Buscar TODOS os Produtos
 app.get('/api/products', async (req, res) => {
     try {
         const query = `
@@ -53,7 +48,6 @@ app.get('/api/products', async (req, res) => {
     }
 });
 
-// 2.1 Rota para Buscar um ÚNICO Produto pelo ID
 app.get('/api/products/:id', async (req, res) => {
     try {
         const query = `
@@ -63,76 +57,102 @@ app.get('/api/products/:id', async (req, res) => {
             WHERE p.id = ?
         `;
         const [rows] = await db.query(query, [req.params.id]);
-        
-        if (rows.length === 0) {
-            return res.status(404).json({ message: "Produto não encontrado" });
-        }
-        
+        if (rows.length === 0) return res.status(404).json({ message: "Produto não encontrado" });
         res.json(rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// 3. Rota para Salvar Novo Produto
-app.post('/api/products', upload.single('image'), async (req, res) => {
+// Criar Produto (POST)
+app.post('/api/products', upload.array('images', 20), async (req, res) => {
+    console.log("Recebendo novo produto...");
     try {
         const { name, category_id, description, extra_data } = req.body;
-        const main_image = req.file ? `/img/${req.file.filename}` : null;
+        
+        const files = req.files || [];
+        const imagePaths = files.map(file => `/img/${file.filename}`);
+        const main_image = imagePaths.length > 0 ? imagePaths[0] : null;
+
+        let extra = {};
+        try {
+            extra = typeof extra_data === 'string' ? JSON.parse(extra_data) : extra_data;
+        } catch (e) { extra = {}; }
+        
+        // Adiciona a lista de imagens ao JSON dinâmico
+        extra.images = imagePaths;
 
         const query = `
             INSERT INTO products (name, category_id, description, main_image, extra_data) 
             VALUES (?, ?, ?, ?, ?)
         `;
         
-        const [result] = await db.execute(query, [
+        await db.execute(query, [
             name, 
             category_id, 
             description, 
             main_image, 
-            extra_data 
+            JSON.stringify(extra) 
         ]);
 
-        res.status(201).json({ id: result.insertId, message: "Produto criado com sucesso!" });
+        console.log("✅ Produto cadastrado com sucesso!");
+        res.status(201).json({ message: "Produto criado!" });
     } catch (err) {
+        console.error("❌ Erro ao criar produto:", err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// 4. Rota para ATUALIZAR Produto (Editar)
-app.put('/api/products/:id', upload.single('image'), async (req, res) => {
+// Atualizar Produto (PUT)
+app.put('/api/products/:id', upload.array('images', 20), async (req, res) => {
+    console.log(`Atualizando produto ID ${req.params.id}...`);
     try {
         const { name, category_id, description, extra_data } = req.body;
-        let query = `UPDATE products SET name=?, category_id=?, description=?, extra_data=?`;
-        let params = [name, category_id, description, extra_data];
+        const files = req.files || [];
+        const newImagePaths = files.map(file => `/img/${file.filename}`);
 
-        // Se uma nova imagem foi enviada, atualizamos o caminho
-        if (req.file) {
-            query += `, main_image=?`;
-            params.push(`/img/${req.file.filename}`);
+        let extra = {};
+        try {
+            extra = typeof extra_data === 'string' ? JSON.parse(extra_data) : extra_data;
+        } catch (e) { extra = {}; }
+
+        // Parâmetros base da atualização
+        let query = "UPDATE products SET name=?, category_id=?, description=?, extra_data=?";
+        let params = [name, category_id, description];
+
+        if (newImagePaths.length > 0) {
+            // Se enviou fotos novas, atualizamos a lista de imagens
+            extra.images = newImagePaths;
+            query += ", main_image=?";
+            params.push(JSON.stringify(extra)); // Para o campo extra_data
+            params.push(newImagePaths[0]);      // Para o campo main_image
+        } else {
+            // Se NÃO enviou fotos novas, mantemos as antigas no extra_data 
+            // que o front-end enviou de volta (se houver)
+            params.push(JSON.stringify(extra));
         }
 
-        query += ` WHERE id=?`;
+        query += " WHERE id=?";
         params.push(req.params.id);
 
         await db.execute(query, params);
-        res.json({ message: "Produto atualizado com sucesso!" });
+        console.log("✅ Produto atualizado!");
+        res.json({ message: "Produto atualizado!" });
     } catch (err) {
+        console.error("❌ Erro ao atualizar produto:", err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// 5. Rota para EXCLUIR Produto
 app.delete('/api/products/:id', async (req, res) => {
     try {
         await db.execute('DELETE FROM products WHERE id = ?', [req.params.id]);
-        res.json({ message: "Produto excluído com sucesso!" });
+        res.json({ message: "Produto excluído!" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Inicializando o Servidor
 app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
 });
