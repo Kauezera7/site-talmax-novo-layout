@@ -17,70 +17,84 @@ const ProductCatalog = () => {
   const [activeCategory, setActiveCategory] = useState('Todas');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [products, setProducts] = useState([]); // Agora vem do Banco!
+  const [products, setProducts] = useState([]); 
+  const [categories, setCategories] = useState([]); // Nova lista de categorias do banco
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('http://localhost:5000/api/products');
-        const data = await response.json();
+        const [prodRes, catRes] = await Promise.all([
+          fetch('http://localhost:5000/api/products'),
+          fetch('http://localhost:5000/api/categories')
+        ]);
         
-        // Formata os dados do banco para o formato que o React espera
-        const formattedProducts = data.map(p => {
+        const prodData = await prodRes.json();
+        const catData = await catRes.json();
+
+        // Formata os produtos
+        const formattedProducts = prodData.map(p => {
           let extra = {};
           try {
-            // Se o extra_data for string (MySQL), converte para objeto
             extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data;
           } catch(e) { extra = {}; }
 
           return {
             id: p.id,
             name: p.name,
-            category: p.category_name, // Nome da categoria que vem do JOIN no MySQL
-            description: p.description,
+            // category agora pode ser uma string como "Gesso, Ceras"
+            category: p.category_names || 'Sem categoria',
             image: p.main_image || '/img/placeholder.png',
             ...extra
           };
         });
         
         setProducts(formattedProducts);
+        // Filtra apenas categorias marcadas como visíveis no banco
+        setCategories(catData.filter(c => c.is_visible !== 0));
       } catch (err) {
-        console.error("Erro ao carregar produtos do banco:", err);
+        console.error("Erro ao carregar dados do catálogo:", err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchData();
   }, []);
 
-  const categoriesList = useMemo(() => {
-    return ['Todas', ...new Set(products.map(p => p.category))];
-  }, [products]);
-
-  useEffect(() => {
-    if (slug) {
-      const categoryFromSlug = categoriesList.find(
-        cat => cat.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase()
-      );
-      if (categoryFromSlug) setActiveCategory(categoryFromSlug);
-    }
-  }, [slug, categoriesList]);
-
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 300);
-    return () => clearTimeout(timer);
-  }, [activeCategory, searchTerm]);
+  const categoriesTree = useMemo(() => {
+    const main = categories.filter(c => !c.parent_id);
+    return main.map(parent => ({
+      ...parent,
+      children: categories.filter(c => c.parent_id === parent.id)
+    }));
+  }, [categories]);
 
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = activeCategory === 'Todas' || product.category === activeCategory;
+      const matchesSearch = (product.name || '').toLowerCase().includes(searchTerm.toLowerCase());
+      
+      if (activeCategory === 'Todas') return matchesSearch;
+
+      // Encontra a categoria ativa no banco para saber se ela tem filhos
+      const currentCat = categories.find(c => c.name === activeCategory);
+      if (!currentCat) return matchesSearch;
+
+      // Se for uma categoria pai, pegamos o nome dela e de todos os filhos
+      const categoriesToMatch = [currentCat.name];
+      if (!currentCat.parent_id) {
+        const children = categories.filter(c => c.parent_id === currentCat.id);
+        children.forEach(child => categoriesToMatch.push(child.name));
+      }
+
+      // Verifica se alguma das categorias permitidas está no produto
+      const productCategories = product.category.split(', ');
+      const matchesCategory = productCategories.some(pc => categoriesToMatch.includes(pc));
+      
       return matchesSearch && matchesCategory;
     });
-  }, [searchTerm, activeCategory, products]);
+  }, [searchTerm, activeCategory, products, categories]);
+
 
   const resetFilters = () => {
     setSearchTerm('');
@@ -154,18 +168,46 @@ const ProductCatalog = () => {
 
               <div className="drawer-content">
                 <div className="options-stack">
-                  {categoriesList.map(cat => (
-                    <button 
-                      key={cat} 
-                      className={activeCategory === cat ? 'active' : ''} 
-                      onClick={() => {
-                        setActiveCategory(cat);
-                        if (window.innerWidth < 768) setIsDrawerOpen(false);
-                      }}
-                    >
-                      {cat}
-                      {activeCategory === cat && <ChevronRight size={14} />}
-                    </button>
+                  <button 
+                    className={activeCategory === 'Todas' ? 'active' : ''} 
+                    onClick={() => {
+                      setActiveCategory('Todas');
+                      if (window.innerWidth < 768) setIsDrawerOpen(false);
+                    }}
+                  >
+                    Todas as Categorias
+                  </button>
+                  
+                  {categoriesTree.map(parent => (
+                    <div key={parent.id} className="category-group">
+                      <button 
+                        className={`parent-cat ${activeCategory === parent.name ? 'active' : ''}`} 
+                        onClick={() => {
+                          setActiveCategory(parent.name);
+                          if (window.innerWidth < 768) setIsDrawerOpen(false);
+                        }}
+                      >
+                        {parent.name}
+                        {activeCategory === parent.name && <ChevronRight size={14} />}
+                      </button>
+                      
+                      {parent.children && parent.children.length > 0 && (
+                        <div className="sub-options">
+                          {parent.children.map(child => (
+                            <button 
+                              key={child.id} 
+                              className={`child-cat ${activeCategory === child.name ? 'active' : ''}`} 
+                              onClick={() => {
+                                setActiveCategory(child.name);
+                                if (window.innerWidth < 768) setIsDrawerOpen(false);
+                              }}
+                            >
+                              {child.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>

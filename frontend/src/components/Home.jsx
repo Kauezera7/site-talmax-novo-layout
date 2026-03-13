@@ -1,9 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { categories, services } from '../data';
+import { services } from '../data';
 import HeroSlider from './HeroSlider';
 
 const Home = () => {
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/categories');
+        const data = await response.json();
+        // Filtra apenas categorias visíveis (trata 1/0, true/false, '1'/'0')
+        const visibleCategories = data.filter(cat => 
+          cat.is_visible !== 0 && 
+          cat.is_visible !== false && 
+          cat.is_visible !== '0'
+        );
+        setCategories(visibleCategories);
+      } catch (err) {
+        console.error("Erro ao carregar categorias na Home:", err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   return (
     <>
       <HeroSlider />
@@ -15,12 +36,15 @@ const Home = () => {
           {categories.map((cat) => (
             <Link 
               key={cat.id} 
-              to={`/categoria/${cat.name.toLowerCase().replace(/\s+/g, '-')}`} 
+              to={`/categoria/${cat.slug}`} 
               className="category-card"
             >
-              {/* Agora usamos uma imagem personalizada em vez de ícone genérico */}
               <div className="category-icon-wrapper">
-                <img src={cat.image} alt={cat.name} className="category-custom-icon" />
+                <img 
+                  src={cat.icon_url || '/img/placeholder.png'} 
+                  alt={cat.name} 
+                  className="category-custom-icon" 
+                />
               </div>
               <h3>{cat.name}</h3>
             </Link>

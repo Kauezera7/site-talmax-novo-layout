@@ -370,11 +370,54 @@ body {
   width: 100%;
   color: var(--dark);
   transition: 0.2s;
+  text-align: left;
 }
 
 .options-stack button.active {
   background: var(--dark);
   color: white;
+}
+
+/* Hierarquia no Drawer */
+.category-group {
+  margin-bottom: 20px;
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.parent-cat {
+  margin-bottom: 8px !important;
+  font-size: 1rem;
+  background: white !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.sub-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 15px;
+}
+
+.child-cat {
+  padding: 10px 15px !important;
+  font-size: 0.85rem !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: #64748b !important;
+  margin-bottom: 0 !important;
+}
+
+.child-cat:hover {
+  background: rgba(0, 74, 153, 0.05) !important;
+  color: var(--primary) !important;
+}
+
+.child-cat.active {
+  background: var(--primary) !important;
+  color: white !important;
 }
 
 /* RESPONSIVIDADE */

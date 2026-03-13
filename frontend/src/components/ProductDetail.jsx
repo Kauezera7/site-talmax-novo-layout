@@ -96,14 +96,14 @@ const ProductDetail = () => {
   }, [id, navigate]);
 
   const handleNextImage = () => {
-    if (!product || !product.images) return;
+    if (!product || !Array.isArray(product.images) || product.images.length === 0) return;
     const currentIndex = product.images.indexOf(activeImage);
     const nextIndex = (currentIndex + 1) % product.images.length;
     setActiveImage(product.images[nextIndex]);
   };
 
   const handlePrevImage = () => {
-    if (!product || !product.images) return;
+    if (!product || !Array.isArray(product.images) || product.images.length === 0) return;
     const currentIndex = product.images.indexOf(activeImage);
     const prevIndex = (currentIndex - 1 + product.images.length) % product.images.length;
     setActiveImage(product.images[prevIndex]);

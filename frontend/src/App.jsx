@@ -44,6 +44,26 @@ function App() {
 const AppContent = ({ menuOpen, setMenuOpen }) => {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      const fetchCategories = async () => {
+        try {
+          const response = await fetch('http://localhost:5000/api/categories');
+          const data = await response.json();
+          // Filtra categorias visíveis e apenas principais (sem parent_id)
+          setCategories(data.filter(cat => 
+            (cat.is_visible !== 0 && cat.is_visible !== false && cat.is_visible !== '0') &&
+            (!cat.parent_id)
+          ));
+        } catch (err) {
+          console.error("Erro ao carregar categorias no menu:", err);
+        }
+      };
+      fetchCategories();
+    }
+  }, [isAdmin]);
 
   return (
     <div className="app">
@@ -73,9 +93,9 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
                 <div className="dropdown">
                   <Link to="/produtos" className="highlight-link">Ver Todos os Produtos</Link>
                   <hr />
-                  <Link to="/categoria/talmax-digital">Talmax Digital</Link>
-                  <Link to="/categoria/protese-dentaria">Prótese Dentária</Link>
-                  <Link to="/categoria/nail-podologia">Nail e Podologia</Link>
+                  {categories.map(cat => (
+                    <Link key={cat.id} to={`/categoria/${cat.slug}`}>{cat.name}</Link>
+                  ))}
                 </div>
               </div>
 
@@ -139,9 +159,9 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
               <span>Produtos</span>
               <div className="nav-mobile-sub">
                 <Link to="/produtos" onClick={() => setMenuOpen(false)} style={{fontWeight: 'bold', color: 'var(--primary)'}}>Ver Todos os Produtos</Link>
-                <Link to="/categoria/talmax-digital" onClick={() => setMenuOpen(false)}>Talmax Digital</Link>
-                <Link to="/categoria/protese-dentaria" onClick={() => setMenuOpen(false)}>Prótese Dentária</Link>
-                <Link to="/categoria/nail-podologia" onClick={() => setMenuOpen(false)}>Nail e Podologia</Link>
+                {categories.map(cat => (
+                  <Link key={cat.id} to={`/categoria/${cat.slug}`} onClick={() => setMenuOpen(false)}>{cat.name}</Link>
+                ))}
               </div>
             </div>
 
