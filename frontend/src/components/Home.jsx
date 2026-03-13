@@ -31,7 +31,12 @@ const Home = () => {
       {/* Service Banners */}
       <section className="service-banners">
         {services.map((service) => (
-          <Link key={service.id} to="#" className="service-banner" style={{ backgroundColor: service.color }}>
+          <Link 
+            key={service.id} 
+            to={service.name === 'Talmax Digital' ? '/categoria/talmax-digital' : '#'} 
+            className="service-banner" 
+            style={{ backgroundColor: service.color }}
+          >
             <span>{service.name}</span>
           </Link>
         ))}

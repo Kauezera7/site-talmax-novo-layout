@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// --- ROTAS ---
+// --- ROTAS DE CATEGORIAS ---
 
 app.get('/api/categories', async (req, res) => {
     try {
@@ -32,6 +32,53 @@ app.get('/api/categories', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+app.post('/api/categories', upload.single('icon'), async (req, res) => {
+    try {
+        const { name, slug } = req.body;
+        const icon_url = req.file ? `/img/${req.file.filename}` : null;
+        
+        const [result] = await db.execute(
+            'INSERT INTO categories (name, slug, icon_url) VALUES (?, ?, ?)',
+            [name, slug, icon_url]
+        );
+        res.status(201).json({ id: result.insertId, message: "Categoria criada!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/categories/:id', upload.single('icon'), async (req, res) => {
+    try {
+        const { name, slug } = req.body;
+        let query = 'UPDATE categories SET name = ?, slug = ?';
+        let params = [name, slug];
+
+        if (req.file) {
+            query += ', icon_url = ?';
+            params.push(`/img/${req.file.filename}`);
+        }
+
+        query += ' WHERE id = ?';
+        params.push(req.params.id);
+
+        await db.execute(query, params);
+        res.json({ message: "Categoria atualizada!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/categories/:id', async (req, res) => {
+    try {
+        await db.execute('DELETE FROM categories WHERE id = ?', [req.params.id]);
+        res.json({ message: "Categoria excluída!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- ROTAS DE PRODUTOS ---
 
 app.get('/api/products', async (req, res) => {
     try {

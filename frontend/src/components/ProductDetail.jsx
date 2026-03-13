@@ -43,8 +43,27 @@ const ProductDetail = () => {
         
         let extra = {};
         try {
-          extra = typeof data.extra_data === 'string' ? JSON.parse(data.extra_data) : data.extra_data;
-        } catch(e) { extra = {}; }
+          if (data.extra_data) {
+            extra = typeof data.extra_data === 'string' ? JSON.parse(data.extra_data) : data.extra_data;
+          }
+        } catch(e) { 
+          console.error("Erro ao processar dados extras:", e);
+          extra = {}; 
+        }
+
+        // Garantir que extra seja um objeto e não null
+        if (!extra) extra = {};
+
+        // Normalização de dados: Se o produto é antigo e não tem modelTable, converte aqui para exibição
+        let finalTable = extra.modelTable;
+        if (!finalTable && extra.models && extra.models.length > 0) {
+          finalTable = {
+            headers: extra.modelHeaders || ['Tipo / Referência', 'Código'],
+            rows: (typeof extra.models[0] === 'object' && !Array.isArray(extra.models[0])) 
+                  ? extra.models.map(m => [m.type || '', m.code || ''])
+                  : extra.models
+          };
+        }
 
         const formattedProduct = {
           id: data.id,
@@ -52,8 +71,8 @@ const ProductDetail = () => {
           category: data.category_name,
           description: data.description,
           image: data.main_image || '/img/placeholder.png',
-          modelHeaders: extra.modelHeaders || ['Tipo / Referência', 'Código'],
-          ...extra
+          ...extra,
+          modelTable: finalTable
         };
 
         setProduct(formattedProduct);
@@ -184,7 +203,7 @@ const ProductDetail = () => {
         </div>
 
         {/* TABELA DE MODELOS - LARGURA TOTAL */}
-        {((product.models && product.models.length > 0) || product.modelTable) && (
+        {product.modelTable && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -198,47 +217,19 @@ const ProductDetail = () => {
 
             <div className="table-container">
               <table className={`models-table ${product.hideModelData ? 'strip-mode' : ''}`}>
-                {product.modelTable ? (
-                  <>
-                    <thead>
-                      <tr>
-                        {product.modelTable.headers.map((h, i) => <th key={i}>{h}</th>)}
+                <thead>
+                  <tr>
+                    {product.modelTable.headers.map((h, i) => <th key={i}>{h}</th>)}
+                  </tr>
+                </thead>
+                {!product.hideModelData && (
+                  <tbody>
+                    {product.modelTable.rows.map((row, ri) => (
+                      <tr key={ri}>
+                        {row.map((cell, ci) => <td key={ci}>{cell}</td>)}
                       </tr>
-                    </thead>
-                    {!product.hideModelData && (
-                      <tbody>
-                        {product.modelTable.rows.map((row, ri) => (
-                          <tr key={ri}>
-                            {row.map((cell, ci) => <td key={ci}>{cell}</td>)}
-                          </tr>
-                        ))}
-                      </tbody>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <thead>
-                      <tr>
-                        {product.modelHeaders.map((h, i) => <th key={i}>{h}</th>)}
-                      </tr>
-                    </thead>
-                    {!product.hideModelData && (
-                      <tbody>
-                        {product.models.map((m, i) => (
-                          <tr key={i}>
-                            {Array.isArray(m) ? (
-                              m.map((cell, ci) => <td key={ci}>{cell}</td>)
-                            ) : (
-                              <>
-                                <td>{m.type}</td>
-                                <td>{m.code}</td>
-                              </>
-                            )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    )}
-                  </>
+                    ))}
+                  </tbody>
                 )}
               </table>
             </div>

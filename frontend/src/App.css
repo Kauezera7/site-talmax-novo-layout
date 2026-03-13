@@ -371,8 +371,8 @@ body {
 }
 
 .category-custom-icon {
-  width: 55px;
-  height: 55px;
+  width: 80px;
+  height: 80px;
   object-fit: contain;
   transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); /* Efeito elástico sutil */
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));

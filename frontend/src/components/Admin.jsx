@@ -32,9 +32,10 @@ const Admin = () => {
   const [editingId, setEditingId] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isListVisible, setIsListVisible] = useState(true);
   
-  // Estado do Formulário
+  // Estado do Formulário de Produtos
   const [formData, setFormData] = useState({
     name: '',
     category_id: '',
@@ -43,15 +44,26 @@ const Admin = () => {
     hideModelData: false,
     images: [],
     features: [''],
-    models: [['', '']], // Agora é uma matriz [linha][coluna]
-    modelHeaders: ['Tipo / Referência', 'Código'],
     modelTitle: '',
-    modelTable: null // { headers: [], rows: [] }
+    modelTable: { headers: ['Tipo / Referência', 'Código'], rows: [['', '']] }
   });
   const [previews, setPreviews] = useState([]);
 
+  // Estado do Formulário de Categorias
+  const [categoryFormData, setCategoryFormData] = useState({
+    name: '',
+    slug: '',
+    icon: null
+  });
+  const [categoryIconPreview, setCategoryIconPreview] = useState(null);
+  const [isEditingCategory, setIsEditingCategory] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+  const [showCategoryDeleteModal, setShowCategoryDeleteModal] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -90,14 +102,23 @@ const Admin = () => {
       descriptionAsList: false,
       hideModelData: false,
       features: [''], 
-      models: [['', '']], 
-      modelHeaders: ['Tipo / Referência', 'Código'],
       modelTitle: '',
-      modelTable: null
+      modelTable: { headers: ['Tipo / Referência', 'Código'], rows: [['', '']] }
     });
     setPreviews([]);
     setIsEditing(false);
     setEditingId(null);
+  };
+
+  const resetCategoryForm = () => {
+    setCategoryFormData({
+      name: '',
+      slug: '',
+      icon: null
+    });
+    setCategoryIconPreview(null);
+    setIsEditingCategory(false);
+    setEditingCategoryId(null);
   };
 
   const handleEdit = (product) => {
@@ -106,18 +127,27 @@ const Admin = () => {
       extra = typeof product.extra_data === 'string' ? JSON.parse(product.extra_data) : product.extra_data;
     } catch(e) { extra = {}; }
 
-    // Migração de dados antigos (objetos para arrays)
-    let formattedModels = [['', '']];
-    let headers = extra.modelHeaders || ['Tipo / Referência', 'Código'];
+    // Migração de dados antigos para o novo formato de Tabela Unificada
+    let finalModelTable = extra.modelTable;
 
-    if (extra.models && extra.models.length > 0) {
+    if (!finalModelTable && extra.models && extra.models.length > 0) {
+      // Se não tem modelTable mas tem models antigo, converte agora
+      let rows = [];
       if (typeof extra.models[0] === 'object' && !Array.isArray(extra.models[0])) {
-        // Antigo formato: [{type, code}]
-        formattedModels = extra.models.map(m => [m.type || '', m.code || '']);
+        rows = extra.models.map(m => [m.type || '', m.code || '']);
       } else {
-        // Novo formato ou já array
-        formattedModels = extra.models;
+        rows = extra.models;
       }
+      
+      finalModelTable = {
+        headers: extra.modelHeaders || ['Tipo / Referência', 'Código'],
+        rows: rows
+      };
+    }
+
+    // Caso ainda esteja vazio após a migração
+    if (!finalModelTable) {
+      finalModelTable = { headers: ['Tipo / Referência', 'Código'], rows: [['', '']] };
     }
 
     setFormData({
@@ -128,10 +158,8 @@ const Admin = () => {
       hideModelData: extra.hideModelData || false,
       images: [],
       features: (extra.features && extra.features.length > 0) ? extra.features : [''],
-      models: formattedModels,
-      modelHeaders: headers,
       modelTitle: extra.modelTitle || '',
-      modelTable: extra.modelTable || null
+      modelTable: finalModelTable
     });
     
     if (extra.images) {
@@ -146,6 +174,87 @@ const Admin = () => {
     setEditingId(product.id);
     setActiveTab('products');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Funções de Categoria
+  const handleEditCategory = (category) => {
+    setCategoryFormData({
+      name: category.name,
+      slug: category.slug,
+      icon: null
+    });
+    setCategoryIconPreview(category.icon_url);
+    setIsEditingCategory(true);
+    setEditingCategoryId(category.id);
+    setShowCategoryModal(true);
+  };
+
+  const handleCategoryDeleteClick = (category) => {
+    setCategoryToDelete(category);
+    setShowCategoryDeleteModal(true);
+  };
+
+  const confirmCategoryDelete = async () => {
+    if (!categoryToDelete) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/categories/${categoryToDelete.id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setShowCategoryDeleteModal(false);
+        setCategoryToDelete(null);
+        addToast('Categoria excluída com sucesso');
+        fetchData();
+      }
+    } catch (err) {
+      addToast('Erro ao excluir categoria', 'error');
+    }
+  };
+
+  const handleCategorySubmit = async (e) => {
+    e.preventDefault();
+    const data = new FormData();
+    data.append('name', categoryFormData.name);
+    data.append('slug', categoryFormData.slug);
+    if (categoryFormData.icon) {
+      data.append('icon', categoryFormData.icon);
+    }
+
+    const url = isEditingCategory 
+      ? `http://localhost:5000/api/categories/${editingCategoryId}` 
+      : 'http://localhost:5000/api/categories';
+    
+    const method = isEditingCategory ? 'PUT' : 'POST';
+
+    try {
+      const res = await fetch(url, { method: method, body: data });
+      if (res.ok) {
+        addToast(isEditingCategory ? "Categoria atualizada!" : "Categoria criada!");
+        setShowCategoryModal(false);
+        resetCategoryForm();
+        fetchData();
+      }
+    } catch (err) {
+      addToast('Erro ao salvar categoria', 'error');
+    }
+  };
+
+  const generateSlug = (name) => {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w ]+/g, '')
+      .replace(/ +/g, '-');
+  };
+
+  const handleCategoryNameChange = (e) => {
+    const name = e.target.value;
+    setCategoryFormData({
+      ...categoryFormData,
+      name,
+      slug: generateSlug(name)
+    });
   };
 
   // Funções para Gerador de Tabela
@@ -250,12 +359,13 @@ const Admin = () => {
     
     const extraData = {
       features: formData.features.filter(f => f !== ''),
-      models: formData.models.filter(m => m.some(cell => cell !== '')),
-      modelHeaders: formData.modelHeaders,
       modelTitle: formData.modelTitle,
       descriptionAsList: formData.descriptionAsList,
       hideModelData: formData.hideModelData,
-      modelTable: formData.modelTable
+      modelTable: {
+        headers: formData.modelTable.headers,
+        rows: formData.modelTable.rows.filter(row => row.some(cell => cell.trim() !== ''))
+      }
     };
 
 
@@ -285,30 +395,6 @@ const Admin = () => {
     setFormData({...formData, features: newFeatures});
   };
 
-  const handleAddModel = () => {
-    const newRow = new Array(formData.modelHeaders.length).fill('');
-    setFormData({...formData, models: [...formData.models, newRow]});
-  };
-
-  const handleRemoveModel = (index) => {
-    if (formData.models.length <= 1) return;
-    const newModels = formData.models.filter((_, i) => i !== index);
-    setFormData({...formData, models: newModels});
-  };
-
-  const handleAddSimpleColumn = () => {
-    const newHeaders = [...formData.modelHeaders, `Coluna ${formData.modelHeaders.length + 1}`];
-    const newModels = formData.models.map(row => [...row, '']);
-    setFormData({ ...formData, modelHeaders: newHeaders, models: newModels });
-  };
-
-  const handleRemoveSimpleColumn = (index) => {
-    if (formData.modelHeaders.length <= 1) return;
-    const newHeaders = formData.modelHeaders.filter((_, i) => i !== index);
-    const newModels = formData.models.map(row => row.filter((_, i) => i !== index));
-    setFormData({ ...formData, modelHeaders: newHeaders, models: newModels });
-  };
-
   const filteredProducts = products.filter(p => 
     (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.category_name && p.category_name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -325,8 +411,23 @@ const Admin = () => {
 
   return (
     <div className={`admin-layout ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      {/* Sidebar Overlay for Mobile */}
+      {isMobileMenuOpen && (
+        <div 
+          className="sidebar-overlay-mobile" 
+          onClick={() => setIsMobileMenuOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 99,
+            backdropFilter: 'blur(2px)'
+          }}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className={`admin-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+      <aside className={`admin-sidebar ${isSidebarCollapsed ? 'collapsed' : ''} ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
           {!isSidebarCollapsed && (
             <div className="sidebar-logo-text">
@@ -346,21 +447,21 @@ const Admin = () => {
         <nav className="sidebar-nav">
           <div 
             className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => { setActiveTab('dashboard'); setIsMobileMenuOpen(false); }}
             title="Painel Geral"
           >
             <LayoutDashboard size={20} /> <span>Painel Geral</span>
           </div>
           <div 
             className={`nav-link ${activeTab === 'products' ? 'active' : ''}`}
-            onClick={() => setActiveTab('products')}
+            onClick={() => { setActiveTab('products'); setIsMobileMenuOpen(false); }}
             title="Produtos"
           >
             <Package size={20} /> <span>Produtos</span>
           </div>
           <div 
             className={`nav-link ${activeTab === 'categories' ? 'active' : ''}`}
-            onClick={() => setActiveTab('categories')}
+            onClick={() => { setActiveTab('categories'); setIsMobileMenuOpen(false); }}
             title="Categorias"
           >
             <Layers size={20} /> <span>Categorias</span>
@@ -376,18 +477,34 @@ const Admin = () => {
       {/* Main Content */}
       <main className="admin-main">
         <header className="admin-topbar">
-          <motion.h1
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
-            {activeTab === 'dashboard' && 'Dashboard Overview'}
-            {activeTab === 'products' && 'Gerenciamento de Produtos'}
-            {activeTab === 'categories' && 'Categorias de Produtos'}
-          </motion.h1>
+          <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
+            <button 
+              className="btn-mobile-menu"
+              onClick={() => setIsMobileMenuOpen(true)}
+              style={{
+                display: 'none',
+                background: 'white',
+                border: '1px solid var(--admin-border)',
+                padding: '8px',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              <List size={20} />
+            </button>
+            <motion.h1
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
+              {activeTab === 'dashboard' && 'Dashboard Overview'}
+              {activeTab === 'products' && 'Gerenciamento de Produtos'}
+              {activeTab === 'categories' && 'Categorias de Produtos'}
+            </motion.h1>
+          </div>
           <div className="admin-user-info">
             {activeTab === 'products' && (
               <button 
-                className="btn-secondary" 
+                className="btn-secondary btn-hide-list" 
                 onClick={() => setIsListVisible(!isListVisible)}
                 style={{display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', fontSize: '0.85rem'}}
               >
@@ -395,7 +512,7 @@ const Admin = () => {
                 {isListVisible ? 'Esconder Lista' : 'Mostrar Lista'}
               </button>
             )}
-            <span style={{fontSize: '0.9rem', color: 'var(--admin-text-light)'}}>Olá, Administrador</span>
+            <span className="user-name" style={{fontSize: '0.9rem', color: 'var(--admin-text-light)'}}>Olá, Administrador</span>
             <div className="user-avatar">AD</div>
           </div>
         </header>
@@ -480,13 +597,7 @@ const Admin = () => {
               exit={{ opacity: 0, y: -20 }}
             >
               <div 
-                className="admin-grid-management" 
-                style={{
-                  display: 'grid', 
-                  gridTemplateColumns: isListVisible ? '1fr 1.5fr' : '1fr', 
-                  gap: '2rem',
-                  transition: 'grid-template-columns 0.3s ease'
-                }}
+                className={`admin-grid-management ${!isListVisible ? 'list-hidden' : ''}`}
               >
                 {/* Form Column */}
                 <section className="admin-card">
@@ -500,25 +611,28 @@ const Admin = () => {
                   </div>
                   <div className="card-body">
                     <form onSubmit={handleSubmit} className="admin-form">
-                      <div className="form-group">
-                        <label>Nome do Produto</label>
-                        <input 
-                          type="text" required 
-                          placeholder="Ex: Gesso Troquelização"
-                          value={formData.name}
-                          onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        />
-                      </div>
-
-                      <div className="form-row">
+                      
+                      {/* SEÇÃO 1: INFORMAÇÕES BÁSICAS */}
+                      <div className="admin-section-group">
+                        <span className="section-label">1. Informações Básicas</span>
                         <div className="form-group">
-                          <label>Categoria</label>
+                          <label>Nome Comercial do Produto</label>
+                          <input 
+                            type="text" required 
+                            placeholder="Ex: Gesso Troquelização Talmax"
+                            value={formData.name}
+                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Categoria do Catálogo</label>
                           <select 
                             required
                             value={formData.category_id}
                             onChange={(e) => setFormData({...formData, category_id: e.target.value})}
                           >
-                            <option value="">Selecione...</option>
+                            <option value="">Selecione uma categoria...</option>
                             {categories.map(cat => (
                               <option key={cat.id} value={cat.id}>{cat.name}</option>
                             ))}
@@ -526,215 +640,159 @@ const Admin = () => {
                         </div>
                       </div>
 
-                      <div className="form-group">
-                        <label>Descrição Curta</label>
-                        <textarea 
-                          placeholder="Descreva o produto..."
-                          value={formData.description}
-                          onChange={(e) => {
-                            setFormData({...formData, description: e.target.value});
-                            // Auto-ajuste de altura
-                            e.target.style.height = 'inherit';
-                            e.target.style.height = `${e.target.scrollHeight}px`;
-                          }}
-                          onFocus={(e) => {
-                            e.target.style.height = 'inherit';
-                            e.target.style.height = `${e.target.scrollHeight}px`;
-                          }}
-                        ></textarea>
-                      </div>
+                      {/* SEÇÃO 2: CONTEÚDO DESCRITIVO */}
+                      <div className="admin-section-group">
+                        <span className="section-label">2. Descrição do Produto</span>
+                        <div className="form-group">
+                          <label>Texto Descritivo</label>
+                          <textarea 
+                            placeholder="Conte os detalhes do produto aqui..."
+                            value={formData.description}
+                            onChange={(e) => {
+                              setFormData({...formData, description: e.target.value});
+                              e.target.style.height = 'inherit';
+                              e.target.style.height = `${e.target.scrollHeight}px`;
+                            }}
+                            onFocus={(e) => {
+                              e.target.style.height = 'inherit';
+                              e.target.style.height = `${e.target.scrollHeight}px`;
+                            }}
+                          ></textarea>
+                        </div>
 
-                      <div className="form-group" style={{display: 'flex', alignItems: 'center', gap: '8px', marginTop: '-10px', marginBottom: '15px'}}>
-                        <input 
-                          type="checkbox" 
-                          id="descAsList"
-                          style={{width: '18px', height: '18px', cursor: 'pointer'}}
-                          checked={formData.descriptionAsList}
-                          onChange={(e) => setFormData({...formData, descriptionAsList: e.target.checked})}
-                        />
-                        <label htmlFor="descAsList" style={{marginBottom: 0, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500, color: 'var(--admin-primary)'}}>Exibir descrição como lista de tópicos</label>
-                      </div>
-
-                      <div className="form-group">
-                        <label>Fotos do Produto</label>
-                        <div className="file-upload-area">
-                          <UploadCloud size={32} color="var(--admin-primary)" />
-                          <p>Clique ou arraste imagens para upload</p>
+                        <div className="form-group" style={{display: 'flex', alignItems: 'center', gap: '10px', background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid var(--admin-border)'}}>
                           <input 
-                            type="file" 
-                            multiple
-                            accept="image/*"
-                            onChange={handleFileChange}
+                            type="checkbox" 
+                            id="descAsList"
+                            style={{width: '20px', height: '20px', cursor: 'pointer'}}
+                            checked={formData.descriptionAsList}
+                            onChange={(e) => setFormData({...formData, descriptionAsList: e.target.checked})}
                           />
+                          <label htmlFor="descAsList" style={{marginBottom: 0, cursor: 'pointer', fontWeight: 600}}>Exibir descrição em tópicos (bolinhas)</label>
                         </div>
-                        {previews.length > 0 && (
-                          <div className="admin-previews">
-                            {previews.map((src, idx) => (
-                              <div key={idx} className="preview-thumb">
-                                <img src={src} alt="Preview" />
-                                <button type="button" className="remove-preview" onClick={() => removeImage(idx)}>
-                                  <X size={14} />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+
+                        <div style={{marginTop: '10px'}}>
+                          <label style={{fontWeight: 600, display: 'block', marginBottom: '10px'}}>Destaques / Diferenciais</label>
+                          {formData.features.map((feature, index) => (
+                            <div key={index} className="dynamic-input-group">
+                              <input 
+                                placeholder="Ex: Secagem em 30 minutos"
+                                value={feature}
+                                onChange={(e) => {
+                                  const newFeatures = [...formData.features];
+                                  newFeatures[index] = e.target.value;
+                                  setFormData({...formData, features: newFeatures});
+                                }}
+                              />
+                              <button type="button" className="btn-icon delete" onClick={() => handleRemoveFeature(index)}><Trash2 size={18}/></button>
+                            </div>
+                          ))}
+                          <button type="button" className="btn-add" onClick={handleAddFeature}><Plus size={16}/> Adicionar Destaque</button>
+                        </div>
                       </div>
 
-                      <div className="admin-section">
-                        <label style={{fontWeight: 600, display: 'block', marginBottom: '10px'}}>Características</label>
-                        {formData.features.map((feature, index) => (
-                          <div key={index} className="dynamic-input">
+                      {/* SEÇÃO 3: MÍDIA (IMAGENS) */}
+                      <div className="admin-section-group">
+                        <span className="section-label">3. Mídia e Fotos</span>
+                        <div className="form-group">
+                          <label>Galeria de Imagens</label>
+                          <div className="file-upload-area">
+                            <UploadCloud size={40} color="var(--admin-primary)" style={{marginBottom: '10px'}} />
+                            <p style={{fontWeight: 600, color: 'var(--admin-text)', marginBottom: '5px'}}>Upload de Fotos</p>
+                            <p style={{fontSize: '0.8rem', color: 'var(--admin-secondary)'}}>Arraste arquivos ou clique para selecionar</p>
                             <input 
-                              placeholder="Ex: Alta resistência"
-                              value={feature}
-                              onChange={(e) => {
-                                const newFeatures = [...formData.features];
-                                newFeatures[index] = e.target.value;
-                                setFormData({...formData, features: newFeatures});
-                              }}
+                              type="file" 
+                              multiple
+                              accept="image/*"
+                              onChange={handleFileChange}
                             />
-                            <button type="button" className="btn-icon delete" onClick={() => handleRemoveFeature(index)}><Trash2 size={16}/></button>
                           </div>
-                        ))}
-                        <button type="button" className="btn-add" onClick={handleAddFeature}><Plus size={14}/> Adicionar Linha</button>
+                          {previews.length > 0 && (
+                            <div className="admin-previews">
+                              {previews.map((src, idx) => (
+                                <div key={idx} className="preview-thumb">
+                                  <img src={src} alt="Preview" />
+                                  <button type="button" className="remove-preview" onClick={() => removeImage(idx)}>
+                                    <X size={14} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="admin-section">
-                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
-                          <label style={{fontWeight: 600}}>Modelos / Códigos</label>
-                          <button 
-                            type="button" 
-                            className="btn-add" 
-                            style={{width: 'auto', margin: 0}} 
-                            onClick={toggleModelTable}
-                          >
-                            {formData.modelTable ? 'Usar Lista Simples' : 'Usar Tabela/Grade'}
-                          </button>
-                        </div>
-
-                        <div className="form-group" style={{marginBottom: '15px'}}>
-                          <label style={{fontSize: '0.8rem', color: 'var(--admin-text-light)'}}>Título da Seção (Ex: Especificações)</label>
+                      {/* SEÇÃO 4: ESPECIFICAÇÕES TÉCNICAS */}
+                      <div className="admin-section-group">
+                        <span className="section-label">4. Modelos e Especificações</span>
+                        
+                        <div className="form-group">
+                          <label>Título desta Seção</label>
                           <input 
                             type="text" 
-                            placeholder="Modelos / Códigos"
+                            placeholder="Ex: Modelos Disponíveis ou Especificações"
                             value={formData.modelTitle}
                             onChange={(e) => setFormData({...formData, modelTitle: e.target.value})}
-                            style={{padding: '8px 12px', fontSize: '0.9rem'}}
                           />
                         </div>
 
-                        <div className="form-group" style={{display: 'flex', alignItems: 'center', gap: '8px', marginTop: '-5px', marginBottom: '15px'}}>
+                        <div className="form-group" style={{display: 'flex', alignItems: 'center', gap: '10px', background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid var(--admin-border)', marginBottom: '15px'}}>
                           <input 
                             type="checkbox" 
                             id="hideModelData"
-                            style={{width: '18px', height: '18px', cursor: 'pointer'}}
+                            style={{width: '20px', height: '20px', cursor: 'pointer'}}
                             checked={formData.hideModelData}
                             onChange={(e) => setFormData({...formData, hideModelData: e.target.checked})}
                           />
-                          <label htmlFor="hideModelData" style={{marginBottom: 0, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500, color: 'var(--admin-primary)'}}>Ocultar corpo da tabela (Mostrar apenas cabeçalho)</label>
+                          <label htmlFor="hideModelData" style={{marginBottom: 0, cursor: 'pointer', fontWeight: 600}}>Ocultar corpo (Mostrar apenas a tira superior)</label>
                         </div>
 
-                        {!formData.modelTable ? (
-                          <>
-                            <div className="simple-headers" style={{display: 'flex', gap: '10px', marginBottom: '10px', paddingRight: '45px'}}>
-                              {formData.modelHeaders.map((header, hIdx) => (
-                                <div key={hIdx} style={{flex: 1, position: 'relative'}}>
-                                  <input 
-                                    style={{fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', background: '#f1f5f9', border: 'none', padding: '4px 8px'}}
-                                    value={header}
-                                    onChange={(e) => {
-                                      const newHeaders = [...formData.modelHeaders];
-                                      newHeaders[hIdx] = e.target.value;
-                                      setFormData({...formData, modelHeaders: newHeaders});
-                                    }}
-                                  />
-                                  {formData.modelHeaders.length > 1 && (
-                                    <button 
-                                      type="button" 
-                                      onClick={() => handleRemoveSimpleColumn(hIdx)}
-                                      style={{position: 'absolute', right: -5, top: -5, background: 'var(--admin-danger)', color: 'white', border: 'none', borderRadius: '50%', width: '16px', height: '16px', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'}}
-                                    >
-                                      ×
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
-                              <button 
-                                type="button" 
-                                className="btn-add" 
-                                style={{width: 'auto', margin: 0, padding: '2px 8px', fontSize: '0.7rem'}}
-                                onClick={handleAddSimpleColumn}
-                              >
-                                + Coluna
-                              </button>
-                            </div>
-
-                            {formData.models.map((modelRow, rowIndex) => (
-                              <div key={rowIndex} className="dynamic-input-group">
-                                {modelRow.map((cell, colIndex) => (
-                                  <input 
-                                    key={colIndex}
-                                    placeholder={formData.modelHeaders[colIndex]}
-                                    value={cell}
-                                    onChange={(e) => {
-                                      const newModels = [...formData.models];
-                                      newModels[rowIndex][colIndex] = e.target.value;
-                                      setFormData({...formData, models: newModels});
-                                    }}
-                                  />
-                                ))}
-                                <button type="button" className="btn-icon delete" onClick={() => handleRemoveModel(rowIndex)}><Trash2 size={16}/></button>
-                              </div>
-                            ))}
-                            <button type="button" className="btn-add" onClick={handleAddModel}><Plus size={14}/> Adicionar Modelo</button>
-                          </>
-                        ) : (
-                          <div className="table-builder-container">
-                            <div className="table-builder-scroll">
-                              <table className="builder-table">
-                                <thead>
-                                  <tr>
-                                    {formData.modelTable.headers.map((header, hIdx) => (
-                                      <th key={hIdx}>
-                                        <div className="header-cell">
-                                          <input 
-                                            value={header}
-                                            onChange={(e) => updateTableHeader(hIdx, e.target.value)}
-                                          />
-                                          <button type="button" onClick={() => removeTableHeader(hIdx)}><X size={12}/></button>
-                                        </div>
-                                      </th>
-                                    ))}
-                                    <th><button type="button" className="btn-add-col" onClick={addTableHeader}><Plus size={14}/></button></th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {formData.modelTable.rows.map((row, rIdx) => (
-                                    <tr key={rIdx}>
-                                      {row.map((cell, cIdx) => (
-                                        <td key={cIdx}>
-                                          <input 
-                                            value={cell}
-                                            onChange={(e) => updateTableCell(rIdx, cIdx, e.target.value)}
-                                          />
-                                        </td>
-                                      ))}
-                                      <td>
-                                        <button type="button" className="btn-icon delete" onClick={() => removeTableRow(rIdx)}><Trash2 size={14}/></button>
-                                      </td>
-                                    </tr>
+                        <div className="table-builder-container" style={{background: 'white', padding: '15px', borderRadius: '10px', border: '1px solid var(--admin-border)'}}>
+                          <div className="table-builder-scroll">
+                            <table className="builder-table">
+                              <thead>
+                                <tr>
+                                  {formData.modelTable.headers.map((header, hIdx) => (
+                                    <th key={hIdx}>
+                                      <div style={{display: 'flex', alignItems: 'center', gap: '5px'}}>
+                                        <input 
+                                          value={header}
+                                          onChange={(e) => updateTableHeader(hIdx, e.target.value)}
+                                          style={{fontWeight: 800, textTransform: 'uppercase', border: 'none', background: '#f1f5f9', padding: '5px'}}
+                                        />
+                                        <button type="button" onClick={() => removeTableHeader(hIdx)} style={{background: 'none', border: 'none', color: 'red', cursor: 'pointer'}}><X size={14}/></button>
+                                      </div>
+                                    </th>
                                   ))}
-                                </tbody>
-                              </table>
-                            </div>
-                            <button type="button" className="btn-add" onClick={addTableRow}><Plus size={14}/> Adicionar Linha</button>
+                                  <th><button type="button" className="btn-add" style={{margin: 0}} onClick={addTableHeader}><Plus size={14}/></button></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {formData.modelTable.rows.map((row, rIdx) => (
+                                  <tr key={rIdx}>
+                                    {row.map((cell, cIdx) => (
+                                      <td key={cIdx}>
+                                        <input 
+                                          value={cell}
+                                          onChange={(e) => updateTableCell(rIdx, cIdx, e.target.value)}
+                                          style={{border: '1px solid #eee', padding: '8px', borderRadius: '4px'}}
+                                        />
+                                      </td>
+                                    ))}
+                                    <td>
+                                      <button type="button" className="btn-icon delete" onClick={() => removeTableRow(rIdx)}><Trash2 size={16}/></button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
-                        )}
+                          <button type="button" className="btn-add" onClick={addTableRow}><Plus size={16}/> Nova Linha na Tabela</button>
+                        </div>
                       </div>
 
-                      <button type="submit" className="btn-primary" style={{width: '100%', justifyContent: 'center', padding: '1rem'}}>
-                        <Save size={18} /> {isEditing ? 'ATUALIZAR PRODUTO' : 'CADASTRAR PRODUTO'}
+                      <button type="submit" className="btn-primary" style={{padding: '1.25rem', fontSize: '1.1rem', marginTop: '1rem'}}>
+                        <Save size={22} /> {isEditing ? 'SALVAR ALTERAÇÕES NO PRODUTO' : 'FINALIZAR E CADASTRAR PRODUTO'}
                       </button>
                     </form>
                   </div>
@@ -810,13 +868,16 @@ const Admin = () => {
               <div className="admin-card">
                 <div className="card-header">
                   <h2><Layers size={20} /> Gerenciar Categorias</h2>
-                  <button className="btn-primary"><Plus size={18} /> Nova Categoria</button>
+                  <button className="btn-primary" onClick={() => { resetCategoryForm(); setShowCategoryModal(true); }}>
+                    <Plus size={18} /> Nova Categoria
+                  </button>
                 </div>
                 <div className="card-body">
                   <div className="admin-table-container">
                     <table className="admin-table">
                       <thead>
                         <tr>
+                          <th>Ícone</th>
                           <th>Nome</th>
                           <th>Slug</th>
                           <th>Produtos</th>
@@ -826,12 +887,17 @@ const Admin = () => {
                       <tbody>
                         {categories.map(cat => (
                           <tr key={cat.id}>
+                            <td>
+                              <div className="category-icon-cell">
+                                {cat.icon_url ? <img src={cat.icon_url} alt={cat.name} /> : <ImageIcon size={20} color="#94a3b8" />}
+                              </div>
+                            </td>
                             <td><strong>{cat.name}</strong></td>
                             <td><code>{cat.slug}</code></td>
                             <td>{products.filter(p => p.category_id === cat.id).length}</td>
                             <td className="actions-cell">
-                              <button className="btn-icon edit"><Edit size={16} /></button>
-                              <button className="btn-icon delete"><Trash2 size={16} /></button>
+                              <button className="btn-icon edit" onClick={() => handleEditCategory(cat)}><Edit size={16} /></button>
+                              <button className="btn-icon delete" onClick={() => handleCategoryDeleteClick(cat)}><Trash2 size={16} /></button>
                             </td>
                           </tr>
                         ))}
@@ -845,7 +911,105 @@ const Admin = () => {
         </AnimatePresence>
       </main>
 
-      {/* Modal de Confirmação de Exclusão */}
+      {/* Modal de Nova/Editar Categoria */}
+      <AnimatePresence>
+        {showCategoryModal && (
+          <div className="modal-overlay">
+            <motion.div 
+              className="modal-content"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              style={{ maxWidth: '500px' }}
+            >
+              <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3>{isEditingCategory ? 'Editar Categoria' : 'Nova Categoria'}</h3>
+                <button className="btn-icon" onClick={() => setShowCategoryModal(false)}><X size={20} /></button>
+              </div>
+              <form onSubmit={handleCategorySubmit}>
+                <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div className="form-group">
+                    <label>Nome da Categoria</label>
+                    <input 
+                      type="text" required 
+                      placeholder="Ex: Gessos e Revestimentos"
+                      value={categoryFormData.name}
+                      onChange={handleCategoryNameChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Slug (URL amigável)</label>
+                    <input 
+                      type="text" required 
+                      value={categoryFormData.slug}
+                      onChange={(e) => setCategoryFormData({...categoryFormData, slug: e.target.value})}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Ícone da Categoria</label>
+                    <div className="file-upload-area" style={{ padding: '15px' }}>
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            setCategoryFormData({...categoryFormData, icon: file});
+                            setCategoryIconPreview(URL.createObjectURL(file));
+                          }
+                        }}
+                      />
+                      <p>Clique para enviar o ícone</p>
+                    </div>
+                    {categoryIconPreview && (
+                      <div className="preview-thumb" style={{ marginTop: '10px', width: '60px', height: '60px' }}>
+                        <img src={categoryIconPreview} alt="Preview Icon" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button type="button" className="btn-secondary" onClick={() => setShowCategoryModal(false)}>Cancelar</button>
+                  <button type="submit" className="btn-primary">
+                    <Save size={18} /> {isEditingCategory ? 'Salvar Alterações' : 'Criar Categoria'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Confirmação de Exclusão de Categoria */}
+      <AnimatePresence>
+        {showCategoryDeleteModal && (
+          <div className="modal-overlay">
+            <motion.div 
+              className="modal-content"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <div className="modal-body">
+                <div className="modal-icon" style={{ backgroundColor: '#fee2e2', color: '#dc2626' }}>
+                  <AlertCircle size={32} />
+                </div>
+                <h3>Excluir Categoria?</h3>
+                <p>Tem certeza que deseja excluir <strong>{categoryToDelete?.name}</strong>?</p>
+                <p style={{ fontSize: '0.85rem', color: '#ef4444', marginTop: '10px' }}>
+                  ⚠️ Atenção: Produtos vinculados a esta categoria ficarão "Sem Categoria".
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button className="btn-secondary" onClick={() => setShowCategoryDeleteModal(false)}>Cancelar</button>
+                <button className="btn-primary" style={{backgroundColor: 'var(--admin-danger)'}} onClick={confirmCategoryDelete}>Sim, Excluir</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Confirmação de Exclusão de Produto */}
       <AnimatePresence>
         {showDeleteModal && (
           <div className="modal-overlay">

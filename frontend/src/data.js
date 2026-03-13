@@ -42,6 +42,21 @@ export const slides = [
     image: '/img/BANNER-CERAMOTION.webp',
   },
   {
+    id: 2,
+    title: 'A53 - Performance e Agilidade',
+    image: '/img/BANNER-A53.webp',
+  },
+  {
+    id: 3,
+    title: 'Aoralscan 3',
+    image: '/img/BANNER-AORALSCAN-3.webp',
+  },
+  {
+    id: 4,
+    title: 'Sistema Ceramotion',
+    image: '/img/BANNER-CERAMOTION.webp',
+  },
+  {
     id: 5,
     title: 'MicroFit',
     image: '/img/BANNER-microFit.webp',
