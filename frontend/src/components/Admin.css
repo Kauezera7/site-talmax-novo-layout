@@ -820,20 +820,16 @@
 
 .admin-table tr.subcategory-row td {
   background-color: #f8fafc;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.admin-table tr.subcategory-row td:nth-child(2) {
-  padding-left: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.admin-table tr.subcategory-row td:nth-child(2)::before {
-  content: "↳";
+.subcategory-arrow-cell {
+  text-align: right;
+  padding-right: 0 !important;
   color: var(--admin-secondary);
   font-weight: bold;
+  font-size: 1.1rem;
 }
 
 .btn-add-sub {

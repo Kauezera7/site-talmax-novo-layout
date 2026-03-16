@@ -74,6 +74,7 @@ const Admin = () => {
   const [editingCategoryId, setEditingCategoryId] = useState(null);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState({});
+  const [quickSubNames, setQuickSubNames] = useState({}); // Estado para o input rápido
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
@@ -366,6 +367,41 @@ const Admin = () => {
       parent_id: parent.id
     });
     setShowCategoryModal(true);
+  };
+
+  const handleQuickAddSub = async (parentId) => {
+    const name = quickSubNames[parentId];
+    if (!name || !name.trim()) {
+      addToast('Digite um nome para a subcategoria', 'error');
+      return;
+    }
+
+    try {
+      const slug = generateSlug(name);
+      const data = new FormData();
+      data.append('name', name.trim());
+      data.append('slug', slug);
+      data.append('is_visible', true);
+      data.append('parent_id', parentId);
+
+      const res = await fetch('http://localhost:5000/api/categories', {
+        method: 'POST',
+        body: data
+      });
+
+      if (res.ok) {
+        addToast('Subcategoria adicionada com sucesso!');
+        setQuickSubNames(prev => ({ ...prev, [parentId]: '' })); // Limpa o input
+        fetchData();
+        // Expande a categoria pai automaticamente para mostrar a nova sub
+        setExpandedCategories(prev => ({ ...prev, [parentId]: true }));
+      } else {
+        const errorData = await res.json();
+        addToast(errorData.error || 'Erro ao adicionar', 'error');
+      }
+    } catch (err) {
+      addToast('Erro de conexão', 'error');
+    }
   };
 
   // Funções para Gerador de Tabela
@@ -1161,9 +1197,22 @@ const Admin = () => {
               <div className="admin-card">
                 <div className="card-header">
                   <h2><Layers size={20} /> Gerenciar Categorias</h2>
-                  <button className="btn-primary" onClick={() => { resetCategoryForm(); setShowCategoryModal(true); }}>
-                    <Plus size={18} /> Nova Categoria
-                  </button>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                      className="btn-secondary" 
+                      onClick={() => { 
+                        resetCategoryForm(); 
+                        setCategoryFormData(prev => ({ ...prev, parent_id: mainCategories[0]?.id || null }));
+                        setShowCategoryModal(true); 
+                      }}
+                      style={{ border: '1px solid var(--admin-primary)', color: 'var(--admin-primary)' }}
+                    >
+                      <Plus size={18} /> Nova Subcategoria
+                    </button>
+                    <button className="btn-primary" onClick={() => { resetCategoryForm(); setShowCategoryModal(true); }}>
+                      <Plus size={18} /> Nova Categoria
+                    </button>
+                  </div>
                 </div>
                 <div className="card-body">
                   <div className="admin-table-container">
@@ -1203,17 +1252,7 @@ const Admin = () => {
                                 </div>
                               </td>
                               <td>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  <strong>{cat.name}</strong>
-                                  <button 
-                                    type="button"
-                                    className="btn-add-sub" 
-                                    onClick={() => handleAddSubcategory(cat)}
-                                    title="Adicionar Subcategoria"
-                                  >
-                                    <Plus size={12} /> Subcategoria
-                                  </button>
-                                </div>
+                                <strong>{cat.name}</strong>
                               </td>
                               <td><code>{cat.slug}</code></td>
                               <td>
@@ -1318,16 +1357,42 @@ const Admin = () => {
               style={{ maxWidth: '500px' }}
             >
               <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3>{isEditingCategory ? 'Editar Categoria' : 'Nova Categoria'}</h3>
+                <h3>
+                  {isEditingCategory 
+                    ? (categoryFormData.parent_id ? 'Editar Subcategoria' : 'Editar Categoria') 
+                    : (categoryFormData.parent_id ? 'Nova Subcategoria' : 'Nova Categoria')
+                  }
+                </h3>
                 <button className="btn-icon" onClick={() => setShowCategoryModal(false)}><X size={20} /></button>
               </div>
               <form onSubmit={handleCategorySubmit}>
                 <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px', textAlign: 'left' }}>
+                  {(categoryFormData.parent_id || isEditingCategory && categories.find(c => c.id === editingCategoryId)?.parent_id) && (
+                    <div className="form-group">
+                      <label>Categoria Principal (Pai)</label>
+                      <select 
+                        value={categoryFormData.parent_id || ''} 
+                        onChange={(e) => setCategoryFormData({...categoryFormData, parent_id: e.target.value || null})}
+                        style={{
+                          width: '100%',
+                          padding: '10px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--admin-border)',
+                          background: 'white'
+                        }}
+                      >
+                        {mainCategories.map(cat => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   <div className="form-group">
-                    <label>Nome da Categoria</label>
+                    <label>{categoryFormData.parent_id ? 'Nome da Subcategoria' : 'Nome da Categoria'}</label>
                     <input 
                       type="text" required 
-                      placeholder="Ex: Gessos e Revestimentos"
+                      placeholder={categoryFormData.parent_id ? "Ex: Silicone por Condensação" : "Ex: Gessos e Revestimentos"}
                       value={categoryFormData.name}
                       onChange={handleCategoryNameChange}
                     />
@@ -1339,26 +1404,6 @@ const Admin = () => {
                       value={categoryFormData.slug}
                       onChange={(e) => setCategoryFormData({...categoryFormData, slug: e.target.value})}
                     />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Categoria Pai (Opcional - Para criar subcategoria)</label>
-                    <select 
-                      value={categoryFormData.parent_id || ''} 
-                      onChange={(e) => setCategoryFormData({...categoryFormData, parent_id: e.target.value || null})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        borderRadius: '8px',
-                        border: '1px solid var(--admin-border)',
-                        background: 'white'
-                      }}
-                    >
-                      <option value="">Nenhuma (Categoria Principal)</option>
-                      {mainCategories.map(cat => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </select>
                   </div>
 
                   <div className="form-group" style={{display: 'flex', alignItems: 'center', gap: '10px', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid var(--admin-border)'}}>
