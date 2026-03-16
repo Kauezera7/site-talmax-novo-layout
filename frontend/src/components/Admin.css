@@ -159,12 +159,26 @@
   flex: 1;
   margin-left: var(--sidebar-width);
   padding: 2.5rem;
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Mantém centralizado mas permite expansão */
+}
+
+.admin-main > * {
+  width: 100%;
+  max-width: 1400px; /* Aumentei para não recolher tanto quando o painel está aberto */
+  transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .admin-layout.sidebar-collapsed .admin-main {
   margin-left: var(--sidebar-collapsed-width);
+  padding: 2.5rem 1.5rem; /* Reduz um pouco o padding lateral para ganhar mais espaço */
+}
+
+.admin-layout.sidebar-collapsed .admin-main > * {
+  max-width: 1700px; /* Reduzi levemente para um equilíbrio melhor */
 }
 
 /* Responsive Breakpoints */
@@ -492,20 +506,56 @@
   border-spacing: 0;
 }
 
-.admin-table th {
-  background: #f8fafc;
-  padding: 1rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--admin-secondary);
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--admin-border);
-}
-
+.admin-table th, 
 .admin-table td {
   padding: 1rem;
   border-bottom: 1px solid var(--admin-border);
   background: white;
+  vertical-align: middle;
+  font-size: 0.9rem;
+}
+
+/* Centralização para colunas de dados curtos/ícones */
+.admin-table th,
+.admin-table td:first-child, /* Ícone */
+.admin-table td:nth-child(4), /* Status */
+.admin-table td:nth-child(5), /* Produtos */
+.admin-table td:last-child {  /* Ações */
+  text-align: center;
+}
+
+/* Alinhamento à esquerda para Nomes e Slugs (mais profissional para texto longo) */
+.admin-table td:nth-child(2), /* Nome */
+.admin-table td:nth-child(3) { /* Slug */
+  text-align: left;
+  max-width: 250px; /* Limite para não esticar a tabela */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Ajuste específico para a célula de Produto (Imagem + Nome) */
+.product-cell {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+}
+
+.product-info h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.actions-cell {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
 }
 
 .admin-table tr:last-child td { border-bottom: none; }

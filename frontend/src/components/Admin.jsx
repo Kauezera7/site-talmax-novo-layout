@@ -653,14 +653,11 @@ const Admin = () => {
             >
               <List size={20} />
             </button>
-            <motion.h1
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-            >
+            <h1>
               {activeTab === 'dashboard' && 'Dashboard Overview'}
               {activeTab === 'products' && 'Gerenciamento de Produtos'}
               {activeTab === 'categories' && 'Categorias de Produtos'}
-            </motion.h1>
+            </h1>
           </div>
           <div className="admin-user-info">
             {activeTab === 'products' && (
@@ -1198,20 +1195,56 @@ const Admin = () => {
                 <div className="card-header">
                   <h2><Layers size={20} /> Gerenciar Categorias</h2>
                   <div style={{ display: 'flex', gap: '10px' }}>
-                    <button 
+                    <motion.button 
                       className="btn-secondary" 
+                      whileHover={{ 
+                        scale: 1.05, 
+                        backgroundColor: "var(--admin-primary)", 
+                        color: "#fff",
+                        boxShadow: "0 4px 15px rgba(37, 99, 235, 0.2)"
+                      }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => { resetCategoryForm(); setShowCategoryModal(true); }}
+                      style={{ 
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        border: '1px solid var(--admin-primary)', 
+                        color: 'var(--admin-primary)',
+                        padding: '0.6rem 1.2rem',
+                        transition: 'background-color 0.2s, color 0.2s'
+                      }}
+                    >
+                      <Plus size={18} /> Nova Categoria
+                    </motion.button>
+                    <motion.button 
+                      className="btn-secondary" 
+                      whileHover={{ 
+                        scale: 1.05, 
+                        backgroundColor: "var(--admin-primary)", 
+                        color: "#fff",
+                        boxShadow: "0 4px 15px rgba(37, 99, 235, 0.2)"
+                      }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={() => { 
                         resetCategoryForm(); 
                         setCategoryFormData(prev => ({ ...prev, parent_id: mainCategories[0]?.id || null }));
                         setShowCategoryModal(true); 
                       }}
-                      style={{ border: '1px solid var(--admin-primary)', color: 'var(--admin-primary)' }}
+                      style={{ 
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        border: '1px solid var(--admin-primary)', 
+                        color: 'var(--admin-primary)',
+                        padding: '0.6rem 1.2rem',
+                        transition: 'background-color 0.2s, color 0.2s'
+                      }}
                     >
                       <Plus size={18} /> Nova Subcategoria
-                    </button>
-                    <button className="btn-primary" onClick={() => { resetCategoryForm(); setShowCategoryModal(true); }}>
-                      <Plus size={18} /> Nova Categoria
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
                 <div className="card-body">
@@ -1366,9 +1399,9 @@ const Admin = () => {
                 <button className="btn-icon" onClick={() => setShowCategoryModal(false)}><X size={20} /></button>
               </div>
               <form onSubmit={handleCategorySubmit}>
-                <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px', textAlign: 'left' }}>
+                <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   {(categoryFormData.parent_id || isEditingCategory && categories.find(c => c.id === editingCategoryId)?.parent_id) && (
-                    <div className="form-group">
+                    <div className="form-group" style={{ textAlign: 'left' }}>
                       <label>Categoria Principal (Pai)</label>
                       <select 
                         value={categoryFormData.parent_id || ''} 
