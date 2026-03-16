@@ -11,13 +11,15 @@ const Home = () => {
       try {
         const response = await fetch('http://localhost:5000/api/categories');
         const data = await response.json();
-        // Filtra apenas categorias visíveis (trata 1/0, true/false, '1'/'0')
-        const visibleCategories = data.filter(cat => 
+        // Filtra apenas categorias principais E visíveis
+        const visibleMainCategories = data.filter(cat => 
+          !cat.parent_id && 
           cat.is_visible !== 0 && 
           cat.is_visible !== false && 
-          cat.is_visible !== '0'
+          cat.is_visible !== '0' &&
+          cat.is_visible !== null
         );
-        setCategories(visibleCategories);
+        setCategories(visibleMainCategories);
       } catch (err) {
         console.error("Erro ao carregar categorias na Home:", err);
       }

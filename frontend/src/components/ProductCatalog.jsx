@@ -51,7 +51,7 @@ const ProductCatalog = () => {
         
         setProducts(formattedProducts);
         // Filtra apenas categorias marcadas como visíveis no banco
-        setCategories(catData.filter(c => c.is_visible !== 0));
+        setCategories(catData.filter(c => c.is_visible !== 0 && c.is_visible !== false && c.is_visible !== '0' && c.is_visible !== null));
       } catch (err) {
         console.error("Erro ao carregar dados do catálogo:", err);
       } finally {

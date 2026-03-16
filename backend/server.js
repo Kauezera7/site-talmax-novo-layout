@@ -33,7 +33,7 @@ app.get('/api/categories', async (req, res) => {
             SELECT id, name, slug, icon_url, display_order, is_visible, NULL as parent_id 
             FROM categorias
             UNION ALL
-            SELECT id, name, slug, NULL as icon_url, display_order, 1 as is_visible, category_id as parent_id
+            SELECT id, name, slug, NULL as icon_url, display_order, IFNULL(is_visible, 1) as is_visible, category_id as parent_id
             FROM sub_categorias
             ORDER BY display_order
         `;
@@ -79,8 +79,8 @@ app.put('/api/categories/:id', upload.single('icon'), async (req, res) => {
         if (parent_id && parent_id !== 'null' && parent_id !== '') {
             // Atualizar subcategoria
             await db.query(
-                'UPDATE sub_categorias SET name = ?, slug = ?, category_id = ? WHERE id = ?',
-                [safe(name) || '', safe(slug) || '', Number(parent_id), id]
+                'UPDATE sub_categorias SET name = ?, slug = ?, category_id = ?, is_visible = ? WHERE id = ?',
+                [safe(name) || '', safe(slug) || '', Number(parent_id), visible, id]
             );
             res.json({ message: "Subcategoria atualizada!" });
         } else {

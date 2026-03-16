@@ -73,6 +73,7 @@ const Admin = () => {
   const [isEditingCategory, setIsEditingCategory] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState(null);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState({});
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
@@ -215,6 +216,32 @@ const Admin = () => {
 
 
   // Funções de Categoria
+  const toggleCategoryVisibility = async (category) => {
+    try {
+        const data = new FormData();
+        data.append('name', category.name);
+        data.append('slug', category.slug);
+        data.append('is_visible', !category.is_visible);
+        if (category.parent_id) {
+            data.append('parent_id', category.parent_id);
+        }
+
+        const res = await fetch(`http://localhost:5000/api/categories/${category.id}`, {
+            method: 'PUT',
+            body: data
+        });
+
+        if (res.ok) {
+            addToast(`Categoria ${!category.is_visible ? 'visível' : 'oculta'} com sucesso`);
+            fetchData();
+        } else {
+            addToast('Erro ao alterar visibilidade', 'error');
+        }
+    } catch (err) {
+        addToast('Erro de conexão', 'error');
+    }
+  };
+
   const handleEditCategory = (category) => {
     setCategoryFormData({
       name: category.name,
@@ -327,6 +354,18 @@ const Admin = () => {
       name,
       slug: generateSlug(name)
     });
+  };
+
+  const handleAddSubcategory = (parent) => {
+    resetCategoryForm();
+    setCategoryFormData({
+      name: '',
+      slug: '',
+      icon: null,
+      is_visible: true,
+      parent_id: parent.id
+    });
+    setShowCategoryModal(true);
   };
 
   // Funções para Gerador de Tabela
@@ -1140,31 +1179,120 @@ const Admin = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {categories.map(cat => (
-                          <tr key={cat.id}>
-                            <td>
-                              <div className="category-icon-cell">
-                                {cat.icon_url ? <img src={cat.icon_url} alt={cat.name} /> : <ImageIcon size={20} color="#94a3b8" />}
-                              </div>
-                            </td>
-                            <td><strong>{cat.name}</strong></td>
-                            <td><code>{cat.slug}</code></td>
-                            <td>
-                              <span className={`badge ${cat.is_visible ? 'badge-blue' : 'badge-secondary'}`} style={{
-                                backgroundColor: cat.is_visible ? '#eff6ff' : '#f1f5f9',
-                                color: cat.is_visible ? '#2563eb' : '#64748b',
-                                padding: '4px 8px',
-                                borderRadius: '6px',
-                                fontSize: '0.75rem',
-                                fontWeight: 700
-                              }}>
-                                {cat.is_visible ? 'VISÍVEL' : 'OCULTA'}
-                              </span>
-                            </td>
-                            <td>{products.filter(p => p.category_ids && p.category_ids.includes(cat.id)).length}</td>
+                        {mainCategories.map(cat => (
+                          <React.Fragment key={cat.id}>
+                            <tr className="main-category-row">
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                  <button 
+                                    className="btn-icon" 
+                                    style={{ width: '24px', height: '24px', border: 'none', background: '#f1f5f9' }}
+                                    onClick={() => setExpandedCategories(prev => ({ ...prev, [cat.id]: !prev[cat.id] }))}
+                                  >
+                                    <ChevronRight 
+                                      size={16} 
+                                      style={{ 
+                                        transform: expandedCategories[cat.id] ? 'rotate(90deg)' : 'rotate(0deg)',
+                                        transition: 'transform 0.2s'
+                                      }} 
+                                    />
+                                  </button>
+                                  <div className="category-icon-cell">
+                                    {cat.icon_url ? <img src={cat.icon_url} alt={cat.name} /> : <ImageIcon size={20} color="#94a3b8" />}
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                  <strong>{cat.name}</strong>
+                                  <button 
+                                    type="button"
+                                    className="btn-add-sub" 
+                                    onClick={() => handleAddSubcategory(cat)}
+                                    title="Adicionar Subcategoria"
+                                  >
+                                    <Plus size={12} /> Subcategoria
+                                  </button>
+                                </div>
+                              </td>
+                              <td><code>{cat.slug}</code></td>
+                              <td>
+                                <span 
+                                  className={`badge ${cat.is_visible ? 'badge-blue' : 'badge-secondary'}`} 
+                                  onClick={() => toggleCategoryVisibility(cat)}
+                                  style={{
+                                    backgroundColor: cat.is_visible ? '#eff6ff' : '#f1f5f9',
+                                    color: cat.is_visible ? '#2563eb' : '#64748b',
+                                    padding: '4px 8px',
+                                    borderRadius: '6px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    width: 'fit-content'
+                                  }}
+                                  title="Clique para alternar visibilidade"
+                                >
+                                  {cat.is_visible ? <Eye size={12} /> : <EyeOff size={12} />}
+                                  {cat.is_visible ? 'VISÍVEL' : 'OCULTA'}
+                                </span>
+                              </td>
+                              <td>{products.filter(p => p.category_ids && p.category_ids.includes(cat.id)).length}</td>
+                              <td className="actions-cell">
+                                <button className="btn-icon edit" onClick={() => handleEditCategory(cat)}><Edit size={16} /></button>
+                                <button className="btn-icon delete" onClick={() => handleCategoryDeleteClick(cat)}><Trash2 size={16} /></button>
+                              </td>
+                            </tr>
+                            {/* Subcategorias */}
+                            {expandedCategories[cat.id] && subCategories
+                              .filter(sub => Number(sub.parent_id) === Number(cat.id))
+                              .map(subCat => (
+                                <tr key={subCat.id} className="subcategory-row">
+                                  <td></td>
+                                  <td>{subCat.name}</td>
+                                  <td><code>{subCat.slug}</code></td>
+                                  <td>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <span className="badge badge-secondary" style={{fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px'}}>SUBCATEGORIA</span>
+                                      <button 
+                                        onClick={() => toggleCategoryVisibility(subCat)}
+                                        style={{ 
+                                          background: 'none', 
+                                          border: 'none', 
+                                          cursor: 'pointer',
+                                          color: subCat.is_visible ? 'var(--admin-primary)' : 'var(--admin-secondary)',
+                                          display: 'flex',
+                                          alignItems: 'center'
+                                        }}
+                                        title={subCat.is_visible ? 'Ocultar Subcategoria' : 'Mostrar Subcategoria'}
+                                      >
+                                        {subCat.is_visible ? <Eye size={16} /> : <EyeOff size={16} />}
+                                      </button>
+                                    </div>
+                                  </td>
+                                  <td>{products.filter(p => p.category_ids && p.category_ids.includes(subCat.id)).length}</td>
+                                  <td className="actions-cell">
+                                    <button className="btn-icon edit" onClick={() => handleEditCategory(subCat)}><Edit size={16} /></button>
+                                    <button className="btn-icon delete" onClick={() => handleCategoryDeleteClick(subCat)}><Trash2 size={16} /></button>
+                                  </td>
+                                </tr>
+                              ))
+                            }
+                          </React.Fragment>
+                        ))}
+                        {/* Mostrar subcategorias órfãs se houver */}
+                        {subCategories.filter(sub => !mainCategories.some(m => m.id === Number(sub.parent_id))).map(orphan => (
+                          <tr key={orphan.id} className="subcategory-row orphan">
+                            <td></td>
+                            <td>{orphan.name} (Órfã)</td>
+                            <td><code>{orphan.slug}</code></td>
+                            <td><span className="badge badge-danger" style={{fontSize: '0.7rem'}}>SEM PAI</span></td>
+                            <td>{products.filter(p => p.category_ids && p.category_ids.includes(orphan.id)).length}</td>
                             <td className="actions-cell">
-                              <button className="btn-icon edit" onClick={() => handleEditCategory(cat)}><Edit size={16} /></button>
-                              <button className="btn-icon delete" onClick={() => handleCategoryDeleteClick(cat)}><Trash2 size={16} /></button>
+                              <button className="btn-icon edit" onClick={() => handleEditCategory(orphan)}><Edit size={16} /></button>
+                              <button className="btn-icon delete" onClick={() => handleCategoryDeleteClick(orphan)}><Trash2 size={16} /></button>
                             </td>
                           </tr>
                         ))}

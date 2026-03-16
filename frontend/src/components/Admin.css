@@ -809,6 +809,55 @@
   padding: 4px;
 }
 
+/* Subcategory Styling in Categories Table */
+.admin-table tr.main-category-row td:first-child {
+  border-left: 4px solid var(--admin-primary);
+}
+
+.admin-table tr.subcategory-row {
+  background-color: #f8fafc;
+}
+
+.admin-table tr.subcategory-row td {
+  background-color: #f8fafc;
+  font-size: 0.9rem;
+}
+
+.admin-table tr.subcategory-row td:nth-child(2) {
+  padding-left: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-table tr.subcategory-row td:nth-child(2)::before {
+  content: "↳";
+  color: var(--admin-secondary);
+  font-weight: bold;
+}
+
+.btn-add-sub {
+  background: #eff6ff;
+  border: 1px dashed var(--admin-primary);
+  color: var(--admin-primary);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+
+.btn-add-sub:hover {
+  background: var(--admin-primary);
+  color: white;
+  border-style: solid;
+}
+
 /* Multi-select Dropdown Premium */
 .custom-multi-select {
   position: relative;
