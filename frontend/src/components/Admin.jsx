@@ -926,23 +926,31 @@ const Admin = () => {
                       <tbody>
                         {banners.map(banner => (
                           <tr key={banner.id}>
-                            <td>
-                              <div className="banner-preview-cell" style={{ width: '120px', height: '60px', overflow: 'hidden', borderRadius: '4px' }}>
+                            <td style={{ verticalAlign: 'middle' }}>
+                              <div className="banner-preview-cell" style={{ width: '120px', height: '60px', overflow: 'hidden', borderRadius: '4px', border: '1px solid var(--admin-border)' }}>
                                 <img src={banner.image_url} alt={banner.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               </div>
                             </td>
-                            <td>
-                              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <strong>{banner.title || 'Sem título'}</strong>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-light)' }}>Link: {banner.link_url || 'Nenhum'}</span>
+                            <td style={{ verticalAlign: 'middle' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                <strong style={{ fontSize: '0.95rem' }}>{banner.title || 'Sem título'}</strong>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-light)', marginTop: '2px' }}>Link: {banner.link_url || 'Nenhum'}</span>
                               </div>
                             </td>
-                            <td>{banner.display_order}</td>
-                            <td>
+                            <td style={{ verticalAlign: 'middle', textAlign: 'center', fontWeight: 'bold' }}>{banner.display_order}</td>
+                            <td style={{ verticalAlign: 'middle' }}>
                               <span 
                                 className={`badge ${banner.active ? 'badge-blue' : 'badge-secondary'}`} 
                                 onClick={() => toggleBannerStatus(banner)}
-                                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', width: 'fit-content' }}
+                                style={{ 
+                                  cursor: 'pointer', 
+                                  display: 'inline-flex', 
+                                  alignItems: 'center', 
+                                  gap: '6px', 
+                                  padding: '4px 10px',
+                                  borderRadius: '20px',
+                                  fontSize: '0.7rem'
+                                }}
                               >
                                 {banner.active ? <Eye size={12} /> : <EyeOff size={12} />}
                                 {banner.active ? 'ATIVO' : 'INATIVO'}

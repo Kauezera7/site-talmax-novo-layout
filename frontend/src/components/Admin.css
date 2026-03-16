@@ -502,8 +502,7 @@
 /* Tables */
 .admin-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
 }
 
 .admin-table th, 
@@ -513,49 +512,56 @@
   background: white;
   vertical-align: middle;
   font-size: 0.9rem;
+  text-align: left; /* Alinhamento padrão para a esquerda */
 }
 
-/* Centralização para colunas de dados curtos/ícones */
-.admin-table th,
-.admin-table td:first-child, /* Ícone */
-.admin-table td:nth-child(4), /* Status */
-.admin-table td:nth-child(5), /* Produtos */
-.admin-table td:last-child {  /* Ações */
+/* Centralização específica para colunas de Status e Ações */
+.admin-table th:last-child,
+.admin-table td:last-child,
+.admin-table th:nth-child(3), /* Coluna de Status no Dashboard */
+.admin-table td:nth-child(3) { 
   text-align: center;
-}
-
-/* Alinhamento à esquerda para Nomes e Slugs (mais profissional para texto longo) */
-.admin-table td:nth-child(2), /* Nome */
-.admin-table td:nth-child(3) { /* Slug */
-  text-align: left;
-  max-width: 250px; /* Limite para não esticar a tabela */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* Ajuste específico para a célula de Produto (Imagem + Nome) */
 .product-cell {
-  display: flex;
+  display: inline-flex; /* inline-flex permite que o vertical-align: middle do td funcione melhor */
   align-items: center;
   gap: 1rem;
   text-align: left;
+}
+
+.product-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .product-info h4 {
   margin: 0;
   font-size: 0.95rem;
   font-weight: 600;
-  max-width: 300px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.badge-container {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  vertical-align: middle;
 }
 
 .actions-cell {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.actions-cell .btn-icon {
+  display: inline-flex;
+  margin: 0 4px;
+  vertical-align: middle;
 }
 
 .admin-table tr:last-child td { border-bottom: none; }
