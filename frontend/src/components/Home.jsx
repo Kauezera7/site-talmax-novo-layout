@@ -11,14 +11,13 @@ const Home = () => {
       try {
         const response = await fetch('http://localhost:5000/api/categories');
         const data = await response.json();
-        // Filtra apenas categorias principais E visíveis
+        
+        // Mostra todas as categorias principais que o usuário marcou como visíveis no Admin
         const visibleMainCategories = data.filter(cat => 
           !cat.parent_id && 
-          cat.is_visible !== 0 && 
-          cat.is_visible !== false && 
-          cat.is_visible !== '0' &&
-          cat.is_visible !== null
+          (cat.is_visible === 1 || cat.is_visible === true || cat.is_visible === '1')
         );
+          
         setCategories(visibleMainCategories);
       } catch (err) {
         console.error("Erro ao carregar categorias na Home:", err);

@@ -65,10 +65,22 @@ const ProductDetail = () => {
           };
         }
 
+        const segmentSlugs = ['talmax-digital', 'protese-dentaria', 'nail-e-podologia'];
+        const segmentNames = others
+          .filter(p => p.category_name && segmentSlugs.some(slug => p.category_name.toLowerCase().includes(slug.replace('-', ' '))))
+          // Na verdade, melhor buscar as categorias reais para ter os nomes exatos
+          .map(p => p.category_name);
+
+        // Como não temos a lista de categorias aqui, vamos carregar ou usar um filtro fixo baseado nos nomes conhecidos
+        const fixedSegmentNames = ['Talmax Digital', 'Prótese Dentária', 'Nail e Podologia'];
+
         const formattedProduct = {
           id: data.id,
           name: data.name,
-          category: data.category_name,
+          category: (data.category_names || data.category_name || '')
+            .split(', ')
+            .filter(name => !fixedSegmentNames.includes(name))
+            .join(', ') || 'Sem categoria',
           description: data.description,
           image: data.main_image || '/img/placeholder.png',
           ...extra,
@@ -80,7 +92,10 @@ const ProductDetail = () => {
         setAllProducts(others.map(p => ({
           id: p.id,
           name: p.name,
-          category: p.category_name,
+          category: (p.category_names || p.category_name || '')
+            .split(', ')
+            .filter(name => !fixedSegmentNames.includes(name))
+            .join(', ') || 'Sem categoria',
           image: p.main_image || '/img/placeholder.png'
         })));
 

@@ -42,8 +42,9 @@ const Admin = () => {
   // Estado do Formulário de Produtos
   const [formData, setFormData] = useState({
     name: '',
-    main_category_ids: [],
-    category_ids: [],
+    segment_ids: [], // NOVO: Talmax Digital, Prótese Dentária, Nail e Podologia
+    category_ids: [], // Categorias de Produto (Gesso, Ceras, etc)
+    sub_category_ids: [], // Subcategorias
     description: '',
     descriptionAsList: false,
     hideModelData: false,
@@ -53,12 +54,23 @@ const Admin = () => {
     modelTable: { headers: ['Tipo / Referência', 'Código'], rows: [['', '']] }
   });
 
+  const segmentSlugs = ['talmax-digital', 'protese-dentaria', 'nail-e-podologia'];
+  
+  // Categorias principais (todas que não têm pai)
   const mainCategories = Array.isArray(categories) ? categories.filter(c => !c.parent_id) : [];
+  
+  // Segmentos específicos
+  const segments = mainCategories.filter(c => segmentSlugs.includes(c.slug));
+  
+  // Categorias de produto (principais que não são segmentos)
+  const productCategories = mainCategories.filter(c => !segmentSlugs.includes(c.slug));
+  
+  // Subcategorias (todas que têm pai)
   const subCategories = Array.isArray(categories) ? categories.filter(c => c.parent_id) : [];
 
   const getFilteredSubCategories = () => {
-    if (formData.main_category_ids.length === 0 || !Array.isArray(subCategories)) return [];
-    return subCategories.filter(s => formData.main_category_ids.includes(Number(s.parent_id)));
+    if (formData.category_ids.length === 0 || !Array.isArray(subCategories)) return [];
+    return subCategories.filter(s => formData.category_ids.includes(Number(s.parent_id)));
   };
 
   // Estado do Formulário de Categorias
@@ -134,8 +146,9 @@ const Admin = () => {
   const resetForm = () => {
     setFormData({
       name: '', 
-      main_category_ids: [],
+      segment_ids: [],
       category_ids: [], 
+      sub_category_ids: [],
       description: '', 
       images: [],
       descriptionAsList: false,
@@ -168,18 +181,23 @@ const Admin = () => {
       extra = typeof product.extra_data === 'string' ? JSON.parse(product.extra_data) : product.extra_data;
     } catch(e) { extra = {}; }
 
-    // Separar categorias em Principais e Subcategorias
+    // Separar categorias em Segmentos, Categorias Principais e Subcategorias
     const allCategoryIds = Array.isArray(product.category_ids) ? product.category_ids : [];
-    const mainCatIds = [];
-    const subCatIds = [];
+    const selectedSegmentIds = [];
+    const selectedProductCatIds = [];
+    const selectedSubCatIds = [];
 
     allCategoryIds.forEach(id => {
       const cat = categories.find(c => c.id === id);
       if (cat) {
         if (!cat.parent_id) {
-          mainCatIds.push(id);
+          if (segmentSlugs.includes(cat.slug)) {
+            selectedSegmentIds.push(id);
+          } else {
+            selectedProductCatIds.push(id);
+          }
         } else {
-          subCatIds.push(id);
+          selectedSubCatIds.push(id);
         }
       }
     });
@@ -209,8 +227,9 @@ const Admin = () => {
 
     setFormData({
       name: product.name,
-      main_category_ids: mainCatIds,
-      category_ids: subCatIds,
+      segment_ids: selectedSegmentIds,
+      category_ids: selectedProductCatIds,
+      sub_category_ids: selectedSubCatIds,
       description: product.description,
       descriptionAsList: extra.descriptionAsList || false,
       hideModelData: extra.hideModelData || false,
@@ -628,16 +647,16 @@ const Admin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.main_category_ids.length === 0) {
-      addToast('Selecione pelo menos uma categoria principal', 'error');
+    if (formData.segment_ids.length === 0 && formData.category_ids.length === 0) {
+      addToast('Selecione pelo menos um segmento ou categoria', 'error');
       return;
     }
 
     const data = new FormData();
     data.append('name', formData.name);
     
-    // Une as categorias principais com as subcategorias selecionadas
-    const allSelectedCategories = [...formData.main_category_ids, ...formData.category_ids];
+    // Une tudo para enviar ao backend
+    const allSelectedCategories = [...formData.segment_ids, ...formData.category_ids, ...formData.sub_category_ids];
     data.append('category_ids', JSON.stringify(allSelectedCategories));
     
     data.append('description', formData.description);
@@ -1014,15 +1033,15 @@ const Admin = () => {
                         </div>
 
                         <div className="form-group">
-                          <label>Categorias Principais (Selecione uma ou mais)</label>
+                          <label>Segmentos (Exibidos no Menu Superior)</label>
                           <div className="custom-multi-select">
                             <div 
                               className="multi-select-header" 
                               onClick={() => setIsMainCategoryDropdownOpen(!isMainCategoryDropdownOpen)}
                             >
                               <div className="selected-tags-container">
-                                {formData.main_category_ids.length > 0 ? (
-                                  formData.main_category_ids.map(id => {
+                                {formData.segment_ids.length > 0 ? (
+                                  formData.segment_ids.map(id => {
                                     const cat = categories.find(c => c.id === id);
                                     return (
                                       <span key={id} className="header-tag">
@@ -1031,16 +1050,8 @@ const Admin = () => {
                                           type="button" 
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            const newIds = formData.main_category_ids.filter(cid => cid !== id);
-                                            // Também limpa subcategorias que não pertencem mais a nenhuma categoria principal selecionada
-                                            const remainingSubCats = subCategories.filter(s => newIds.includes(Number(s.parent_id)));
-                                            const newSubIds = formData.category_ids.filter(sid => remainingSubCats.some(rs => rs.id === sid));
-                                            
-                                            setFormData({
-                                              ...formData, 
-                                              main_category_ids: newIds,
-                                              category_ids: newSubIds
-                                            });
+                                            const newIds = formData.segment_ids.filter(cid => cid !== id);
+                                            setFormData({...formData, segment_ids: newIds});
                                           }}
                                         >
                                           <X size={12} />
@@ -1049,7 +1060,7 @@ const Admin = () => {
                                     );
                                   })
                                 ) : (
-                                  <span className="placeholder">Selecione as categorias principais...</span>
+                                  <span className="placeholder">Selecione os segmentos (Talmax Digital, etc)...</span>
                                 )}
                               </div>
                               <ChevronRight 
@@ -1071,27 +1082,106 @@ const Admin = () => {
                                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                   transition={{ duration: 0.2 }}
                                 >
-                                  {mainCategories.map(cat => (
+                                  {segments.map(cat => (
                                     <div 
                                       key={cat.id} 
-                                      className={`multi-select-option ${formData.main_category_ids.includes(cat.id) ? 'selected' : ''}`}
+                                      className={`multi-select-option ${formData.segment_ids.includes(cat.id) ? 'selected' : ''}`}
                                       onClick={() => {
-                                        const isSelected = formData.main_category_ids.includes(cat.id);
+                                        const isSelected = formData.segment_ids.includes(cat.id);
                                         const newIds = isSelected
-                                          ? formData.main_category_ids.filter(id => id !== cat.id)
-                                          : [...formData.main_category_ids, cat.id];
+                                          ? formData.segment_ids.filter(id => id !== cat.id)
+                                          : [...formData.segment_ids, cat.id];
+                                        setFormData({...formData, segment_ids: newIds});
+                                      }}
+                                    >
+                                      <span>{cat.name}</span>
+                                      <CheckCircle className="check-icon" size={16} />
+                                    </div>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </div>
+
+                        <div className="form-group">
+                          <label>Categorias de Produtos (Ex: Gesso, Ceras...)</label>
+                          <div className="custom-multi-select">
+                            <div 
+                              className="multi-select-header" 
+                              onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                            >
+                              <div className="selected-tags-container">
+                                {formData.category_ids.length > 0 ? (
+                                  formData.category_ids.map(id => {
+                                    const cat = categories.find(c => c.id === id);
+                                    return (
+                                      <span key={id} className="header-tag">
+                                        {cat?.name}
+                                        <button 
+                                          type="button" 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            const newIds = formData.category_ids.filter(cid => cid !== id);
+                                            // Limpa subcategorias órfãs
+                                            const remainingSubCats = subCategories.filter(s => newIds.includes(Number(s.parent_id)));
+                                            const newSubIds = formData.sub_category_ids.filter(sid => remainingSubCats.some(rs => rs.id === sid));
+                                            
+                                            setFormData({
+                                              ...formData, 
+                                              category_ids: newIds,
+                                              sub_category_ids: newSubIds
+                                            });
+                                          }}
+                                        >
+                                          <X size={12} />
+                                        </button>
+                                      </span>
+                                    );
+                                  })
+                                ) : (
+                                  <span className="placeholder">Selecione as categorias de produtos...</span>
+                                )}
+                              </div>
+                              <ChevronRight 
+                                size={16} 
+                                style={{ 
+                                  transform: isCategoryDropdownOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                                  transition: 'transform 0.2s',
+                                  color: '#94a3b8'
+                                }} 
+                              />
+                            </div>
+
+                            <AnimatePresence>
+                              {isCategoryDropdownOpen && (
+                                <motion.div 
+                                  className="multi-select-options"
+                                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  transition={{ duration: 0.2 }}
+                                >
+                                  {productCategories.map(cat => (
+                                    <div 
+                                      key={cat.id} 
+                                      className={`multi-select-option ${formData.category_ids.includes(cat.id) ? 'selected' : ''}`}
+                                      onClick={() => {
+                                        const isSelected = formData.category_ids.includes(cat.id);
+                                        const newIds = isSelected
+                                          ? formData.category_ids.filter(id => id !== cat.id)
+                                          : [...formData.category_ids, cat.id];
                                         
-                                        // Se desmarcou, limpa subcategorias órfãs
-                                        let newSubIds = formData.category_ids;
+                                        let newSubIds = formData.sub_category_ids;
                                         if (isSelected) {
                                           const remainingSubCats = subCategories.filter(s => newIds.includes(Number(s.parent_id)));
-                                          newSubIds = formData.category_ids.filter(sid => remainingSubCats.some(rs => rs.id === sid));
+                                          newSubIds = formData.sub_category_ids.filter(sid => remainingSubCats.some(rs => rs.id === sid));
                                         }
 
                                         setFormData({
                                           ...formData, 
-                                          main_category_ids: newIds,
-                                          category_ids: newSubIds
+                                          category_ids: newIds,
+                                          sub_category_ids: newSubIds
                                         });
                                       }}
                                     >
@@ -1105,17 +1195,17 @@ const Admin = () => {
                           </div>
                         </div>
 
-                        {formData.main_category_ids.length > 0 && (
+                        {formData.category_ids.length > 0 && (
                           <div className="form-group">
-                            <label>Subcategorias (Selecione uma ou mais)</label>
+                            <label>Subcategorias (Específicas das categorias acima)</label>
                             <div className="custom-multi-select">
                               <div 
                                 className="multi-select-header" 
                                 onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
                               >
                                 <div className="selected-tags-container">
-                                  {formData.category_ids.length > 0 ? (
-                                    formData.category_ids.map(id => {
+                                  {formData.sub_category_ids.length > 0 ? (
+                                    formData.sub_category_ids.map(id => {
                                       const cat = categories.find(c => c.id === id);
                                       return (
                                         <span key={id} className="header-tag">
@@ -1124,8 +1214,8 @@ const Admin = () => {
                                             type="button" 
                                             onClick={(e) => {
                                               e.stopPropagation();
-                                              const newIds = formData.category_ids.filter(cid => cid !== id);
-                                              setFormData({...formData, category_ids: newIds});
+                                              const newIds = formData.sub_category_ids.filter(cid => cid !== id);
+                                              setFormData({...formData, sub_category_ids: newIds});
                                             }}
                                           >
                                             <X size={12} />
@@ -1159,12 +1249,12 @@ const Admin = () => {
                                     {getFilteredSubCategories().map(cat => (
                                       <div 
                                         key={cat.id} 
-                                        className={`multi-select-option ${formData.category_ids.includes(cat.id) ? 'selected' : ''}`}
+                                        className={`multi-select-option ${formData.sub_category_ids.includes(cat.id) ? 'selected' : ''}`}
                                         onClick={() => {
-                                          const newIds = formData.category_ids.includes(cat.id)
-                                            ? formData.category_ids.filter(id => id !== cat.id)
-                                            : [...formData.category_ids, cat.id];
-                                          setFormData({...formData, category_ids: newIds});
+                                          const newIds = formData.sub_category_ids.includes(cat.id)
+                                            ? formData.sub_category_ids.filter(id => id !== cat.id)
+                                            : [...formData.sub_category_ids, cat.id];
+                                          setFormData({...formData, sub_category_ids: newIds});
                                         }}
                                       >
                                         <span>{cat.name}</span>

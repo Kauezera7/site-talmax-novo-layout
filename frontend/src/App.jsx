@@ -44,26 +44,6 @@ function App() {
 const AppContent = ({ menuOpen, setMenuOpen }) => {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
-  const [categories, setCategories] = useState([]);
-
-  useEffect(() => {
-    if (!isAdmin) {
-      const fetchCategories = async () => {
-        try {
-          const response = await fetch('http://localhost:5000/api/categories');
-          const data = await response.json();
-          // Filtra categorias visíveis e apenas principais (sem parent_id)
-          setCategories(data.filter(cat => 
-            (cat.is_visible !== 0 && cat.is_visible !== false && cat.is_visible !== '0') &&
-            (!cat.parent_id)
-          ));
-        } catch (err) {
-          console.error("Erro ao carregar categorias no menu:", err);
-        }
-      };
-      fetchCategories();
-    }
-  }, [isAdmin]);
 
   return (
     <div className="app">
@@ -78,7 +58,7 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
               <div className="nav-item">
                 <Link to="/">Home</Link>
               </div>
-              
+
               <div className="nav-item">
                 <span>Institucional <ChevronDown size={14} /></span>
                 <div className="dropdown">
@@ -93,9 +73,10 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
                 <div className="dropdown">
                   <Link to="/produtos" className="highlight-link">Ver Todos os Produtos</Link>
                   <hr />
-                  {categories.map(cat => (
-                    <Link key={cat.id} to={`/categoria/${cat.slug}`}>{cat.name}</Link>
-                  ))}
+                  {/* Menu Fixo e Estático (Não vêm do Banco) */}
+                  <Link to="/categoria/talmax-digital" style={{fontWeight: '700', color: 'var(--primary)'}}>Talmax Digital</Link>
+                  <Link to="/categoria/protese-dentaria" style={{fontWeight: '700', color: 'var(--primary)'}}>Prótese Dentária</Link>
+                  <Link to="/categoria/nail-e-podologia" style={{fontWeight: '700', color: 'var(--primary)'}}>Nail e Podologia</Link>
                 </div>
               </div>
 
@@ -159,9 +140,11 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
               <span>Produtos</span>
               <div className="nav-mobile-sub">
                 <Link to="/produtos" onClick={() => setMenuOpen(false)} style={{fontWeight: 'bold', color: 'var(--primary)'}}>Ver Todos os Produtos</Link>
-                {categories.map(cat => (
-                  <Link key={cat.id} to={`/categoria/${cat.slug}`} onClick={() => setMenuOpen(false)}>{cat.name}</Link>
-                ))}
+                <hr style={{border: '0', borderTop: '1px solid #eee', margin: '5px 0'}} />
+                {/* Menu Fixo no Mobile */}
+                <Link to="/categoria/talmax-digital" onClick={() => setMenuOpen(false)} style={{fontWeight: '700'}}>Talmax Digital</Link>
+                <Link to="/categoria/protese-dentaria" onClick={() => setMenuOpen(false)} style={{fontWeight: '700'}}>Prótese Dentária</Link>
+                <Link to="/categoria/nail-e-podologia" onClick={() => setMenuOpen(false)} style={{fontWeight: '700'}}>Nail e Podologia</Link>
               </div>
             </div>
 

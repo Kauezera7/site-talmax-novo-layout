@@ -18,7 +18,8 @@ const ProductCatalog = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState([]); 
-  const [categories, setCategories] = useState([]); // Nova lista de categorias do banco
+  const [allCategories, setAllCategories] = useState([]); // Todas as categorias do banco
+  const [categories, setCategories] = useState([]); // Apenas categorias visíveis para o menu
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,6 +32,7 @@ const ProductCatalog = () => {
         
         const prodData = await prodRes.json();
         const catData = await catRes.json();
+        setAllCategories(catData);
 
         // Formata os produtos
         const formattedProducts = prodData.map(p => {
@@ -39,18 +41,29 @@ const ProductCatalog = () => {
             extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data;
           } catch(e) { extra = {}; }
 
+          const segmentSlugs = ['talmax-digital', 'protese-dentaria', 'nail-e-podologia'];
+          const segmentNames = catData
+            .filter(c => segmentSlugs.includes(c.slug))
+            .map(c => c.name);
+
+          const productCatNames = (p.category_names || '').split(', ');
+
           return {
             id: p.id,
             name: p.name,
-            // category agora pode ser uma string como "Gesso, Ceras"
-            category: p.category_names || 'Sem categoria',
+            // Mantemos todos os nomes para filtragem interna
+            allCategoryNames: productCatNames,
+            // Filtra os nomes dos segmentos da string de categorias apenas para exibição
+            category: productCatNames
+              .filter(name => !segmentNames.includes(name))
+              .join(', ') || 'Sem categoria',
             image: p.main_image || '/img/placeholder.png',
             ...extra
           };
         });
         
         setProducts(formattedProducts);
-        // Filtra apenas categorias marcadas como visíveis no banco
+        // Filtra apenas categorias marcadas como visíveis no banco para a sidebar
         setCategories(catData.filter(c => c.is_visible !== 0 && c.is_visible !== false && c.is_visible !== '0' && c.is_visible !== null));
       } catch (err) {
         console.error("Erro ao carregar dados do catálogo:", err);
@@ -62,8 +75,23 @@ const ProductCatalog = () => {
     fetchData();
   }, []);
 
+  // Sincroniza a categoria ativa com o slug da URL
+  useEffect(() => {
+    if (slug && allCategories.length > 0) {
+      const cat = allCategories.find(c => c.slug === slug);
+      if (cat) {
+        setActiveCategory(cat.name);
+      }
+    } else if (!slug) {
+      setActiveCategory('Todas');
+    }
+  }, [slug, allCategories]);
+
   const categoriesTree = useMemo(() => {
-    const main = categories.filter(c => !c.parent_id);
+    // Segmentos que NÃO devem aparecer na sidebar de categorias de produto
+    const segmentSlugs = ['talmax-digital', 'protese-dentaria', 'nail-e-podologia'];
+    
+    const main = categories.filter(c => !c.parent_id && !segmentSlugs.includes(c.slug));
     return main.map(parent => ({
       ...parent,
       children: categories.filter(c => c.parent_id === parent.id)
@@ -76,24 +104,23 @@ const ProductCatalog = () => {
       
       if (activeCategory === 'Todas') return matchesSearch;
 
-      // Encontra a categoria ativa no banco para saber se ela tem filhos
-      const currentCat = categories.find(c => c.name === activeCategory);
+      // Encontra a categoria ativa em TODAS as categorias para pegar o ID
+      const currentCat = allCategories.find(c => c.name === activeCategory);
       if (!currentCat) return matchesSearch;
 
       // Se for uma categoria pai, pegamos o nome dela e de todos os filhos
       const categoriesToMatch = [currentCat.name];
       if (!currentCat.parent_id) {
-        const children = categories.filter(c => c.parent_id === currentCat.id);
+        const children = allCategories.filter(c => c.parent_id === currentCat.id);
         children.forEach(child => categoriesToMatch.push(child.name));
       }
 
       // Verifica se alguma das categorias permitidas está no produto
-      const productCategories = product.category.split(', ');
-      const matchesCategory = productCategories.some(pc => categoriesToMatch.includes(pc));
+      const matchesCategory = (product.allCategoryNames || []).some(pc => categoriesToMatch.includes(pc));
       
       return matchesSearch && matchesCategory;
     });
-  }, [searchTerm, activeCategory, products, categories]);
+  }, [searchTerm, activeCategory, products, allCategories]);
 
 
   const resetFilters = () => {
