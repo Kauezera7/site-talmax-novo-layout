@@ -14,6 +14,7 @@ app.use(express.json());
 // Configuração do Multer (Salva fotos em frontend/public/img)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
+        // Ajuste para o caminho na KingHost (geralmente absoluto)
         cb(null, path.join(__dirname, '../frontend/public/img'));
     },
     filename: (req, file, cb) => {
@@ -21,6 +22,10 @@ const storage = multer.diskStorage({
     }
 });
 const upload = multer({ storage });
+
+// Servir arquivos estáticos do Frontend (React Build)
+// Se você colocar a pasta 'dist' dentro de 'backend', use path.join(__dirname, 'dist')
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // FUNÇÃO DE LIMPEZA RADICAL: Transforma QUALQUER undefined em null
 const safe = (val) => (val === undefined ? null : val);
