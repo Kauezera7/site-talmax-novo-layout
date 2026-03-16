@@ -26,6 +26,7 @@ import './Admin.css';
 const Admin = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isEditing, setIsEditing] = useState(false);
@@ -76,6 +77,21 @@ const Admin = () => {
   const [expandedCategories, setExpandedCategories] = useState({});
   const [quickSubNames, setQuickSubNames] = useState({}); // Estado para o input rápido
 
+  // Estado do Formulário de Banners
+  const [bannerFormData, setBannerFormData] = useState({
+    title: '',
+    link_url: '',
+    display_order: 0,
+    active: true,
+    image: null
+  });
+  const [bannerPreview, setBannerPreview] = useState(null);
+  const [isEditingBanner, setIsEditingBanner] = useState(false);
+  const [editingBannerId, setEditingBannerId] = useState(null);
+  const [showBannerModal, setShowBannerModal] = useState(false);
+  const [showBannerDeleteModal, setShowBannerDeleteModal] = useState(false);
+  const [bannerToDelete, setBannerToDelete] = useState(null);
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
   const [showCategoryDeleteModal, setShowCategoryDeleteModal] = useState(false);
@@ -89,14 +105,17 @@ const Admin = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [prodRes, catRes] = await Promise.all([
+      const [prodRes, catRes, banRes] = await Promise.all([
         fetch('http://localhost:5000/api/products'),
-        fetch('http://localhost:5000/api/categories')
+        fetch('http://localhost:5000/api/categories'),
+        fetch('http://localhost:5000/api/banners')
       ]);
       const prods = await prodRes.json();
       const cats = await catRes.json();
+      const bans = await banRes.json();
       setProducts(prods);
       setCategories(cats);
+      setBanners(bans);
     } catch (err) {
       addToast('Erro ao carregar dados', 'error');
     } finally {
@@ -215,6 +234,119 @@ const Admin = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+
+  const resetBannerForm = () => {
+    setBannerFormData({
+      title: '',
+      link_url: '',
+      display_order: 0,
+      active: true,
+      image: null
+    });
+    setBannerPreview(null);
+    setIsEditingBanner(false);
+    setEditingBannerId(null);
+  };
+
+  const handleEditBanner = (banner) => {
+    setBannerFormData({
+      title: banner.title || '',
+      link_url: banner.link_url || '',
+      display_order: banner.display_order || 0,
+      active: banner.active !== 0,
+      image: null
+    });
+    setBannerPreview(banner.image_url);
+    setIsEditingBanner(true);
+    setEditingBannerId(banner.id);
+    setShowBannerModal(true);
+  };
+
+  const handleBannerDeleteClick = (banner) => {
+    setBannerToDelete(banner);
+    setShowBannerDeleteModal(true);
+  };
+
+  const confirmBannerDelete = async () => {
+    if (!bannerToDelete) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/banners/${bannerToDelete.id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setShowBannerDeleteModal(false);
+        setBannerToDelete(null);
+        addToast('Banner excluído com sucesso');
+        fetchData();
+      }
+    } catch (err) {
+      addToast('Erro ao excluir banner', 'error');
+    }
+  };
+
+  const handleBannerSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!isEditingBanner && !bannerFormData.image) {
+      addToast('A imagem do banner é obrigatória', 'error');
+      return;
+    }
+
+    try {
+      const data = new FormData();
+      data.append('title', bannerFormData.title);
+      data.append('link_url', bannerFormData.link_url);
+      data.append('display_order', bannerFormData.display_order);
+      data.append('active', bannerFormData.active);
+      
+      if (bannerFormData.image) {
+        data.append('image', bannerFormData.image);
+      }
+
+      const url = isEditingBanner 
+        ? `http://localhost:5000/api/banners/${editingBannerId}` 
+        : 'http://localhost:5000/api/banners';
+      
+      const method = isEditingBanner ? 'PUT' : 'POST';
+
+      const res = await fetch(url, { 
+        method: method, 
+        body: data 
+      });
+
+      if (res.ok) {
+        addToast(isEditingBanner ? "Banner atualizado com sucesso!" : "Banner criado com sucesso!");
+        setShowBannerModal(false);
+        resetBannerForm();
+        fetchData();
+      } else {
+        const errorData = await res.json();
+        addToast(errorData.error || 'Erro ao salvar banner', 'error');
+      }
+    } catch (err) {
+      addToast('Erro de conexão com o servidor', 'error');
+    }
+  };
+
+  const toggleBannerStatus = async (banner) => {
+    try {
+      const data = new FormData();
+      data.append('title', banner.title || '');
+      data.append('active', !banner.active);
+      
+      const res = await fetch(`http://localhost:5000/api/banners/${banner.id}`, {
+        method: 'PUT',
+        body: data
+      });
+
+      if (res.ok) {
+        addToast(`Banner ${!banner.active ? 'ativado' : 'desativado'} com sucesso`);
+        fetchData();
+      }
+    } catch (err) {
+      addToast('Erro ao alterar status do banner', 'error');
+    }
+  };
 
   // Funções de Categoria
   const toggleCategoryVisibility = async (category) => {
@@ -627,6 +759,13 @@ const Admin = () => {
           >
             <Layers size={20} /> <span>Categorias</span>
           </div>
+          <div 
+            className={`nav-link ${activeTab === 'banners' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('banners'); setIsMobileMenuOpen(false); }}
+            title="Banners/Slides"
+          >
+            <ImageIcon size={20} /> <span>Banners / Slides</span>
+          </div>
         </nav>
         <div className="sidebar-footer">
           <button className="btn-logout" title="Sair do Painel">
@@ -657,6 +796,7 @@ const Admin = () => {
               {activeTab === 'dashboard' && 'Dashboard Overview'}
               {activeTab === 'products' && 'Gerenciamento de Produtos'}
               {activeTab === 'categories' && 'Categorias de Produtos'}
+              {activeTab === 'banners' && 'Gerenciamento de Banners/Slides'}
             </h1>
           </div>
           <div className="admin-user-info">
@@ -699,10 +839,10 @@ const Admin = () => {
                   </div>
                 </div>
                 <div className="stat-card">
-                  <div className="stat-icon orange"><Plus size={24} /></div>
+                  <div className="stat-icon purple"><ImageIcon size={24} /></div>
                   <div className="stat-info">
-                    <h3>Novos Este Mês</h3>
-                    <p>4</p>
+                    <h3>Banners Ativos</h3>
+                    <p>{banners.filter(b => b.active).length}</p>
                   </div>
                 </div>
               </div>
@@ -748,6 +888,82 @@ const Admin = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'banners' && (
+            <motion.div 
+              key="banners"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="admin-card">
+                <div className="card-header">
+                  <h2><ImageIcon size={20} /> Gerenciar Banners (Slide Principal)</h2>
+                  <button 
+                    className="btn-primary" 
+                    onClick={() => { resetBannerForm(); setShowBannerModal(true); }}
+                    style={{ padding: '0.6rem 1.2rem', gap: '8px' }}
+                  >
+                    <Plus size={18} /> Novo Banner
+                  </button>
+                </div>
+                <div className="card-body">
+                  <div className="admin-table-container">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Preview</th>
+                          <th>Título / Info</th>
+                          <th>Ordem</th>
+                          <th>Status</th>
+                          <th>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {banners.map(banner => (
+                          <tr key={banner.id}>
+                            <td>
+                              <div className="banner-preview-cell" style={{ width: '120px', height: '60px', overflow: 'hidden', borderRadius: '4px' }}>
+                                <img src={banner.image_url} alt={banner.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              </div>
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <strong>{banner.title || 'Sem título'}</strong>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-light)' }}>Link: {banner.link_url || 'Nenhum'}</span>
+                              </div>
+                            </td>
+                            <td>{banner.display_order}</td>
+                            <td>
+                              <span 
+                                className={`badge ${banner.active ? 'badge-blue' : 'badge-secondary'}`} 
+                                onClick={() => toggleBannerStatus(banner)}
+                                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', width: 'fit-content' }}
+                              >
+                                {banner.active ? <Eye size={12} /> : <EyeOff size={12} />}
+                                {banner.active ? 'ATIVO' : 'INATIVO'}
+                              </span>
+                            </td>
+                            <td className="actions-cell">
+                              <button className="btn-icon edit" onClick={() => handleEditBanner(banner)}><Edit size={16} /></button>
+                              <button className="btn-icon delete" onClick={() => handleBannerDeleteClick(banner)}><Trash2 size={16} /></button>
+                            </td>
+                          </tr>
+                        ))}
+                        {banners.length === 0 && (
+                          <tr>
+                            <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--admin-text-light)' }}>
+                              Nenhum banner cadastrado.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -1377,6 +1593,126 @@ const Admin = () => {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Modal de Nova/Editar Categoria */}
+      <AnimatePresence>
+        {showBannerModal && (
+          <div className="modal-overlay">
+            <motion.div 
+              className="modal-content"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              style={{ maxWidth: '600px' }}
+            >
+              <div className="modal-header">
+                <h3>{isEditingBanner ? 'Editar Banner' : 'Novo Banner'}</h3>
+                <button className="btn-icon" onClick={() => setShowBannerModal(false)}><X size={20} /></button>
+              </div>
+              <form onSubmit={handleBannerSubmit}>
+                <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div className="form-group">
+                    <label>Imagem do Banner (Recomendado: 1920x600px)</label>
+                    <div className="file-upload-area" style={{ padding: '20px' }}>
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            setBannerFormData({...bannerFormData, image: file});
+                            setBannerPreview(URL.createObjectURL(file));
+                          }
+                        }}
+                      />
+                      <UploadCloud size={32} color="var(--admin-primary)" />
+                      <p>Clique ou arraste a imagem do banner</p>
+                    </div>
+                    {bannerPreview && (
+                      <div className="banner-preview-large" style={{ marginTop: '10px', width: '100%', height: '150px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
+                        <img src={bannerPreview} alt="Preview Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label>Título / Texto do Banner (Opcional)</label>
+                    <input 
+                      type="text" 
+                      placeholder="Ex: Lançamento Nova Frizadora"
+                      value={bannerFormData.title}
+                      onChange={(e) => setBannerFormData({...bannerFormData, title: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>URL de Destino (Ao clicar no banner)</label>
+                    <input 
+                      type="text" 
+                      placeholder="Ex: /produtos/frizadora-digital"
+                      value={bannerFormData.link_url}
+                      onChange={(e) => setBannerFormData({...bannerFormData, link_url: e.target.value})}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div className="form-group">
+                      <label>Ordem de Exibição</label>
+                      <input 
+                        type="number" 
+                        value={bannerFormData.display_order}
+                        onChange={(e) => setBannerFormData({...bannerFormData, display_order: e.target.value})}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '25px' }}>
+                      <input 
+                        type="checkbox" 
+                        id="bannerActive"
+                        style={{ width: '20px', height: '20px' }}
+                        checked={bannerFormData.active}
+                        onChange={(e) => setBannerFormData({...bannerFormData, active: e.target.checked})}
+                      />
+                      <label htmlFor="bannerActive" style={{ marginBottom: 0, fontWeight: 600 }}>Banner Ativo</label>
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn-secondary" onClick={() => setShowBannerModal(false)}>Cancelar</button>
+                  <button type="submit" className="btn-primary">
+                    <Save size={18} /> {isEditingBanner ? 'Salvar Alterações' : 'Criar Banner'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Confirmação de Exclusão de Banner */}
+      <AnimatePresence>
+        {showBannerDeleteModal && (
+          <div className="modal-overlay">
+            <motion.div 
+              className="modal-content"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <div className="modal-body">
+                <div className="modal-icon" style={{ backgroundColor: '#fee2e2', color: '#dc2626' }}>
+                  <AlertCircle size={32} />
+                </div>
+                <h3>Excluir Banner?</h3>
+                <p>Tem certeza que deseja remover este banner? Esta ação não pode ser desfeita.</p>
+              </div>
+              <div className="modal-footer">
+                <button className="btn-secondary" onClick={() => setShowBannerDeleteModal(false)}>Cancelar</button>
+                <button className="btn-primary" style={{backgroundColor: 'var(--admin-danger)'}} onClick={confirmBannerDelete}>Sim, Excluir</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Modal de Nova/Editar Categoria */}
       <AnimatePresence>

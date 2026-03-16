@@ -105,6 +105,70 @@ app.put('/api/categories/:id', upload.single('icon'), async (req, res) => {
 
 // --- ROTAS DE PRODUTOS ---
 
+app.get('/api/banners', async (req, res) => {
+    try {
+        const [rows] = await db.query('SELECT * FROM banners ORDER BY display_order ASC');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/banners', upload.single('image'), async (req, res) => {
+    try {
+        const { title, link_url, display_order, active } = req.body;
+        const image_url = req.file ? `/img/${req.file.filename}` : null;
+        
+        if (!image_url) {
+            return res.status(400).json({ error: "A imagem do banner é obrigatória." });
+        }
+
+        const isActive = (active === 'true' || active === true || active === 1) ? 1 : 0;
+        const order = display_order ? parseInt(display_order) : 0;
+
+        await db.query(
+            'INSERT INTO banners (image_url, title, link_url, display_order, active) VALUES (?, ?, ?, ?, ?)',
+            [image_url, safe(title), safe(link_url), order, isActive]
+        );
+        res.status(201).json({ message: "Banner criado!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/banners/:id', upload.single('image'), async (req, res) => {
+    try {
+        const { title, link_url, display_order, active } = req.body;
+        const id = req.params.id;
+        const isActive = (active === 'true' || active === true || active === 1) ? 1 : 0;
+        const order = display_order ? parseInt(display_order) : 0;
+
+        let query = 'UPDATE banners SET title = ?, link_url = ?, display_order = ?, active = ?';
+        let params = [safe(title), safe(link_url), order, isActive];
+
+        if (req.file) {
+            query += ', image_url = ?';
+            params.push(`/img/${req.file.filename}`);
+        }
+        query += ' WHERE id = ?';
+        params.push(id);
+
+        await db.query(query, params);
+        res.json({ message: "Banner atualizado!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/banners/:id', async (req, res) => {
+    try {
+        await db.query('DELETE FROM banners WHERE id = ?', [req.params.id]);
+        res.json({ message: "Banner excluído!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/products', async (req, res) => {
     try {
         const query = `
