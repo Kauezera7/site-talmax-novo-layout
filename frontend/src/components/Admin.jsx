@@ -35,6 +35,11 @@ const Admin = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isListVisible, setIsListVisible] = useState(true);
+  const [isDashboardListExpanded, setIsDashboardListExpanded] = useState(false);
+  const [isDashboardFilterOpen, setIsDashboardFilterOpen] = useState(false);
+  const [isDashboardCatDropdownOpen, setIsDashboardCatDropdownOpen] = useState(false);
+  const [dashboardSearch, setDashboardSearch] = useState('');
+  const [dashboardSelectedCats, setDashboardSelectedCats] = useState([]);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isSubCategoryDropdownOpen, setIsSubCategoryDropdownOpen] = useState(false);
   const [previews, setPreviews] = useState([]);
@@ -47,6 +52,7 @@ const Admin = () => {
     description: '',
     descriptionAsList: false,
     hideModelData: false,
+    showModelSection: true,
     images: [],
     features: [''],
     modelTitle: '',
@@ -63,6 +69,9 @@ const Admin = () => {
   });
 
   const [upceraProductSearch, setUpceraProductSearch] = useState('');
+  const [isUpceraFilterOpen, setIsUpceraFilterOpen] = useState(false);
+  const [upceraSelectedCats, setUpceraSelectedCats] = useState([]);
+  const [isUpceraCatDropdownOpen, setIsUpceraCatDropdownOpen] = useState(false);
 
   // Categorias principais (todas que não têm pai)
   const mainCategories = Array.isArray(categories) ? categories.filter(c => !c.parent_id) : [];
@@ -187,6 +196,7 @@ const Admin = () => {
       images: [],
       descriptionAsList: false,
       hideModelData: false,
+      showModelSection: true,
       features: [''], 
       modelTitle: '',
       modelTable: { headers: ['Tipo / Referência', 'Código'], rows: [['', '']] }
@@ -261,6 +271,7 @@ const Admin = () => {
       description: product.description,
       descriptionAsList: extra.descriptionAsList || false,
       hideModelData: extra.hideModelData || false,
+      showModelSection: extra.showModelSection !== false, // Default true
       images: [],
       features: (extra.features && extra.features.length > 0) ? extra.features : [''],
       modelTitle: extra.modelTitle || '',
@@ -698,6 +709,7 @@ const Admin = () => {
       modelTitle: formData.modelTitle,
       descriptionAsList: formData.descriptionAsList,
       hideModelData: formData.hideModelData,
+      showModelSection: formData.showModelSection,
       modelTable: {
         headers: formData.modelTable.headers,
         rows: formData.modelTable.rows.filter(row => row.some(cell => cell.trim() !== ''))
@@ -883,43 +895,202 @@ const Admin = () => {
               exit={{ opacity: 0, y: -20 }}
             >
               <div className="admin-card">
-                <div className="card-header">
-                  <h2><ImageIcon size={20} /> Editar Conteúdo Upcera</h2>
-                  <button className="btn-primary" onClick={handleUpceraSubmit}>
-                    <Save size={18} /> Salvar Alterações
-                  </button>
+                <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h2><ImageIcon size={20} /> Seleção de Produtos Upcera</h2>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                      className={`btn-secondary ${isUpceraFilterOpen ? 'active' : ''}`} 
+                      onClick={() => setIsUpceraFilterOpen(!isUpceraFilterOpen)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: isUpceraFilterOpen ? 'var(--admin-primary)' : 'white',
+                        color: isUpceraFilterOpen ? 'white' : 'var(--admin-text)',
+                        borderColor: isUpceraFilterOpen ? 'var(--admin-primary)' : 'var(--admin-border)'
+                      }}
+                    >
+                      <Search size={16} /> {isUpceraFilterOpen ? 'Ocultar Filtros' : 'Filtros'}
+                    </button>
+                    <button className="btn-primary" onClick={handleUpceraSubmit}>
+                      <Save size={18} /> Salvar Alterações
+                    </button>
+                  </div>
                 </div>
-                <div className="card-body">
-                  <form className="admin-form">
-                    <div className="admin-section-group">
-                      <span className="section-label">Seleção de Produtos Upcera</span>
+                <div className="card-body" style={{ padding: '20px' }}>
+                  <form className="admin-form" onSubmit={(e) => e.preventDefault()}>
+                    
+                    {/* Filtro Horizontal Profissional Upcera */}
+                    <AnimatePresence>
+                      {isUpceraFilterOpen && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          style={{ marginBottom: '20px', position: 'relative', zIndex: 100 }}
+                        >
+                          <div style={{
+                            background: '#f8fafc',
+                            padding: '20px',
+                            borderRadius: '12px',
+                            border: '1px solid var(--admin-border)',
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr auto',
+                            gap: '20px',
+                            alignItems: 'flex-end',
+                            position: 'relative',
+                            zIndex: 101
+                          }}>
+                            <div className="filter-group">
+                              <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--admin-text-light)', display: 'block', marginBottom: '8px', textTransform: 'uppercase' }}>Buscar no Catálogo Upcera</label>
+                              <div style={{ position: 'relative' }}>
+                                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                <input 
+                                  type="text" 
+                                  placeholder="Digite o nome ou ID..."
+                                  value={upceraProductSearch}
+                                  onChange={(e) => setUpceraProductSearch(e.target.value)}
+                                  style={{ width: '100%', padding: '10px 10px 10px 38px', borderRadius: '8px', border: '1px solid var(--admin-border)', fontSize: '0.85rem', outline: 'none' }}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="filter-group">
+                              <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--admin-text-light)', display: 'block', marginBottom: '8px', textTransform: 'uppercase' }}>Subcategoria Upcera</label>
+                              <div className="custom-multi-select" style={{ position: 'relative' }}>
+                                <div 
+                                  className="multi-select-header" 
+                                  onClick={() => setIsUpceraCatDropdownOpen(!isUpceraCatDropdownOpen)}
+                                  style={{ 
+                                    padding: '10px 15px', 
+                                    background: 'white', 
+                                    border: '1px solid var(--admin-border)', 
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    cursor: 'pointer',
+                                    fontSize: '0.85rem'
+                                  }}
+                                >
+                                  <span>
+                                    {upceraSelectedCats.length === 0 
+                                      ? 'Todas as categorias' 
+                                      : `${upceraSelectedCats.length} selecionada(s)`}
+                                  </span>
+                                  <ChevronRight 
+                                    size={16} 
+                                    style={{ 
+                                      transform: isUpceraCatDropdownOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                                      transition: 'transform 0.2s',
+                                      color: '#94a3b8'
+                                    }} 
+                                  />
+                                </div>
+
+                                <AnimatePresence>
+                                  {isUpceraCatDropdownOpen && (
+                                    <motion.div 
+                                      className="multi-select-options"
+                                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                      transition={{ duration: 0.2 }}
+                                      style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        left: 0,
+                                        right: 0,
+                                        zIndex: 100,
+                                        background: 'white',
+                                        border: '1px solid var(--admin-border)',
+                                        borderRadius: '8px',
+                                        marginTop: '5px',
+                                        boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                                        maxHeight: '250px',
+                                        overflowY: 'auto'
+                                      }}
+                                    >
+                                      {/* Mostra categorias que contêm Upcera no nome (subcategorias) ou todas se preferir */}
+                                      {categories.filter(c => (c.name || '').toLowerCase().includes('upcera') || !c.parent_id).map(cat => (
+                                        <div 
+                                          key={cat.id} 
+                                          className={`multi-select-option ${upceraSelectedCats.includes(cat.id) ? 'selected' : ''}`}
+                                          onClick={() => {
+                                            const isSelected = upceraSelectedCats.includes(cat.id);
+                                            const newSelection = isSelected
+                                              ? upceraSelectedCats.filter(id => id !== cat.id)
+                                              : [...upceraSelectedCats, cat.id];
+                                            setUpceraSelectedCats(newSelection);
+                                          }}
+                                          style={{
+                                            padding: '10px 15px',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            cursor: 'pointer',
+                                            borderBottom: '1px solid #f1f5f9',
+                                            fontSize: '0.85rem',
+                                            background: upceraSelectedCats.includes(cat.id) ? '#eff6ff' : 'transparent'
+                                          }}
+                                        >
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <div style={{
+                                              width: '16px',
+                                              height: '16px',
+                                              border: '2px solid var(--admin-primary)',
+                                              borderRadius: '4px',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              background: upceraSelectedCats.includes(cat.id) ? 'var(--admin-primary)' : 'transparent'
+                                            }}>
+                                              {upceraSelectedCats.includes(cat.id) && <CheckCircle size={12} color="white" />}
+                                            </div>
+                                            <span>{cat.name}</span>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                              <button 
+                                type="button"
+                                onClick={() => { setUpceraProductSearch(''); setUpceraSelectedCats([]); }}
+                                className="btn-secondary"
+                                style={{ padding: '10px 20px', fontSize: '0.8rem', height: '42px' }}
+                              >
+                                Resetar
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <div className="admin-section-group" style={{ marginTop: 0 }}>
                       <p style={{fontSize: '0.85rem', color: 'var(--admin-text-light)', marginBottom: '15px'}}>
                         Selecione quais produtos do catálogo devem aparecer na página da Upcera.
                       </p>
-                      
-                      <div className="search-box" style={{position: 'relative', marginBottom: '15px'}}>
-                        <Search size={16} style={{position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8'}} />
-                        <input 
-                          type="text" 
-                          placeholder="Filtrar produtos..." 
-                          style={{paddingLeft: '35px'}}
-                          value={upceraProductSearch}
-                          onChange={(e) => setUpceraProductSearch(e.target.value)}
-                        />
-                      </div>
 
                       <div className="upcera-product-selector" style={{ 
-                        maxHeight: '500px', 
+                        maxHeight: '550px', 
                         overflowY: 'auto', 
                         background: 'white', 
-                        borderRadius: '10px', 
-                        border: '1px solid var(--admin-border)' 
+                        borderRadius: '12px', 
+                        border: '1px solid var(--admin-border)',
+                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
                       }}>
                         {products
                           .filter(p => {
                             const isUpceraCategory = (p.category_names || '').toLowerCase().includes('upcera');
                             const matchesSearch = (p.name || '').toLowerCase().includes(upceraProductSearch.toLowerCase());
-                            return isUpceraCategory && matchesSearch;
+                            const matchesFilterCat = upceraSelectedCats.length === 0 || (p.category_ids && p.category_ids.some(id => upceraSelectedCats.includes(id)));
+                            return isUpceraCategory && matchesSearch && matchesFilterCat;
                           })
                           .map(product => (
                             <div 
@@ -936,10 +1107,10 @@ const Admin = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '15px',
-                                padding: '12px 15px',
+                                padding: '14px 20px',
                                 borderBottom: '1px solid var(--admin-border)',
                                 cursor: 'pointer',
-                                transition: 'background 0.2s',
+                                transition: 'all 0.2s',
                                 background: upceraData.selected_product_ids.includes(product.id) ? '#eff6ff' : 'transparent'
                               }}
                             >
@@ -959,10 +1130,10 @@ const Admin = () => {
                               <img 
                                 src={product.main_image || '/img/placeholder.png'} 
                                 alt={product.name} 
-                                style={{ width: '45px', height: '45px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--admin-border)' }}
+                                style={{ width: '50px', height: '50px', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--admin-border)' }}
                               />
                               <div style={{ flex: 1 }}>
-                                <p style={{ margin: 0, fontWeight: 700, fontSize: '0.95rem', color: 'var(--admin-text)' }}>{product.name}</p>
+                                <p style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: 'var(--admin-text)' }}>{product.name}</p>
                                 <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--admin-text-light)' }}>ID: #{product.id} • {product.category_names || 'Sem Categoria'}</p>
                               </div>
                             </div>
@@ -971,15 +1142,21 @@ const Admin = () => {
                       </div>
                       <div style={{ 
                         marginTop: '15px', 
-                        padding: '10px', 
+                        padding: '12px 20px', 
                         background: '#f8fafc', 
-                        borderRadius: '8px',
+                        borderRadius: '10px',
                         borderLeft: '4px solid var(--admin-primary)',
-                        fontSize: '0.9rem', 
+                        fontSize: '0.95rem', 
                         color: 'var(--admin-text)', 
-                        fontWeight: 600 
+                        fontWeight: 600,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
                       }}>
-                        📌 {upceraData.selected_product_ids.length} produto(s) definidos para exibição na página Upcera.
+                        <span>📌 {upceraData.selected_product_ids.length} produto(s) selecionados para a página Upcera.</span>
+                        <button type="button" className="btn-primary" onClick={handleUpceraSubmit} style={{ padding: '8px 20px' }}>
+                          Salvar Lista
+                        </button>
                       </div>
                     </div>
                   </form>
@@ -1020,46 +1197,263 @@ const Admin = () => {
               </div>
 
               <div className="admin-card">
-                <div className="card-header">
-                  <h2><List size={20} /> Produtos Recentes</h2>
-                  <button className="btn-secondary" onClick={() => setActiveTab('products')}>Ver Todos</button>
+                <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h2><List size={20} /> {isDashboardListExpanded ? 'Gerenciamento Rápido de Produtos' : 'Produtos Recentes'}</h2>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    {isDashboardListExpanded && (
+                      <button 
+                        className={`btn-secondary ${isDashboardFilterOpen ? 'active' : ''}`} 
+                        onClick={() => setIsDashboardFilterOpen(!isDashboardFilterOpen)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          background: isDashboardFilterOpen ? 'var(--admin-primary)' : 'white',
+                          color: isDashboardFilterOpen ? 'white' : 'var(--admin-text)',
+                          borderColor: isDashboardFilterOpen ? 'var(--admin-primary)' : 'var(--admin-border)'
+                        }}
+                      >
+                        <Search size={16} /> {isDashboardFilterOpen ? 'Ocultar Filtros' : 'Filtros'}
+                      </button>
+                    )}
+                    <button className="btn-secondary" onClick={() => setIsDashboardListExpanded(!isDashboardListExpanded)}>
+                      {isDashboardListExpanded ? 'Ver Menos' : 'Ver Todos'}
+                    </button>
+                  </div>
                 </div>
-                <div className="admin-table-container">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Produto</th>
-                        <th>Categoria</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {products.slice(0, 5).map(p => (
-                        <tr key={p.id}>
-                          <td>
-                            <div className="product-cell">
-                              <img src={p.main_image || '/img/placeholder.png'} alt={p.name} />
-                              <div className="product-info">
-                                <h4>{p.name}</h4>
+                
+                <div className={`dashboard-products-layout ${isDashboardListExpanded ? 'expanded' : ''}`} style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  padding: isDashboardListExpanded ? '20px' : '0'
+                }}>
+                  
+                  {/* Filtro Horizontal Profissional (Expandível para baixo) */}
+                  <AnimatePresence>
+                    {isDashboardListExpanded && isDashboardFilterOpen && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        style={{ marginBottom: '20px', position: 'relative', zIndex: 100 }}
+                      >
+                        <div style={{
+                          background: '#f8fafc',
+                          padding: '20px',
+                          borderRadius: '12px',
+                          border: '1px solid var(--admin-border)',
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr auto',
+                          gap: '20px',
+                          alignItems: 'flex-end',
+                          position: 'relative',
+                          zIndex: 101
+                        }}>
+                          <div className="filter-group">
+                            <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--admin-text-light)', display: 'block', marginBottom: '8px', textTransform: 'uppercase' }}>Buscar Produto</label>
+                            <div style={{ position: 'relative' }}>
+                              <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                              <input 
+                                type="text" 
+                                placeholder="Digite o nome ou ID..."
+                                value={dashboardSearch}
+                                onChange={(e) => setDashboardSearch(e.target.value)}
+                                style={{ width: '100%', padding: '10px 10px 10px 38px', borderRadius: '8px', border: '1px solid var(--admin-border)', fontSize: '0.85rem', outline: 'none' }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="filter-group">
+                            <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--admin-text-light)', display: 'block', marginBottom: '8px', textTransform: 'uppercase' }}>Filtrar por Categoria</label>
+                            <div className="custom-multi-select" style={{ position: 'relative' }}>
+                              <div 
+                                className="multi-select-header" 
+                                onClick={() => setIsDashboardCatDropdownOpen(!isDashboardCatDropdownOpen)}
+                                style={{ 
+                                  padding: '10px 15px', 
+                                  background: 'white', 
+                                  border: '1px solid var(--admin-border)', 
+                                  borderRadius: '8px',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  cursor: 'pointer',
+                                  fontSize: '0.85rem'
+                                }}
+                              >
+                                <span>
+                                  {dashboardSelectedCats.length === 0 
+                                    ? 'Todas as categorias' 
+                                    : `${dashboardSelectedCats.length} selecionada(s)`}
+                                </span>
+                                <ChevronRight 
+                                  size={16} 
+                                  style={{ 
+                                    transform: isDashboardCatDropdownOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                                    transition: 'transform 0.2s',
+                                    color: '#94a3b8'
+                                  }} 
+                                />
                               </div>
+
+                              <AnimatePresence>
+                                {isDashboardCatDropdownOpen && (
+                                  <motion.div 
+                                    className="multi-select-options"
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    transition={{ duration: 0.2 }}
+                                    style={{
+                                      position: 'absolute',
+                                      top: '100%',
+                                      left: 0,
+                                      right: 0,
+                                      zIndex: 100,
+                                      background: 'white',
+                                      border: '1px solid var(--admin-border)',
+                                      borderRadius: '8px',
+                                      marginTop: '5px',
+                                      boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                                      maxHeight: '250px',
+                                      overflowY: 'auto'
+                                    }}
+                                  >
+                                    {mainCategories.map(cat => (
+                                      <div 
+                                        key={cat.id} 
+                                        className={`multi-select-option ${dashboardSelectedCats.includes(cat.id) ? 'selected' : ''}`}
+                                        onClick={() => {
+                                          const isSelected = dashboardSelectedCats.includes(cat.id);
+                                          const newSelection = isSelected
+                                            ? dashboardSelectedCats.filter(id => id !== cat.id)
+                                            : [...dashboardSelectedCats, cat.id];
+                                          setDashboardSelectedCats(newSelection);
+                                        }}
+                                        style={{
+                                          padding: '10px 15px',
+                                          display: 'flex',
+                                          justifyContent: 'space-between',
+                                          alignItems: 'center',
+                                          cursor: 'pointer',
+                                          borderBottom: '1px solid #f1f5f9',
+                                          fontSize: '0.85rem',
+                                          background: dashboardSelectedCats.includes(cat.id) ? '#eff6ff' : 'transparent'
+                                        }}
+                                      >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                          <div style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            border: '2px solid var(--admin-primary)',
+                                            borderRadius: '4px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            background: dashboardSelectedCats.includes(cat.id) ? 'var(--admin-primary)' : 'transparent'
+                                          }}>
+                                            {dashboardSelectedCats.includes(cat.id) && <CheckCircle size={12} color="white" />}
+                                          </div>
+                                          <span>{cat.name}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
-                          </td>
-                          <td>
-                            <div className="badge-container">
-                              {p.category_names ? p.category_names.split(', ').map((cat, i) => (
-                                <span key={i} className="badge-soft-blue">{cat}</span>
-                              )) : <span className="badge-soft-blue badge-secondary">Sem categoria</span>}
-                            </div>
-                          </td>
-                          <td><span style={{color: 'var(--admin-success)', fontSize: '0.85rem', fontWeight: 600}}>Ativo</span></td>
-                          <td className="actions-cell">
-                            <button className="btn-icon edit" onClick={() => handleEdit(p)}><Edit size={16} /></button>
-                          </td>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '10px' }}>
+                            <button 
+                              onClick={() => { setDashboardSearch(''); setDashboardSelectedCats([]); }}
+                              className="btn-secondary"
+                              style={{ padding: '10px 20px', fontSize: '0.8rem', height: '42px' }}
+                            >
+                              Resetar
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Tags de categorias selecionadas (Opcional para melhor UX) */}
+                        {dashboardSelectedCats.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                            {dashboardSelectedCats.map(id => {
+                              const cat = mainCategories.find(c => c.id === id);
+                              return (
+                                <span key={id} style={{ 
+                                  background: '#eff6ff', 
+                                  color: '#2563eb', 
+                                  padding: '4px 12px', 
+                                  borderRadius: '20px', 
+                                  fontSize: '0.75rem', 
+                                  fontWeight: 600,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  border: '1px solid #dbeafe'
+                                }}>
+                                  {cat?.name}
+                                  <X size={12} style={{ cursor: 'pointer' }} onClick={() => setDashboardSelectedCats(dashboardSelectedCats.filter(cid => cid !== id))} />
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="admin-table-container" style={{ 
+                    maxHeight: isDashboardListExpanded ? '700px' : 'auto', 
+                    overflowY: 'auto',
+                    borderRadius: '8px',
+                    border: isDashboardListExpanded ? '1px solid var(--admin-border)' : 'none'
+                  }}>
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Produto</th>
+                          <th>Categoria</th>
+                          <th>Status</th>
+                          <th>Ações</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {products
+                          .filter(p => {
+                            const matchesSearch = (p.name || '').toLowerCase().includes(dashboardSearch.toLowerCase());
+                            const matchesCat = dashboardSelectedCats.length === 0 || (p.category_ids && p.category_ids.some(id => dashboardSelectedCats.includes(id)));
+                            return matchesSearch && matchesCat;
+                          })
+                          .slice(0, isDashboardListExpanded ? 999 : 5)
+                          .map(p => (
+                            <tr key={p.id}>
+                              <td>
+                                <div className="product-cell">
+                                  <img src={p.main_image || '/img/placeholder.png'} alt={p.name} />
+                                  <div className="product-info">
+                                    <h4>{p.name}</h4>
+                                    {isDashboardListExpanded && <p style={{fontSize: '0.7rem'}}>ID: #{p.id}</p>}
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <div className="badge-container">
+                                  {p.category_names ? p.category_names.split(', ').map((cat, i) => (
+                                    <span key={i} className="badge-soft-blue">{cat}</span>
+                                  )) : <span className="badge-soft-blue badge-secondary">Sem categoria</span>}
+                                </div>
+                              </td>
+                              <td><span style={{color: 'var(--admin-success)', fontSize: '0.85rem', fontWeight: 600}}>Ativo</span></td>
+                              <td className="actions-cell">
+                                <button className="btn-icon edit" onClick={() => handleEdit(p)}><Edit size={16} /></button>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -1451,7 +1845,18 @@ const Admin = () => {
                           />
                         </div>
 
-                        <div className="form-group" style={{display: 'flex', alignItems: 'center', gap: '10px', background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid var(--admin-border)', marginBottom: '15px'}}>
+                        <div className="form-group" style={{display: 'flex', alignItems: 'center', gap: '10px', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid var(--admin-border)', marginBottom: '15px'}}>
+                          <input 
+                            type="checkbox" 
+                            id="showModelSection"
+                            style={{width: '20px', height: '20px', cursor: 'pointer'}}
+                            checked={formData.showModelSection}
+                            onChange={(e) => setFormData({...formData, showModelSection: e.target.checked})}
+                          />
+                          <label htmlFor="showModelSection" style={{marginBottom: 0, cursor: 'pointer', fontWeight: 600}}>Exibir Seção de Modelos e Especificações</label>
+                        </div>
+
+                        <div className="form-group" style={{display: 'flex', alignItems: 'center', gap: '10px', background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid var(--admin-border)', marginBottom: '15px', opacity: formData.showModelSection ? 1 : 0.5, pointerEvents: formData.showModelSection ? 'auto' : 'none'}}>
                           <input 
                             type="checkbox" 
                             id="hideModelData"
@@ -1462,7 +1867,7 @@ const Admin = () => {
                           <label htmlFor="hideModelData" style={{marginBottom: 0, cursor: 'pointer', fontWeight: 600}}>Ocultar corpo (Mostrar apenas a tira superior)</label>
                         </div>
 
-                        <div className="table-builder-container" style={{background: 'white', padding: '15px', borderRadius: '10px', border: '1px solid var(--admin-border)'}}>
+                        <div className="table-builder-container" style={{background: 'white', padding: '15px', borderRadius: '10px', border: '1px solid var(--admin-border)', opacity: formData.showModelSection ? 1 : 0.5, pointerEvents: formData.showModelSection ? 'auto' : 'none'}}>
                           <div className="table-builder-scroll">
                             <table className="builder-table">
                               <thead>

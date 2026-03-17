@@ -218,7 +218,7 @@ const ProductDetail = () => {
         </div>
 
         {/* TABELA DE MODELOS - LARGURA TOTAL */}
-        {product.modelTable && (
+        {product.modelTable && product.showModelSection !== false && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
