@@ -6,6 +6,7 @@ import './TalmaxDigital.css';
 
 const Upcera = () => {
   const [products, setProducts] = useState([]);
+  const [cadCamProducts, setCadCamProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -15,11 +16,8 @@ const Upcera = () => {
         const res = await fetch('http://localhost:5000/api/products');
         const data = await res.json();
 
-        const upceraProducts = data.filter(p => {
-          const nameMatch = (p.name || '').toLowerCase().includes('upcera');
-          const catMatch = (p.category_names || '').toLowerCase().includes('upcera');
-          return nameMatch || catMatch;
-        }).map(p => {
+        // Filtra APENAS os produtos marcados como Upcera no painel ADM
+        const upceraProducts = data.filter(p => p.is_upcera).map(p => {
           let extra = {};
           try {
             extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data;
@@ -34,7 +32,14 @@ const Upcera = () => {
           };
         });
 
+        // Filtra produtos da categoria Linha Cad/Cam (ID 121 ou Slug 'linha-cad-cam')
+        const cadCamItems = data.filter(p => 
+          (p.category_ids && p.category_ids.includes(121)) || 
+          (p.category_names && p.category_names.toLowerCase().includes('linha cad/cam'))
+        ).slice(0, 4); // Pega os primeiros 4 para o grid
+
         setProducts(upceraProducts);
+        setCadCamProducts(cadCamItems);
       } catch (err) {
         console.error("Erro ao carregar produtos Upcera:", err);
       } finally {
@@ -253,6 +258,129 @@ const Upcera = () => {
           )}
         </div>
       </section>
+
+      {/* Seção CAD/CAM Relacionados */}
+      {!isLoading && cadCamProducts.length > 0 && (
+        <section style={{ 
+          background: '#ffffff',
+          padding: '0 0 120px 0'
+        }}>
+          {/* FAIXA PRETA DE ALTO IMPACTO - MAIS FINA */}
+          <div style={{ 
+            width: '100%', 
+            background: '#000000', 
+            padding: '30px 0', 
+            position: 'relative', 
+            marginBottom: '60px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            borderTop: '1px solid rgba(255,255,255,0.05)',
+            borderBottom: '1px solid rgba(255,255,255,0.05)'
+          }}>
+            {/* Imagem natural reduzida em cima da faixa */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              style={{
+                maxWidth: '350px',
+                width: '80%',
+                zIndex: 3,
+                position: 'relative'
+              }}
+            >
+              <img 
+                src="/img/na-pagina-dauoceracad-cam.webp" 
+                alt="Sistema CAD/CAM" 
+                style={{ 
+                  width: '100%', 
+                  height: 'auto', 
+                  borderRadius: '20px',
+                  display: 'block',
+                  boxShadow: '0 30px 60px rgba(0, 0, 0, 0.3)'
+                }} 
+              />
+            </motion.div>
+
+            {/* Elementos decorativos de fundo na faixa */}
+            <div style={{
+              position: 'absolute',
+              top: '0',
+              right: '-100px',
+              width: '400px',
+              height: '400px',
+              background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)',
+              borderRadius: '50%'
+            }}></div>
+          </div>
+
+          <div className="container-inner" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+              gap: '30px' 
+            }}>
+              {cadCamProducts.map((p, i) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  whileHover={{ y: -10 }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    padding: '30px',
+                    borderRadius: '20px',
+                    textAlign: 'center',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+                    cursor: 'pointer',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.2)'
+                  }}
+                  onClick={() => navigate(`/produto/${p.id}`)}
+                >
+                  <img 
+                    src={p.main_image || '/img/placeholder.png'} 
+                    alt={p.name} 
+                    style={{ 
+                      width: '100%', 
+                      height: '200px', 
+                      objectFit: 'contain', 
+                      marginBottom: '20px' 
+                    }} 
+                  />
+                  <h3 style={{ 
+                    fontSize: '1.2rem', 
+                    fontWeight: '800', 
+                    color: '#000', 
+                    marginBottom: '10px',
+                    textTransform: 'uppercase'
+                  }}>
+                    {p.name}
+                  </h3>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: '5px',
+                    color: '#e31212',
+                    fontSize: '0.8rem',
+                    fontWeight: '700',
+                    letterSpacing: '1px'
+                  }}>
+                    VER DETALHES <ChevronRight size={14} />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Rodapé da Página Upcera */}
       <footer style={{ 

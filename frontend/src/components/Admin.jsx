@@ -53,6 +53,17 @@ const Admin = () => {
     modelTable: { headers: ['Tipo / Referência', 'Código'], rows: [['', '']] }
   });
 
+  const [isCatalogDropdownOpen, setIsCatalogDropdownOpen] = useState(true);
+  const [upceraData, setUpceraData] = useState({
+    title: 'Upcera - Soluções em Zircônia',
+    description: '',
+    banners: [],
+    features: [],
+    selected_product_ids: [] // IDs dos produtos que aparecerão na página Upcera
+  });
+
+  const [upceraProductSearch, setUpceraProductSearch] = useState('');
+
   // Categorias principais (todas que não têm pai)
   const mainCategories = Array.isArray(categories) ? categories.filter(c => !c.parent_id) : [];
   
@@ -103,6 +114,7 @@ const Admin = () => {
 
   useEffect(() => {
     fetchData();
+    fetchUpceraData();
   }, []);
 
   const fetchData = async () => {
@@ -123,6 +135,38 @@ const Admin = () => {
       addToast('Erro ao carregar dados', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUpceraData = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/products');
+      const allProducts = await res.json();
+      // Filtra apenas os que já são is_upcera
+      const upceraIds = allProducts.filter(p => p.is_upcera).map(p => p.id);
+      setUpceraData(prev => ({...prev, selected_product_ids: upceraIds}));
+    } catch (err) {
+      console.error("Erro ao carregar dados da Upcera:", err);
+    }
+  };
+
+  const handleUpceraSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('http://localhost:5000/api/upcera/products', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selected_product_ids: upceraData.selected_product_ids })
+      });
+
+      if (res.ok) {
+        addToast('Produtos Upcera atualizados com sucesso!');
+        fetchData(); // Atualiza a lista geral
+      } else {
+        addToast('Erro ao salvar produtos Upcera', 'error');
+      }
+    } catch (err) {
+      addToast('Erro de conexão com o servidor', 'error');
     }
   };
 
@@ -748,6 +792,7 @@ const Admin = () => {
           >
             <LayoutDashboard size={20} /> <span>Painel Geral</span>
           </div>
+
           <div 
             className={`nav-link ${activeTab === 'products' ? 'active' : ''}`}
             onClick={() => { setActiveTab('products'); setIsMobileMenuOpen(false); }}
@@ -755,6 +800,7 @@ const Admin = () => {
           >
             <Package size={20} /> <span>Produtos</span>
           </div>
+
           <div 
             className={`nav-link ${activeTab === 'categories' ? 'active' : ''}`}
             onClick={() => { setActiveTab('categories'); setIsMobileMenuOpen(false); }}
@@ -762,6 +808,15 @@ const Admin = () => {
           >
             <Layers size={20} /> <span>Categorias</span>
           </div>
+
+          <div 
+            className={`nav-link ${activeTab === 'upcera' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('upcera'); setIsMobileMenuOpen(false); }}
+            title="Página da Upcera"
+          >
+            <ImageIcon size={20} /> <span>Página da Upcera</span>
+          </div>
+
           <div 
             className={`nav-link ${activeTab === 'banners' ? 'active' : ''}`}
             onClick={() => { setActiveTab('banners'); setIsMobileMenuOpen(false); }}
@@ -800,6 +855,7 @@ const Admin = () => {
               {activeTab === 'products' && 'Gerenciamento de Produtos'}
               {activeTab === 'categories' && 'Categorias de Produtos'}
               {activeTab === 'banners' && 'Gerenciamento de Banners/Slides'}
+              {activeTab === 'upcera' && 'Gerenciamento Página Upcera'}
             </h1>
           </div>
           <div className="admin-user-info">
@@ -819,6 +875,119 @@ const Admin = () => {
         </header>
 
         <AnimatePresence mode="wait">
+          {activeTab === 'upcera' && (
+            <motion.div 
+              key="upcera"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="admin-card">
+                <div className="card-header">
+                  <h2><ImageIcon size={20} /> Editar Conteúdo Upcera</h2>
+                  <button className="btn-primary" onClick={handleUpceraSubmit}>
+                    <Save size={18} /> Salvar Alterações
+                  </button>
+                </div>
+                <div className="card-body">
+                  <form className="admin-form">
+                    <div className="admin-section-group">
+                      <span className="section-label">Seleção de Produtos Upcera</span>
+                      <p style={{fontSize: '0.85rem', color: 'var(--admin-text-light)', marginBottom: '15px'}}>
+                        Selecione quais produtos do catálogo devem aparecer na página da Upcera.
+                      </p>
+                      
+                      <div className="search-box" style={{position: 'relative', marginBottom: '15px'}}>
+                        <Search size={16} style={{position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8'}} />
+                        <input 
+                          type="text" 
+                          placeholder="Filtrar produtos..." 
+                          style={{paddingLeft: '35px'}}
+                          value={upceraProductSearch}
+                          onChange={(e) => setUpceraProductSearch(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="upcera-product-selector" style={{ 
+                        maxHeight: '500px', 
+                        overflowY: 'auto', 
+                        background: 'white', 
+                        borderRadius: '10px', 
+                        border: '1px solid var(--admin-border)' 
+                      }}>
+                        {products
+                          .filter(p => {
+                            const isUpceraCategory = (p.category_names || '').toLowerCase().includes('upcera');
+                            const matchesSearch = (p.name || '').toLowerCase().includes(upceraProductSearch.toLowerCase());
+                            return isUpceraCategory && matchesSearch;
+                          })
+                          .map(product => (
+                            <div 
+                              key={product.id} 
+                              className={`product-select-item ${upceraData.selected_product_ids.includes(product.id) ? 'selected' : ''}`}
+                              onClick={() => {
+                                const isSelected = upceraData.selected_product_ids.includes(product.id);
+                                const newSelection = isSelected
+                                  ? upceraData.selected_product_ids.filter(id => id !== product.id)
+                                  : [...upceraData.selected_product_ids, product.id];
+                                setUpceraData({...upceraData, selected_product_ids: newSelection});
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '15px',
+                                padding: '12px 15px',
+                                borderBottom: '1px solid var(--admin-border)',
+                                cursor: 'pointer',
+                                transition: 'background 0.2s',
+                                background: upceraData.selected_product_ids.includes(product.id) ? '#eff6ff' : 'transparent'
+                              }}
+                            >
+                              <div style={{
+                                width: '22px',
+                                height: '22px',
+                                borderRadius: '6px',
+                                border: '2px solid var(--admin-primary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: upceraData.selected_product_ids.includes(product.id) ? 'var(--admin-primary)' : 'transparent',
+                                transition: 'all 0.2s'
+                              }}>
+                                {upceraData.selected_product_ids.includes(product.id) && <CheckCircle size={14} color="white" />}
+                              </div>
+                              <img 
+                                src={product.main_image || '/img/placeholder.png'} 
+                                alt={product.name} 
+                                style={{ width: '45px', height: '45px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--admin-border)' }}
+                              />
+                              <div style={{ flex: 1 }}>
+                                <p style={{ margin: 0, fontWeight: 700, fontSize: '0.95rem', color: 'var(--admin-text)' }}>{product.name}</p>
+                                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--admin-text-light)' }}>ID: #{product.id} • {product.category_names || 'Sem Categoria'}</p>
+                              </div>
+                            </div>
+                          ))
+                        }
+                      </div>
+                      <div style={{ 
+                        marginTop: '15px', 
+                        padding: '10px', 
+                        background: '#f8fafc', 
+                        borderRadius: '8px',
+                        borderLeft: '4px solid var(--admin-primary)',
+                        fontSize: '0.9rem', 
+                        color: 'var(--admin-text)', 
+                        fontWeight: 600 
+                      }}>
+                        📌 {upceraData.selected_product_ids.length} produto(s) definidos para exibição na página Upcera.
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {activeTab === 'dashboard' && (
             <motion.div 
               key="dashboard"
