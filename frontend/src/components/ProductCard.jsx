@@ -7,6 +7,11 @@ const ProductCard = ({ product, index }) => {
   const [activeImage, setActiveImage] = React.useState(product.image);
   const navigate = useNavigate();
 
+  // Sincroniza a imagem ativa quando o produto muda
+  React.useEffect(() => {
+    setActiveImage(product.image);
+  }, [product.image]);
+
   const handleCardClick = () => {
     navigate(`/produto/${product.id}`);
     window.scrollTo(0, 0);

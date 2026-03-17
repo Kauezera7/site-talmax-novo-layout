@@ -38,8 +38,8 @@ const Home = () => {
             <Link 
               key={cat.id} 
               to={`/categoria/${cat.slug}`} 
-              className="category-card"
-            >
+            className="category-card"
+          >
               <div className="category-icon-wrapper">
                 <img 
                   src={cat.icon_url || '/img/placeholder.png'} 

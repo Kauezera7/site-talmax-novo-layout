@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   Search, 
   ChevronRight, 
@@ -13,6 +13,7 @@ import './ProductCatalog.css';
 
 const ProductCatalog = () => {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todas');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -134,39 +135,88 @@ const ProductCatalog = () => {
       <div className="catalog-hero-minimal">
         <div className="container-inner">
           <span className="top-tag">Tecnologia Odontológica</span>
-          <h1>Catálogo <span className="thin">Digital</span></h1>
-          <p>Explore nossa linha completa de soluções para prótese e estética dental.</p>
+          {activeCategory === 'Talmax Digital' ? (
+             <div className="digital-standard-header">
+                <div className="digital-title-standard">
+                   <div className="line"></div>
+                   <h1>TALMAX <strong>DIGITAL</strong></h1>
+                   <div className="line"></div>
+                </div>
+                <p>O futuro da prótese dentária com tecnologia de ponta e precisão absoluta.</p>
+             </div>
+          ) : (
+            <>
+              <h1>Catálogo <span className="thin">Digital</span></h1>
+              <p>Explore nossa linha completa de soluções para prótese e estética dental.</p>
+            </>
+          )}
         </div>
       </div>
 
+      {/* Seção Especial de 5 Cards para Talmax Digital */}
+      {activeCategory === 'Talmax Digital' && (
+        <section className="digital-quick-nav">
+          <div className="quick-nav-grid">
+            {[
+              { id: 'upcera', title: 'UPCERA', desc: 'Cerâmicas e Discos', icon: '🦷' },
+              { id: 'scanners', title: 'SCANNERS', desc: 'Intraoral e Bancada', icon: '🔍' },
+              { id: 'impressoras', title: 'IMPRESSORAS 3D', desc: 'Anycubic e Resinas', icon: '🖨️' },
+              { id: 'componentes', title: 'COMPONENTES', desc: 'Peças e Estruturas', icon: '🔧' },
+              { id: 'insumos', title: 'INSUMOS', desc: 'Blocos e Ceras', icon: '📦' },
+            ].map((item) => (
+              <div 
+                key={item.id} 
+                className="quick-card-standard"
+                onClick={() => {
+                  if (item.id === 'upcera') {
+                    navigate('/upcera');
+                  } else {
+                    setSearchTerm(item.title);
+                  }
+                }}
+              >
+                <div className="card-icon-box">{item.icon}</div>
+                <h3>{item.title}</h3>
+                <p>{item.desc}</p>
+                <div className="card-arrow">
+                  <ChevronRight size={16} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* 2. Barra de Navegação e Filtros */}
-      <header className="catalog-top-nav">
-        <div className="top-nav-inner">
-          <div className="category-quick-info">
-            <span className="active-cat-label">{activeCategory}</span>
-            <span className="results-count">{filteredProducts.length} itens</span>
-          </div>
-          
-          <div className="catalog-actions">
-            <div className="search-minimalist">
-              <Search size={18} color="#86868b" />
-              <input 
-                type="text" 
-                placeholder="O que você procura?" 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+      {activeCategory !== 'Talmax Digital' && (
+        <header className="catalog-top-nav">
+          <div className="top-nav-inner">
+            <div className="category-quick-info">
+              <span className="active-cat-label">{activeCategory}</span>
+              <span className="results-count">{filteredProducts.length} itens</span>
             </div>
-            <button 
-              className={`btn-filter-toggle ${activeCategory !== 'Todas' ? 'has-filters' : ''}`} 
-              onClick={() => setIsDrawerOpen(true)}
-            >
-              <SlidersHorizontal size={18} />
-              <span>Filtrar</span>
-            </button>
+            
+            <div className="catalog-actions">
+              <div className="search-minimalist">
+                <Search size={18} color="#86868b" />
+                <input 
+                  type="text" 
+                  placeholder="O que você procura?" 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <button 
+                className={`btn-filter-toggle ${activeCategory !== 'Todas' ? 'has-filters' : ''}`} 
+                onClick={() => setIsDrawerOpen(true)}
+              >
+                <SlidersHorizontal size={18} />
+                <span>Filtrar</span>
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* 3. Drawer de Filtros */}
       <AnimatePresence>
@@ -259,8 +309,8 @@ const ProductCatalog = () => {
             <div className="spinner-lux"></div>
             <p>Sincronizando catálogo...</p>
           </div>
-        ) : (
-          <div className="catalog-grid-lux">
+        ) : activeCategory === 'Talmax Digital' ? null : (
+          <div className={`catalog-grid-lux ${activeCategory === 'Talmax Digital' ? 'five-cols' : ''}`}>
             <AnimatePresence mode='popLayout'>
               {filteredProducts.length > 0 ? (
                 filteredProducts.map((product, index) => (

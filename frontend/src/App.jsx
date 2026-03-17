@@ -18,6 +18,8 @@ import CookieBanner from './components/CookieBanner';
 import PagePlaceholder from './components/PagePlaceholder';
 import ProductCatalog from './components/ProductCatalog';
 import ProductDetail from './components/ProductDetail';
+import TalmaxDigital from './components/TalmaxDigital';
+import Upcera from './components/Upcera';
 import Admin from './components/Admin';
 import './App.css';
 
@@ -174,6 +176,8 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
           
           {/* Produtos */}
           <Route path="/produtos" element={<ProductCatalog />} />
+          <Route path="/categoria/talmax-digital" element={<TalmaxDigital />} />
+          <Route path="/upcera" element={<Upcera />} />
           <Route path="/categoria/:slug" element={<ProductCatalog />} />
           <Route path="/produto/:id" element={<ProductDetail />} />
           

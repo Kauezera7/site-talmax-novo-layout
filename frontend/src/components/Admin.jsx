@@ -36,13 +36,12 @@ const Admin = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isListVisible, setIsListVisible] = useState(true);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
-  const [isMainCategoryDropdownOpen, setIsMainCategoryDropdownOpen] = useState(false);
+  const [isSubCategoryDropdownOpen, setIsSubCategoryDropdownOpen] = useState(false);
   const [previews, setPreviews] = useState([]);
   
   // Estado do Formulário de Produtos
   const [formData, setFormData] = useState({
     name: '',
-    segment_ids: [], // NOVO: Talmax Digital, Prótese Dentária, Nail e Podologia
     category_ids: [], // Categorias de Produto (Gesso, Ceras, etc)
     sub_category_ids: [], // Subcategorias
     description: '',
@@ -54,16 +53,8 @@ const Admin = () => {
     modelTable: { headers: ['Tipo / Referência', 'Código'], rows: [['', '']] }
   });
 
-  const segmentSlugs = ['talmax-digital', 'protese-dentaria', 'nail-e-podologia'];
-  
   // Categorias principais (todas que não têm pai)
   const mainCategories = Array.isArray(categories) ? categories.filter(c => !c.parent_id) : [];
-  
-  // Segmentos específicos
-  const segments = mainCategories.filter(c => segmentSlugs.includes(c.slug));
-  
-  // Categorias de produto (principais que não são segmentos)
-  const productCategories = mainCategories.filter(c => !segmentSlugs.includes(c.slug));
   
   // Subcategorias (todas que têm pai)
   const subCategories = Array.isArray(categories) ? categories.filter(c => c.parent_id) : [];
@@ -146,7 +137,6 @@ const Admin = () => {
   const resetForm = () => {
     setFormData({
       name: '', 
-      segment_ids: [],
       category_ids: [], 
       sub_category_ids: [],
       description: '', 
@@ -181,9 +171,8 @@ const Admin = () => {
       extra = typeof product.extra_data === 'string' ? JSON.parse(product.extra_data) : product.extra_data;
     } catch(e) { extra = {}; }
 
-    // Separar categorias em Segmentos, Categorias Principais e Subcategorias
+    // Separar categorias em Categorias Principais e Subcategorias
     const allCategoryIds = Array.isArray(product.category_ids) ? product.category_ids : [];
-    const selectedSegmentIds = [];
     const selectedProductCatIds = [];
     const selectedSubCatIds = [];
 
@@ -191,11 +180,7 @@ const Admin = () => {
       const cat = categories.find(c => c.id === id);
       if (cat) {
         if (!cat.parent_id) {
-          if (segmentSlugs.includes(cat.slug)) {
-            selectedSegmentIds.push(id);
-          } else {
-            selectedProductCatIds.push(id);
-          }
+          selectedProductCatIds.push(id);
         } else {
           selectedSubCatIds.push(id);
         }
@@ -227,7 +212,6 @@ const Admin = () => {
 
     setFormData({
       name: product.name,
-      segment_ids: selectedSegmentIds,
       category_ids: selectedProductCatIds,
       sub_category_ids: selectedSubCatIds,
       description: product.description,
@@ -647,8 +631,8 @@ const Admin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.segment_ids.length === 0 && formData.category_ids.length === 0) {
-      addToast('Selecione pelo menos um segmento ou categoria', 'error');
+    if (formData.category_ids.length === 0) {
+      addToast('Selecione pelo menos uma categoria', 'error');
       return;
     }
 
@@ -656,7 +640,7 @@ const Admin = () => {
     data.append('name', formData.name);
     
     // Une tudo para enviar ao backend
-    const allSelectedCategories = [...formData.segment_ids, ...formData.category_ids, ...formData.sub_category_ids];
+    const allSelectedCategories = [...formData.category_ids, ...formData.sub_category_ids];
     data.append('category_ids', JSON.stringify(allSelectedCategories));
     
     data.append('description', formData.description);
@@ -1033,79 +1017,7 @@ const Admin = () => {
                         </div>
 
                         <div className="form-group">
-                          <label>Segmentos (Exibidos no Menu Superior)</label>
-                          <div className="custom-multi-select">
-                            <div 
-                              className="multi-select-header" 
-                              onClick={() => setIsMainCategoryDropdownOpen(!isMainCategoryDropdownOpen)}
-                            >
-                              <div className="selected-tags-container">
-                                {formData.segment_ids.length > 0 ? (
-                                  formData.segment_ids.map(id => {
-                                    const cat = categories.find(c => c.id === id);
-                                    return (
-                                      <span key={id} className="header-tag">
-                                        {cat?.name}
-                                        <button 
-                                          type="button" 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            const newIds = formData.segment_ids.filter(cid => cid !== id);
-                                            setFormData({...formData, segment_ids: newIds});
-                                          }}
-                                        >
-                                          <X size={12} />
-                                        </button>
-                                      </span>
-                                    );
-                                  })
-                                ) : (
-                                  <span className="placeholder">Selecione os segmentos (Talmax Digital, etc)...</span>
-                                )}
-                              </div>
-                              <ChevronRight 
-                                size={16} 
-                                style={{ 
-                                  transform: isMainCategoryDropdownOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                                  transition: 'transform 0.2s',
-                                  color: '#94a3b8'
-                                }} 
-                              />
-                            </div>
-
-                            <AnimatePresence>
-                              {isMainCategoryDropdownOpen && (
-                                <motion.div 
-                                  className="multi-select-options"
-                                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                  transition={{ duration: 0.2 }}
-                                >
-                                  {segments.map(cat => (
-                                    <div 
-                                      key={cat.id} 
-                                      className={`multi-select-option ${formData.segment_ids.includes(cat.id) ? 'selected' : ''}`}
-                                      onClick={() => {
-                                        const isSelected = formData.segment_ids.includes(cat.id);
-                                        const newIds = isSelected
-                                          ? formData.segment_ids.filter(id => id !== cat.id)
-                                          : [...formData.segment_ids, cat.id];
-                                        setFormData({...formData, segment_ids: newIds});
-                                      }}
-                                    >
-                                      <span>{cat.name}</span>
-                                      <CheckCircle className="check-icon" size={16} />
-                                    </div>
-                                  ))}
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                        </div>
-
-                        <div className="form-group">
-                          <label>Categorias de Produtos (Ex: Gesso, Ceras...)</label>
+                          <label>Categorias Principais (Ex: Gesso, Ceras, Talmax Digital...)</label>
                           <div className="custom-multi-select">
                             <div 
                               className="multi-select-header" 
@@ -1140,7 +1052,7 @@ const Admin = () => {
                                     );
                                   })
                                 ) : (
-                                  <span className="placeholder">Selecione as categorias de produtos...</span>
+                                  <span className="placeholder">Selecione as categorias principais...</span>
                                 )}
                               </div>
                               <ChevronRight 
@@ -1162,7 +1074,7 @@ const Admin = () => {
                                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                   transition={{ duration: 0.2 }}
                                 >
-                                  {productCategories.map(cat => (
+                                  {mainCategories.map(cat => (
                                     <div 
                                       key={cat.id} 
                                       className={`multi-select-option ${formData.category_ids.includes(cat.id) ? 'selected' : ''}`}
@@ -1201,7 +1113,7 @@ const Admin = () => {
                             <div className="custom-multi-select">
                               <div 
                                 className="multi-select-header" 
-                                onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                                onClick={() => setIsSubCategoryDropdownOpen(!isSubCategoryDropdownOpen)}
                               >
                                 <div className="selected-tags-container">
                                   {formData.sub_category_ids.length > 0 ? (
@@ -1230,7 +1142,7 @@ const Admin = () => {
                                 <ChevronRight 
                                   size={16} 
                                   style={{ 
-                                    transform: isCategoryDropdownOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                                    transform: isSubCategoryDropdownOpen ? 'rotate(90deg)' : 'rotate(0deg)',
                                     transition: 'transform 0.2s',
                                     color: '#94a3b8'
                                   }} 
@@ -1238,7 +1150,7 @@ const Admin = () => {
                               </div>
 
                               <AnimatePresence>
-                                {isCategoryDropdownOpen && (
+                                {isSubCategoryDropdownOpen && (
                                   <motion.div 
                                     className="multi-select-options"
                                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
