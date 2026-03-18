@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Search, 
   ChevronRight, 
@@ -13,6 +13,7 @@ import './ProductCatalog.css';
 
 const ProductCatalog = () => {
   const { slug } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todas');
@@ -76,17 +77,28 @@ const ProductCatalog = () => {
     fetchData();
   }, []);
 
-  // Sincroniza a categoria ativa com o slug da URL
+  // Sincroniza a categoria ativa com o slug da URL ou query parameter
   useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const categoryQuery = queryParams.get('categoria');
+
+    if (categoryQuery && allCategories.length > 0) {
+      const cat = allCategories.find(c => c.slug === categoryQuery);
+      if (cat) {
+        setActiveCategory(cat.name);
+        return;
+      }
+    }
+
     if (slug && allCategories.length > 0) {
       const cat = allCategories.find(c => c.slug === slug);
       if (cat) {
         setActiveCategory(cat.name);
       }
-    } else if (!slug) {
+    } else if (!slug && !categoryQuery) {
       setActiveCategory('Todas');
     }
-  }, [slug, allCategories]);
+  }, [slug, location.search, allCategories]);
 
   const categoriesTree = useMemo(() => {
     // Segmentos que NÃO devem aparecer na sidebar de categorias de produto

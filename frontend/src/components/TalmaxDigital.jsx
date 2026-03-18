@@ -68,6 +68,8 @@ const TalmaxDigital = () => {
   const handleCategoryClick = (cat) => {
     if (cat.id === 'upcera') {
       navigate('/upcera');
+    } else if (cat.id === 'scanners') {
+      navigate('/scanners');
     } else {
       setSelectedCategory(cat.title);
       // Opcional: focar na busca ou rolar para os produtos

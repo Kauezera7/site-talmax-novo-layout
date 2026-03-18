@@ -1,0 +1,127 @@
+/* Estilos para Páginas Especiais (Upcera e Scanners) */
+
+.special-page-container {
+  overflow-x: hidden;
+}
+
+/* Ajustes para o Header */
+@media (max-width: 768px) {
+  .special-page-header {
+    padding: 100px 20px 40px !important;
+  }
+
+  .special-page-header h1 {
+    font-size: 2.2rem !important;
+  }
+
+  .special-page-header p {
+    font-size: 1.1rem !important;
+  }
+
+  .special-page-header img {
+    height: 40px !important;
+  }
+}
+
+/* Ajustes para o Showcase de Produtos */
+.product-showcase-item {
+  display: flex;
+  align-items: center;
+  gap: 100px;
+}
+
+@media (max-width: 1024px) {
+  .product-showcase-item {
+    gap: 40px;
+  }
+  
+  .product-showcase-item h2 {
+    font-size: 3rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .product-showcase-item {
+    flex-direction: column !important; /* Sempre empilha no mobile */
+    gap: 30px;
+    text-align: center;
+  }
+
+  .product-showcase-item .image-stage {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .product-showcase-item h2 {
+    font-size: 2.5rem !important;
+    margin-bottom: 30px !important;
+    line-height: 1 !important;
+  }
+
+  .product-showcase-item .feature-item {
+    justify-content: center;
+    text-align: left;
+  }
+
+  .product-showcase-item .feature-text {
+    font-size: 1.2rem !important;
+  }
+
+  .product-showcase-item .divider-line {
+    margin-top: 40px !important;
+  }
+  
+  .product-showcase-list {
+    gap: 80px !important;
+  }
+}
+
+/* Seção CAD/CAM Responsiva */
+.cad-cam-responsive-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 25px;
+  margin-top: 20px;
+}
+
+@media (max-width: 1024px) {
+  .cad-cam-responsive-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .cad-cam-responsive-list {
+    display: flex;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    gap: 0; /* Remove gap para não vazar o próximo card */
+    padding: 20px 0 40px; /* Remove padding lateral do container */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    margin: 0;
+  }
+
+  .cad-cam-responsive-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cad-cam-responsive-list .premium-product-card {
+    flex: 0 0 100%; /* Ocupa a largura total */
+    height: 450px;
+    scroll-snap-align: center;
+    text-align: center;
+    border-radius: 0; /* Remove radius lateral para preencher a tela se desejar, ou mantenha se quiser margem interna */
+    border-left: none;
+    border-right: none;
+    box-shadow: none; /* Simplifica o visual para foco total */
+  }
+}
+
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

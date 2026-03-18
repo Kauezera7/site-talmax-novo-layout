@@ -195,7 +195,8 @@ app.get('/api/products', async (req, res) => {
         const formattedRows = rows.map(row => ({
             ...row,
             category_ids: row.category_ids ? row.category_ids.split(',').map(Number) : [],
-            is_upcera: row.is_upcera === 1 // Garante que retorne true/false
+            is_upcera: row.is_upcera === 1, // Garante que retorne true/false
+            is_scanner: row.is_scanner === 1
         }));
         res.json(formattedRows);
     } catch (err) {
@@ -218,13 +219,37 @@ app.put('/api/upcera/products', async (req, res) => {
 
         // 2. Marcar os selecionados
         if (selected_product_ids.length > 0) {
-            // No mysql2, para usar IN (?) com array, passamos o array dentro de outro array [[ids]]
             await db.query('UPDATE products SET is_upcera = TRUE WHERE id IN (?)', [selected_product_ids]);
         }
 
         res.json({ message: "Produtos Upcera atualizados com sucesso!" });
     } catch (err) {
         console.error("ERRO AO SALVAR UPCERA NO BACKEND:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- ROTA SCANNERS ---
+
+app.put('/api/scanners/products', async (req, res) => {
+    try {
+        const { selected_product_ids } = req.body;
+        
+        if (!Array.isArray(selected_product_ids)) {
+            return res.status(400).json({ error: "O campo selected_product_ids deve ser um array." });
+        }
+
+        // 1. Resetar todos os produtos Scanners
+        await db.query('UPDATE products SET is_scanner = FALSE');
+
+        // 2. Marcar os selecionados
+        if (selected_product_ids.length > 0) {
+            await db.query('UPDATE products SET is_scanner = TRUE WHERE id IN (?)', [selected_product_ids]);
+        }
+
+        res.json({ message: "Produtos Scanners atualizados com sucesso!" });
+    } catch (err) {
+        console.error("ERRO AO SALVAR SCANNERS NO BACKEND:", err.message);
         res.status(500).json({ error: err.message });
     }
 });
