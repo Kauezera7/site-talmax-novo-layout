@@ -209,18 +209,18 @@ app.get('/api/products', async (req, res) => {
 
 app.put('/api/upcera/products', async (req, res) => {
     try {
-        const { selected_product_ids } = req.body;
+        const { selected_products } = req.body; // Array de { id, order }
         
-        if (!Array.isArray(selected_product_ids)) {
-            return res.status(400).json({ error: "O campo selected_product_ids deve ser um array." });
+        if (!Array.isArray(selected_products)) {
+            return res.status(400).json({ error: "O campo selected_products deve ser um array." });
         }
 
         // 1. Resetar todos os produtos Upcera
-        await db.query('UPDATE products SET is_upcera = FALSE');
+        await db.query('UPDATE products SET is_upcera = FALSE, upcera_order = 0');
 
-        // 2. Marcar os selecionados
-        if (selected_product_ids.length > 0) {
-            await db.query('UPDATE products SET is_upcera = TRUE WHERE id IN (?)', [selected_product_ids]);
+        // 2. Marcar os selecionados com sua ordem
+        for (const item of selected_products) {
+            await db.query('UPDATE products SET is_upcera = TRUE, upcera_order = ? WHERE id = ?', [item.order || 0, item.id]);
         }
 
         res.json({ message: "Produtos Upcera atualizados com sucesso!" });
@@ -234,18 +234,18 @@ app.put('/api/upcera/products', async (req, res) => {
 
 app.put('/api/scanners/products', async (req, res) => {
     try {
-        const { selected_product_ids } = req.body;
+        const { selected_products } = req.body; // Array de { id, order }
         
-        if (!Array.isArray(selected_product_ids)) {
-            return res.status(400).json({ error: "O campo selected_product_ids deve ser um array." });
+        if (!Array.isArray(selected_products)) {
+            return res.status(400).json({ error: "O campo selected_products deve ser um array." });
         }
 
         // 1. Resetar todos os produtos Scanners
-        await db.query('UPDATE products SET is_scanner = FALSE');
+        await db.query('UPDATE products SET is_scanner = FALSE, scanner_order = 0');
 
-        // 2. Marcar os selecionados
-        if (selected_product_ids.length > 0) {
-            await db.query('UPDATE products SET is_scanner = TRUE WHERE id IN (?)', [selected_product_ids]);
+        // 2. Marcar os selecionados com sua ordem
+        for (const item of selected_products) {
+            await db.query('UPDATE products SET is_scanner = TRUE, scanner_order = ? WHERE id = ?', [item.order || 0, item.id]);
         }
 
         res.json({ message: "Produtos Scanners atualizados com sucesso!" });
@@ -259,18 +259,18 @@ app.put('/api/scanners/products', async (req, res) => {
 
 app.put('/api/3d-printers/products', async (req, res) => {
     try {
-        const { selected_product_ids } = req.body;
+        const { selected_products } = req.body; // Array de { id, order }
         
-        if (!Array.isArray(selected_product_ids)) {
-            return res.status(400).json({ error: "O campo selected_product_ids deve ser um array." });
+        if (!Array.isArray(selected_products)) {
+            return res.status(400).json({ error: "O campo selected_products deve ser um array." });
         }
 
         // 1. Resetar todos os produtos
-        await db.query('UPDATE products SET is_3d_printer = FALSE');
+        await db.query('UPDATE products SET is_3d_printer = FALSE, printer_order = 0');
 
-        // 2. Marcar os selecionados
-        if (selected_product_ids && selected_product_ids.length > 0) {
-            await db.query('UPDATE products SET is_3d_printer = TRUE WHERE id IN (?)', [selected_product_ids]);
+        // 2. Marcar os selecionados com sua ordem
+        for (const item of selected_products) {
+            await db.query('UPDATE products SET is_3d_printer = TRUE, printer_order = ? WHERE id = ?', [item.order || 0, item.id]);
         }
 
         res.json({ message: "Produtos Impressoras 3D atualizados com sucesso!" });

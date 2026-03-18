@@ -65,11 +65,11 @@ const Admin = () => {
     description: '',
     banners: [],
     features: [],
-    selected_product_ids: [] // IDs dos produtos que aparecerão na página Upcera
+    selected_products: [] // Array de { id, order }
   });
 
   const [scannersData, setScannersData] = useState({
-    selected_product_ids: [] // IDs dos produtos que aparecerão na página Scanners
+    selected_products: [] // Array de { id, order }
   });
 
   const [upceraProductSearch, setUpceraProductSearch] = useState('');
@@ -80,7 +80,7 @@ const Admin = () => {
   // --- ESTADO IMPRESSORAS 3D ---
   const [printerData, setPrinterData] = useState({
     title: 'Impressoras 3D - Talmax',
-    selected_product_ids: []
+    selected_products: [] // Array de { id, order }
   });
   const [printerProductSearch, setPrinterProductSearch] = useState('');
   const [isPrinterFilterOpen, setIsPrinterFilterOpen] = useState(false);
@@ -173,8 +173,10 @@ const Admin = () => {
       const res = await fetch('http://localhost:5000/api/products');
       const allProducts = await res.json();
       // Filtra apenas os que já são is_upcera
-      const upceraIds = allProducts.filter(p => p.is_upcera).map(p => p.id);
-      setUpceraData(prev => ({...prev, selected_product_ids: upceraIds}));
+      const upceraProducts = allProducts
+        .filter(p => p.is_upcera)
+        .map(p => ({ id: p.id, order: p.upcera_order || 0 }));
+      setUpceraData(prev => ({...prev, selected_products: upceraProducts}));
     } catch (err) {
       console.error("Erro ao carregar dados da Upcera:", err);
     }
@@ -185,8 +187,10 @@ const Admin = () => {
       const res = await fetch('http://localhost:5000/api/products');
       const allProducts = await res.json();
       // Filtra apenas os que já são is_scanner
-      const scannerIds = allProducts.filter(p => p.is_scanner).map(p => p.id);
-      setScannersData(prev => ({...prev, selected_product_ids: scannerIds}));
+      const scannerProducts = allProducts
+        .filter(p => p.is_scanner)
+        .map(p => ({ id: p.id, order: p.scanner_order || 0 }));
+      setScannersData(prev => ({...prev, selected_products: scannerProducts}));
     } catch (err) {
       console.error("Erro ao carregar dados dos Scanners:", err);
     }
@@ -197,8 +201,10 @@ const Admin = () => {
       const res = await fetch('http://localhost:5000/api/products');
       const allProducts = await res.json();
       // Filtra apenas os que já são is_3d_printer
-      const printerIds = allProducts.filter(p => p.is_3d_printer).map(p => p.id);
-      setPrinterData(prev => ({...prev, selected_product_ids: printerIds}));
+      const printerProducts = allProducts
+        .filter(p => p.is_3d_printer)
+        .map(p => ({ id: p.id, order: p.printer_order || 0 }));
+      setPrinterData(prev => ({...prev, selected_products: printerProducts}));
     } catch (err) {
       console.error("Erro ao carregar dados das Impressoras 3D:", err);
     }
@@ -210,7 +216,7 @@ const Admin = () => {
       const res = await fetch('http://localhost:5000/api/upcera/products', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ selected_product_ids: upceraData.selected_product_ids })
+        body: JSON.stringify({ selected_products: upceraData.selected_products })
       });
 
       if (res.ok) {
@@ -230,7 +236,7 @@ const Admin = () => {
       const res = await fetch('http://localhost:5000/api/scanners/products', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ selected_product_ids: scannersData.selected_product_ids })
+        body: JSON.stringify({ selected_products: scannersData.selected_products })
       });
 
       if (res.ok) {
@@ -250,7 +256,7 @@ const Admin = () => {
       const res = await fetch('http://localhost:5000/api/3d-printers/products', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ selected_product_ids: printerData.selected_product_ids })
+        body: JSON.stringify({ selected_products: printerData.selected_products })
       });
 
       if (res.ok) {
@@ -1177,7 +1183,7 @@ const Admin = () => {
 
                     <div className="admin-section-group" style={{ marginTop: 0 }}>
                       <p style={{fontSize: '0.85rem', color: 'var(--admin-text-light)', marginBottom: '15px'}}>
-                        Selecione quais produtos devem aparecer na página de Scanners.
+                        Selecione quais produtos devem aparecer na página de Scanners e defina a ordem.
                       </p>
 
                       <div className="upcera-product-selector" style={{ 
@@ -1195,52 +1201,73 @@ const Admin = () => {
                             const matchesFilterCat = scannersSelectedCats.length === 0 || (p.category_ids && p.category_ids.some(id => scannersSelectedCats.includes(id)));
                             return isScannerCategory && matchesSearch && matchesFilterCat;
                           })
-                          .map(product => (
-                            <div 
-                              key={product.id} 
-                              className={`product-select-item ${scannersData.selected_product_ids.includes(product.id) ? 'selected' : ''}`}
-                              onClick={() => {
-                                const isSelected = scannersData.selected_product_ids.includes(product.id);
-                                const newSelection = isSelected
-                                  ? scannersData.selected_product_ids.filter(id => id !== product.id)
-                                  : [...scannersData.selected_product_ids, product.id];
-                                setScannersData({...scannersData, selected_product_ids: newSelection});
-                              }}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '15px',
-                                padding: '14px 20px',
-                                borderBottom: '1px solid var(--admin-border)',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                background: scannersData.selected_product_ids.includes(product.id) ? '#eff6ff' : 'transparent'
-                              }}
-                            >
-                              <div style={{
-                                width: '22px',
-                                height: '22px',
-                                borderRadius: '6px',
-                                border: '2px solid var(--admin-primary)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: scannersData.selected_product_ids.includes(product.id) ? 'var(--admin-primary)' : 'transparent',
-                                transition: 'all 0.2s'
-                              }}>
-                                {scannersData.selected_product_ids.includes(product.id) && <CheckCircle size={14} color="white" />}
+                          .map(product => {
+                            const selectedProduct = scannersData.selected_products.find(sp => sp.id === product.id);
+                            const isSelected = !!selectedProduct;
+                            
+                            return (
+                              <div 
+                                key={product.id} 
+                                className={`product-select-item ${isSelected ? 'selected' : ''}`}
+                                onClick={() => {
+                                  const newSelection = isSelected
+                                    ? scannersData.selected_products.filter(sp => sp.id !== product.id)
+                                    : [...scannersData.selected_products, { id: product.id, order: 0 }];
+                                  setScannersData({...scannersData, selected_products: newSelection});
+                                }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '15px',
+                                  padding: '14px 20px',
+                                  borderBottom: '1px solid var(--admin-border)',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                  background: isSelected ? '#eff6ff' : 'transparent'
+                                }}
+                              >
+                                <div style={{
+                                  width: '22px',
+                                  height: '22px',
+                                  borderRadius: '6px',
+                                  border: '2px solid var(--admin-primary)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  background: isSelected ? 'var(--admin-primary)' : 'transparent',
+                                  transition: 'all 0.2s'
+                                }}>
+                                  {isSelected && <CheckCircle size={14} color="white" />}
+                                </div>
+                                <img 
+                                  src={product.main_image || '/img/placeholder.png'} 
+                                  alt={product.name} 
+                                  style={{ width: '50px', height: '50px', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--admin-border)' }}
+                                />
+                                <div style={{ flex: 1 }}>
+                                  <p style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: 'var(--admin-text)' }}>{product.name}</p>
+                                  <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--admin-text-light)' }}>ID: #{product.id} • {product.category_names || 'Sem Categoria'}</p>
+                                </div>
+                                {isSelected && (
+                                  <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--admin-text-light)' }}>ORDEM:</label>
+                                    <input 
+                                      type="number" 
+                                      value={selectedProduct.order} 
+                                      onChange={(e) => {
+                                        const newOrder = parseInt(e.target.value) || 0;
+                                        const newSelection = scannersData.selected_products.map(sp => 
+                                          sp.id === product.id ? { ...sp, order: newOrder } : sp
+                                        );
+                                        setScannersData({...scannersData, selected_products: newSelection});
+                                      }}
+                                      style={{ width: '60px', padding: '6px', borderRadius: '6px', border: '1px solid var(--admin-border)', textAlign: 'center' }}
+                                    />
+                                  </div>
+                                )}
                               </div>
-                              <img 
-                                src={product.main_image || '/img/placeholder.png'} 
-                                alt={product.name} 
-                                style={{ width: '50px', height: '50px', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--admin-border)' }}
-                              />
-                              <div style={{ flex: 1 }}>
-                                <p style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: 'var(--admin-text)' }}>{product.name}</p>
-                                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--admin-text-light)' }}>ID: #{product.id} • {product.category_names || 'Sem Categoria'}</p>
-                              </div>
-                            </div>
-                          ))
+                            );
+                          })
                         }
                       </div>
                       <div style={{ 
@@ -1256,7 +1283,7 @@ const Admin = () => {
                         justifyContent: 'space-between',
                         alignItems: 'center'
                       }}>
-                        <span>📌 {scannersData.selected_product_ids.length} produto(s) selecionados para a página de Scanners.</span>
+                        <span>📌 {scannersData.selected_products.length} produto(s) selecionados para a página de Scanners.</span>
                         <button type="button" className="btn-primary" onClick={handleScannersSubmit} style={{ padding: '8px 20px' }}>
                           Salvar Lista
                         </button>
@@ -1454,7 +1481,7 @@ const Admin = () => {
 
                     <div className="admin-section-group" style={{ marginTop: 0 }}>
                       <p style={{fontSize: '0.85rem', color: 'var(--admin-text-light)', marginBottom: '15px'}}>
-                        Selecione quais produtos devem aparecer na página de Impressoras 3D.
+                        Selecione quais produtos devem aparecer na página de Impressoras 3D e defina a ordem.
                       </p>
 
                       <div className="upcera-product-selector" style={{ 
@@ -1472,52 +1499,73 @@ const Admin = () => {
                             const matchesFilterCat = printerSelectedCats.length === 0 || (p.category_ids && p.category_ids.some(id => printerSelectedCats.includes(id)));
                             return isPrinterCategory && matchesSearch && matchesFilterCat;
                           })
-                          .map(product => (
-                            <div 
-                              key={product.id} 
-                              className={`product-select-item ${printerData.selected_product_ids.includes(product.id) ? 'selected' : ''}`}
-                              onClick={() => {
-                                const isSelected = printerData.selected_product_ids.includes(product.id);
-                                const newSelection = isSelected
-                                  ? printerData.selected_product_ids.filter(id => id !== product.id)
-                                  : [...printerData.selected_product_ids, product.id];
-                                setPrinterData({...printerData, selected_product_ids: newSelection});
-                              }}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '15px',
-                                padding: '14px 20px',
-                                borderBottom: '1px solid var(--admin-border)',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                background: printerData.selected_product_ids.includes(product.id) ? '#eff6ff' : 'transparent'
-                              }}
-                            >
-                              <div style={{
-                                width: '22px',
-                                height: '22px',
-                                borderRadius: '6px',
-                                border: '2px solid var(--admin-primary)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: printerData.selected_product_ids.includes(product.id) ? 'var(--admin-primary)' : 'transparent',
-                                transition: 'all 0.2s'
-                              }}>
-                                {printerData.selected_product_ids.includes(product.id) && <CheckCircle size={14} color="white" />}
+                          .map(product => {
+                            const selectedProduct = printerData.selected_products.find(sp => sp.id === product.id);
+                            const isSelected = !!selectedProduct;
+
+                            return (
+                              <div 
+                                key={product.id} 
+                                className={`product-select-item ${isSelected ? 'selected' : ''}`}
+                                onClick={() => {
+                                  const newSelection = isSelected
+                                    ? printerData.selected_products.filter(sp => sp.id !== product.id)
+                                    : [...printerData.selected_products, { id: product.id, order: 0 }];
+                                  setPrinterData({...printerData, selected_products: newSelection});
+                                }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '15px',
+                                  padding: '14px 20px',
+                                  borderBottom: '1px solid var(--admin-border)',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                  background: isSelected ? '#eff6ff' : 'transparent'
+                                }}
+                              >
+                                <div style={{
+                                  width: '22px',
+                                  height: '22px',
+                                  borderRadius: '6px',
+                                  border: '2px solid var(--admin-primary)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  background: isSelected ? 'var(--admin-primary)' : 'transparent',
+                                  transition: 'all 0.2s'
+                                }}>
+                                  {isSelected && <CheckCircle size={14} color="white" />}
+                                </div>
+                                <img 
+                                  src={product.main_image || '/img/placeholder.png'} 
+                                  alt={product.name} 
+                                  style={{ width: '50px', height: '50px', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--admin-border)' }}
+                                />
+                                <div style={{ flex: 1 }}>
+                                  <p style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: 'var(--admin-text)' }}>{product.name}</p>
+                                  <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--admin-text-light)' }}>ID: #{product.id} • {product.category_names || 'Sem Categoria'}</p>
+                                </div>
+                                {isSelected && (
+                                  <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--admin-text-light)' }}>ORDEM:</label>
+                                    <input 
+                                      type="number" 
+                                      value={selectedProduct.order} 
+                                      onChange={(e) => {
+                                        const newOrder = parseInt(e.target.value) || 0;
+                                        const newSelection = printerData.selected_products.map(sp => 
+                                          sp.id === product.id ? { ...sp, order: newOrder } : sp
+                                        );
+                                        setPrinterData({...printerData, selected_products: newSelection});
+                                      }}
+                                      style={{ width: '60px', padding: '6px', borderRadius: '6px', border: '1px solid var(--admin-border)', textAlign: 'center' }}
+                                    />
+                                  </div>
+                                )}
                               </div>
-                              <img 
-                                src={product.main_image || '/img/placeholder.png'} 
-                                alt={product.name} 
-                                style={{ width: '50px', height: '50px', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--admin-border)' }}
-                              />
-                              <div style={{ flex: 1 }}>
-                                <p style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: 'var(--admin-text)' }}>{product.name}</p>
-                                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--admin-text-light)' }}>ID: #{product.id} • {product.category_names || 'Sem Categoria'}</p>
-                              </div>
-                            </div>
-                          ))
+                            );
+                          })
                         }
                       </div>
                       <div style={{ 
@@ -1533,7 +1581,7 @@ const Admin = () => {
                         justifyContent: 'space-between',
                         alignItems: 'center'
                       }}>
-                        <span>📌 {printerData.selected_product_ids.length} produto(s) selecionados para a página de Impressoras 3D.</span>
+                        <span>📌 {printerData.selected_products.length} produto(s) selecionados para a página de Impressoras 3D.</span>
                         <button type="button" className="btn-primary" onClick={handlePrinterSubmit} style={{ padding: '8px 20px' }}>
                           Salvar Lista
                         </button>
@@ -1732,7 +1780,7 @@ const Admin = () => {
 
                     <div className="admin-section-group" style={{ marginTop: 0 }}>
                       <p style={{fontSize: '0.85rem', color: 'var(--admin-text-light)', marginBottom: '15px'}}>
-                        Selecione quais produtos do catálogo devem aparecer na página da Upcera.
+                        Selecione quais produtos do catálogo devem aparecer na página da Upcera e defina a ordem.
                       </p>
 
                       <div className="upcera-product-selector" style={{ 
@@ -1750,52 +1798,73 @@ const Admin = () => {
                             const matchesFilterCat = upceraSelectedCats.length === 0 || (p.category_ids && p.category_ids.some(id => upceraSelectedCats.includes(id)));
                             return isUpceraCategory && matchesSearch && matchesFilterCat;
                           })
-                          .map(product => (
-                            <div 
-                              key={product.id} 
-                              className={`product-select-item ${upceraData.selected_product_ids.includes(product.id) ? 'selected' : ''}`}
-                              onClick={() => {
-                                const isSelected = upceraData.selected_product_ids.includes(product.id);
-                                const newSelection = isSelected
-                                  ? upceraData.selected_product_ids.filter(id => id !== product.id)
-                                  : [...upceraData.selected_product_ids, product.id];
-                                setUpceraData({...upceraData, selected_product_ids: newSelection});
-                              }}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '15px',
-                                padding: '14px 20px',
-                                borderBottom: '1px solid var(--admin-border)',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                background: upceraData.selected_product_ids.includes(product.id) ? '#eff6ff' : 'transparent'
-                              }}
-                            >
-                              <div style={{
-                                width: '22px',
-                                height: '22px',
-                                borderRadius: '6px',
-                                border: '2px solid var(--admin-primary)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: upceraData.selected_product_ids.includes(product.id) ? 'var(--admin-primary)' : 'transparent',
-                                transition: 'all 0.2s'
-                              }}>
-                                {upceraData.selected_product_ids.includes(product.id) && <CheckCircle size={14} color="white" />}
+                          .map(product => {
+                            const selectedProduct = upceraData.selected_products.find(sp => sp.id === product.id);
+                            const isSelected = !!selectedProduct;
+
+                            return (
+                              <div 
+                                key={product.id} 
+                                className={`product-select-item ${isSelected ? 'selected' : ''}`}
+                                onClick={() => {
+                                  const newSelection = isSelected
+                                    ? upceraData.selected_products.filter(sp => sp.id !== product.id)
+                                    : [...upceraData.selected_products, { id: product.id, order: 0 }];
+                                  setUpceraData({...upceraData, selected_products: newSelection});
+                                }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '15px',
+                                  padding: '14px 20px',
+                                  borderBottom: '1px solid var(--admin-border)',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                  background: isSelected ? '#eff6ff' : 'transparent'
+                                }}
+                              >
+                                <div style={{
+                                  width: '22px',
+                                  height: '22px',
+                                  borderRadius: '6px',
+                                  border: '2px solid var(--admin-primary)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  background: isSelected ? 'var(--admin-primary)' : 'transparent',
+                                  transition: 'all 0.2s'
+                                }}>
+                                  {isSelected && <CheckCircle size={14} color="white" />}
+                                </div>
+                                <img 
+                                  src={product.main_image || '/img/placeholder.png'} 
+                                  alt={product.name} 
+                                  style={{ width: '50px', height: '50px', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--admin-border)' }}
+                                />
+                                <div style={{ flex: 1 }}>
+                                  <p style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: 'var(--admin-text)' }}>{product.name}</p>
+                                  <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--admin-text-light)' }}>ID: #{product.id} • {product.category_names || 'Sem Categoria'}</p>
+                                </div>
+                                {isSelected && (
+                                  <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--admin-text-light)' }}>ORDEM:</label>
+                                    <input 
+                                      type="number" 
+                                      value={selectedProduct.order} 
+                                      onChange={(e) => {
+                                        const newOrder = parseInt(e.target.value) || 0;
+                                        const newSelection = upceraData.selected_products.map(sp => 
+                                          sp.id === product.id ? { ...sp, order: newOrder } : sp
+                                        );
+                                        setUpceraData({...upceraData, selected_products: newSelection});
+                                      }}
+                                      style={{ width: '60px', padding: '6px', borderRadius: '6px', border: '1px solid var(--admin-border)', textAlign: 'center' }}
+                                    />
+                                  </div>
+                                )}
                               </div>
-                              <img 
-                                src={product.main_image || '/img/placeholder.png'} 
-                                alt={product.name} 
-                                style={{ width: '50px', height: '50px', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--admin-border)' }}
-                              />
-                              <div style={{ flex: 1 }}>
-                                <p style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: 'var(--admin-text)' }}>{product.name}</p>
-                                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--admin-text-light)' }}>ID: #{product.id} • {product.category_names || 'Sem Categoria'}</p>
-                              </div>
-                            </div>
-                          ))
+                            );
+                          })
                         }
                       </div>
                       <div style={{ 
@@ -1811,7 +1880,7 @@ const Admin = () => {
                         justifyContent: 'space-between',
                         alignItems: 'center'
                       }}>
-                        <span>📌 {upceraData.selected_product_ids.length} produto(s) selecionados para a página Upcera.</span>
+                        <span>📌 {upceraData.selected_products.length} produto(s) selecionados para a página Upcera.</span>
                         <button type="button" className="btn-primary" onClick={handleUpceraSubmit} style={{ padding: '8px 20px' }}>
                           Salvar Lista
                         </button>

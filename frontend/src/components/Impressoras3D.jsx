@@ -12,8 +12,8 @@ const Impressoras3D = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Cor de destaque para Impressoras 3D (Azul)
-  const accentColor = '#2563eb';
+  // Cor de destaque para Impressoras 3D (Azul Padrão Talmax)
+  const accentColor = '#004a99';
 
   // Função para sortear os produtos
   const shuffleArray = (array) => {
@@ -26,8 +26,11 @@ const Impressoras3D = () => {
         const res = await fetch('http://localhost:5000/api/products');
         const data = await res.json();
 
-        // 1. Filtra os produtos marcados MANUALMENTE como Impressora 3D
-        const printerItems = data.filter(p => p.is_3d_printer).map(p => {
+        // 1. Filtra e Ordena os produtos marcados MANUALMENTE como Impressora 3D
+        const printerItems = data
+          .filter(p => p.is_3d_printer)
+          .sort((a, b) => (a.printer_order || 0) - (b.printer_order || 0))
+          .map(p => {
           let extra = {};
           try { extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data; } catch(e) { extra = {}; }
           return {

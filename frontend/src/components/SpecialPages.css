@@ -121,6 +121,36 @@
 }
 
 
+/* Estilos para o Carrossel de Produtos Relacionados (Upcera) */
+.white-cards-carousel .premium-product-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.white-cards-carousel .card-title {
+  color: #1d1d1f !important;
+}
+
+.white-cards-carousel .card-details {
+  background: #ffffff !important;
+}
+
+/* Customização das setas do Swiper para fundo preto */
+.white-cards-carousel .swiper-button-next,
+.white-cards-carousel .swiper-button-prev {
+  color: #ffffff !important;
+}
+
+.white-cards-carousel .swiper-pagination-bullet {
+  background: #ffffff !important;
+}
+
+.white-cards-carousel .swiper-pagination-bullet-active {
+  background: var(--accent-color, #cf222e) !important;
+}
+
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }

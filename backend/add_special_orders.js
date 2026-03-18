@@ -1,0 +1,34 @@
+const db = require('./db');
+
+async function addOrderColumns() {
+    try {
+        console.log("Adicionando colunas de ordenação especial...");
+        
+        const columns = [
+            'ALTER TABLE products ADD COLUMN upcera_order INT DEFAULT 0',
+            'ALTER TABLE products ADD COLUMN scanner_order INT DEFAULT 0',
+            'ALTER TABLE products ADD COLUMN printer_order INT DEFAULT 0'
+        ];
+
+        for (const sql of columns) {
+            try {
+                await db.query(sql);
+                console.log(`Sucesso: ${sql}`);
+            } catch (err) {
+                if (err.code === 'ER_DUP_COLUMN_NAME') {
+                    console.log(`Coluna já existe: ${sql.split('ADD COLUMN ')[1]}`);
+                } else {
+                    throw err;
+                }
+            }
+        }
+
+        console.log("Processo concluído!");
+        process.exit(0);
+    } catch (err) {
+        console.error("Erro ao atualizar tabela:", err);
+        process.exit(1);
+    }
+}
+
+addOrderColumns();
