@@ -21,6 +21,7 @@ import ProductDetail from './components/ProductDetail';
 import TalmaxDigital from './components/TalmaxDigital';
 import Upcera from './components/Upcera';
 import Scanners from './components/Scanners';
+import Impressoras3D from './components/Impressoras3D';
 import Admin from './components/Admin';
 import './App.css';
 
@@ -180,6 +181,7 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
           <Route path="/categoria/talmax-digital" element={<TalmaxDigital />} />
           <Route path="/upcera" element={<Upcera />} />
           <Route path="/scanners" element={<Scanners />} />
+          <Route path="/impressoras-3d" element={<Impressoras3D />} />
           <Route path="/categoria/:slug" element={<ProductCatalog />} />
           <Route path="/produto/:id" element={<ProductDetail />} />
           

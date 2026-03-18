@@ -70,6 +70,8 @@ const TalmaxDigital = () => {
       navigate('/upcera');
     } else if (cat.id === 'scanners') {
       navigate('/scanners');
+    } else if (cat.id === 'impressoras') {
+      navigate('/impressoras-3d');
     } else {
       setSelectedCategory(cat.title);
       // Opcional: focar na busca ou rolar para os produtos

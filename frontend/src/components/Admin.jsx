@@ -77,6 +77,16 @@ const Admin = () => {
   const [upceraSelectedCats, setUpceraSelectedCats] = useState([]);
   const [isUpceraCatDropdownOpen, setIsUpceraCatDropdownOpen] = useState(false);
 
+  // --- ESTADO IMPRESSORAS 3D ---
+  const [printerData, setPrinterData] = useState({
+    title: 'Impressoras 3D - Talmax',
+    selected_product_ids: []
+  });
+  const [printerProductSearch, setPrinterProductSearch] = useState('');
+  const [isPrinterFilterOpen, setIsPrinterFilterOpen] = useState(false);
+  const [printerSelectedCats, setPrinterSelectedCats] = useState([]);
+  const [isPrinterCatDropdownOpen, setIsPrinterCatDropdownOpen] = useState(false);
+
   const [scannersProductSearch, setScannersProductSearch] = useState('');
   const [isScannersFilterOpen, setIsScannersFilterOpen] = useState(false);
   const [scannersSelectedCats, setScannersSelectedCats] = useState([]);
@@ -134,6 +144,7 @@ const Admin = () => {
     fetchData();
     fetchUpceraData();
     fetchScannersData();
+    fetchPrinterData();
   }, []);
 
   const fetchData = async () => {
@@ -181,6 +192,18 @@ const Admin = () => {
     }
   };
 
+  const fetchPrinterData = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/products');
+      const allProducts = await res.json();
+      // Filtra apenas os que já são is_3d_printer
+      const printerIds = allProducts.filter(p => p.is_3d_printer).map(p => p.id);
+      setPrinterData(prev => ({...prev, selected_product_ids: printerIds}));
+    } catch (err) {
+      console.error("Erro ao carregar dados das Impressoras 3D:", err);
+    }
+  };
+
   const handleUpceraSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -215,6 +238,27 @@ const Admin = () => {
         fetchData(); // Atualiza a lista geral
       } else {
         addToast('Erro ao salvar produtos Scanners', 'error');
+      }
+    } catch (err) {
+      addToast('Erro de conexão com o servidor', 'error');
+    }
+  };
+
+  const handlePrinterSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('http://localhost:5000/api/3d-printers/products', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selected_product_ids: printerData.selected_product_ids })
+      });
+
+      if (res.ok) {
+        addToast('Produtos Impressoras 3D atualizados com sucesso!');
+        fetchData(); // Atualiza a lista geral
+      } else {
+        const errorData = await res.json();
+        addToast(errorData.error || 'Erro ao salvar produtos Impressoras 3D', 'error');
       }
     } catch (err) {
       addToast('Erro de conexão com o servidor', 'error');
@@ -880,6 +924,14 @@ const Admin = () => {
           </div>
 
           <div 
+            className={`nav-link ${activeTab === 'printers' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('printers'); setIsMobileMenuOpen(false); }}
+            title="Página de Impressoras 3D"
+          >
+            <ImageIcon size={20} /> <span>Página de Impressoras 3D</span>
+          </div>
+
+          <div 
             className={`nav-link ${activeTab === 'banners' ? 'active' : ''}`}
             onClick={() => { setActiveTab('banners'); setIsMobileMenuOpen(false); }}
             title="Banners/Slides"
@@ -919,6 +971,7 @@ const Admin = () => {
               {activeTab === 'banners' && 'Gerenciamento de Banners/Slides'}
               {activeTab === 'upcera' && 'Gerenciamento Página Upcera'}
               {activeTab === 'scanners' && 'Gerenciamento Página Scanners'}
+              {activeTab === 'printers' && 'Gerenciamento Página Impressoras 3D'}
             </h1>
           </div>
           <div className="admin-user-info">
@@ -1205,6 +1258,283 @@ const Admin = () => {
                       }}>
                         <span>📌 {scannersData.selected_product_ids.length} produto(s) selecionados para a página de Scanners.</span>
                         <button type="button" className="btn-primary" onClick={handleScannersSubmit} style={{ padding: '8px 20px' }}>
+                          Salvar Lista
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'printers' && (
+            <motion.div 
+              key="printers"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="admin-card">
+                <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h2><ImageIcon size={20} /> Seleção de Impressoras 3D</h2>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                      className={`btn-secondary ${isPrinterFilterOpen ? 'active' : ''}`} 
+                      onClick={() => setIsPrinterFilterOpen(!isPrinterFilterOpen)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: isPrinterFilterOpen ? 'var(--admin-primary)' : 'white',
+                        color: isPrinterFilterOpen ? 'white' : 'var(--admin-text)',
+                        borderColor: isPrinterFilterOpen ? 'var(--admin-primary)' : 'var(--admin-border)'
+                      }}
+                    >
+                      <Search size={16} /> {isPrinterFilterOpen ? 'Ocultar Filtros' : 'Filtros'}
+                    </button>
+                    <button className="btn-primary" onClick={handlePrinterSubmit}>
+                      <Save size={18} /> Salvar Alterações
+                    </button>
+                  </div>
+                </div>
+                <div className="card-body" style={{ padding: '20px' }}>
+                  <form className="admin-form" onSubmit={(e) => e.preventDefault()}>
+                    
+                    {/* Filtro Horizontal Profissional Impressoras 3D */}
+                    <AnimatePresence>
+                      {isPrinterFilterOpen && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          style={{ marginBottom: '20px', position: 'relative', zIndex: 100 }}
+                        >
+                          <div style={{
+                            background: '#f8fafc',
+                            padding: '20px',
+                            borderRadius: '12px',
+                            border: '1px solid var(--admin-border)',
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr auto',
+                            gap: '20px',
+                            alignItems: 'flex-end',
+                            position: 'relative',
+                            zIndex: 101
+                          }}>
+                            <div className="filter-group">
+                              <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--admin-text-light)', display: 'block', marginBottom: '8px', textTransform: 'uppercase' }}>Buscar Impressoras</label>
+                              <div style={{ position: 'relative' }}>
+                                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                <input 
+                                  type="text" 
+                                  placeholder="Digite o nome ou ID..."
+                                  value={printerProductSearch}
+                                  onChange={(e) => setPrinterProductSearch(e.target.value)}
+                                  style={{ width: '100%', padding: '10px 10px 10px 38px', borderRadius: '8px', border: '1px solid var(--admin-border)', fontSize: '0.85rem', outline: 'none' }}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="filter-group">
+                              <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--admin-text-light)', display: 'block', marginBottom: '8px', textTransform: 'uppercase' }}>Filtrar por Categoria</label>
+                              <div className="custom-multi-select" style={{ position: 'relative' }}>
+                                <div 
+                                  className="multi-select-header" 
+                                  onClick={() => setIsPrinterCatDropdownOpen(!isPrinterCatDropdownOpen)}
+                                  style={{ 
+                                    padding: '10px 15px', 
+                                    background: 'white', 
+                                    border: '1px solid var(--admin-border)', 
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    cursor: 'pointer',
+                                    fontSize: '0.85rem'
+                                  }}
+                                >
+                                  <span>
+                                    {printerSelectedCats.length === 0 
+                                      ? 'Todas as categorias' 
+                                      : `${printerSelectedCats.length} selecionada(s)`}
+                                  </span>
+                                  <ChevronRight 
+                                    size={16} 
+                                    style={{ 
+                                      transform: isPrinterCatDropdownOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                                      transition: 'transform 0.2s',
+                                      color: '#94a3b8'
+                                    }} 
+                                  />
+                                </div>
+
+                                <AnimatePresence>
+                                  {isPrinterCatDropdownOpen && (
+                                    <motion.div 
+                                      className="multi-select-options"
+                                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                      transition={{ duration: 0.2 }}
+                                      style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        left: 0,
+                                        right: 0,
+                                        zIndex: 100,
+                                        background: 'white',
+                                        border: '1px solid var(--admin-border)',
+                                        borderRadius: '8px',
+                                        marginTop: '5px',
+                                        boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                                        maxHeight: '250px',
+                                        overflowY: 'auto'
+                                      }}
+                                    >
+                                      {categories.filter(c => !c.parent_id).map(cat => (
+                                        <div 
+                                          key={cat.id} 
+                                          className={`multi-select-option ${printerSelectedCats.includes(cat.id) ? 'selected' : ''}`}
+                                          onClick={() => {
+                                            const isSelected = printerSelectedCats.includes(cat.id);
+                                            const newSelection = isSelected
+                                              ? printerSelectedCats.filter(id => id !== cat.id)
+                                              : [...printerSelectedCats, cat.id];
+                                            setPrinterSelectedCats(newSelection);
+                                          }}
+                                          style={{
+                                            padding: '10px 15px',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            cursor: 'pointer',
+                                            borderBottom: '1px solid #f1f5f9',
+                                            fontSize: '0.85rem',
+                                            background: printerSelectedCats.includes(cat.id) ? '#eff6ff' : 'transparent'
+                                          }}
+                                        >
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <div style={{
+                                              width: '16px',
+                                              height: '16px',
+                                              border: '2px solid var(--admin-primary)',
+                                              borderRadius: '4px',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              background: printerSelectedCats.includes(cat.id) ? 'var(--admin-primary)' : 'transparent'
+                                            }}>
+                                              {printerSelectedCats.includes(cat.id) && <CheckCircle size={12} color="white" />}
+                                            </div>
+                                            <span>{cat.name}</span>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                              <button 
+                                type="button"
+                                onClick={() => { setPrinterProductSearch(''); setPrinterSelectedCats([]); }}
+                                className="btn-secondary"
+                                style={{ padding: '10px 20px', fontSize: '0.8rem', height: '42px' }}
+                              >
+                                Resetar
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <div className="admin-section-group" style={{ marginTop: 0 }}>
+                      <p style={{fontSize: '0.85rem', color: 'var(--admin-text-light)', marginBottom: '15px'}}>
+                        Selecione quais produtos devem aparecer na página de Impressoras 3D.
+                      </p>
+
+                      <div className="upcera-product-selector" style={{ 
+                        maxHeight: '550px', 
+                        overflowY: 'auto', 
+                        background: 'white', 
+                        borderRadius: '12px', 
+                        border: '1px solid var(--admin-border)',
+                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
+                      }}>
+                        {products
+                          .filter(p => {
+                            const isPrinterCategory = (p.category_names || '').toLowerCase().includes('impressora') || (p.category_names || '').toLowerCase().includes('3d');
+                            const matchesSearch = (p.name || '').toLowerCase().includes(printerProductSearch.toLowerCase());
+                            const matchesFilterCat = printerSelectedCats.length === 0 || (p.category_ids && p.category_ids.some(id => printerSelectedCats.includes(id)));
+                            return isPrinterCategory && matchesSearch && matchesFilterCat;
+                          })
+                          .map(product => (
+                            <div 
+                              key={product.id} 
+                              className={`product-select-item ${printerData.selected_product_ids.includes(product.id) ? 'selected' : ''}`}
+                              onClick={() => {
+                                const isSelected = printerData.selected_product_ids.includes(product.id);
+                                const newSelection = isSelected
+                                  ? printerData.selected_product_ids.filter(id => id !== product.id)
+                                  : [...printerData.selected_product_ids, product.id];
+                                setPrinterData({...printerData, selected_product_ids: newSelection});
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '15px',
+                                padding: '14px 20px',
+                                borderBottom: '1px solid var(--admin-border)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                background: printerData.selected_product_ids.includes(product.id) ? '#eff6ff' : 'transparent'
+                              }}
+                            >
+                              <div style={{
+                                width: '22px',
+                                height: '22px',
+                                borderRadius: '6px',
+                                border: '2px solid var(--admin-primary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: printerData.selected_product_ids.includes(product.id) ? 'var(--admin-primary)' : 'transparent',
+                                transition: 'all 0.2s'
+                              }}>
+                                {printerData.selected_product_ids.includes(product.id) && <CheckCircle size={14} color="white" />}
+                              </div>
+                              <img 
+                                src={product.main_image || '/img/placeholder.png'} 
+                                alt={product.name} 
+                                style={{ width: '50px', height: '50px', borderRadius: '10px', objectFit: 'cover', border: '1px solid var(--admin-border)' }}
+                              />
+                              <div style={{ flex: 1 }}>
+                                <p style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: 'var(--admin-text)' }}>{product.name}</p>
+                                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--admin-text-light)' }}>ID: #{product.id} • {product.category_names || 'Sem Categoria'}</p>
+                              </div>
+                            </div>
+                          ))
+                        }
+                      </div>
+                      <div style={{ 
+                        marginTop: '15px', 
+                        padding: '12px 20px', 
+                        background: '#f8fafc', 
+                        borderRadius: '10px',
+                        borderLeft: '4px solid var(--admin-primary)',
+                        fontSize: '0.95rem', 
+                        color: 'var(--admin-text)', 
+                        fontWeight: 600,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <span>📌 {printerData.selected_product_ids.length} produto(s) selecionados para a página de Impressoras 3D.</span>
+                        <button type="button" className="btn-primary" onClick={handlePrinterSubmit} style={{ padding: '8px 20px' }}>
                           Salvar Lista
                         </button>
                       </div>

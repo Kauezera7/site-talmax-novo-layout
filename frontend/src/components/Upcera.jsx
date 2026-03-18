@@ -165,7 +165,6 @@ const Upcera = () => {
         </section>
       )}
 
-      <footer style={{ padding: '60px 0', textAlign: 'center', borderTop: '1px solid rgba(0,0,0,0.05)', background: '#ffffff' }}></footer>
     </div>
   );
 };

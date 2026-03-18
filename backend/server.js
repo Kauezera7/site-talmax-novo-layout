@@ -196,7 +196,8 @@ app.get('/api/products', async (req, res) => {
             ...row,
             category_ids: row.category_ids ? row.category_ids.split(',').map(Number) : [],
             is_upcera: row.is_upcera === 1, // Garante que retorne true/false
-            is_scanner: row.is_scanner === 1
+            is_scanner: row.is_scanner === 1,
+            is_3d_printer: row.is_3d_printer === 1
         }));
         res.json(formattedRows);
     } catch (err) {
@@ -251,6 +252,31 @@ app.put('/api/scanners/products', async (req, res) => {
     } catch (err) {
         console.error("ERRO AO SALVAR SCANNERS NO BACKEND:", err.message);
         res.status(500).json({ error: err.message });
+    }
+});
+
+// --- ROTA IMPRESSORAS 3D ---
+
+app.put('/api/3d-printers/products', async (req, res) => {
+    try {
+        const { selected_product_ids } = req.body;
+        
+        if (!Array.isArray(selected_product_ids)) {
+            return res.status(400).json({ error: "O campo selected_product_ids deve ser um array." });
+        }
+
+        // 1. Resetar todos os produtos
+        await db.query('UPDATE products SET is_3d_printer = FALSE');
+
+        // 2. Marcar os selecionados
+        if (selected_product_ids && selected_product_ids.length > 0) {
+            await db.query('UPDATE products SET is_3d_printer = TRUE WHERE id IN (?)', [selected_product_ids]);
+        }
+
+        res.json({ message: "Produtos Impressoras 3D atualizados com sucesso!" });
+    } catch (err) {
+        console.error("❌ ERRO AO SALVAR IMPRESSORAS 3D NO BACKEND:", err);
+        res.status(500).json({ error: "Erro no banco de dados: " + err.message });
     }
 });
 
