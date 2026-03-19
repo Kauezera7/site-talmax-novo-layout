@@ -2,17 +2,21 @@
 
 ## Funcao
 
-O admin é o painel usado para gerenciar:
+O admin e o painel usado para gerenciar:
 
 - produtos
 - categorias
 - banners
-- seções especiais
+- secoes especiais
 
 ## Entrada Principal
 
 - Rota: `/admin`
-- Arquivo principal: `frontend/src/pages/Admin/AdminDashboard.jsx`
+- Arquivo principal:
+
+```txt
+frontend/src/pages/Admin/AdminDashboard.jsx
+```
 
 ## Estrutura Atual
 
@@ -45,12 +49,18 @@ AdminDashboard
   Estrutura principal do painel.
 - `AdminBase.css`
   Estilo base do admin.
-- `frontend/src/context/AdminContext.jsx`
+- ```txt
+  frontend/src/context/AdminContext.jsx
+  ```
   Estado compartilhado do admin.
-- `frontend/src/hooks/`
-  Regras de carregamento e atualização.
-- `frontend/src/services/`
-  Comunicação com a API.
+- ```txt
+  frontend/src/hooks/
+  ```
+  Regras de carregamento e atualizacao.
+- ```txt
+  frontend/src/services/
+  ```
+  Comunicacao com a API.
 
 ## Modulos
 
@@ -61,8 +71,8 @@ AdminDashboard
 - `AdminBanners/`
   Banners do site
 - `AdminUpcera/`
-  Gestão da seção Upcera
+  Gestao da secao Upcera
 - `AdminScanners/`
-  Gestão da seção de scanners
+  Gestao da secao de scanners
 - `AdminPrinters/`
-  Gestão da seção de impressoras
+  Gestao da secao de impressoras

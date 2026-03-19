@@ -2,7 +2,7 @@
 
 ## Funcao
 
-O frontend mostra o site público e também a rota do painel administrativo.
+O frontend mostra o site publico e tambem a rota do painel administrativo.
 
 ## Estrutura Atual
 
@@ -27,9 +27,13 @@ frontend/
 
 ## Parte Publica
 
-As páginas e componentes públicos ficam em `frontend/src/components/`.
+As paginas e componentes publicos ficam neste caminho:
 
-Hoje eles já estão organizados em pastas próprias, por exemplo:
+```txt
+frontend/src/components/
+```
+
+Hoje eles ja estao organizados em pastas proprias, por exemplo:
 
 - `Home/`
 - `HeroSlider/`
@@ -48,12 +52,12 @@ Hoje eles já estão organizados em pastas próprias, por exemplo:
 - `App.css`
   Estilos globais.
 - `main.jsx`
-  Entrada da aplicação React.
+  Entrada da aplicacao React.
 
 ## Regra De Organizacao
 
-O padrão usado hoje é:
+O padrao usado hoje e:
 
-- cada componente importante fica na própria pasta
+- cada componente importante fica na propria pasta
 - o CSS do componente fica junto dele
 - estilos globais ficam em `App.css`

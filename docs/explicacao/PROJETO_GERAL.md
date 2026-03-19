@@ -5,7 +5,7 @@
 O `site-talmax` tem duas partes principais:
 
 - `frontend`
-  Site público + painel administrativo em React
+  Site publico + painel administrativo em React
 - `backend`
   API em Node.js + MySQL
 
@@ -32,22 +32,36 @@ site-talmax/
 
 ## Onde Fica Cada Parte
 
-- `frontend/src/components/`
-  Páginas e componentes públicos
-- `frontend/src/pages/Admin/`
+- ```txt
+  frontend/src/components/
+  ```
+  Paginas e componentes publicos
+- ```txt
+  frontend/src/pages/Admin/
+  ```
   Painel admin
-- `frontend/src/context/`
+- ```txt
+  frontend/src/context/
+  ```
   Estado compartilhado
-- `frontend/src/hooks/`
-  Lógica de carregamento e CRUD
-- `frontend/src/services/`
-  Comunicação com a API
-- `backend/server.js`
+- ```txt
+  frontend/src/hooks/
+  ```
+  Logica de carregamento e CRUD
+- ```txt
+  frontend/src/services/
+  ```
+  Comunicacao com a API
+- ```txt
+  backend/server.js
+  ```
   Arquivo principal da API hoje
-- `backend/database_schema.sql`
+- ```txt
+  backend/database_schema.sql
+  ```
   Estrutura principal do banco
 
 ## Observacao Importante
 
-O frontend já está mais modular.
-O backend já tem pastas preparadas, mas a maior parte da lógica ainda está centralizada em `server.js`.
+O frontend ja esta mais modular.
+O backend ja tem pastas preparadas, mas a maior parte da logica ainda esta centralizada em `server.js`.
