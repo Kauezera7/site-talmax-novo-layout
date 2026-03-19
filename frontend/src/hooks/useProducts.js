@@ -1,0 +1,80 @@
+import { useState, useEffect, useCallback } from 'react';
+import { productService } from '../services/productService';
+
+export const useProducts = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await productService.getAll();
+      setProducts(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const createProduct = async (formData) => {
+    try {
+      await productService.create(formData);
+      await fetchProducts();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
+  const updateProduct = async (id, formData) => {
+    try {
+      await productService.update(id, formData);
+      await fetchProducts();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
+  const deleteProduct = async (id) => {
+    try {
+      await productService.delete(id);
+      await fetchProducts();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
+  const updateSpecialSection = async (section, selectedProducts) => {
+    try {
+      let res;
+      if (section === 'upcera') res = await productService.updateUpcera(selectedProducts);
+      else if (section === 'scanners') res = await productService.updateScanners(selectedProducts);
+      else if (section === 'printers') res = await productService.updatePrinters(selectedProducts);
+      
+      await fetchProducts();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
+  return {
+    products,
+    loading,
+    error,
+    refresh: fetchProducts,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    updateSpecialSection
+  };
+};

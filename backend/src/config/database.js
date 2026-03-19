@@ -1,7 +1,18 @@
-module.exports = {
-    host: 'localhost',
-    user: 'root',
-    password: 'password',
-    database: 'my_database',
-    connectionLimit: 10
-};
+const mysql = require('mysql2');
+require('dotenv').config();
+
+// Configuração da conexão com o banco de dados
+const pool = mysql.createPool({
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || 'TalmaxInfo1@',
+    database: process.env.DB_NAME || 'site-talmax',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
+
+// Promisify para usar async/await
+const promisePool = pool.promise();
+
+module.exports = promisePool;

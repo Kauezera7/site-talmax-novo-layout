@@ -1,0 +1,136 @@
+import React, { useState, useEffect } from 'react';
+import { Save, X, UploadCloud } from 'lucide-react';
+
+const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    slug: '',
+    icon: null,
+    is_visible: true,
+    parent_id: null
+  });
+  const [preview, setPreview] = useState(null);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name || '',
+        slug: initialData.slug || '',
+        icon: null,
+        is_visible: initialData.is_visible !== 0,
+        parent_id: initialData.parent_id || null
+      });
+      setPreview(initialData.icon_url);
+    }
+  }, [initialData]);
+
+  const handleNameChange = (e) => {
+    const name = e.target.value;
+    const slug = name.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .replace(/[^\w\s-]/g, '') // Remove caracteres especiais
+      .replace(/\s+/g, '-'); // Troca espaços por hífens
+    
+    setFormData({ ...formData, name, slug });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const data = new FormData();
+    data.append('name', formData.name);
+    data.append('slug', formData.slug);
+    data.append('is_visible', formData.is_visible);
+    if (formData.parent_id) data.append('parent_id', formData.parent_id);
+    if (formData.icon) data.append('icon', formData.icon);
+    
+    onSubmit(data);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px', textAlign: 'left' }}>
+        
+        {/* Se for subcategoria ou estiver editando uma que já tenha pai */}
+        {(formData.parent_id || (!initialData && mainCategories.length > 0)) && (
+          <div className="form-group">
+            <label>Categoria Principal (Pai)</label>
+            <select 
+              value={formData.parent_id || ''} 
+              onChange={(e) => setFormData({...formData, parent_id: e.target.value || null})}
+              style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--admin-border)', background: 'white' }}
+            >
+              <option value="">-- Categoria Principal (Nenhuma) --</option>
+              {mainCategories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div className="form-group">
+          <label>Nome da Categoria</label>
+          <input 
+            type="text" required 
+            placeholder="Ex: Gessos e Revestimentos"
+            value={formData.name}
+            onChange={handleNameChange}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Slug (URL amigável)</label>
+          <input 
+            type="text" required 
+            value={formData.slug}
+            onChange={(e) => setFormData({...formData, slug: e.target.value})}
+          />
+        </div>
+
+        <div className="form-group" style={{display: 'flex', alignItems: 'center', gap: '10px', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid var(--admin-border)'}}>
+          <input 
+            type="checkbox" 
+            id="catVisible"
+            style={{width: '20px', height: '20px', cursor: 'pointer'}}
+            checked={formData.is_visible}
+            onChange={(e) => setFormData({...formData, is_visible: e.target.checked})}
+          />
+          <label htmlFor="catVisible" style={{marginBottom: 0, cursor: 'pointer', fontWeight: 600}}>Exibir categoria no site</label>
+        </div>
+
+        {!formData.parent_id && (
+          <div className="form-group">
+            <label>Ícone da Categoria</label>
+            <div className="file-upload-area" style={{ padding: '15px' }}>
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setFormData({...formData, icon: file});
+                    setPreview(URL.createObjectURL(file));
+                  }
+                }}
+              />
+              <UploadCloud size={32} color="var(--admin-primary)" style={{marginBottom: '5px'}} />
+              <p style={{fontSize: '0.85rem'}}>Clique para enviar o ícone</p>
+            </div>
+            {preview && (
+              <div className="preview-thumb" style={{ marginTop: '10px', width: '60px', height: '60px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
+                <img src={preview} alt="Preview Icon" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="modal-footer">
+        <button type="button" className="btn-secondary" onClick={onCancel}>Cancelar</button>
+        <button type="submit" className="btn-primary">
+          <Save size={18} /> {initialData ? 'Salvar Alterações' : 'Criar Categoria'}
+        </button>
+      </div>
+    </form>
+  );
+};
+
+export default CategoryForm;

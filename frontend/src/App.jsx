@@ -22,7 +22,7 @@ import TalmaxDigital from './components/TalmaxDigital';
 import Upcera from './components/Upcera';
 import Scanners from './components/Scanners';
 import Impressoras3D from './components/Impressoras3D';
-import Admin from './components/Admin';
+import Admin from './pages/Admin/AdminDashboard';
 import './App.css';
 
 // Scroll to Top helper
