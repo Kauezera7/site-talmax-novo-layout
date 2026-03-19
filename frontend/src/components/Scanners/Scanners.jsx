@@ -1,27 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { ChevronRight, ChevronLeft, ArrowLeft, ArrowUpRight } from 'lucide-react';
+/**
+ * Pagina: Scanners
+ * Rota: /scanners
+ * Responsabilidade: exibir a pagina especial da linha de scanners
+ */
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { ChevronRight, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-// Import Swiper React components
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Navigation, Pagination } from 'swiper/modules';
-// Import Swiper styles
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
+import './Scanners.css';
 
-import ProductCard from './ProductCard';
-import './Upcera.css';
-import './ProductCatalog.css';
-
-const Upcera = () => {
+const Scanners = () => {
   const [products, setProducts] = useState([]);
-  const [cadCamProducts, setCadCamProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Cor de destaque para Upcera (Vermelho Profissional)
-  const accentColor = '#cf222e';
+  // Cor de destaque para Scanners (Azul Padrão Talmax)
+  const accentColor = '#004a99';
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -29,10 +23,10 @@ const Upcera = () => {
         const res = await fetch('http://localhost:5000/api/products');
         const data = await res.json();
 
-        // 1. Filtra e Ordena os produtos Upcera pelo upcera_order
-        const upceraItems = data
-          .filter(p => p.is_upcera)
-          .sort((a, b) => (a.upcera_order || 0) - (b.upcera_order || 0))
+        // 1. Filtra e Ordena os produtos Scanners pelo scanner_order
+        const scannerItems = data
+          .filter(p => p.is_scanner)
+          .sort((a, b) => (a.scanner_order || 0) - (b.scanner_order || 0))
           .map(p => {
             let extra = {};
             try { extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data; } catch(e) { extra = {}; }
@@ -45,20 +39,9 @@ const Upcera = () => {
             };
           });
 
-        // 2. Filtra produtos relacionados da Linha CAD/CAM / Insumos Upcera
-        const relatedItems = data.filter(p => 
-          (p.category_names && (
-            p.category_names.toLowerCase().includes('zirconia') || 
-            p.category_names.toLowerCase().includes('upcera') ||
-            p.category_names.toLowerCase().includes('cad') ||
-            p.category_names.toLowerCase().includes('cam')
-          )) && !p.is_upcera
-        );
-
-        setProducts(upceraItems);
-        setCadCamProducts(relatedItems);
+        setProducts(scannerItems);
       } catch (err) {
-        console.error("Erro ao carregar produtos Upcera:", err);
+        console.error("Erro ao carregar produtos Scanners:", err);
       } finally {
         setIsLoading(false);
       }
@@ -87,10 +70,10 @@ const Upcera = () => {
            </motion.div>
            
            <div style={{ textAlign: 'center' }}>
-              <img src="/img/logo-upcera-.webp" alt="Upcera Logo" style={{ height: '70px', marginBottom: '30px', maxWidth: '100%', objectFit: 'contain' }} />
+              <img src="/img/titulo-pag-scanners.png" alt="Scanners Title" style={{ height: '80px', marginBottom: '30px', maxWidth: '100%' }} />
               <div style={{ width: '50px', height: '4px', background: accentColor, margin: '0 auto 40px' }}></div>
-              <h1 style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '6px', textTransform: 'uppercase', color: accentColor, marginBottom: '20px' }}>Innovation in Restorative Dentistry</h1>
-              <p style={{ fontSize: '1.5rem', fontWeight: '300', color: '#000', maxWidth: '850px', margin: '0 auto', lineHeight: '1.4' }}>Líder mundial em cerâmicas odontológicas de alta performance, unindo estética natural e resistência extrema.</p>
+              <h1 style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '6px', textTransform: 'uppercase', color: accentColor, marginBottom: '20px' }}>Digital Reality Capture</h1>
+              <p style={{ fontSize: '1.5rem', fontWeight: '300', color: '#000', maxWidth: '850px', margin: '0 auto', lineHeight: '1.4' }}>A mais alta tecnologia em digitalização 3D, transformando o fluxo físico em digital com precisão absoluta.</p>
            </div>
         </div>
       </section>
@@ -126,7 +109,7 @@ const Upcera = () => {
                   <div className="product-details" style={{ flex: '1.2' }}>
                     <div className="feature-header" style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
                       <div style={{ width: '40px', height: '2px', background: accentColor }}></div>
-                      <span style={{ fontSize: '0.85rem', fontWeight: '900', letterSpacing: '4px', color: accentColor, textTransform: 'uppercase' }}>High Tech Ceramics</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: '900', letterSpacing: '4px', color: accentColor, textTransform: 'uppercase' }}>Precision Scanning</span>
                     </div>
                     <h2 style={{ fontSize: '3.5rem', fontWeight: '900', lineHeight: '1', letterSpacing: '-2px', marginBottom: '40px', color: '#020202', textTransform: 'uppercase', cursor: 'pointer' }} onClick={() => navigate(`/produto/${product.id}`)}>{product.name}</h2>
                     <div className="features-container" style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
@@ -153,89 +136,8 @@ const Upcera = () => {
         </div>
       </section>
 
-      {/* Seção de Banner CAD/CAM (Apenas esta parte preta) */}
-      {!isLoading && cadCamProducts.length > 0 && (
-        <div style={{ width: '100%', background: '#000000', overflow: 'hidden' }}>
-          <motion.img 
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1 }}
-            src="/img/na-pagina-dauoceracad-cam.webp"
-            alt="Linha CAD/CAM e Insumos"
-            style={{ width: '25%', height: 'auto', display: 'block', margin: '0 auto' }}
-            />        </div>
-      )}
-
-      {/* Seção de Carrossel Produtos Relacionados (Fundo Branco) */}
-      {!isLoading && cadCamProducts.length > 0 && (
-        <section style={{ background: '#ffffff', padding: '80px 0 100px 0' }}>
-          <div className="container-inner" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: accentColor, letterSpacing: '2px', textTransform: 'uppercase' }}>Portfólio Completo</span>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginTop: '5px', flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#000000', margin: 0 }}>PRODUTOS RELACIONADOS</h2>
-                <motion.button 
-                  whileHover={{ scale: 1.05 }} 
-                  whileTap={{ scale: 0.95 }} 
-                  onClick={() => navigate('/produtos?categoria=upcera')}
-                  style={{ 
-                    padding: '10px 25px', 
-                    background: accentColor, 
-                    color: '#fff', 
-                    border: 'none', 
-                    borderRadius: '50px', 
-                    fontWeight: '800', 
-                    fontSize: '0.75rem', 
-                    letterSpacing: '1px', 
-                    textTransform: 'uppercase', 
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: `0 10px 20px ${accentColor}33`
-                  }}
-                >
-                  VER TUDO <ArrowUpRight size={16} />
-                </motion.button>
-              </div>
-            </div>
-
-            {/* Swiper Carrossel */}
-            <div className="special-products-carousel">
-              <Swiper
-                modules={[Autoplay, Navigation, Pagination]}
-                spaceBetween={30}
-                slidesPerView={1}
-                navigation
-                pagination={{ clickable: true }}
-                autoplay={{ delay: 3000, disableOnInteraction: false }}
-                breakpoints={{
-                  640: { slidesPerView: 2 },
-                  1024: { slidesPerView: 3 },
-                  1400: { slidesPerView: 4 }
-                }}
-                className="mySwiper"
-              >
-                {cadCamProducts.map((p, index) => (
-                  <SwiperSlide key={p.id}>
-                    <ProductCard 
-                      product={{
-                        ...p,
-                        image: p.main_image || '/img/placeholder.png'
-                      }} 
-                      index={index} 
-                    />
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-            </div>
-          </div>
-        </section>
-      )}
-
     </div>
   );
 };
 
-export default Upcera;
+export default Scanners;

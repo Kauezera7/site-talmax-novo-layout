@@ -1,7 +1,13 @@
+/**
+ * Componente: ProductCard
+ * Uso: catalogos, paginas especiais e relacionados
+ * Responsabilidade: renderizar o card reutilizavel de produto
+ */
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
+import './ProductCard.css';
 
 const ProductCard = ({ product, index }) => {
   const [activeImage, setActiveImage] = React.useState(product.image);

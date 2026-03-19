@@ -1,3 +1,8 @@
+/**
+ * Pagina: ProductCatalog
+ * Rota: /produtos e /categoria/:slug
+ * Responsabilidade: listar produtos e aplicar filtros por busca e categoria
+ */
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -8,7 +13,7 @@ import {
   PackageSearch
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ProductCard from './ProductCard';
+import ProductCard from '../ProductCard/ProductCard';
 import './ProductCatalog.css';
 
 const ProductCatalog = () => {

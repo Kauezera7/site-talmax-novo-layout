@@ -1,5 +1,11 @@
+/**
+ * Componente: CookieBanner
+ * Uso: componente global do site publico
+ * Responsabilidade: exibir e registrar o consentimento de cookies
+ */
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import './CookieBanner.css';
 
 const CookieBanner = () => {
   const [showBanner, setShowBanner] = useState(false);

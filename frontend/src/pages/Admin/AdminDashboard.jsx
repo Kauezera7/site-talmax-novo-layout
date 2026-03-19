@@ -1,3 +1,10 @@
+/**
+ * Pagina: AdminDashboard
+ * Rota: /admin
+ * Responsabilidade: servir como estrutura principal do painel administrativo
+ * e alternar entre as secoes internas como dashboard, produtos, categorias e banners
+ * container principal do painel administrativo.
+ */
 import React, { useState } from 'react';
 import {
   Package,

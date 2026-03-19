@@ -1,3 +1,8 @@
+/**
+ * Pagina raiz da aplicacao.
+ * Responsabilidade: configurar rotas, layout publico, header, footer
+ * e decidir quando o painel admin deve ser exibido sem a estrutura publica.
+ */
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
@@ -12,16 +17,16 @@ import {
   ChevronDown
 } from 'lucide-react';
 
-import Home from './components/Home';
-import PrivacyPolicy from './components/PrivacyPolicy';
-import CookieBanner from './components/CookieBanner';
-import PagePlaceholder from './components/PagePlaceholder';
-import ProductCatalog from './components/ProductCatalog';
-import ProductDetail from './components/ProductDetail';
-import TalmaxDigital from './components/TalmaxDigital';
-import Upcera from './components/Upcera';
-import Scanners from './components/Scanners';
-import Impressoras3D from './components/Impressoras3D';
+import Home from './components/Home/Home';
+import PrivacyPolicy from './components/PrivacyPolicy/PrivacyPolicy';
+import CookieBanner from './components/CookieBanner/CookieBanner';
+import PagePlaceholder from './components/PagePlaceholder/PagePlaceholder';
+import ProductCatalog from './components/ProductCatalog/ProductCatalog';
+import ProductDetail from './components/ProductDetail/ProductDetail';
+import TalmaxDigital from './components/TalmaxDigital/TalmaxDigital';
+import Upcera from './components/Upcera/Upcera';
+import Scanners from './components/Scanners/Scanners';
+import Impressoras3D from './components/Impressoras3D/Impressoras3D';
 import Admin from './pages/Admin/AdminDashboard';
 import './App.css';
 

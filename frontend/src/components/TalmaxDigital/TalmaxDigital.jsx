@@ -1,3 +1,8 @@
+/**
+ * Pagina: TalmaxDigital
+ * Rota: /categoria/talmax-digital
+ * Responsabilidade: apresentar a area Talmax Digital e seus acessos principais
+ */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -13,7 +18,7 @@ import {
   Monitor
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import ProductCard from './ProductCard';
+import ProductCard from '../ProductCard/ProductCard';
 import './TalmaxDigital.css';
 
 const TalmaxDigital = () => {

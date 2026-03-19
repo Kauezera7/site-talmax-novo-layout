@@ -1,0 +1,24 @@
+.privacy-policy {
+  padding: 5rem 5%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.privacy-policy-title {
+  color: var(--primary);
+  margin-bottom: 2rem;
+}
+
+.privacy-policy-section {
+  margin-bottom: 2rem;
+}
+
+.privacy-policy-section h2 {
+  margin-bottom: 0.75rem;
+  color: #1f2937;
+}
+
+.privacy-policy-section p {
+  color: #4b5563;
+  line-height: 1.7;
+}

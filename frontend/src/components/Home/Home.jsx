@@ -1,7 +1,13 @@
+/**
+ * Pagina: Home
+ * Rota: /
+ * Responsabilidade: montar a pagina inicial e carregar categorias visiveis
+ */
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { services } from '../data';
-import HeroSlider from './HeroSlider';
+import { services } from '../../data';
+import HeroSlider from '../HeroSlider/HeroSlider';
+import './Home.css';
 
 const Home = () => {
   const [categories, setCategories] = useState([]);

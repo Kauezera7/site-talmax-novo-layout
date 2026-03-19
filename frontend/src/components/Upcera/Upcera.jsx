@@ -1,24 +1,32 @@
+/**
+ * Pagina: Upcera
+ * Rota: /upcera
+ * Responsabilidade: exibir a pagina especial da linha Upcera e produtos relacionados
+ */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronRight, ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import ProductCard from './ProductCard';
-import './Impressoras3D.css';
-import './ProductCatalog.css';
+// Import Swiper React components
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Navigation, Pagination } from 'swiper/modules';
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
-const Impressoras3D = () => {
+import ProductCard from '../ProductCard/ProductCard';
+import './Upcera.css';
+import '../ProductCatalog/ProductCatalog.css';
+
+const Upcera = () => {
   const [products, setProducts] = useState([]);
-  const [resinsProducts, setResinsProducts] = useState([]);
+  const [cadCamProducts, setCadCamProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Cor de destaque para Impressoras 3D (Azul Padrão Talmax)
-  const accentColor = '#004a99';
-
-  // Função para sortear os produtos
-  const shuffleArray = (array) => {
-    return [...array].sort(() => Math.random() - 0.5);
-  };
+  // Cor de destaque para Upcera (Vermelho Profissional)
+  const accentColor = '#cf222e';
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -26,34 +34,36 @@ const Impressoras3D = () => {
         const res = await fetch('http://localhost:5000/api/products');
         const data = await res.json();
 
-        // 1. Filtra e Ordena os produtos marcados MANUALMENTE como Impressora 3D
-        const printerItems = data
-          .filter(p => p.is_3d_printer)
-          .sort((a, b) => (a.printer_order || 0) - (b.printer_order || 0))
+        // 1. Filtra e Ordena os produtos Upcera pelo upcera_order
+        const upceraItems = data
+          .filter(p => p.is_upcera)
+          .sort((a, b) => (a.upcera_order || 0) - (b.upcera_order || 0))
           .map(p => {
-          let extra = {};
-          try { extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data; } catch(e) { extra = {}; }
-          return {
-            id: p.id,
-            name: p.name,
-            description: p.description,
-            image: p.main_image || '/img/placeholder.png',
-            ...extra
-          };
-        });
+            let extra = {};
+            try { extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data; } catch(e) { extra = {}; }
+            return {
+              id: p.id,
+              name: p.name,
+              description: p.description,
+              image: p.main_image || '/img/placeholder.png',
+              ...extra
+            };
+          });
 
-        // 2. Filtra produtos relacionados (Resinas/Insumos 3D) para o grid inferior
+        // 2. Filtra produtos relacionados da Linha CAD/CAM / Insumos Upcera
         const relatedItems = data.filter(p => 
           (p.category_names && (
-            p.category_names.toLowerCase().includes('resina') || 
-            p.category_names.toLowerCase().includes('insumo')
-          )) && !p.is_3d_printer
+            p.category_names.toLowerCase().includes('zirconia') || 
+            p.category_names.toLowerCase().includes('upcera') ||
+            p.category_names.toLowerCase().includes('cad') ||
+            p.category_names.toLowerCase().includes('cam')
+          )) && !p.is_upcera
         );
 
-        setProducts(printerItems);
-        setResinsProducts(shuffleArray(relatedItems).slice(0, 4));
+        setProducts(upceraItems);
+        setCadCamProducts(relatedItems);
       } catch (err) {
-        console.error("Erro ao carregar produtos Impressoras 3D:", err);
+        console.error("Erro ao carregar produtos Upcera:", err);
       } finally {
         setIsLoading(false);
       }
@@ -82,10 +92,10 @@ const Impressoras3D = () => {
            </motion.div>
            
            <div style={{ textAlign: 'center' }}>
-              <img src="/img/impressoras3d.png" alt="Impressoras 3D" style={{ height: '80px', marginBottom: '30px', maxWidth: '100%' }} />
+              <img src="/img/logo-upcera-.webp" alt="Upcera Logo" style={{ height: '70px', marginBottom: '30px', maxWidth: '100%', objectFit: 'contain' }} />
               <div style={{ width: '50px', height: '4px', background: accentColor, margin: '0 auto 40px' }}></div>
-              <h1 style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '6px', textTransform: 'uppercase', color: accentColor, marginBottom: '20px' }}>High Precision Printing</h1>
-              <p style={{ fontSize: '1.5rem', fontWeight: '300', color: '#000', maxWidth: '850px', margin: '0 auto', lineHeight: '1.4' }}>A revolução da manufatura aditiva com precisão industrial para o fluxo digital odontológico.</p>
+              <h1 style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '6px', textTransform: 'uppercase', color: accentColor, marginBottom: '20px' }}>Innovation in Restorative Dentistry</h1>
+              <p style={{ fontSize: '1.5rem', fontWeight: '300', color: '#000', maxWidth: '850px', margin: '0 auto', lineHeight: '1.4' }}>Líder mundial em cerâmicas odontológicas de alta performance, unindo estética natural e resistência extrema.</p>
            </div>
         </div>
       </section>
@@ -121,7 +131,7 @@ const Impressoras3D = () => {
                   <div className="product-details" style={{ flex: '1.2' }}>
                     <div className="feature-header" style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
                       <div style={{ width: '40px', height: '2px', background: accentColor }}></div>
-                      <span style={{ fontSize: '0.85rem', fontWeight: '900', letterSpacing: '4px', color: accentColor, textTransform: 'uppercase' }}>Additive Manufacturing</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: '900', letterSpacing: '4px', color: accentColor, textTransform: 'uppercase' }}>High Tech Ceramics</span>
                     </div>
                     <h2 style={{ fontSize: '3.5rem', fontWeight: '900', lineHeight: '1', letterSpacing: '-2px', marginBottom: '40px', color: '#020202', textTransform: 'uppercase', cursor: 'pointer' }} onClick={() => navigate(`/produto/${product.id}`)}>{product.name}</h2>
                     <div className="features-container" style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
@@ -148,24 +158,32 @@ const Impressoras3D = () => {
         </div>
       </section>
 
-      {/* Seção de Resinas e Insumos */}
-      {!isLoading && resinsProducts.length > 0 && (
-        <section style={{ background: '#ffffff', padding: '0 0 80px 0' }}>
-          <div style={{ width: '100%', background: '#1a1a1a', padding: '40px 20px', marginBottom: '60px', display: 'flex', justifyContent: 'center' }}>
-            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: 'center' }}>
-              <h2 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: '900', letterSpacing: '4px', textTransform: 'uppercase', margin: 0 }}>RESINAS E INSUMOS 3D</h2>
-            </motion.div>
-          </div>
+      {/* Seção de Banner CAD/CAM (Apenas esta parte preta) */}
+      {!isLoading && cadCamProducts.length > 0 && (
+        <div style={{ width: '100%', background: '#000000', overflow: 'hidden' }}>
+          <motion.img 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1 }}
+            src="/img/na-pagina-dauoceracad-cam.webp"
+            alt="Linha CAD/CAM e Insumos"
+            style={{ width: '25%', height: 'auto', display: 'block', margin: '0 auto' }}
+            />        </div>
+      )}
 
+      {/* Seção de Carrossel Produtos Relacionados (Fundo Branco) */}
+      {!isLoading && cadCamProducts.length > 0 && (
+        <section style={{ background: '#ffffff', padding: '80px 0 100px 0' }}>
           <div className="container-inner" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: accentColor, letterSpacing: '2px', textTransform: 'uppercase' }}>Materiais de Alta Performance</span>
+            <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: accentColor, letterSpacing: '2px', textTransform: 'uppercase' }}>Portfólio Completo</span>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginTop: '5px', flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#000', margin: 0 }}>LINHA DE MATERIAIS</h2>
+                <h2 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#000000', margin: 0 }}>PRODUTOS RELACIONADOS</h2>
                 <motion.button 
                   whileHover={{ scale: 1.05 }} 
                   whileTap={{ scale: 0.95 }} 
-                  onClick={() => navigate('/produtos?categoria=resinas')}
+                  onClick={() => navigate('/produtos?categoria=upcera')}
                   style={{ 
                     padding: '10px 25px', 
                     background: accentColor, 
@@ -188,17 +206,34 @@ const Impressoras3D = () => {
               </div>
             </div>
 
-            <div className="cad-cam-responsive-list">
-              {resinsProducts.map((p, index) => (
-                <ProductCard 
-                  key={p.id} 
-                  product={{
-                    ...p,
-                    image: p.main_image || '/img/placeholder.png'
-                  }} 
-                  index={index} 
-                />
-              ))}
+            {/* Swiper Carrossel */}
+            <div className="special-products-carousel">
+              <Swiper
+                modules={[Autoplay, Navigation, Pagination]}
+                spaceBetween={30}
+                slidesPerView={1}
+                navigation
+                pagination={{ clickable: true }}
+                autoplay={{ delay: 3000, disableOnInteraction: false }}
+                breakpoints={{
+                  640: { slidesPerView: 2 },
+                  1024: { slidesPerView: 3 },
+                  1400: { slidesPerView: 4 }
+                }}
+                className="mySwiper"
+              >
+                {cadCamProducts.map((p, index) => (
+                  <SwiperSlide key={p.id}>
+                    <ProductCard 
+                      product={{
+                        ...p,
+                        image: p.main_image || '/img/placeholder.png'
+                      }} 
+                      index={index} 
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
             </div>
           </div>
         </section>
@@ -208,4 +243,4 @@ const Impressoras3D = () => {
   );
 };
 
-export default Impressoras3D;
+export default Upcera;

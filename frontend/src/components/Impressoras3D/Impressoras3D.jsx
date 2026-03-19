@@ -1,16 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { ChevronRight, ArrowLeft } from 'lucide-react';
+/**
+ * Pagina: Impressoras3D
+ * Rota: /impressoras-3d
+ * Responsabilidade: exibir a pagina especial de impressoras 3D e materiais relacionados
+ */
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { ChevronRight, ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import './Scanners.css';
+import ProductCard from '../ProductCard/ProductCard';
+import './Impressoras3D.css';
+import '../ProductCatalog/ProductCatalog.css';
 
-const Scanners = () => {
+const Impressoras3D = () => {
   const [products, setProducts] = useState([]);
+  const [resinsProducts, setResinsProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Cor de destaque para Scanners (Azul Padrão Talmax)
+  // Cor de destaque para Impressoras 3D (Azul Padrão Talmax)
   const accentColor = '#004a99';
+
+  // Função para sortear os produtos
+  const shuffleArray = (array) => {
+    return [...array].sort(() => Math.random() - 0.5);
+  };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -18,25 +31,34 @@ const Scanners = () => {
         const res = await fetch('http://localhost:5000/api/products');
         const data = await res.json();
 
-        // 1. Filtra e Ordena os produtos Scanners pelo scanner_order
-        const scannerItems = data
-          .filter(p => p.is_scanner)
-          .sort((a, b) => (a.scanner_order || 0) - (b.scanner_order || 0))
+        // 1. Filtra e Ordena os produtos marcados MANUALMENTE como Impressora 3D
+        const printerItems = data
+          .filter(p => p.is_3d_printer)
+          .sort((a, b) => (a.printer_order || 0) - (b.printer_order || 0))
           .map(p => {
-            let extra = {};
-            try { extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data; } catch(e) { extra = {}; }
-            return {
-              id: p.id,
-              name: p.name,
-              description: p.description,
-              image: p.main_image || '/img/placeholder.png',
-              ...extra
-            };
-          });
+          let extra = {};
+          try { extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data; } catch(e) { extra = {}; }
+          return {
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            image: p.main_image || '/img/placeholder.png',
+            ...extra
+          };
+        });
 
-        setProducts(scannerItems);
+        // 2. Filtra produtos relacionados (Resinas/Insumos 3D) para o grid inferior
+        const relatedItems = data.filter(p => 
+          (p.category_names && (
+            p.category_names.toLowerCase().includes('resina') || 
+            p.category_names.toLowerCase().includes('insumo')
+          )) && !p.is_3d_printer
+        );
+
+        setProducts(printerItems);
+        setResinsProducts(shuffleArray(relatedItems).slice(0, 4));
       } catch (err) {
-        console.error("Erro ao carregar produtos Scanners:", err);
+        console.error("Erro ao carregar produtos Impressoras 3D:", err);
       } finally {
         setIsLoading(false);
       }
@@ -65,10 +87,10 @@ const Scanners = () => {
            </motion.div>
            
            <div style={{ textAlign: 'center' }}>
-              <img src="/img/titulo-pag-scanners.png" alt="Scanners Title" style={{ height: '80px', marginBottom: '30px', maxWidth: '100%' }} />
+              <img src="/img/impressoras3d.png" alt="Impressoras 3D" style={{ height: '80px', marginBottom: '30px', maxWidth: '100%' }} />
               <div style={{ width: '50px', height: '4px', background: accentColor, margin: '0 auto 40px' }}></div>
-              <h1 style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '6px', textTransform: 'uppercase', color: accentColor, marginBottom: '20px' }}>Digital Reality Capture</h1>
-              <p style={{ fontSize: '1.5rem', fontWeight: '300', color: '#000', maxWidth: '850px', margin: '0 auto', lineHeight: '1.4' }}>A mais alta tecnologia em digitalização 3D, transformando o fluxo físico em digital com precisão absoluta.</p>
+              <h1 style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '6px', textTransform: 'uppercase', color: accentColor, marginBottom: '20px' }}>High Precision Printing</h1>
+              <p style={{ fontSize: '1.5rem', fontWeight: '300', color: '#000', maxWidth: '850px', margin: '0 auto', lineHeight: '1.4' }}>A revolução da manufatura aditiva com precisão industrial para o fluxo digital odontológico.</p>
            </div>
         </div>
       </section>
@@ -104,7 +126,7 @@ const Scanners = () => {
                   <div className="product-details" style={{ flex: '1.2' }}>
                     <div className="feature-header" style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
                       <div style={{ width: '40px', height: '2px', background: accentColor }}></div>
-                      <span style={{ fontSize: '0.85rem', fontWeight: '900', letterSpacing: '4px', color: accentColor, textTransform: 'uppercase' }}>Precision Scanning</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: '900', letterSpacing: '4px', color: accentColor, textTransform: 'uppercase' }}>Additive Manufacturing</span>
                     </div>
                     <h2 style={{ fontSize: '3.5rem', fontWeight: '900', lineHeight: '1', letterSpacing: '-2px', marginBottom: '40px', color: '#020202', textTransform: 'uppercase', cursor: 'pointer' }} onClick={() => navigate(`/produto/${product.id}`)}>{product.name}</h2>
                     <div className="features-container" style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
@@ -131,8 +153,64 @@ const Scanners = () => {
         </div>
       </section>
 
+      {/* Seção de Resinas e Insumos */}
+      {!isLoading && resinsProducts.length > 0 && (
+        <section style={{ background: '#ffffff', padding: '0 0 80px 0' }}>
+          <div style={{ width: '100%', background: '#1a1a1a', padding: '40px 20px', marginBottom: '60px', display: 'flex', justifyContent: 'center' }}>
+            <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: 'center' }}>
+              <h2 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: '900', letterSpacing: '4px', textTransform: 'uppercase', margin: 0 }}>RESINAS E INSUMOS 3D</h2>
+            </motion.div>
+          </div>
+
+          <div className="container-inner" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: accentColor, letterSpacing: '2px', textTransform: 'uppercase' }}>Materiais de Alta Performance</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginTop: '5px', flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#000', margin: 0 }}>LINHA DE MATERIAIS</h2>
+                <motion.button 
+                  whileHover={{ scale: 1.05 }} 
+                  whileTap={{ scale: 0.95 }} 
+                  onClick={() => navigate('/produtos?categoria=resinas')}
+                  style={{ 
+                    padding: '10px 25px', 
+                    background: accentColor, 
+                    color: '#fff', 
+                    border: 'none', 
+                    borderRadius: '50px', 
+                    fontWeight: '800', 
+                    fontSize: '0.75rem', 
+                    letterSpacing: '1px', 
+                    textTransform: 'uppercase', 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: `0 10px 20px ${accentColor}33`
+                  }}
+                >
+                  VER TUDO <ArrowUpRight size={16} />
+                </motion.button>
+              </div>
+            </div>
+
+            <div className="cad-cam-responsive-list">
+              {resinsProducts.map((p, index) => (
+                <ProductCard 
+                  key={p.id} 
+                  product={{
+                    ...p,
+                    image: p.main_image || '/img/placeholder.png'
+                  }} 
+                  index={index} 
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
     </div>
   );
 };
 
-export default Scanners;
+export default Impressoras3D;

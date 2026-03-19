@@ -1,3 +1,8 @@
+/**
+ * Pagina: ProductDetail
+ * Rota: /produto/:id
+ * Responsabilidade: exibir detalhes do produto, galeria, modelos e relacionados
+ */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
@@ -13,7 +18,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import ProductCard from './ProductCard';
+import ProductCard from '../ProductCard/ProductCard';
 import './ProductDetail.css';
 
 const ProductDetail = () => {

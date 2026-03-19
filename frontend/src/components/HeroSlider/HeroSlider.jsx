@@ -1,16 +1,22 @@
+/**
+ * Componente: HeroSlider
+ * Uso: pagina Home
+ * Responsabilidade: banner principal da pagina inicial
+ */
 import React, { useState, useEffect } from 'react';
 // Importação dos componentes core do Swiper (Biblioteca de Slider)
 import { Swiper, SwiperSlide } from 'swiper/react';
 // Importação dos módulos de funcionalidade (Autoplay, Efeitos, Paginação, Navegação)
 import { Autoplay, EffectFade, Pagination, Navigation } from 'swiper/modules';
 // Importação dos dados estáticos como fallback
-import { slides as staticSlides } from '../data';
+import { slides as staticSlides } from '../../data';
 
 // Importação obrigatória dos estilos do Swiper para que ele funcione visualmente
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
+import './HeroSlider.css';
 
 /**
  * HeroSlider: Componente de Banner Principal da Home
@@ -44,7 +50,7 @@ const HeroSlider = () => {
 
   if (loading) {
     return (
-      <section className="hero-slider-container" style={{ height: '600px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <section className="hero-slider-container" style={{ height: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="spinner"></div>
       </section>
     );
