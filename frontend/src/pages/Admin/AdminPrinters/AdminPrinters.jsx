@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAdmin } from '../../../context/AdminContext';
 import SpecialSectionManager from '../AdminUpcera/SpecialSectionManager';
+import './AdminPrinters.css';
 
 const AdminPrinters = () => {
   const { products, mainCategories, productsHook, addToast } = useAdmin();

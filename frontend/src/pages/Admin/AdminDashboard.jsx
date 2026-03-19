@@ -1,17 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  Package, 
-  Plus, 
-  Trash2, 
-  Save, 
-  Image as ImageIcon, 
-  List, 
-  Edit, 
-  X, 
-  LayoutDashboard, 
-  Layers, 
-  LogOut, 
-  UploadCloud,
+import {
+  Package,
+  Image as ImageIcon,
+  LayoutDashboard,
+  Layers,
+  LogOut,
   CheckCircle,
   AlertCircle,
   Search,
@@ -21,9 +14,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin, AdminProvider } from '../../context/AdminContext';
-import '../../components/Admin.css'; // Usando o CSS original por enquanto
+import './AdminBase.css';
 
-// Importação das Sub-Páginas (Criaremos a seguir)
 import AdminProducts from './AdminProducts/AdminProducts';
 import AdminCategories from './AdminCategories/AdminCategories';
 import AdminBanners from './AdminBanners/AdminBanners';
@@ -33,11 +25,11 @@ import AdminPrinters from './AdminPrinters/AdminPrinters';
 
 const DashboardHome = () => {
   const { products, categories, banners } = useAdmin();
-  
+
   const stats = [
     { title: 'Produtos', value: products.length, icon: <Package />, color: 'blue' },
     { title: 'Categorias', value: categories.length, icon: <Layers />, color: 'green' },
-    { title: 'Banners', value: banners.length, icon: <ImageIcon />, color: 'orange' },
+    { title: 'Banners', value: banners.length, icon: <ImageIcon />, color: 'orange' }
   ];
 
   return (
@@ -53,7 +45,7 @@ const DashboardHome = () => {
           </div>
         ))}
       </div>
-      
+
       <div className="admin-card">
         <div className="card-header">
           <h2><LayoutDashboard size={20} /> Bem-vindo ao Painel Administrativo</h2>
@@ -68,7 +60,6 @@ const DashboardHome = () => {
 
 const AdminDashboardContent = () => {
   const { activeTab, setActiveTab, isSidebarCollapsed, setIsSidebarCollapsed, isMobileMenuOpen, setIsMobileMenuOpen, toasts } = useAdminState();
-  const { addToast } = useAdmin();
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
@@ -77,7 +68,7 @@ const AdminDashboardContent = () => {
     { id: 'banners', label: 'Banners', icon: <ImageIcon size={20} /> },
     { id: 'upcera', label: 'Upcera', icon: <CheckCircle size={20} /> },
     { id: 'scanners', label: 'Scanners', icon: <Search size={20} /> },
-    { id: 'printers', label: 'Impressoras 3D', icon: <ImageIcon size={20} /> },
+    { id: 'printers', label: 'Impressoras 3D', icon: <ImageIcon size={20} /> }
   ];
 
   const renderActiveTab = () => {
@@ -95,7 +86,6 @@ const AdminDashboardContent = () => {
 
   return (
     <div className={`admin-layout ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-      {/* Sidebar */}
       <aside className={`admin-sidebar ${isSidebarCollapsed ? 'collapsed' : ''} ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-logo-text">
@@ -107,9 +97,9 @@ const AdminDashboardContent = () => {
         </div>
 
         <nav className="sidebar-nav">
-          {menuItems.map(item => (
-            <div 
-              key={item.id} 
+          {menuItems.map((item) => (
+            <div
+              key={item.id}
               className={`nav-link ${activeTab === item.id ? 'active' : ''}`}
               onClick={() => {
                 setActiveTab(item.id);
@@ -123,20 +113,19 @@ const AdminDashboardContent = () => {
         </nav>
 
         <div className="sidebar-footer">
-          <button className="btn-logout" onClick={() => window.location.href = '/'}>
+          <button className="btn-logout" onClick={() => { window.location.href = '/'; }}>
             <LogOut size={20} />
             {!isSidebarCollapsed && <span>Sair do Painel</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="admin-main">
         <header className="admin-topbar">
           <button className="menu-toggle btn-mobile-menu" onClick={() => setIsMobileMenuOpen(true)} style={{ display: 'none' }}>
             <Menu size={24} />
           </button>
-          <h1>{menuItems.find(i => i.id === activeTab)?.label}</h1>
+          <h1>{menuItems.find((i) => i.id === activeTab)?.label}</h1>
           <div className="user-profile">
             <span className="user-name">Administrador</span>
           </div>
@@ -155,18 +144,19 @@ const AdminDashboardContent = () => {
         </AnimatePresence>
       </main>
 
-      {/* Toast System */}
       <div className="toast-container">
         <AnimatePresence>
-          {toasts.map(toast => (
-            <motion.div 
+          {toasts.map((toast) => (
+            <motion.div
               key={toast.id}
               className={`toast ${toast.type}`}
               initial={{ opacity: 0, x: 20, scale: 0.9 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 20, scale: 0.9 }}
             >
-              {toast.type === 'success' ? <CheckCircle size={20} color="var(--admin-success)" /> : <AlertCircle size={20} color="var(--admin-danger)" />}
+              {toast.type === 'success'
+                ? <CheckCircle size={20} color="var(--admin-success)" />
+                : <AlertCircle size={20} color="var(--admin-danger)" />}
               <span>{toast.message}</span>
             </motion.div>
           ))}
@@ -176,7 +166,6 @@ const AdminDashboardContent = () => {
   );
 };
 
-// Hook auxiliar para gerenciar estado local do AdminDashboard (abas, sidebar)
 const useAdminState = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);

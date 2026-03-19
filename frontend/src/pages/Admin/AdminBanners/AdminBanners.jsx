@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../../../context/AdminContext';
 import BannerTable from './BannerTable';
 import BannerForm from './BannerForm';
+import './AdminBanners.css';
 
 const AdminBanners = () => {
   const { banners, bannersHook, addToast } = useAdmin();
@@ -44,10 +45,13 @@ const AdminBanners = () => {
   };
 
   const confirmDelete = async () => {
+    if (!bannerToDelete) return;
+
     const result = await bannersHook.deleteBanner(bannerToDelete.id);
     if (result.success) {
       addToast('Banner excluído!');
       setShowDeleteModal(false);
+      setBannerToDelete(null);
     } else {
       addToast(result.error, 'error');
     }
@@ -57,7 +61,9 @@ const AdminBanners = () => {
     const data = new FormData();
     data.append('active', !banner.active);
     data.append('title', banner.title || '');
-    
+    data.append('link_url', banner.link_url || '');
+    data.append('display_order', banner.display_order ?? 0);
+
     const result = await bannersHook.updateBanner(banner.id, data);
     if (result.success) {
       addToast(`Banner ${!banner.active ? 'ativado' : 'desativado'}!`);
@@ -76,20 +82,19 @@ const AdminBanners = () => {
           </button>
         </div>
         <div className="card-body">
-          <BannerTable 
-            banners={banners} 
-            onEdit={handleEdit} 
+          <BannerTable
+            banners={banners}
+            onEdit={handleEdit}
             onDelete={handleDeleteClick}
             onToggleStatus={handleToggleStatus}
           />
         </div>
       </div>
 
-      {/* Modal de Formulário */}
       <AnimatePresence>
         {showModal && (
           <div className="modal-overlay">
-            <motion.div 
+            <motion.div
               className="modal-content"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -99,7 +104,7 @@ const AdminBanners = () => {
                 <h3>{editingBanner ? 'Editar Banner' : 'Novo Banner'}</h3>
                 <button className="btn-icon" onClick={() => setShowModal(false)}><X size={20} /></button>
               </div>
-              <BannerForm 
+              <BannerForm
                 initialData={editingBanner}
                 onSubmit={handleSubmit}
                 onCancel={() => setShowModal(false)}
@@ -109,11 +114,10 @@ const AdminBanners = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal de Confirmação de Exclusão */}
       <AnimatePresence>
         {showDeleteModal && (
           <div className="modal-overlay">
-            <motion.div 
+            <motion.div
               className="modal-content"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -128,7 +132,7 @@ const AdminBanners = () => {
               </div>
               <div className="modal-footer">
                 <button className="btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancelar</button>
-                <button className="btn-primary" style={{backgroundColor: 'var(--admin-danger)'}} onClick={confirmDelete}>Sim, Excluir</button>
+                <button className="btn-primary admin-danger-button" onClick={confirmDelete}>Sim, Excluir</button>
               </div>
             </motion.div>
           </div>

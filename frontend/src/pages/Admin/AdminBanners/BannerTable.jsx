@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Trash2, Eye, EyeOff, Image as ImageIcon } from 'lucide-react';
+import { Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 
 const BannerTable = ({ banners, onEdit, onDelete, onToggleStatus }) => {
   return (
@@ -15,24 +15,23 @@ const BannerTable = ({ banners, onEdit, onDelete, onToggleStatus }) => {
           </tr>
         </thead>
         <tbody>
-          {banners.map(banner => (
+          {banners.map((banner) => (
             <tr key={banner.id}>
               <td>
-                <div style={{ width: '120px', height: '50px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
-                  <img 
-                    src={banner.image_url} 
-                    alt={banner.title} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                <div className="banner-table-image">
+                  <img
+                    src={banner.image_url}
+                    alt={banner.title}
+                    className="banner-table-image-content"
                   />
                 </div>
               </td>
-              <td>{banner.title || <span style={{color: '#ccc'}}>Sem título</span>}</td>
+              <td>{banner.title || <span className="banner-empty-title">Sem título</span>}</td>
               <td>{banner.display_order}</td>
               <td>
-                <span 
-                  className={`badge ${banner.active ? 'badge-blue' : 'badge-secondary'}`} 
+                <span
+                  className={`badge banner-status-badge ${banner.active ? 'badge-blue' : 'badge-secondary'}`}
                   onClick={() => onToggleStatus(banner)}
-                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content', margin: '0 auto' }}
                 >
                   {banner.active ? <Eye size={12} /> : <EyeOff size={12} />}
                   {banner.active ? 'ATIVO' : 'INATIVO'}
@@ -46,7 +45,7 @@ const BannerTable = ({ banners, onEdit, onDelete, onToggleStatus }) => {
           ))}
           {banners.length === 0 && (
             <tr>
-              <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--admin-text-light)' }}>
+              <td colSpan="5" className="banner-empty-state">
                 Nenhum banner cadastrado.
               </td>
             </tr>

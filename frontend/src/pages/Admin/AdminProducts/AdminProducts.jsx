@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Package, AlertCircle, X, ChevronLeft } from 'lucide-react';
+import { Plus, AlertCircle, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../../../context/AdminContext';
 import ProductTable from './ProductTable';
 import ProductForm from './ProductForm';
+import './AdminProducts.css';
 
 const AdminProducts = () => {
   const { products, categories, mainCategories, subCategories, productsHook, addToast } = useAdmin();
@@ -24,10 +25,13 @@ const AdminProducts = () => {
   };
 
   const confirmDelete = async () => {
+    if (!productToDelete) return;
+
     const result = await productsHook.deleteProduct(productToDelete.id);
     if (result.success) {
       addToast('Produto excluído com sucesso!');
       setShowDeleteModal(false);
+      setProductToDelete(null);
     } else {
       addToast(result.error, 'error');
     }
@@ -58,14 +62,14 @@ const AdminProducts = () => {
   return (
     <div className="admin-products">
       {!isCreating ? (
-        <div className="admin-actions-bar" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="admin-actions-bar admin-actions-bar-right">
           <button className="btn-primary" onClick={() => setIsCreating(true)}>
             <Plus size={18} /> Novo Produto
           </button>
         </div>
       ) : (
-        <div className="admin-actions-bar" style={{ marginBottom: '20px' }}>
-          <button className="btn-secondary" onClick={handleCancel} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="admin-actions-bar">
+          <button className="btn-secondary admin-back-button" onClick={handleCancel}>
             <ChevronLeft size={18} /> Voltar para a Lista
           </button>
         </div>
@@ -73,7 +77,7 @@ const AdminProducts = () => {
 
       <AnimatePresence mode="wait">
         {isCreating ? (
-          <motion.div 
+          <motion.div
             key="form"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -84,7 +88,7 @@ const AdminProducts = () => {
                 <h2>{editingProduct ? 'Editar Produto' : 'Novo Produto'}</h2>
               </div>
               <div className="card-body">
-                <ProductForm 
+                <ProductForm
                   initialData={editingProduct}
                   categories={categories}
                   mainCategories={mainCategories}
@@ -96,13 +100,13 @@ const AdminProducts = () => {
             </div>
           </motion.div>
         ) : (
-          <motion.div 
+          <motion.div
             key="table"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
           >
-            <ProductTable 
+            <ProductTable
               products={products}
               onEdit={handleEdit}
               onDelete={handleDeleteClick}
@@ -111,11 +115,10 @@ const AdminProducts = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal de Confirmação de Exclusão */}
       <AnimatePresence>
         {showDeleteModal && (
           <div className="modal-overlay">
-            <motion.div 
+            <motion.div
               className="modal-content"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -127,13 +130,11 @@ const AdminProducts = () => {
                 </div>
                 <h3>Excluir Produto?</h3>
                 <p>Tem certeza que deseja excluir o produto <strong>{productToDelete?.name}</strong>?</p>
-                <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '10px' }}>
-                  Esta ação é irreversível.
-                </p>
+                <p className="product-delete-warning">Esta ação é irreversível.</p>
               </div>
               <div className="modal-footer">
                 <button className="btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancelar</button>
-                <button className="btn-primary" style={{backgroundColor: 'var(--admin-danger)'}} onClick={confirmDelete}>Sim, Excluir</button>
+                <button className="btn-primary admin-danger-button" onClick={confirmDelete}>Sim, Excluir</button>
               </div>
             </motion.div>
           </div>

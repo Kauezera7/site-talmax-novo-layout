@@ -1,165 +1,264 @@
 -- ======================================================
--- SCRIPT DE CRIAÇÃO DO BANCO DE DADOS - TALMAX
+-- SCRIPT DE CRIACAO DO BANCO DE DADOS - TALMAX
+-- Estado atualizado com base no banco atual do projeto
 -- ======================================================
 
--- 1. Criação do Banco
-CREATE DATABASE IF NOT EXISTS `site-talmax`;
+CREATE DATABASE IF NOT EXISTS `site-talmax`
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_0900_ai_ci;
+
 USE `site-talmax`;
 
--- 2. Tabela de Categorias
+-- ======================================================
+-- TABELAS PRINCIPAIS
+-- ======================================================
+
 CREATE TABLE IF NOT EXISTS categorias (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) NOT NULL UNIQUE,
-    icon_url VARCHAR(255),
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) NOT NULL,
+    icon_url VARCHAR(255) DEFAULT NULL,
     display_order INT DEFAULT 0,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     is_visible BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_categorias_name (name),
+    UNIQUE KEY uk_categorias_slug (slug)
 );
 
--- 2.1 Tabela de Subcategorias
 CREATE TABLE IF NOT EXISTS sub_categorias (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT NOT NULL AUTO_INCREMENT,
     category_id INT NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) NOT NULL,
     display_order INT DEFAULT 0,
     is_visible BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categorias(id) ON DELETE CASCADE
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sub_categorias_slug (slug),
+    KEY idx_sub_categorias_category_id (category_id),
+    CONSTRAINT fk_sub_categorias_categoria
+        FOREIGN KEY (category_id) REFERENCES categorias(id) ON DELETE CASCADE
 );
 
--- 3. Tabela de Produtos
 CREATE TABLE IF NOT EXISTS products (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT NOT NULL AUTO_INCREMENT,
+    category_id INT DEFAULT NULL,
+    sub_category_id INT DEFAULT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    main_image VARCHAR(255),
-    extra_data JSON, -- Armazena features, models e techInfo
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    main_image VARCHAR(255) DEFAULT NULL,
+    extra_data JSON DEFAULT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    is_featured BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_upcera BOOLEAN DEFAULT FALSE,
+    is_scanner BOOLEAN DEFAULT FALSE,
+    is_3d_printer BOOLEAN DEFAULT FALSE,
+    upcera_order INT DEFAULT 0,
+    scanner_order INT DEFAULT 0,
+    printer_order INT DEFAULT 0,
+    PRIMARY KEY (id),
+    KEY idx_products_category_id (category_id),
+    KEY idx_products_sub_category_id (sub_category_id),
+    CONSTRAINT fk_products_categoria
+        FOREIGN KEY (category_id) REFERENCES categorias(id) ON DELETE SET NULL,
+    CONSTRAINT fk_products_sub_categoria
+        FOREIGN KEY (sub_category_id) REFERENCES sub_categorias(id) ON DELETE SET NULL
 );
 
--- 4. Tabelas de Junção (Muitos para Muitos)
 CREATE TABLE IF NOT EXISTS product_categorias (
-    product_id INT,
-    category_id INT,
+    product_id INT NOT NULL,
+    category_id INT NOT NULL,
     PRIMARY KEY (product_id, category_id),
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    FOREIGN KEY (category_id) REFERENCES categorias(id) ON DELETE CASCADE
+    KEY idx_product_categorias_category_id (category_id),
+    CONSTRAINT fk_product_categorias_product
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    CONSTRAINT fk_product_categorias_categoria
+        FOREIGN KEY (category_id) REFERENCES categorias(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS product_sub_categorias (
-    product_id INT,
-    sub_category_id INT,
+    product_id INT NOT NULL,
+    sub_category_id INT NOT NULL,
     PRIMARY KEY (product_id, sub_category_id),
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    FOREIGN KEY (sub_category_id) REFERENCES sub_categorias(id) ON DELETE CASCADE
+    KEY idx_product_sub_categorias_sub_category_id (sub_category_id),
+    CONSTRAINT fk_product_sub_categorias_product
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    CONSTRAINT fk_product_sub_categorias_sub_categoria
+        FOREIGN KEY (sub_category_id) REFERENCES sub_categorias(id) ON DELETE CASCADE
 );
 
--- 5. Tabela de Banners (Opcional)
 CREATE TABLE IF NOT EXISTS banners (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT NOT NULL AUTO_INCREMENT,
+    title VARCHAR(255) DEFAULT NULL,
+    subtitle VARCHAR(255) DEFAULT NULL,
     image_url VARCHAR(255) NOT NULL,
-    title VARCHAR(255),
-    link_url VARCHAR(255),
+    link_url VARCHAR(255) DEFAULT NULL,
     display_order INT DEFAULT 0,
-    active BOOLEAN DEFAULT TRUE
+    active BOOLEAN DEFAULT TRUE,
+    PRIMARY KEY (id)
 );
 
--- 6. Tabela de Usuários (Admin)
 CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
+    id INT NOT NULL AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    full_name VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    full_name VARCHAR(100) DEFAULT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_users_username (username)
+);
+
+CREATE TABLE IF NOT EXISTS page_settings (
+    id INT NOT NULL AUTO_INCREMENT,
+    page_name VARCHAR(50) NOT NULL,
+    content JSON DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_page_settings_page_name (page_name)
 );
 
 -- ======================================================
--- DADOS INICIAIS (SEED)
+-- DADOS INICIAIS
+-- Observacao:
+-- Os IDs abaixo refletem o banco atual do projeto.
+-- Isso inclui categorias e subcategorias criadas depois do schema antigo.
 -- ======================================================
 
--- Inserindo TODAS as categorias principais com IDs começando em 1
-INSERT INTO categorias (id, name, slug, icon_url, display_order, is_visible) VALUES 
-(1, 'Gesso e Troquelização', 'gesso-e-troquelizacao', '/img/CAT-icon-gesso.png', 1, 1),
-(2, 'Duplicadores', 'duplicadores', '/img/CAT-icon-duplicadores.png', 2, 1),
-(3, 'Ceras', 'ceras', '/img/CATicon-ceras.png', 3, 1),
-(4, 'Revestimentos', 'revestimentos', '/img/CAT-icon-revestimentos-1.png', 4, 1),
-(5, 'Zirkon Ice', 'zirkon-ice', '/img/CAT-icon-zirkon-ice-1.png', 5, 1),
-(6, 'Ligas Metálicas', 'ligas-metalicas', '/img/CAT-icon-ligas-metalicas-1.png', 6, 1),
-(7, 'Soldas', 'soldas', '/img/CAT-icon-soldas-1.png', 7, 1),
-(8, 'Corte e Acabamento', 'corte-e-acabamento', '/img/CAT-icon-acabamentos-1.png', 8, 1),
-(9, 'Microscópio e Lupa', 'microscopio-e-lupa', '/img/CAT-icon-microscopio-lupa-1.png', 9, 1),
+INSERT INTO categorias (id, name, slug, icon_url, display_order, is_visible) VALUES
+(1, 'Gesso e Troquelizacao', 'gesso-e-troquelizacao', '/img/CAT-icon-gesso.png', 1, 0),
+(2, 'Duplicadores', 'duplicadores', '/img/CAT-icon-duplicadores.png', 2, 0),
+(3, 'Ceras', 'ceras', '/img/CATicon-ceras.png', 3, 0),
+(4, 'Revestimentos', 'revestimentos', '/img/CAT-icon-revestimentos-1.png', 4, 0),
+(5, 'Zirkon Ice', 'zirkon-ice', '/img/CAT-icon-zirkon-ice-1.png', 5, 0),
+(6, 'Ligas Metalicas', 'ligas-metalicas', '/img/CAT-icon-ligas-metalicas-1.png', 6, 0),
+(7, 'Soldas', 'soldas', '/img/CAT-icon-soldas-1.png', 7, 0),
+(8, 'Corte e Acabamento', 'corte-e-acabamento', '/img/CAT-icon-acabamentos-1.png', 8, 0),
+(9, 'Microscopio e Lupa', 'microscopio-e-lupa', '/img/CAT-icon-microscopio-lupa-1.png', 9, 0),
 (10, 'Equipamentos', 'equipamentos', '/img/CAT-icon-equipamentos-1.png', 10, 1),
-(11, 'Acessórios para Cerâmica', 'acessorios-para-ceramica', '/img/CAT-icon-ceramica-1.png', 11, 1),
-(12, 'T-Lithium', 't-lithium', '/img/CAT.icon-tilithium-1.png', 12, 1),
-(13, 'Talmax Digital', 'talmax-digital', NULL, 13, 1),
-(14, 'Blocos', 'blocos', NULL, 14, 1),
-(15, 'Linha Cad/Cam', 'linha-cad-cam', NULL, 15, 1),
-(16, 'Linha de Ceramicas', 'linha-de-ceramicas', NULL, 16, 1),
-(17, 'Resinas', 'resinas', NULL, 17, 1);
+(11, 'Acessorios para Ceramica', 'acessorios-para-ceramica', '/img/CAT-icon-ceramica-1.png', 11, 0),
+(12, 'T-Lithium', 't-lithium', '/img/CAT.icon-tilithium-1.png', 12, 0),
+(13, 'Talmax Digital', 'talmax-digital', NULL, 13, 0),
+(14, 'Blocos', 'blocos', NULL, 14, 0),
+(15, 'Linha Cad/Cam', 'linha-cad-cam', NULL, 15, 0),
+(16, 'Linha de Ceramicas', 'linha-de-ceramicas', NULL, 16, 0),
+(17, 'Resinas', 'resinas', NULL, 17, 0),
+(18, 'Protese Dentaria', 'protese-dentaria', NULL, 0, 0),
+(19, 'Nail e Podologia', 'nail-e-podologia', NULL, 0, 0)
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name),
+    slug = VALUES(slug),
+    icon_url = VALUES(icon_url),
+    display_order = VALUES(display_order),
+    is_visible = VALUES(is_visible);
 
--- Inserindo Subcategorias atualizadas para apontar para os novos IDs (1-17)
-INSERT INTO sub_categorias (id, category_id, name, slug, display_order, is_visible) VALUES 
-(1, 3, 'Ceras Galileo', 'ceras-galileo', 1, 1),
-(2, 3, 'Ceras Flex', 'ceras-flex', 2, 1),
-(3, 3, 'Equipamento para Cera', 'equipamento-para-cera', 3, 1),
-(4, 3, 'Utilitários para Cera', 'utilitrios-para-cera', 4, 1),
-(5, 8, 'Pedras Ninja - Para Metal', 'pedras-ninja-para-metal', 1, 1),
-(6, 8, 'Disco Ninja - Disco e Brocas Diamantada', 'disco-ninja-disco-e-brocas-diamantada', 2, 1),
-(7, 8, 'Borrachas Ninja', 'borrachas-ninja', 3, 1),
-(8, 8, 'Escovas Ninja', 'escovas-ninja', 4, 1),
-(9, 8, 'Utilitário para Corte e Acabamento', 'utilitrio-para-corte-e-acabamento', 5, 1),
-(10, 8, 'Pedras Ninja - Para Zircônia', 'pedras-ninja-para-zircnia', 6, 1),
-(11, 8, 'Brocas Sinterizadas', 'brocas-sinterizadas', 7, 1),
-(12, 10, 'Micromotores', 'micromotores', 1, 1),
-(13, 10, 'Fornos', 'fornos', 2, 1),
-(14, 10, 'Microscópios - Lupas', 'microscpios-lupas', 3, 1),
-(15, 10, 'Fresadoras', 'fresadoras', 4, 1),
-(16, 10, 'Ultra-som', 'ultra-som', 5, 1),
-(17, 10, 'Aspiradores', 'aspiradores', 6, 1),
-(18, 10, 'Poletriz', 'poletriz', 7, 1),
-(19, 10, 'Scanners de Mesa', 'scanners-de-mesa', 8, 1),
-(20, 15, 'Fit Plus Cera - Aman', 'fit-plus-cera-aman', 1, 1),
-(21, 15, 'Fit Plus Cera - Open', 'fit-plus-cera-open', 2, 1),
-(22, 15, 'Fit Plus Cera - ZZ', 'fit-plus-cera-zz', 3, 1),
-(23, 15, 'Fit Plus ZR - Aman', 'fit-plus-zr-aman', 4, 1),
-(24, 15, 'Fit Plus ZR - Open', 'fit-plus-zr-open', 5, 1),
-(25, 15, 'Fit Plus ZR - ZZ', 'fit-plus-zr-zz', 6, 1),
-(26, 1, 'Gesso Tuff Rock', 'gesso-tuff-rock', 1, 1),
-(27, 1, 'Pinos de Troquel', 'pinos-de-troquel', 2, 1),
-(28, 1, 'Pinos de Troquel in Box', 'pinos-de-troquel-in-box', 3, 1),
-(29, 1, 'Troquelizadores', 'troquelizadores', 4, 1),
-(30, 1, 'Articuladores', 'articuladores', 5, 1),
-(31, 1, 'Impermeabilizante', 'impermeabilizante', 6, 1),
-(32, 1, 'Espaçadores', 'espaadores', 7, 1),
-(33, 1, 'Isolante', 'isolante', 8, 1),
-(34, 6, 'Blocos e Núcleos - Ligas', 'blocos-e-ncleos-ligas', 1, 1),
-(35, 6, 'Metalocerâmica - Ligas', 'metalocermica-ligas', 2, 1),
-(36, 6, 'PPR - Ligas', 'ppr-ligas', 3, 1),
-(37, 6, 'Utilitários para Ligas (Cadinhos)', 'utilitrios-para-ligas-cadinhos', 4, 1),
-(38, 16, 'Pincéis', 'pincis', 1, 1),
-(39, 16, 'Godés', 'gods', 2, 1),
-(40, 16, 'Bases Refratárias', 'bases-refratrias', 3, 1),
-(41, 4, 'Revestimentos - Fundição - Prensagem - Refratários', 'revestimentos-fundio-prensagem-refratrios', 1, 1),
-(42, 4, 'Refratários', 'refratrios', 2, 1),
-(43, 4, 'Revestimento para Solda', 'revestimento-para-solda', 3, 1),
-(44, 4, 'Silicone', 'silicone', 4, 1),
-(45, 4, 'Utilitários para Fundição e Prensagem', 'utilitrios-para-fundio-e-prensagem', 5, 1),
-(46, 4, 'Micro Fit', 'micro-fit', 6, 1),
-(47, 2, 'Duplicador - Fundição - Prensagem - Refratários', 'duplicador-fundio-prensagem-refratrios', 1, 1),
-(48, 2, 'Refratários Duplicadores', 'refratrios-duplicadores', 2, 1),
-(49, 2, 'Revestimento para Solda Duplicadores', 'revestimento-para-solda-duplicadores', 3, 1),
-(50, 2, 'Silicone Duplicadores', 'silicone-duplicadores', 4, 1),
-(51, 2, 'Utilitários Duplicadores', 'utilitrios-duplicadores', 5, 1),
-(52, 2, 'Micro Fit Duplicadores', 'micro-fit-duplicadores', 6, 1),
-(53, 7, 'Metalocerâmica - Soldas', 'metalocermica-soldas', 1, 1),
-(54, 7, 'PPR - Soldas', 'ppr-soldas', 2, 1),
-(55, 7, 'Utilitários para Soldas', 'utilitrios-para-soldas', 3, 1),
-(56, 12, 'Press', 'press', 1, 1),
-(57, 12, 'Pad', 'pad', 2, 1),
-(58, 12, 'Acessórios T-Lithium', 'acessrios-t-lithium', 3, 1);
+INSERT INTO sub_categorias (id, category_id, name, slug, display_order, is_visible) VALUES
+(1, 3, 'Ceras Galileo', 'ceras-galileo', 0, 1),
+(2, 3, 'Ceras Flex', 'ceras-flex', 0, 1),
+(3, 3, 'Equipamento para Cera', 'equipamento-para-cera', 0, 1),
+(4, 3, 'Utilitarios para Cera', 'utilitrios-para-cera', 0, 1),
+(5, 8, 'Pedras Ninja - Para Metal', 'pedras-ninja-para-metal', 0, 1),
+(6, 8, 'Disco Ninja - Disco e Brocas Diamantada', 'disco-ninja-disco-e-brocas-diamantada', 0, 1),
+(7, 8, 'Borrachas Ninja', 'borrachas-ninja', 0, 1),
+(8, 8, 'Escovas Ninja', 'escovas-ninja', 0, 1),
+(9, 8, 'Utilitario para Corte e Acabamento', 'utilitrio-para-corte-e-acabamento', 0, 1),
+(10, 8, 'Pedras Ninja - Para Zirconia', 'pedras-ninja-para-zircnia', 0, 1),
+(11, 8, 'Brocas Sinterizadas', 'brocas-sinterizadas', 0, 1),
+(12, 10, 'Micromotores', 'micromotores', 0, 1),
+(13, 10, 'Fornos', 'fornos', 0, 1),
+(14, 10, 'Microscopios - Lupas', 'microscpios-lupas', 0, 1),
+(15, 10, 'Fresadoras', 'fresadoras', 0, 1),
+(16, 10, 'Ultra-som', 'ultra-som', 0, 1),
+(17, 10, 'Aspiradores', 'aspiradores', 0, 1),
+(18, 10, 'Poletriz', 'poletriz', 0, 1),
+(19, 10, 'Scanners de Mesa', 'scanners-de-mesa', 0, 1),
+(20, 15, 'Fit Plus Cera - Aman', 'fit-plus-cera-aman', 0, 1),
+(21, 15, 'Fit Plus Cera - Open', 'fit-plus-cera-open', 0, 1),
+(22, 15, 'Fit Plus Cera - ZZ', 'fit-plus-cera-zz', 0, 1),
+(23, 15, 'Fit Plus ZR - Aman', 'fit-plus-zr-aman', 0, 1),
+(24, 15, 'Fit Plus ZR - Open', 'fit-plus-zr-open', 0, 1),
+(25, 15, 'Fit Plus ZR - ZZ', 'fit-plus-zr-zz', 0, 1),
+(26, 1, 'Gesso Tuff Rock', 'gesso-tuff-rock', 0, 1),
+(27, 1, 'Pinos de Troquel', 'pinos-de-troquel', 0, 1),
+(28, 1, 'Pinos de Troquel in Box', 'pinos-de-troquel-in-box', 0, 1),
+(29, 1, 'Troquelizadores', 'troquelizadores', 0, 1),
+(30, 1, 'Articuladores', 'articuladores', 0, 1),
+(31, 1, 'Impermeabilizante', 'impermeabilizante', 0, 1),
+(32, 1, 'Espacadores', 'espaadores', 0, 1),
+(33, 1, 'Isolante', 'isolante', 0, 1),
+(34, 6, 'Blocos e Nucleos - Ligas', 'blocos-e-ncleos-ligas', 0, 1),
+(35, 6, 'Metaloceramica - Ligas', 'metalocermica-ligas', 0, 1),
+(36, 6, 'PPR - Ligas', 'ppr-ligas', 0, 1),
+(37, 6, 'Utilitarios para Ligas (Cadinhos)', 'utilitrios-para-ligas-cadinhos', 0, 1),
+(38, 16, 'Pinceis', 'pincis', 0, 1),
+(39, 16, 'Godes', 'gods', 0, 1),
+(40, 16, 'Bases Refratarias', 'bases-refratrias', 0, 1),
+(41, 4, 'Revestimentos - Fundicao - Prensagem - Refratarios', 'revestimentos-fundio-prensagem-refratrios', 0, 1),
+(42, 4, 'Refratarios', 'refratrios', 0, 1),
+(43, 4, 'Revestimento para Solda', 'revestimento-para-solda', 0, 1),
+(44, 4, 'Silicone', 'silicone', 0, 1),
+(45, 4, 'Utilitarios para Fundicao e Prensagem', 'utilitrios-para-fundio-e-prensagem', 0, 1),
+(46, 4, 'Micro Fit', 'micro-fit', 0, 1),
+(47, 2, 'Duplicador - Fundicao - Prensagem - Refratarios', 'duplicador-fundio-prensagem-refratrios', 0, 1),
+(48, 2, 'Refratarios Duplicadores', 'refratrios-duplicadores', 0, 1),
+(49, 2, 'Revestimento para Solda Duplicadores', 'revestimento-para-solda-duplicadores', 0, 1),
+(50, 2, 'Silicone Duplicadores', 'silicone-duplicadores', 0, 1),
+(51, 2, 'Utilitarios Duplicadores', 'utilitrios-duplicadores', 0, 1),
+(52, 2, 'Micro Fit Duplicadores', 'micro-fit-duplicadores', 0, 1),
+(53, 7, 'Metaloceramica - Soldas', 'metalocermica-soldas', 0, 1),
+(54, 7, 'PPR - Soldas', 'ppr-soldas', 0, 1),
+(55, 7, 'Utilitarios para Soldas', 'utilitrios-para-soldas', 0, 1),
+(56, 12, 'Press', 'press', 0, 1),
+(57, 12, 'Pad', 'pad', 0, 1),
+(58, 12, 'Acessorios T-Lithium', 'acessrios-t-lithium', 0, 1),
+(61, 13, 'Upcera', 'upcera', 0, 1),
+(62, 13, 'Scanner', 'scanner', 0, 1),
+(63, 13, 'Impressora', 'impressora', 0, 1)
+ON DUPLICATE KEY UPDATE
+    category_id = VALUES(category_id),
+    name = VALUES(name),
+    slug = VALUES(slug),
+    display_order = VALUES(display_order),
+    is_visible = VALUES(is_visible);
 
--- Criando usuário Admin padrão (Senha: admin123)
-INSERT INTO users (username, password, full_name) 
-VALUES ('admin', '$2a$10$7vNfN.fBwZ7fVfS.Z7fVfO.7vNfN.fBwZ7fVfS.Z7fVfO', 'Administrador Talmax');
+INSERT INTO page_settings (id, page_name, content) VALUES
+(
+    1,
+    'scanners',
+    JSON_OBJECT(
+        'title', 'Digital Precision Engineering',
+        'description', 'O apice da captura digital para diagnosticos e planejamentos proteticos de precisao absoluta.'
+    )
+),
+(
+    2,
+    'upcera',
+    JSON_OBJECT(
+        'title', 'Upcera - Solucoes em Zirconia',
+        'description', 'Lider mundial em tecnologia de ceramicas odontologicas.'
+    )
+),
+(
+    3,
+    'equipamentos',
+    JSON_OBJECT(
+        'title', 'Equipamentos Odontologicos de Alta Performance',
+        'description', 'Tecnologia avancada para laboratorios e consultorios que buscam excelencia e produtividade.'
+    )
+)
+ON DUPLICATE KEY UPDATE
+    page_name = VALUES(page_name),
+    content = VALUES(content);
+
+INSERT INTO users (id, username, password, full_name) VALUES
+(1, 'admin', '$2a$10$7vNfN.fBwZ7fVfS.Z7fVfO.7vNfN.fBwZ7fVfS.Z7fVfO', 'Administrador Talmax')
+ON DUPLICATE KEY UPDATE
+    username = VALUES(username),
+    password = VALUES(password),
+    full_name = VALUES(full_name);
+
+-- ======================================================
+-- FIM DO SCRIPT
+-- ======================================================

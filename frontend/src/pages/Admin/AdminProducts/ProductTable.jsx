@@ -4,7 +4,7 @@ import { Edit, Trash2, Search, List } from 'lucide-react';
 const ProductTable = ({ products, onEdit, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredProducts = products.filter(p => 
+  const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.id.toString().includes(searchTerm) ||
     (p.category_names && p.category_names.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -14,12 +14,12 @@ const ProductTable = ({ products, onEdit, onDelete }) => {
     <div className="admin-card">
       <div className="card-header">
         <h2><List size={20} /> Lista de Produtos</h2>
-        <div className="search-box" style={{position: 'relative'}}>
-          <Search size={16} style={{position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8'}} />
-          <input 
-            type="text" 
-            placeholder="Buscar por nome, ID ou categoria..." 
-            style={{paddingLeft: '35px', paddingRight: '10px', paddingTop: '6px', paddingBottom: '6px', borderRadius: '20px', border: '1px solid var(--admin-border)', fontSize: '0.85rem', width: '250px'}}
+        <div className="search-box product-search-box">
+          <Search size={16} className="product-search-icon" />
+          <input
+            type="text"
+            placeholder="Buscar por nome, ID ou categoria..."
+            className="product-search-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -35,7 +35,7 @@ const ProductTable = ({ products, onEdit, onDelete }) => {
             </tr>
           </thead>
           <tbody>
-            {filteredProducts.map(p => (
+            {filteredProducts.map((p) => (
               <tr key={p.id}>
                 <td>
                   <div className="product-cell">
@@ -47,7 +47,7 @@ const ProductTable = ({ products, onEdit, onDelete }) => {
                   </div>
                 </td>
                 <td>
-                  <div className="badge-container">
+                  <div className="product-badge-container">
                     {p.category_names ? p.category_names.split(', ').map((cat, i) => (
                       <span key={i} className="badge-soft-blue">{cat}</span>
                     )) : <span className="badge-soft-blue badge-secondary">Sem categoria</span>}
@@ -61,7 +61,7 @@ const ProductTable = ({ products, onEdit, onDelete }) => {
             ))}
             {filteredProducts.length === 0 && (
               <tr>
-                <td colSpan="3" style={{textAlign: 'center', padding: '3rem', color: 'var(--admin-text-light)'}}>
+                <td colSpan="3" className="product-empty-state">
                   Nenhum produto encontrado.
                 </td>
               </tr>

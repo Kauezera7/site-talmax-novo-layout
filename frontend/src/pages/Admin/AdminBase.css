@@ -65,7 +65,9 @@
   font-weight: 800;
   font-size: 1.25rem;
   letter-spacing: -0.5px;
+  color: #2563eb;
   background: linear-gradient(to right, #60a5fa, #2563eb);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -294,16 +296,6 @@
 
   .admin-section-group {
     padding: 1rem;
-  }
-
-  .dynamic-input-group {
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .dynamic-input-group .btn-icon {
-    width: 100%;
-    margin-top: 5px;
   }
 
   .simple-headers {
@@ -583,34 +575,6 @@
 }
 
 /* Ajuste específico para a célula de Produto (Imagem + Nome) */
-.product-cell {
-  display: inline-flex; /* inline-flex permite que o vertical-align: middle do td funcione melhor */
-  align-items: center;
-  gap: 1rem;
-  text-align: left;
-}
-
-.product-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.product-info h4 {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.badge-container {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-  vertical-align: middle;
-}
-
 .actions-cell {
   text-align: center;
   vertical-align: middle;
@@ -624,20 +588,6 @@
 }
 
 .admin-table tr:last-child td { border-bottom: none; }
-
-.product-cell {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.product-cell img {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  object-fit: cover;
-  box-shadow: var(--shadow-sm);
-}
 
 /* Dynamic Inputs (Features/Models) */
 .dynamic-input-group {
@@ -905,71 +855,6 @@
   gap: 1rem;
 }
 
-/* Category Specifics */
-.category-icon-cell {
-  width: 40px;
-  height: 40px;
-  background: #f1f5f9;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.category-icon-cell img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 4px;
-}
-
-/* Subcategory Styling in Categories Table */
-.admin-table tr.main-category-row td:first-child {
-  border-left: 4px solid var(--admin-primary);
-}
-
-.admin-table tr.subcategory-row {
-  background-color: #f8fafc;
-}
-
-.admin-table tr.subcategory-row td {
-  background-color: #f8fafc;
-  font-size: 0.85rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.subcategory-arrow-cell {
-  text-align: right;
-  padding-right: 0 !important;
-  color: var(--admin-secondary);
-  font-weight: bold;
-  font-size: 1.1rem;
-}
-
-.btn-add-sub {
-  background: #eff6ff;
-  border: 1px dashed var(--admin-primary);
-  color: var(--admin-primary);
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.2s;
-  margin-top: 4px;
-}
-
-.btn-add-sub:hover {
-  background: var(--admin-primary);
-  color: white;
-  border-style: solid;
-}
-
-/* Multi-select Dropdown Premium */
 .custom-multi-select {
   position: relative;
   width: 100%;
@@ -1041,7 +926,7 @@
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   z-index: 150;
   max-height: 280px;
   overflow-y: auto;

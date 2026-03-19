@@ -1,10 +1,7 @@
-/* Estilos para Páginas Especiais (Upcera e Scanners) */
-
 .special-page-container {
   overflow-x: hidden;
 }
 
-/* Ajustes para o Header */
 @media (max-width: 768px) {
   .special-page-header {
     padding: 100px 20px 40px !important;
@@ -23,7 +20,6 @@
   }
 }
 
-/* Ajustes para o Showcase de Produtos */
 .product-showcase-item {
   display: flex;
   align-items: center;
@@ -34,7 +30,7 @@
   .product-showcase-item {
     gap: 40px;
   }
-  
+
   .product-showcase-item h2 {
     font-size: 3rem !important;
   }
@@ -42,7 +38,7 @@
 
 @media (max-width: 768px) {
   .product-showcase-item {
-    flex-direction: column !important; /* Sempre empilha no mobile */
+    flex-direction: column !important;
     gap: 30px;
     text-align: center;
   }
@@ -71,13 +67,12 @@
   .product-showcase-item .divider-line {
     margin-top: 40px !important;
   }
-  
+
   .product-showcase-list {
     gap: 80px !important;
   }
 }
 
-/* Seção CAD/CAM Responsiva */
 .cad-cam-responsive-list {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -97,8 +92,8 @@
     overflow-x: auto;
     scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
-    gap: 0; /* Remove gap para não vazar o próximo card */
-    padding: 20px 0 40px; /* Remove padding lateral do container */
+    gap: 0;
+    padding: 20px 0 40px;
     -ms-overflow-style: none;
     scrollbar-width: none;
     margin: 0;
@@ -109,47 +104,16 @@
   }
 
   .cad-cam-responsive-list .premium-product-card {
-    flex: 0 0 100%; /* Ocupa a largura total */
+    flex: 0 0 100%;
     height: 450px;
     scroll-snap-align: center;
     text-align: center;
-    border-radius: 0; /* Remove radius lateral para preencher a tela se desejar, ou mantenha se quiser margem interna */
+    border-radius: 0;
     border-left: none;
     border-right: none;
-    box-shadow: none; /* Simplifica o visual para foco total */
+    box-shadow: none;
   }
 }
-
-
-/* Estilos para o Carrossel de Produtos Relacionados (Upcera) */
-.white-cards-carousel .premium-product-card {
-  background: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-}
-
-.white-cards-carousel .card-title {
-  color: #1d1d1f !important;
-}
-
-.white-cards-carousel .card-details {
-  background: #ffffff !important;
-}
-
-/* Customização das setas do Swiper para fundo preto */
-.white-cards-carousel .swiper-button-next,
-.white-cards-carousel .swiper-button-prev {
-  color: #ffffff !important;
-}
-
-.white-cards-carousel .swiper-pagination-bullet {
-  background: #ffffff !important;
-}
-
-.white-cards-carousel .swiper-pagination-bullet-active {
-  background: var(--accent-color, #cf222e) !important;
-}
-
 
 @keyframes spin {
   0% { transform: rotate(0deg); }

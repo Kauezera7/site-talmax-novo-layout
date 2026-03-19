@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Save, X, UploadCloud } from 'lucide-react';
+import { Save, UploadCloud } from 'lucide-react';
+
+const initialFormState = {
+  title: '',
+  link_url: '',
+  display_order: 0,
+  active: true,
+  image: null
+};
 
 const BannerForm = ({ initialData, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    link_url: '',
-    display_order: 0,
-    active: true,
-    image: null
-  });
+  const [formData, setFormData] = useState(initialFormState);
   const [preview, setPreview] = useState(null);
 
   useEffect(() => {
@@ -16,12 +18,16 @@ const BannerForm = ({ initialData, onSubmit, onCancel }) => {
       setFormData({
         title: initialData.title || '',
         link_url: initialData.link_url || '',
-        display_order: initialData.display_order || 0,
-        active: initialData.active !== 0,
+        display_order: initialData.display_order ?? 0,
+        active: Boolean(initialData.active),
         image: null
       });
-      setPreview(initialData.image_url);
+      setPreview(initialData.image_url || null);
+      return;
     }
+
+    setFormData(initialFormState);
+    setPreview(null);
   }, [initialData]);
 
   const handleSubmit = (e) => {
@@ -32,23 +38,23 @@ const BannerForm = ({ initialData, onSubmit, onCancel }) => {
     data.append('display_order', formData.display_order);
     data.append('active', formData.active);
     if (formData.image) data.append('image', formData.image);
-    
+
     onSubmit(data);
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px', textAlign: 'left' }}>
+      <div className="modal-body banner-form-body">
         <div className="form-group">
           <label>Imagem do Banner (Recomendado: 1920x600px)</label>
-          <div className="file-upload-area" style={{ padding: '20px' }}>
-            <input 
-              type="file" 
+          <div className="file-upload-area banner-upload-area">
+            <input
+              type="file"
               accept="image/*"
               onChange={(e) => {
                 const file = e.target.files[0];
                 if (file) {
-                  setFormData({...formData, image: file});
+                  setFormData({ ...formData, image: file });
                   setPreview(URL.createObjectURL(file));
                 }
               }}
@@ -57,48 +63,48 @@ const BannerForm = ({ initialData, onSubmit, onCancel }) => {
             <p>Clique ou arraste a imagem do banner</p>
           </div>
           {preview && (
-            <div className="banner-preview-large" style={{ marginTop: '10px', width: '100%', height: '150px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
-              <img src={preview} alt="Preview Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div className="banner-preview-large">
+              <img src={preview} alt="Preview Banner" className="banner-preview-image" />
             </div>
           )}
         </div>
 
         <div className="form-group">
           <label>Título / Texto do Banner (Opcional)</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Ex: Lançamento Nova Frizadora"
             value={formData.title}
-            onChange={(e) => setFormData({...formData, title: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           />
         </div>
 
         <div className="form-group">
           <label>URL de Destino (Ao clicar no banner)</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Ex: /produtos/frizadora-digital"
             value={formData.link_url}
-            onChange={(e) => setFormData({...formData, link_url: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, link_url: e.target.value })}
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+        <div className="banner-form-grid">
           <div className="form-group">
             <label>Ordem de Exibição</label>
-            <input 
-              type="number" 
+            <input
+              type="number"
               value={formData.display_order}
-              onChange={(e) => setFormData({...formData, display_order: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, display_order: e.target.value })}
             />
           </div>
-          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '25px' }}>
-            <input 
-              type="checkbox" 
+          <div className="form-group banner-active-group">
+            <input
+              type="checkbox"
               id="bannerActive"
-              style={{ width: '20px', height: '20px' }}
+              className="banner-active-checkbox"
               checked={formData.active}
-              onChange={(e) => setFormData({...formData, active: e.target.checked})}
+              onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
             />
             <label htmlFor="bannerActive" style={{ marginBottom: 0, fontWeight: 600 }}>Banner Ativo</label>
           </div>

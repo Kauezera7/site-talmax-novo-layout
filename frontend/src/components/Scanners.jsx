@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import './SpecialPages.css';
+import './Scanners.css';
 
 const Scanners = () => {
   const [products, setProducts] = useState([]);

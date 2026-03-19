@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronRight, ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ProductCard from './ProductCard';
-import './SpecialPages.css';
+import './Impressoras3D.css';
 import './ProductCatalog.css';
 
 const Impressoras3D = () => {

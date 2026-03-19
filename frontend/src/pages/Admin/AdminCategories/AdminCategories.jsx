@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../../../context/AdminContext';
 import CategoryTable from './CategoryTable';
 import CategoryForm from './CategoryForm';
+import './AdminCategories.css';
 
 const AdminCategories = () => {
   const { mainCategories, subCategories, products, categoriesHook, addToast } = useAdmin();
@@ -44,10 +45,13 @@ const AdminCategories = () => {
   };
 
   const confirmDelete = async () => {
+    if (!categoryToDelete) return;
+
     const result = await categoriesHook.deleteCategory(categoryToDelete.id);
     if (result.success) {
       addToast('Categoria excluída!');
       setShowDeleteModal(false);
+      setCategoryToDelete(null);
     } else {
       addToast(result.error, 'error');
     }
@@ -59,7 +63,7 @@ const AdminCategories = () => {
     data.append('name', category.name);
     data.append('slug', category.slug);
     if (category.parent_id) data.append('parent_id', category.parent_id);
-    
+
     const result = await categoriesHook.updateCategory(category.id, data);
     if (result.success) {
       addToast(`Categoria ${!category.is_visible ? 'visível' : 'oculta'}!`);
@@ -83,7 +87,7 @@ const AdminCategories = () => {
           </div>
         </div>
         <div className="card-body">
-          <CategoryTable 
+          <CategoryTable
             mainCategories={mainCategories}
             subCategories={subCategories}
             products={products}
@@ -98,7 +102,7 @@ const AdminCategories = () => {
       <AnimatePresence>
         {showModal && (
           <div className="modal-overlay">
-            <motion.div 
+            <motion.div
               className="modal-content"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -109,7 +113,7 @@ const AdminCategories = () => {
                 <h3>{editingCategory?.id ? 'Editar Categoria' : 'Nova Categoria'}</h3>
                 <button className="btn-icon" onClick={() => setShowModal(false)}><X size={20} /></button>
               </div>
-              <CategoryForm 
+              <CategoryForm
                 initialData={editingCategory?.id ? editingCategory : null}
                 mainCategories={mainCategories}
                 onSubmit={handleSubmit}
@@ -124,7 +128,7 @@ const AdminCategories = () => {
       <AnimatePresence>
         {showDeleteModal && (
           <div className="modal-overlay">
-            <motion.div 
+            <motion.div
               className="modal-content"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -137,12 +141,12 @@ const AdminCategories = () => {
                 <h3>Excluir Categoria?</h3>
                 <p>Tem certeza que deseja excluir <strong>{categoryToDelete?.name}</strong>?</p>
                 <p style={{ fontSize: '0.85rem', color: '#ef4444', marginTop: '10px' }}>
-                  ⚠️ Atenção: Produtos vinculados a esta categoria ficarão "Sem Categoria".
+                  Atenção: produtos vinculados a esta categoria ficarão "Sem Categoria".
                 </p>
               </div>
               <div className="modal-footer">
                 <button className="btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancelar</button>
-                <button className="btn-primary" style={{backgroundColor: 'var(--admin-danger)'}} onClick={confirmDelete}>Sim, Excluir</button>
+                <button className="btn-primary" style={{ backgroundColor: 'var(--admin-danger)' }} onClick={confirmDelete}>Sim, Excluir</button>
               </div>
             </motion.div>
           </div>

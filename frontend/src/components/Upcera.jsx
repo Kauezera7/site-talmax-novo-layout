@@ -11,7 +11,7 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
 import ProductCard from './ProductCard';
-import './SpecialPages.css';
+import './Upcera.css';
 import './ProductCatalog.css';
 
 const Upcera = () => {

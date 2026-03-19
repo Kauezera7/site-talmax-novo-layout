@@ -1,0 +1,61 @@
+.category-icon-cell {
+  width: 40px;
+  height: 40px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.category-icon-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.admin-table tr.main-category-row td:first-child {
+  border-left: 4px solid var(--admin-primary);
+}
+
+.admin-table tr.subcategory-row {
+  background-color: #f8fafc;
+}
+
+.admin-table tr.subcategory-row td {
+  background-color: #f8fafc;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.subcategory-arrow-cell {
+  text-align: right;
+  padding-right: 0 !important;
+  color: var(--admin-secondary);
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.btn-add-sub {
+  background: #eff6ff;
+  border: 1px dashed var(--admin-primary);
+  color: var(--admin-primary);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+
+.btn-add-sub:hover {
+  background: var(--admin-primary);
+  color: white;
+  border-style: solid;
+}

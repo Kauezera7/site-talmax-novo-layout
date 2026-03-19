@@ -1,0 +1,90 @@
+.admin-danger-button {
+  background-color: var(--admin-danger);
+}
+
+.banner-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  text-align: left;
+}
+
+.banner-upload-area {
+  padding: 20px;
+}
+
+.banner-preview-large {
+  margin-top: 10px;
+  width: 100%;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+}
+
+.banner-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.banner-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.banner-active-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.banner-active-checkbox {
+  width: 20px !important;
+  height: 20px;
+}
+
+.banner-table-image {
+  width: 120px;
+  height: 50px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+}
+
+.banner-table-image-content {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.banner-empty-title {
+  color: #ccc;
+}
+
+.banner-status-badge {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.banner-empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--admin-text-light);
+}
+
+@media (max-width: 768px) {
+  .banner-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .banner-active-group {
+    margin-top: 0;
+  }
+}

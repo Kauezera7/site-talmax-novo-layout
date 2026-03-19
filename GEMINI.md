@@ -14,9 +14,11 @@ O projeto é um catálogo digital de produtos odontológicos, transformado de um
 
 ## 📂 Estrutura de Pastas
 - `/frontend`: Aplicação React.
-  - `src/components/Admin.jsx`: Painel de controle (CRUD).
+  - `src/pages/Admin/AdminDashboard.jsx`: Novo painel de controle modular.
   - `src/components/ProductCatalog.jsx`: Listagem dinâmica do banco.
   - `src/components/ProductDetail.jsx`: Detalhes dinâmicos por ID.
+  - `src/services/`: Serviços de API (produtos, categorias, banners).
+  - `src/hooks/`: Hooks customizados para consumo da API.
 - `/backend`: Servidor Node.js.
   - `server.js`: API Express com rotas de Produtos e Categorias.
   - `db.js`: Configuração do Pool de conexão MySQL (mysql2).

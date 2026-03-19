@@ -5,11 +5,11 @@ const CategoryTable = ({ mainCategories, subCategories, products, onEdit, onDele
   const [expandedCategories, setExpandedCategories] = useState({});
 
   const toggleExpand = (id) => {
-    setExpandedCategories(prev => ({ ...prev, [id]: !prev[id] }));
+    setExpandedCategories((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const getProductCount = (categoryId) => {
-    return products.filter(p => p.category_ids && p.category_ids.includes(categoryId)).length;
+    return products.filter((p) => p.category_ids && p.category_ids.includes(categoryId)).length;
   };
 
   return (
@@ -25,22 +25,22 @@ const CategoryTable = ({ mainCategories, subCategories, products, onEdit, onDele
           </tr>
         </thead>
         <tbody>
-          {mainCategories.map(cat => (
+          {mainCategories.map((cat) => (
             <React.Fragment key={cat.id}>
               <tr className="main-category-row">
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button 
-                      className="btn-icon" 
+                    <button
+                      className="btn-icon"
                       style={{ width: '24px', height: '24px', border: 'none', background: '#f1f5f9' }}
                       onClick={() => toggleExpand(cat.id)}
                     >
-                      <ChevronRight 
-                        size={16} 
-                        style={{ 
+                      <ChevronRight
+                        size={16}
+                        style={{
                           transform: expandedCategories[cat.id] ? 'rotate(90deg)' : 'rotate(0deg)',
                           transition: 'transform 0.2s'
-                        }} 
+                        }}
                       />
                     </button>
                     <div className="category-icon-cell">
@@ -51,8 +51,8 @@ const CategoryTable = ({ mainCategories, subCategories, products, onEdit, onDele
                 </td>
                 <td><code>{cat.slug}</code></td>
                 <td>
-                  <span 
-                    className={`badge ${cat.is_visible ? 'badge-blue' : 'badge-secondary'}`} 
+                  <span
+                    className={`badge ${cat.is_visible ? 'badge-blue' : 'badge-secondary'}`}
                     onClick={() => onToggleVisibility(cat)}
                     style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content' }}
                   >
@@ -66,21 +66,20 @@ const CategoryTable = ({ mainCategories, subCategories, products, onEdit, onDele
                   <button className="btn-icon delete" onClick={() => onDelete(cat)}><Trash2 size={16} /></button>
                 </td>
               </tr>
-              
-              {/* Subcategorias */}
+
               {expandedCategories[cat.id] && subCategories
-                .filter(sub => Number(sub.parent_id) === Number(cat.id))
-                .map(subCat => (
+                .filter((sub) => Number(sub.parent_id) === Number(cat.id))
+                .map((subCat) => (
                   <tr key={subCat.id} className="subcategory-row">
                     <td style={{ paddingLeft: '60px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--admin-primary)' }}></div>
+                        <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--admin-primary)' }} />
                         {subCat.name}
                       </div>
                     </td>
                     <td><code>{subCat.slug}</code></td>
                     <td>
-                      <button 
+                      <button
                         onClick={() => onToggleVisibility(subCat)}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: subCat.is_visible ? 'var(--admin-primary)' : 'var(--admin-secondary)', display: 'flex', alignItems: 'center' }}
                       >
@@ -93,8 +92,7 @@ const CategoryTable = ({ mainCategories, subCategories, products, onEdit, onDele
                       <button className="btn-icon delete" onClick={() => onDelete(subCat)}><Trash2 size={16} /></button>
                     </td>
                   </tr>
-                ))
-              }
+                ))}
             </React.Fragment>
           ))}
         </tbody>
