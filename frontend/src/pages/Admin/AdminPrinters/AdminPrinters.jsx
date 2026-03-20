@@ -4,7 +4,7 @@ import SpecialSectionManager from '../AdminUpcera/SpecialSectionManager';
 import './AdminPrinters.css';
 
 const AdminPrinters = () => {
-  const { products, mainCategories, productsHook, addToast } = useAdmin();
+  const { products, mainCategories, subCategories, productsHook, addToast } = useAdmin();
 
   const handleSave = async (selectedProducts) => {
     const result = await productsHook.updateSpecialSection('printers', selectedProducts);
@@ -21,6 +21,8 @@ const AdminPrinters = () => {
       sectionKey="printers"
       products={products}
       mainCategories={mainCategories}
+      subCategories={subCategories}
+      categoryMatcher={(category) => category.slug === 'impressora'}
       onSave={handleSave}
     />
   );

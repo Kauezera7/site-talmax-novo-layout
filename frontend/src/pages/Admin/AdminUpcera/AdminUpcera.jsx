@@ -4,7 +4,7 @@ import SpecialSectionManager from './SpecialSectionManager';
 import './SpecialSectionManager.css';
 
 const AdminUpcera = () => {
-  const { products, mainCategories, productsHook, addToast } = useAdmin();
+  const { products, mainCategories, subCategories, productsHook, addToast } = useAdmin();
 
   const handleSave = async (selectedProducts) => {
     const result = await productsHook.updateSpecialSection('upcera', selectedProducts);
@@ -21,6 +21,8 @@ const AdminUpcera = () => {
       sectionKey="upcera"
       products={products}
       mainCategories={mainCategories}
+      subCategories={subCategories}
+      categoryMatcher={(category) => category.slug === 'upcera'}
       onSave={handleSave}
     />
   );

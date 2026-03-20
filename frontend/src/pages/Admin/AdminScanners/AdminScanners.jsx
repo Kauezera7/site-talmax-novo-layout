@@ -4,7 +4,7 @@ import SpecialSectionManager from '../AdminUpcera/SpecialSectionManager';
 import './AdminScanners.css';
 
 const AdminScanners = () => {
-  const { products, mainCategories, productsHook, addToast } = useAdmin();
+  const { products, mainCategories, subCategories, productsHook, addToast } = useAdmin();
 
   const handleSave = async (selectedProducts) => {
     const result = await productsHook.updateSpecialSection('scanners', selectedProducts);
@@ -21,6 +21,8 @@ const AdminScanners = () => {
       sectionKey="scanners"
       products={products}
       mainCategories={mainCategories}
+      subCategories={subCategories}
+      categoryMatcher={(category) => ['scanner', 'scanners-de-mesa'].includes(category.slug)}
       onSave={handleSave}
     />
   );

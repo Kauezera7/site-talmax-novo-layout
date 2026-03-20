@@ -1,14 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Save, CheckCircle, ChevronRight } from 'lucide-react';
 
-const SpecialSectionManager = ({ sectionTitle, sectionKey, products, mainCategories, onSave }) => {
+const SpecialSectionManager = ({
+  sectionTitle,
+  sectionKey,
+  products,
+  mainCategories,
+  subCategories = [],
+  categoryMatcher,
+  onSave
+}) => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCats, setSelectedCats] = useState([]);
   const [isCatDropdownOpen, setIsCatDropdownOpen] = useState(false);
 
+  const allowedSubCategoryIds = useMemo(() => {
+    if (!categoryMatcher) return [];
+    return subCategories
+      .filter(categoryMatcher)
+      .map((category) => category.id);
+  }, [subCategories, categoryMatcher]);
+
+  const scopedProducts = useMemo(() => {
+    if (allowedSubCategoryIds.length === 0) {
+      return products;
+    }
+
+    return products.filter((product) =>
+      product.category_ids && product.category_ids.some((id) => allowedSubCategoryIds.includes(id))
+    );
+  }, [products, allowedSubCategoryIds]);
+
+  const availableMainCategories = useMemo(() => {
+    const mainCategoryIds = new Set(
+      scopedProducts.flatMap((product) =>
+        (product.category_ids || []).filter((id) => mainCategories.some((category) => category.id === id))
+      )
+    );
+
+    return mainCategories.filter((category) => mainCategoryIds.has(category.id));
+  }, [scopedProducts, mainCategories]);
+
   useEffect(() => {
-    const initial = products
+    const initial = scopedProducts
       .filter((p) => {
         if (sectionKey === 'upcera') return p.is_upcera;
         if (sectionKey === 'scanners') return p.is_scanner;
@@ -20,7 +55,7 @@ const SpecialSectionManager = ({ sectionTitle, sectionKey, products, mainCategor
         order: (sectionKey === 'upcera' ? p.upcera_order : (sectionKey === 'scanners' ? p.scanner_order : p.printer_order)) || 0
       }));
     setSelectedProducts(initial);
-  }, [products, sectionKey]);
+  }, [scopedProducts, sectionKey]);
 
   const toggleProduct = (product) => {
     const isSelected = selectedProducts.find((sp) => sp.id === product.id);
@@ -37,7 +72,7 @@ const SpecialSectionManager = ({ sectionTitle, sectionKey, products, mainCategor
     ));
   };
 
-  const filteredProducts = products.filter((p) => {
+  const filteredProducts = scopedProducts.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCat = selectedCats.length === 0 || (p.category_ids && p.category_ids.some((id) => selectedCats.includes(id)));
     return matchesSearch && matchesCat;
@@ -80,7 +115,7 @@ const SpecialSectionManager = ({ sectionTitle, sectionKey, products, mainCategor
                 </div>
                 {isCatDropdownOpen && (
                   <div className="multi-select-options">
-                    {mainCategories.map((cat) => (
+                    {availableMainCategories.map((cat) => (
                       <div
                         key={cat.id}
                         className={`multi-select-option ${selectedCats.includes(cat.id) ? 'selected' : ''}`}
