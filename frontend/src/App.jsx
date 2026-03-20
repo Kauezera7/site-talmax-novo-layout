@@ -23,6 +23,7 @@ import CookieBanner from './components/CookieBanner/CookieBanner';
 import PagePlaceholder from './components/PagePlaceholder/PagePlaceholder';
 import ProductCatalog from './components/ProductCatalog/ProductCatalog';
 import ProductDetail from './components/ProductDetail/ProductDetail';
+import Support from './components/Support/Support';
 import TalmaxDigital from './components/TalmaxDigital/TalmaxDigital';
 import Upcera from './components/Upcera/Upcera';
 import Scanners from './components/Scanners/Scanners';
@@ -194,7 +195,7 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
           <Route path="/blog" element={<PagePlaceholder title="Blog" />} />
           
           {/* Serviços */}
-          <Route path="/suporte" element={<PagePlaceholder title="Suporte" />} />
+          <Route path="/suporte" element={<Support />} />
           <Route path="/assistencia-tecnica" element={<PagePlaceholder title="Assistência Técnica" />} />
           
           {/* Contato */}

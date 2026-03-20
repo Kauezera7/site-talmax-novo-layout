@@ -1,0 +1,226 @@
+.support-container {
+  width: 100%;
+  min-height: 80vh;
+  padding-top: 0; /* Removido padding extra pois o hero ja tem */
+  background-color: #f4f6f8; /* Fundo cinza azulado muito leve, comum em sistemas enterprise */
+}
+
+.support-hero {
+  text-align: center;
+  padding: 5rem 1rem;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); /* Slate/Dark Blue muito profissional */
+  color: white;
+  margin-bottom: -4rem; /* Faz os cards sobreporem o header levemente */
+  padding-bottom: 6rem;
+}
+
+.support-hero-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.support-main-logo {
+  max-width: 160px;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
+.support-hero-content p {
+  font-size: 1.15rem;
+  color: #cbd5e1; /* Slate 300 - cinza claro para texto em fundo escuro */
+  font-weight: 300;
+  letter-spacing: 0.3px;
+}
+
+.support-grid-section {
+  max-width: 1400px; /* Aumentado de 1200px para 1400px */
+  margin: 0 auto;
+  padding: 0 1rem; /* Margem lateral reduzida */
+}
+
+.support-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem; /* Gap reduzido de 2.5rem para 1.5rem */
+  margin-bottom: 5rem;
+}
+
+.support-card {
+  background: white;
+  border-radius: 8px; /* Bordas menos arredondadas = mais serio */
+  border: 1px solid #e2e8f0; /* Borda cinza muito clara */
+  overflow: hidden;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05); /* Sombra difusa e elegante */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.support-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
+}
+
+.support-card-image {
+  position: relative;
+  height: 240px; /* Aumentado levemente para dar mais destaque */
+  background-color: #ffffff; /* Fundo branco para imagens inteiras */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 1rem; /* Espaçamento interno para a imagem não encostar na borda */
+}
+
+.support-card-image img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain; /* Garante que a imagem apareça inteira */
+  transition: transform 0.5s ease;
+}
+
+.support-card:hover .support-card-image img {
+  transform: scale(1.05); /* Zoom sutil na imagem */
+}
+
+.support-card-body {
+  padding: 2rem; /* Espaçamento padrão agora que o ícone sumiu */
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.support-card-body h3 {
+  font-size: 1.35rem;
+  color: #1e293b; /* Slate 800 */
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.support-card-body p {
+  color: #64748b; /* Slate 500 */
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+  flex-grow: 1;
+}
+
+.support-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background-color: transparent;
+  color: var(--primary, #004a99);
+  text-decoration: none;
+  padding: 0.85rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  border: 2px solid var(--primary, #004a99);
+  transition: all 0.2s ease;
+  width: 100%;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.support-button:hover {
+  background-color: var(--primary, #004a99);
+  color: white;
+}
+
+.support-info {
+  max-width: 1200px;
+  margin: 0 auto 5rem;
+  padding: 0 1.5rem;
+}
+
+.support-description {
+  margin-bottom: 4rem;
+  text-align: center;
+}
+
+.support-description p {
+  color: #475569;
+  line-height: 1.8;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.support-description strong {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.support-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 3rem;
+  padding: 4rem 0;
+  background: transparent; /* Removido o fundo branco */
+  border: none; /* Removida a borda */
+  box-shadow: none; /* Removida a sombra */
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1rem;
+}
+
+.stat-prefix {
+  font-size: 0.9rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.25rem;
+}
+
+.stat-number {
+  font-size: 3.5rem;
+  color: var(--primary, #004a99);
+  font-weight: 800;
+  margin: 0;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: #1e293b;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .support-hero {
+    margin-bottom: 0;
+    padding-bottom: 3rem;
+  }
+  
+  .support-grid {
+    grid-template-columns: 1fr;
+    margin-top: -2rem;
+  }
+
+  .stat-number {
+    font-size: 2.5rem;
+  }
+
+  .support-stats {
+    padding: 2rem 1rem;
+  }
+}
