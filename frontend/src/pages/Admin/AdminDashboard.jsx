@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin, AdminProvider } from '../../context/AdminContext';
+import { logoutAdmin } from '../../services/adminAuth';
 import './AdminBase.css';
 
 import AdminProducts from './AdminProducts/AdminProducts';
@@ -30,26 +31,32 @@ import AdminUpcera from './AdminUpcera/AdminUpcera';
 import AdminScanners from './AdminScanners/AdminScanners';
 import AdminPrinters from './AdminPrinters/AdminPrinters';
 
-const DashboardHome = () => {
+const DashboardHome = ({ onOpenTab }) => {
   const { products, categories, banners } = useAdmin();
 
   const stats = [
-    { title: 'Produtos', value: products.length, icon: <Package />, color: 'blue' },
-    { title: 'Categorias', value: categories.length, icon: <Layers />, color: 'green' },
-    { title: 'Banners', value: banners.length, icon: <ImageIcon />, color: 'orange' }
+    { title: 'Produtos', value: products.length, icon: <Package />, color: 'blue', tabId: 'products' },
+    { title: 'Categorias', value: categories.length, icon: <Layers />, color: 'green', tabId: 'categories' },
+    { title: 'Banners', value: banners.length, icon: <ImageIcon />, color: 'orange', tabId: 'banners' }
   ];
 
   return (
     <div className="admin-dashboard-home">
       <div className="stats-grid">
         {stats.map((stat, idx) => (
-          <div key={idx} className="stat-card">
+          <button
+            key={idx}
+            type="button"
+            className="stat-card"
+            onClick={() => onOpenTab(stat.tabId)}
+            style={{ cursor: 'pointer', textAlign: 'left', border: '1px solid var(--admin-border)' }}
+          >
             <div className={`stat-icon ${stat.color}`}>{stat.icon}</div>
             <div className="stat-info">
               <h3>{stat.title}</h3>
               <p>{stat.value}</p>
             </div>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -66,21 +73,35 @@ const DashboardHome = () => {
 };
 
 const AdminDashboardContent = () => {
-  const { activeTab, setActiveTab, isSidebarCollapsed, setIsSidebarCollapsed, isMobileMenuOpen, setIsMobileMenuOpen, toasts } = useAdminState();
+  const {
+    activeTab,
+    setActiveTab,
+    isSidebarCollapsed,
+    setIsSidebarCollapsed,
+    isMobileMenuOpen,
+    setIsMobileMenuOpen,
+    isPagesOpen,
+    setIsPagesOpen,
+    toasts
+  } = useAdminState();
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { id: 'products', label: 'Produtos', icon: <Package size={20} /> },
     { id: 'categories', label: 'Categorias', icon: <Layers size={20} /> },
-    { id: 'banners', label: 'Banners', icon: <ImageIcon size={20} /> },
-    { id: 'upcera', label: 'Upcera', icon: <CheckCircle size={20} /> },
-    { id: 'scanners', label: 'Scanners', icon: <Search size={20} /> },
-    { id: 'printers', label: 'Impressoras 3D', icon: <ImageIcon size={20} /> }
+    { id: 'banners', label: 'Banners', icon: <ImageIcon size={20} /> }
   ];
+  const pageItems = [
+    { id: 'upcera', label: 'Upcera', icon: <CheckCircle size={18} /> },
+    { id: 'scanners', label: 'Scanners', icon: <Search size={18} /> },
+    { id: 'printers', label: 'Impressoras 3D', icon: <ImageIcon size={18} /> }
+  ];
+  const activeItem = [...menuItems, ...pageItems].find((item) => item.id === activeTab);
+  const isPagesSectionActive = pageItems.some((item) => item.id === activeTab);
 
   const renderActiveTab = () => {
     switch (activeTab) {
-      case 'dashboard': return <DashboardHome />;
+      case 'dashboard': return <DashboardHome onOpenTab={setActiveTab} />;
       case 'products': return <AdminProducts />;
       case 'categories': return <AdminCategories />;
       case 'banners': return <AdminBanners />;
@@ -89,6 +110,11 @@ const AdminDashboardContent = () => {
       case 'printers': return <AdminPrinters />;
       default: return <DashboardHome />;
     }
+  };
+
+  const handleLogout = async () => {
+    await logoutAdmin();
+    window.location.href = '/admin/login';
   };
 
   return (
@@ -117,10 +143,48 @@ const AdminDashboardContent = () => {
               {!isSidebarCollapsed && <span>{item.label}</span>}
             </div>
           ))}
+
+          <div className={`nav-dropdown ${isPagesOpen ? 'open' : ''}`}>
+            <div
+              className={`nav-link ${isPagesSectionActive ? 'active' : ''}`}
+              onClick={() => {
+                if (isSidebarCollapsed) {
+                  setIsSidebarCollapsed(false);
+                  setIsPagesOpen(true);
+                } else {
+                  setIsPagesOpen(!isPagesOpen);
+                }
+              }}
+            >
+              <Layers size={20} />
+              {!isSidebarCollapsed && <span>Paginas</span>}
+              {!isSidebarCollapsed && <ChevronRight size={16} className="dropdown-arrow" />}
+            </div>
+
+            {!isSidebarCollapsed && (
+              <div className="dropdown-content">
+                {pageItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`nav-link sub-link ${activeTab === item.id ? 'active' : ''}`}
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setIsPagesOpen(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <div className="dot" />
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="sidebar-footer">
-          <button className="btn-logout" onClick={() => { window.location.href = '/'; }}>
+          <button className="btn-logout" onClick={handleLogout}>
             <LogOut size={20} />
             {!isSidebarCollapsed && <span>Sair do Painel</span>}
           </button>
@@ -132,7 +196,7 @@ const AdminDashboardContent = () => {
           <button className="menu-toggle btn-mobile-menu" onClick={() => setIsMobileMenuOpen(true)} style={{ display: 'none' }}>
             <Menu size={24} />
           </button>
-          <h1>{menuItems.find((i) => i.id === activeTab)?.label}</h1>
+          <h1>{activeItem?.label}</h1>
           <div className="user-profile">
             <span className="user-name">Administrador</span>
           </div>
@@ -177,6 +241,7 @@ const useAdminState = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isPagesOpen, setIsPagesOpen] = useState(true);
   const { toasts } = useAdmin();
 
   return {
@@ -186,6 +251,8 @@ const useAdminState = () => {
     setIsSidebarCollapsed,
     isMobileMenuOpen,
     setIsMobileMenuOpen,
+    isPagesOpen,
+    setIsPagesOpen,
     toasts
   };
 };

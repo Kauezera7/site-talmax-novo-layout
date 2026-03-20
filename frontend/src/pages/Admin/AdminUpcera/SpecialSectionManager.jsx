@@ -44,46 +44,85 @@ const SpecialSectionManager = ({
 
   useEffect(() => {
     const initial = scopedProducts
-      .filter((p) => {
-        if (sectionKey === 'upcera') return p.is_upcera;
-        if (sectionKey === 'scanners') return p.is_scanner;
-        if (sectionKey === 'printers') return p.is_3d_printer;
+      .filter((product) => {
+        if (sectionKey === 'upcera') return product.is_upcera;
+        if (sectionKey === 'scanners') return product.is_scanner;
+        if (sectionKey === 'printers') return product.is_3d_printer;
         return false;
       })
-      .map((p) => ({
-        id: p.id,
-        order: (sectionKey === 'upcera' ? p.upcera_order : (sectionKey === 'scanners' ? p.scanner_order : p.printer_order)) || 0
+      .map((product) => ({
+        id: product.id,
+        order: (sectionKey === 'upcera'
+          ? product.upcera_order
+          : (sectionKey === 'scanners' ? product.scanner_order : product.printer_order)) || ''
       }));
+
     setSelectedProducts(initial);
   }, [scopedProducts, sectionKey]);
 
   const toggleProduct = (product) => {
-    const isSelected = selectedProducts.find((sp) => sp.id === product.id);
+    const isSelected = selectedProducts.find((item) => item.id === product.id);
+
     if (isSelected) {
-      setSelectedProducts(selectedProducts.filter((sp) => sp.id !== product.id));
-    } else {
-      setSelectedProducts([...selectedProducts, { id: product.id, order: 0 }]);
+      setSelectedProducts(selectedProducts.filter((item) => item.id !== product.id));
+      return;
     }
+
+    setSelectedProducts([...selectedProducts, { id: product.id, order: '' }]);
   };
 
   const updateOrder = (id, order) => {
-    setSelectedProducts(selectedProducts.map((sp) =>
-      sp.id === id ? { ...sp, order: parseInt(order, 10) || 0 } : sp
+    setSelectedProducts(selectedProducts.map((item) =>
+      item.id === id ? { ...item, order } : item
     ));
   };
 
-  const filteredProducts = scopedProducts.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCat = selectedCats.length === 0 || (p.category_ids && p.category_ids.some((id) => selectedCats.includes(id)));
-    return matchesSearch && matchesCat;
-  });
+  const normalizedSelectedProducts = useMemo(() => {
+    return selectedProducts.map((item) => ({
+      ...item,
+      order: item.order === '' ? 0 : Number(item.order)
+    }));
+  }, [selectedProducts]);
+
+  const selectedProductsMap = useMemo(() => {
+    return new Map(selectedProducts.map((item) => [item.id, item]));
+  }, [selectedProducts]);
+
+  const filteredProducts = useMemo(() => {
+    return [...scopedProducts]
+      .filter((product) => {
+        const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCat = selectedCats.length === 0
+          || (product.category_ids && product.category_ids.some((id) => selectedCats.includes(id)));
+
+        return matchesSearch && matchesCat;
+      })
+      .sort((a, b) => {
+        const selectedA = selectedProductsMap.get(a.id);
+        const selectedB = selectedProductsMap.get(b.id);
+
+        if (selectedA && !selectedB) return -1;
+        if (!selectedA && selectedB) return 1;
+
+        if (selectedA && selectedB) {
+          const orderA = selectedA.order === '' ? Number.MAX_SAFE_INTEGER : Number(selectedA.order);
+          const orderB = selectedB.order === '' ? Number.MAX_SAFE_INTEGER : Number(selectedB.order);
+
+          if (orderA !== orderB) {
+            return orderA - orderB;
+          }
+        }
+
+        return a.name.localeCompare(b.name, 'pt-BR');
+      });
+  }, [scopedProducts, searchTerm, selectedCats, selectedProductsMap]);
 
   return (
     <div className="admin-card">
       <div className="card-header special-section-header">
-        <h2><Search size={20} /> Seleção de {sectionTitle}</h2>
-        <button className="btn-primary" onClick={() => onSave(selectedProducts)}>
-          <Save size={18} /> Salvar Alterações
+        <h2><Search size={20} /> Selecao de {sectionTitle}</h2>
+        <button className="btn-primary" onClick={() => onSave(normalizedSelectedProducts)}>
+          <Save size={18} /> Salvar Alteracoes
         </button>
       </div>
       <div className="card-body special-section-body">
@@ -119,7 +158,11 @@ const SpecialSectionManager = ({
                       <div
                         key={cat.id}
                         className={`multi-select-option ${selectedCats.includes(cat.id) ? 'selected' : ''}`}
-                        onClick={() => setSelectedCats(selectedCats.includes(cat.id) ? selectedCats.filter((id) => id !== cat.id) : [...selectedCats, cat.id])}
+                        onClick={() => setSelectedCats(
+                          selectedCats.includes(cat.id)
+                            ? selectedCats.filter((id) => id !== cat.id)
+                            : [...selectedCats, cat.id]
+                        )}
                       >
                         {cat.name} <CheckCircle className="check-icon" size={16} />
                       </div>
@@ -129,18 +172,27 @@ const SpecialSectionManager = ({
               </div>
             </div>
 
-            <button type="button" onClick={() => { setSearchTerm(''); setSelectedCats([]); }} className="btn-secondary special-reset-button">Resetar</button>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedCats([]);
+              }}
+              className="btn-secondary special-reset-button"
+            >
+              Resetar
+            </button>
           </div>
 
           <div className="admin-section-group special-section-card">
             <p className="special-section-hint">
-              Selecione quais produtos devem aparecer na página de {sectionTitle} e defina a ordem.
+              Selecione quais produtos devem aparecer na pagina de {sectionTitle} e defina a ordem.
             </p>
 
             <div className="special-products-list">
               {filteredProducts.map((product) => {
-                const selected = selectedProducts.find((sp) => sp.id === product.id);
-                const isSelected = !!selected;
+                const selected = selectedProducts.find((item) => item.id === product.id);
+                const isSelected = Boolean(selected);
 
                 return (
                   <div
@@ -162,6 +214,7 @@ const SpecialSectionManager = ({
                           type="number"
                           value={selected.order}
                           onChange={(e) => updateOrder(product.id, e.target.value)}
+                          placeholder="--"
                           className="product-order-input"
                         />
                       </div>
@@ -173,7 +226,9 @@ const SpecialSectionManager = ({
 
             <div className="special-selection-summary">
               <span>{selectedProducts.length} produto(s) selecionados.</span>
-              <button className="btn-primary" onClick={() => onSave(selectedProducts)}>Salvar Lista</button>
+              <button className="btn-primary" onClick={() => onSave(normalizedSelectedProducts)}>
+                Salvar Lista
+              </button>
             </div>
           </div>
         </div>

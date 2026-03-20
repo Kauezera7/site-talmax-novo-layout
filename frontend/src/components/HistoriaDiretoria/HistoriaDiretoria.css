@@ -1,0 +1,285 @@
+.historia-diretoria-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(0, 74, 153, 0.08), transparent 35%),
+    linear-gradient(180deg, #f8fbff 0%, #eef3f8 100%);
+}
+
+.historia-diretoria-hero {
+  padding: 5rem 1.5rem 3rem;
+}
+
+.historia-diretoria-content {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.historia-diretoria-tag {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(0, 74, 153, 0.1);
+  color: #004a99;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.historia-diretoria-content h1 {
+  margin: 0 0 1rem;
+  color: #0f172a;
+  font-size: clamp(2.4rem, 6vw, 4.2rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+
+.historia-diretoria-content p {
+  max-width: 760px;
+  margin: 0 auto;
+  color: #475569;
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+.historia-diretoria-image-section {
+  padding: 0 1.5rem 5rem;
+}
+
+.historia-diretoria-image-card {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+}
+
+.historia-diretoria-image-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.historia-diretoria-text-block {
+  max-width: 900px;
+  margin: 2.5rem auto 0;
+  text-align: center;
+}
+
+.historia-diretoria-text-block p {
+  margin: 0 0 1rem;
+  color: #3c5168;
+  font-size: 0.98rem;
+  font-weight: 300;
+  letter-spacing: 0.035em;
+  line-height: 2;
+}
+
+.historia-diretoria-map-card {
+  max-width: 900px;
+  margin: 2rem auto 0;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+}
+
+.historia-diretoria-map-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.historia-diretoria-people-grid {
+  max-width: 900px;
+  margin: 2rem auto 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.flip-card {
+  background-color: transparent;
+  width: 100%;
+  perspective: 1000px;
+  font-family: sans-serif;
+  min-height: 420px;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  text-align: center;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+}
+
+.flip-card:hover .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.flip-card-front {
+  background: #ffffff;
+}
+
+.flip-card-back {
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.397), transparent 30%),
+    linear-gradient(145deg, #8698b4 0%, #616e7e 36%, #7b8697 68%, #6c7177 100%);
+  color: white;
+  transform: rotateY(180deg);
+  align-items: center;
+  gap: 0.85rem;
+  padding: 10.5rem 2.5rem 2.75rem;
+  text-align: left;
+  justify-content: space-between;
+}
+
+.flip-card-back .title {
+  font-size: clamp(1.2rem, 2.6vw, 1.65rem);
+  font-weight: 900;
+  text-align: left;
+  margin: 0;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.15;
+  width: 100%;
+}
+
+.flip-card-back p {
+  margin: 0;
+  width: 100%;
+}
+
+.flip-card-role {
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #dbeafe;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.flip-card-quote {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.flip-card-label {
+  margin-top: 0.35rem !important;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #bfdbfe;
+}
+
+.flip-card-responsibilities {
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.98);
+}
+
+.historia-diretoria-person-card {
+  position: relative;
+}
+
+.historia-diretoria-person-card::before {
+  content: '';
+  display: block;
+  padding-top: 48%;
+}
+
+.historia-diretoria-person-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.historia-diretoria-final-text {
+  max-width: 900px;
+  margin: 6rem auto 0;
+  text-align: center;
+}
+
+.historia-diretoria-final-text p {
+  margin: 0;
+  color: #1e3a5f;
+  font-size: 1.18rem;
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .historia-diretoria-hero {
+    padding-top: 3.5rem;
+  }
+
+  .historia-diretoria-content p {
+    font-size: 0.98rem;
+  }
+
+  .historia-diretoria-image-section {
+    padding-bottom: 3rem;
+  }
+
+  .historia-diretoria-image-card {
+    border-radius: 18px;
+  }
+
+  .historia-diretoria-map-card {
+    border-radius: 18px;
+  }
+
+  .historia-diretoria-person-card {
+    border-radius: 18px;
+  }
+
+  .flip-card-front,
+  .flip-card-back {
+    border-radius: 18px;
+  }
+
+  .flip-card {
+    min-height: 460px;
+  }
+
+  .historia-diretoria-text-block p {
+    font-size: 0.9rem;
+    line-height: 1.85;
+  }
+
+  .historia-diretoria-final-text p {
+    font-size: 0.96rem;
+    letter-spacing: 0.08em;
+  }
+}

@@ -8,10 +8,10 @@ const BannerTable = ({ banners, onEdit, onDelete, onToggleStatus }) => {
         <thead>
           <tr>
             <th>Imagem</th>
-            <th>Título</th>
+            <th>Titulo</th>
             <th>Ordem</th>
             <th>Status</th>
-            <th>Ações</th>
+            <th>Acoes</th>
           </tr>
         </thead>
         <tbody>
@@ -26,15 +26,15 @@ const BannerTable = ({ banners, onEdit, onDelete, onToggleStatus }) => {
                   />
                 </div>
               </td>
-              <td>{banner.title || <span className="banner-empty-title">Sem título</span>}</td>
+              <td>{banner.title || <span className="banner-empty-title">Sem titulo</span>}</td>
               <td>{banner.display_order}</td>
               <td>
                 <span
-                  className={`badge banner-status-badge ${banner.active ? 'badge-blue' : 'badge-secondary'}`}
+                  className={`status-badge banner-status-badge ${banner.active ? 'status-active' : 'status-inactive'}`}
                   onClick={() => onToggleStatus(banner)}
                 >
                   {banner.active ? <Eye size={12} /> : <EyeOff size={12} />}
-                  {banner.active ? 'ATIVO' : 'INATIVO'}
+                  {banner.active ? 'Ativo' : 'Inativo'}
                 </span>
               </td>
               <td className="actions-cell">

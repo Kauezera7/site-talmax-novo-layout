@@ -5,28 +5,59 @@
  */
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Search, 
-  ChevronRight, 
-  SlidersHorizontal, 
-  X, 
+import {
+  Search,
+  ChevronRight,
+  SlidersHorizontal,
+  X,
   PackageSearch
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../ProductCard/ProductCard';
 import './ProductCatalog.css';
 
+const normalizeSearchText = (value = '') =>
+  value
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
+const featuredCategoryOrder = [
+  'Troquelizacao',
+  'Duplicadores',
+  'Ceras',
+  'Revestimentos',
+  'Zirkon Ice',
+  'Ligas Metalicas',
+  'Soldas',
+  'Corte e Acabamento',
+  'Microscopio e Lupa',
+  'Equipamentos',
+  'Acessorios para Ceramica',
+  'T-Lithium',
+  'Talmax Digital',
+  'Blocos',
+  'Linha Cad/Cam',
+  'Linha de Ceramicas',
+  'Resinas',
+  'Protese Dentaria',
+  'Nail e Podologia'
+];
+
+const normalizedFeaturedCategoryOrder = featuredCategoryOrder.map(normalizeSearchText);
+
 const ProductCatalog = () => {
   const { slug } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeCategory, setActiveCategory] = useState('Todas');
+  const [activeCategories, setActiveCategories] = useState([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [products, setProducts] = useState([]); 
-  const [allCategories, setAllCategories] = useState([]); // Todas as categorias do banco
-  const [categories, setCategories] = useState([]); // Apenas categorias visíveis para o menu
+  const [products, setProducts] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,44 +67,47 @@ const ProductCatalog = () => {
           fetch('http://localhost:5000/api/products'),
           fetch('http://localhost:5000/api/categories')
         ]);
-        
+
         const prodData = await prodRes.json();
         const catData = await catRes.json();
         setAllCategories(catData);
 
-        // Formata os produtos
-        const formattedProducts = prodData.map(p => {
+        const formattedProducts = prodData.map((product) => {
           let extra = {};
           try {
-            extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data;
-          } catch(e) { extra = {}; }
+            extra =
+              typeof product.extra_data === 'string'
+                ? JSON.parse(product.extra_data)
+                : product.extra_data;
+          } catch (error) {
+            extra = {};
+          }
 
           const segmentSlugs = ['talmax-digital', 'protese-dentaria', 'nail-e-podologia'];
           const segmentNames = catData
-            .filter(c => segmentSlugs.includes(c.slug))
-            .map(c => c.name);
+            .filter((category) => segmentSlugs.includes(category.slug))
+            .map((category) => category.name);
 
-          const productCatNames = (p.category_names || '').split(', ');
+          const productCatNames = (product.category_names || '')
+            .split(', ')
+            .filter(Boolean);
 
           return {
-            id: p.id,
-            name: p.name,
-            // Mantemos todos os nomes para filtragem interna
+            id: product.id,
+            name: product.name,
             allCategoryNames: productCatNames,
-            // Filtra os nomes dos segmentos da string de categorias apenas para exibição
-            category: productCatNames
-              .filter(name => !segmentNames.includes(name))
-              .join(', ') || 'Sem categoria',
-            image: p.main_image || '/img/placeholder.png',
+            category:
+              productCatNames
+                .filter((name) => !segmentNames.includes(name))
+                .join(', ') || 'Sem categoria',
+            image: product.main_image || '/img/placeholder.png',
             ...extra
           };
         });
-        
+
         setProducts(formattedProducts);
-        // Filtra apenas categorias marcadas como visíveis no banco para a sidebar
-        setCategories(catData.filter(c => c.is_visible !== 0 && c.is_visible !== false && c.is_visible !== '0' && c.is_visible !== null));
-      } catch (err) {
-        console.error("Erro ao carregar dados do catálogo:", err);
+      } catch (error) {
+        console.error('Erro ao carregar dados do catalogo:', error);
       } finally {
         setIsLoading(false);
       }
@@ -82,113 +116,167 @@ const ProductCatalog = () => {
     fetchData();
   }, []);
 
-  // Sincroniza a categoria ativa com o slug da URL ou query parameter
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const categoryQuery = queryParams.get('categoria');
+    const searchQuery = queryParams.get('busca') || '';
+
+    setSearchTerm(searchQuery);
 
     if (categoryQuery && allCategories.length > 0) {
-      const cat = allCategories.find(c => c.slug === categoryQuery);
-      if (cat) {
-        setActiveCategory(cat.name);
+      const category = allCategories.find((item) => item.slug === categoryQuery);
+      if (category) {
+        setActiveCategories([category.name]);
         return;
       }
     }
 
     if (slug && allCategories.length > 0) {
-      const cat = allCategories.find(c => c.slug === slug);
-      if (cat) {
-        setActiveCategory(cat.name);
+      const category = allCategories.find((item) => item.slug === slug);
+      if (category) {
+        setActiveCategories([category.name]);
+        return;
       }
-    } else if (!slug && !categoryQuery) {
-      setActiveCategory('Todas');
     }
+
+    setActiveCategories([]);
   }, [slug, location.search, allCategories]);
 
+  const activeCategoryLabel = useMemo(() => {
+    if (activeCategories.length === 0) {
+      return 'Ver todos';
+    }
+
+    if (activeCategories.length === 1) {
+      return activeCategories[0];
+    }
+
+    return `${activeCategories.length} categorias selecionadas`;
+  }, [activeCategories]);
+
   const categoriesTree = useMemo(() => {
-    // Segmentos que NÃO devem aparecer na sidebar de categorias de produto
-    const segmentSlugs = ['talmax-digital', 'protese-dentaria', 'nail-e-podologia'];
-    
-    const main = categories.filter(c => !c.parent_id && !segmentSlugs.includes(c.slug));
-    return main.map(parent => ({
-      ...parent,
-      children: categories.filter(c => c.parent_id === parent.id)
-    }));
-  }, [categories]);
+    const filteredCategories = allCategories.filter((category) =>
+      normalizedFeaturedCategoryOrder.includes(normalizeSearchText(category.name))
+    );
+
+    return filteredCategories.sort(
+      (a, b) =>
+        normalizedFeaturedCategoryOrder.indexOf(normalizeSearchText(a.name)) -
+        normalizedFeaturedCategoryOrder.indexOf(normalizeSearchText(b.name))
+    );
+  }, [allCategories]);
 
   const filteredProducts = useMemo(() => {
-    return products.filter(product => {
-      const matchesSearch = (product.name || '').toLowerCase().includes(searchTerm.toLowerCase());
-      
-      if (activeCategory === 'Todas') return matchesSearch;
+    const normalizedTerm = normalizeSearchText(searchTerm);
 
-      // Encontra a categoria ativa em TODAS as categorias para pegar o ID
-      const currentCat = allCategories.find(c => c.name === activeCategory);
-      if (!currentCat) return matchesSearch;
+    return products.filter((product) => {
+      const searchableContent = [
+        product.name,
+        product.category,
+        ...(product.allCategoryNames || [])
+      ]
+        .filter(Boolean)
+        .map(normalizeSearchText)
+        .join(' ');
 
-      // Se for uma categoria pai, pegamos o nome dela e de todos os filhos
-      const categoriesToMatch = [currentCat.name];
-      if (!currentCat.parent_id) {
-        const children = allCategories.filter(c => c.parent_id === currentCat.id);
-        children.forEach(child => categoriesToMatch.push(child.name));
+      const matchesSearch = !normalizedTerm || searchableContent.includes(normalizedTerm);
+
+      if (activeCategories.length === 0) {
+        return matchesSearch;
       }
 
-      // Verifica se alguma das categorias permitidas está no produto
-      const matchesCategory = (product.allCategoryNames || []).some(pc => categoriesToMatch.includes(pc));
-      
+      const categoriesToMatch = activeCategories.flatMap((selectedCategoryName) => {
+        const currentCategory = allCategories.find((category) => category.name === selectedCategoryName);
+        if (!currentCategory) {
+          return [];
+        }
+
+        const matchedNames = [currentCategory.name];
+        if (!currentCategory.parent_id) {
+          const children = allCategories.filter((category) => category.parent_id === currentCategory.id);
+          children.forEach((child) => matchedNames.push(child.name));
+        }
+
+        return matchedNames;
+      });
+
+      const matchesCategory = (product.allCategoryNames || []).some((name) =>
+        categoriesToMatch.includes(name)
+      );
+
       return matchesSearch && matchesCategory;
     });
-  }, [searchTerm, activeCategory, products, allCategories]);
+  }, [searchTerm, activeCategories, products, allCategories]);
 
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+  };
+
+  const handleCategorySelect = (categoryName) => {
+    setActiveCategories((current) =>
+      current.includes(categoryName)
+        ? current.filter((item) => item !== categoryName)
+        : [...current, categoryName]
+    );
+
+    if (window.innerWidth < 768) {
+      setIsDrawerOpen(false);
+    }
+  };
 
   const resetFilters = () => {
     setSearchTerm('');
-    setActiveCategory('Todas');
+    setActiveCategories([]);
+    setIsDrawerOpen(false);
+    navigate('/produtos');
   };
 
   return (
     <div className="catalog-container">
-      {/* 1. Header de Título (Hero Estilo Showroom) */}
       <div className="catalog-hero-minimal">
         <div className="container-inner">
-          <span className="top-tag">Tecnologia Odontológica</span>
-          {activeCategory === 'Talmax Digital' ? (
-             <div className="digital-standard-header">
-                <div className="digital-title-standard">
-                   <div className="line"></div>
-                   <h1>TALMAX <strong>DIGITAL</strong></h1>
-                   <div className="line"></div>
-                </div>
-                <p>O futuro da prótese dentária com tecnologia de ponta e precisão absoluta.</p>
-             </div>
+          <span className="top-tag">Tecnologia Odontologica</span>
+          {activeCategories.length === 1 && activeCategories[0] === 'Talmax Digital' ? (
+            <div className="digital-standard-header">
+              <div className="digital-title-standard">
+                <div className="line"></div>
+                <h1>
+                  TALMAX <strong>DIGITAL</strong>
+                </h1>
+                <div className="line"></div>
+              </div>
+              <p>O futuro da protese dentaria com tecnologia de ponta e precisao absoluta.</p>
+            </div>
           ) : (
             <>
-              <h1>Catálogo <span className="thin">Digital</span></h1>
-              <p>Explore nossa linha completa de soluções para prótese e estética dental.</p>
+              <h1>
+                Catalogo <span className="thin">Digital</span>
+              </h1>
+              <p>Explore nossa linha completa de solucoes para protese e estetica dental.</p>
             </>
           )}
         </div>
       </div>
 
-      {/* Seção Especial de 5 Cards para Talmax Digital */}
-      {activeCategory === 'Talmax Digital' && (
+      {activeCategories.length === 1 && activeCategories[0] === 'Talmax Digital' && (
         <section className="digital-quick-nav">
           <div className="quick-nav-grid">
             {[
-              { id: 'upcera', title: 'UPCERA', desc: 'Cerâmicas e Discos', icon: '🦷' },
-              { id: 'scanners', title: 'SCANNERS', desc: 'Intraoral e Bancada', icon: '🔍' },
-              { id: 'impressoras', title: 'IMPRESSORAS 3D', desc: 'Anycubic e Resinas', icon: '🖨️' },
-              { id: 'componentes', title: 'COMPONENTES', desc: 'Peças e Estruturas', icon: '🔧' },
-              { id: 'insumos', title: 'INSUMOS', desc: 'Blocos e Ceras', icon: '📦' },
+              { id: 'upcera', title: 'UPCERA', desc: 'Ceramicas e Discos', icon: 'U' },
+              { id: 'scanners', title: 'SCANNERS', desc: 'Intraoral e Bancada', icon: 'S' },
+              { id: 'impressoras', title: 'IMPRESSORAS 3D', desc: 'Anycubic e Resinas', icon: '3D' },
+              { id: 'componentes', title: 'COMPONENTES', desc: 'Pecas e Estruturas', icon: 'C' },
+              { id: 'insumos', title: 'INSUMOS', desc: 'Blocos e Ceras', icon: 'I' }
             ].map((item) => (
-              <div 
-                key={item.id} 
+              <div
+                key={item.id}
                 className="quick-card-standard"
                 onClick={() => {
                   if (item.id === 'upcera') {
                     navigate('/upcera');
                   } else {
                     setSearchTerm(item.title);
+                    setActiveCategories([]);
                   }
                 }}
               >
@@ -204,27 +292,26 @@ const ProductCatalog = () => {
         </section>
       )}
 
-      {/* 2. Barra de Navegação e Filtros */}
-      {activeCategory !== 'Talmax Digital' && (
+      {!(activeCategories.length === 1 && activeCategories[0] === 'Talmax Digital') && (
         <header className="catalog-top-nav">
           <div className="top-nav-inner">
             <div className="category-quick-info">
-              <span className="active-cat-label">{activeCategory}</span>
+              <span className="active-cat-label">{activeCategoryLabel}</span>
               <span className="results-count">{filteredProducts.length} itens</span>
             </div>
-            
+
             <div className="catalog-actions">
               <div className="search-minimalist">
                 <Search size={18} color="#86868b" />
-                <input 
-                  type="text" 
-                  placeholder="O que você procura?" 
+                <input
+                  type="text"
+                  placeholder="O que voce procura?"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(event) => handleSearchChange(event.target.value)}
                 />
               </div>
-              <button 
-                className={`btn-filter-toggle ${activeCategory !== 'Todas' ? 'has-filters' : ''}`} 
+              <button
+                className={`btn-filter-toggle ${activeCategories.length > 0 ? 'has-filters' : ''}`}
                 onClick={() => setIsDrawerOpen(true)}
               >
                 <SlidersHorizontal size={18} />
@@ -235,18 +322,17 @@ const ProductCatalog = () => {
         </header>
       )}
 
-      {/* 3. Drawer de Filtros */}
       <AnimatePresence>
         {isDrawerOpen && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="drawer-overlay"
               onClick={() => setIsDrawerOpen(false)}
             />
-            <motion.aside 
+            <motion.aside
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
@@ -262,45 +348,22 @@ const ProductCatalog = () => {
 
               <div className="drawer-content">
                 <div className="options-stack">
-                  <button 
-                    className={activeCategory === 'Todas' ? 'active' : ''} 
-                    onClick={() => {
-                      setActiveCategory('Todas');
-                      if (window.innerWidth < 768) setIsDrawerOpen(false);
-                    }}
+                  <button
+                    className={activeCategories.length === 0 ? 'active' : ''}
+                    onClick={resetFilters}
                   >
-                    Todas as Categorias
+                    Ver todos
                   </button>
-                  
-                  {categoriesTree.map(parent => (
-                    <div key={parent.id} className="category-group">
-                      <button 
-                        className={`parent-cat ${activeCategory === parent.name ? 'active' : ''}`} 
-                        onClick={() => {
-                          setActiveCategory(parent.name);
-                          if (window.innerWidth < 768) setIsDrawerOpen(false);
-                        }}
+
+                  {categoriesTree.map((category) => (
+                    <div key={category.id} className="category-group">
+                      <button
+                        className={`parent-cat ${activeCategories.includes(category.name) ? 'active' : ''}`}
+                        onClick={() => handleCategorySelect(category.name)}
                       >
-                        {parent.name}
-                        {activeCategory === parent.name && <ChevronRight size={14} />}
+                        {category.name}
+                        {activeCategories.includes(category.name) && <ChevronRight size={14} />}
                       </button>
-                      
-                      {parent.children && parent.children.length > 0 && (
-                        <div className="sub-options">
-                          {parent.children.map(child => (
-                            <button 
-                              key={child.id} 
-                              className={`child-cat ${activeCategory === child.name ? 'active' : ''}`} 
-                              onClick={() => {
-                                setActiveCategory(child.name);
-                                if (window.innerWidth < 768) setIsDrawerOpen(false);
-                              }}
-                            >
-                              {child.name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -319,30 +382,27 @@ const ProductCatalog = () => {
         )}
       </AnimatePresence>
 
-      {/* 4. Grade de Produtos */}
       <main className="catalog-viewport">
         {isLoading ? (
           <div className="pro-loader">
             <div className="spinner-lux"></div>
-            <p>Sincronizando catálogo...</p>
+            <p>Sincronizando catalogo...</p>
           </div>
-        ) : activeCategory === 'Talmax Digital' ? null : (
-          <div className={`catalog-grid-lux ${activeCategory === 'Talmax Digital' ? 'five-cols' : ''}`}>
-            <AnimatePresence mode='popLayout'>
+        ) : activeCategories.length === 1 && activeCategories[0] === 'Talmax Digital' ? null : (
+          <div className={`catalog-grid-lux ${activeCategories.length === 1 && activeCategories[0] === 'Talmax Digital' ? 'five-cols' : ''}`}>
+            <AnimatePresence mode="popLayout">
               {filteredProducts.length > 0 ? (
                 filteredProducts.map((product, index) => (
-                  <ProductCard 
-                    key={product.id} 
-                    product={product} 
-                    index={index}
-                  />
+                  <ProductCard key={product.id} product={product} index={index} />
                 ))
               ) : (
                 <div className="empty-state">
                   <PackageSearch size={60} strokeWidth={1} color="#d2d2d7" />
                   <h3>Nenhum produto encontrado</h3>
                   <p>Tente ajustar sua busca ou filtro para encontrar o que deseja.</p>
-                  <button onClick={resetFilters} className="btn-clear-filters">Ver todos os produtos</button>
+                  <button onClick={resetFilters} className="btn-clear-filters">
+                    Ver todos os produtos
+                  </button>
                 </div>
               )}
             </AnimatePresence>

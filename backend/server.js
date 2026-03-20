@@ -2,11 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
+const crypto = require('crypto');
 const db = require('./src/config/database');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const adminSessions = new Map();
 
 app.use(cors());
 app.use(express.json());
@@ -54,6 +56,108 @@ app.use(express.static(path.join(__dirname, '../frontend/dist')));
   Isso evita problemas em inserts e updates.
 */
 const safe = (val) => (val === undefined ? null : val);
+
+const safeEqual = (valueA, valueB) => {
+  const bufferA = Buffer.from(String(valueA));
+  const bufferB = Buffer.from(String(valueB));
+
+  if (bufferA.length !== bufferB.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(bufferA, bufferB);
+};
+
+const hashAdminPassword = (password, salt = crypto.randomBytes(16).toString('hex')) => {
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return `scrypt$${salt}$${hash}`;
+};
+
+const verifyAdminPassword = (password, storedPassword) => {
+  if (!storedPassword) {
+    return false;
+  }
+
+  if (storedPassword.startsWith('scrypt$')) {
+    const [, salt, hash] = storedPassword.split('$');
+    if (!salt || !hash) {
+      return false;
+    }
+
+    const candidateHash = crypto.scryptSync(password, salt, 64).toString('hex');
+    return safeEqual(candidateHash, hash);
+  }
+
+  return safeEqual(password, storedPassword);
+};
+
+const getBearerToken = (req) => {
+  const authHeader = req.headers.authorization || '';
+  if (!authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  return authHeader.slice(7).trim();
+};
+
+const requireAdminSession = (req, res, next) => {
+  const token = getBearerToken(req);
+  const session = token ? adminSessions.get(token) : null;
+
+  if (!session) {
+    return res.status(401).json({ error: 'Sessao invalida ou expirada.' });
+  }
+
+  req.adminSession = session;
+  return next();
+};
+
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Informe usuario e senha.' });
+    }
+
+    const [users] = await db.query(
+      'SELECT id, username, password, full_name FROM users WHERE username = ? LIMIT 1',
+      [username]
+    );
+
+    const adminUser = users[0];
+
+    if (!adminUser || !verifyAdminPassword(password, adminUser.password)) {
+      return res.status(401).json({ error: 'Credenciais invalidas.' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+
+    adminSessions.set(token, {
+      id: adminUser.id,
+      username: adminUser.username,
+      full_name: adminUser.full_name,
+      created_at: new Date().toISOString()
+    });
+
+    return res.json({
+      token,
+      user: adminSessions.get(token)
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/session', requireAdminSession, (req, res) => {
+  res.json({ user: req.adminSession });
+});
+
+app.post('/api/admin/logout', requireAdminSession, (req, res) => {
+  const token = getBearerToken(req);
+  adminSessions.delete(token);
+  res.json({ message: 'Logout realizado com sucesso.' });
+});
 
 /*
   ============================================================

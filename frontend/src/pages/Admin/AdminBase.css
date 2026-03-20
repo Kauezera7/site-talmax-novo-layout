@@ -134,9 +134,15 @@
   justify-content: space-between;
 }
 
+.nav-dropdown .nav-link > span {
+  flex: 1;
+  text-align: left;
+}
+
 .dropdown-arrow {
   transition: transform 0.3s ease;
   color: #64748b;
+  flex-shrink: 0;
 }
 
 .nav-dropdown.open .dropdown-arrow {
@@ -145,11 +151,15 @@
 }
 
 .dropdown-content {
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: 4px;
   padding-left: 1rem;
   overflow: hidden;
+}
+
+.nav-dropdown.open .dropdown-content {
+  display: flex;
 }
 
 .sub-link {
@@ -157,6 +167,7 @@
   font-size: 0.85rem;
   color: #94a3b8;
   gap: 10px;
+  justify-content: flex-start !important;
 }
 
 .sub-link .dot {
@@ -990,6 +1001,47 @@
 .badge-secondary {
   background: #f1f5f9;
   color: #475569;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  user-select: none;
+}
+
+.status-badge:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.05);
+}
+
+.status-badge:active {
+  transform: translateY(0);
+}
+
+.status-active {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.05);
+}
+
+.status-inactive {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.05);
 }
 
 /* Layout Polishing */

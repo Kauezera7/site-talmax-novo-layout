@@ -17,11 +17,11 @@ const CategoryTable = ({ mainCategories, subCategories, products, onEdit, onDele
       <table className="admin-table">
         <thead>
           <tr>
-            <th>Ícone / Nome</th>
+            <th>Icone / Nome</th>
             <th>Slug</th>
             <th>Status</th>
             <th>Produtos</th>
-            <th>Ações</th>
+            <th>Acoes</th>
           </tr>
         </thead>
         <tbody>
@@ -52,12 +52,11 @@ const CategoryTable = ({ mainCategories, subCategories, products, onEdit, onDele
                 <td><code>{cat.slug}</code></td>
                 <td>
                   <span
-                    className={`badge ${cat.is_visible ? 'badge-blue' : 'badge-secondary'}`}
+                    className={`status-badge ${cat.is_visible ? 'status-active' : 'status-inactive'}`}
                     onClick={() => onToggleVisibility(cat)}
-                    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content' }}
                   >
                     {cat.is_visible ? <Eye size={12} /> : <EyeOff size={12} />}
-                    {cat.is_visible ? 'VISÍVEL' : 'OCULTA'}
+                    {cat.is_visible ? 'Visivel' : 'Oculta'}
                   </span>
                 </td>
                 <td>{getProductCount(cat.id)}</td>
@@ -79,12 +78,13 @@ const CategoryTable = ({ mainCategories, subCategories, products, onEdit, onDele
                     </td>
                     <td><code>{subCat.slug}</code></td>
                     <td>
-                      <button
+                      <span
+                        className={`status-badge ${subCat.is_visible ? 'status-active' : 'status-inactive'}`}
                         onClick={() => onToggleVisibility(subCat)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: subCat.is_visible ? 'var(--admin-primary)' : 'var(--admin-secondary)', display: 'flex', alignItems: 'center' }}
                       >
-                        {subCat.is_visible ? <Eye size={16} /> : <EyeOff size={16} />}
-                      </button>
+                        {subCat.is_visible ? <Eye size={12} /> : <EyeOff size={12} />}
+                        {subCat.is_visible ? 'Visivel' : 'Oculta'}
+                      </span>
                     </td>
                     <td>{getProductCount(subCat.id)}</td>
                     <td className="actions-cell">

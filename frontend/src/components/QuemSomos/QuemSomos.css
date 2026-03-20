@@ -1,0 +1,313 @@
+.quem-somos-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(0, 74, 153, 0.08), transparent 35%),
+    linear-gradient(180deg, #f8fbff 0%, #eef3f8 100%);
+}
+
+.quem-somos-hero {
+  padding: 5rem 1.5rem 3rem;
+}
+
+.quem-somos-hero-content {
+  max-width: 880px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.quem-somos-tag {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(0, 74, 153, 0.1);
+  color: #004a99;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.quem-somos-hero-content h1 {
+  margin: 0 0 1rem;
+  color: #0f172a;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+
+.quem-somos-hero-content p {
+  max-width: 760px;
+  margin: 0 auto;
+  color: #52637a;
+  font-size: 1.05rem;
+  line-height: 1.9;
+}
+
+.quem-somos-showcase {
+  padding: 0 1.5rem;
+}
+
+.quem-somos-image-card {
+  max-width: 1140px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 20px;
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.12);
+}
+
+.quem-somos-image-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.quem-somos-content {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+.quem-somos-text-card,
+.quem-somos-info-card,
+.quem-somos-values-card,
+.quem-somos-video-card {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.quem-somos-text-card {
+  padding: 2rem 2.25rem;
+  border-radius: 24px;
+  margin-bottom: 2rem;
+}
+
+.quem-somos-text-card p {
+  margin: 0 0 1rem;
+  color: #334155;
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 1.95;
+}
+
+.quem-somos-text-card p:last-child {
+  margin-bottom: 0;
+}
+
+.quem-somos-info-card {
+  padding: 1.75rem 1.8rem;
+  border-radius: 24px;
+  margin-bottom: 2rem;
+}
+
+.quem-somos-info-card-single {
+  max-width: 100%;
+}
+
+.quem-somos-info-card h2,
+.quem-somos-values-card h2,
+.quem-somos-video-card h2 {
+  margin: 0 0 1rem;
+  color: #0f172a;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+}
+
+.quem-somos-info-card p {
+  margin: 0 0 0.9rem;
+  color: #3b4d63;
+  font-size: 0.96rem;
+  line-height: 1.85;
+}
+
+.quem-somos-info-card p:last-child {
+  margin-bottom: 0;
+}
+
+.quem-somos-values-card {
+  padding: 2rem 2.2rem;
+  border-radius: 24px;
+}
+
+.quem-somos-values-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.quem-somos-value-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.quem-somos-value-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 0.55rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+  flex-shrink: 0;
+}
+
+.quem-somos-value-item p {
+  margin: 0;
+  color: #334155;
+  font-size: 0.96rem;
+  line-height: 1.8;
+}
+
+.quem-somos-video-card {
+  padding: 1.5rem 1.7rem;
+  border-radius: 20px;
+  margin-top: 2.5rem;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.05);
+}
+
+.quem-somos-video-trigger {
+  position: relative;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+}
+
+.quem-somos-video-trigger img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.quem-somos-video-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.08) 0%, rgba(15, 23, 42, 0.45) 100%);
+  transition: background 0.3s ease;
+}
+
+.quem-somos-video-trigger:hover .quem-somos-video-overlay {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.12) 0%, rgba(15, 23, 42, 0.58) 100%);
+}
+
+.quem-somos-video-play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 999px;
+  background: rgba(255, 0, 0, 0.199);
+  border: 1px solid rgba(255, 255, 255, 0.185);
+  box-shadow: 0 10px 24px rgba(255, 0, 0, 0.329);
+  backdrop-filter: blur(4px);
+}
+
+.quem-somos-video-play-triangle {
+  width: 0;
+  height: 0;
+  margin-left: 6px;
+  border-top: 16px solid transparent;
+  border-bottom: 16px solid transparent;
+  border-left: 26px solid #ffffff7c;
+}
+
+.quem-somos-video-frame {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+}
+
+.quem-somos-video-card h2 {
+  margin: 0 0 0.85rem;
+  color: #334155;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.quem-somos-video-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.quem-somos-video-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(6px);
+}
+
+.quem-somos-video-modal-content {
+  position: relative;
+  width: min(100%, 1100px);
+}
+
+.quem-somos-video-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+}
+
+@media (max-width: 768px) {
+  .quem-somos-hero {
+    padding-top: 3.5rem;
+  }
+
+  .quem-somos-image-card,
+  .quem-somos-text-card,
+  .quem-somos-info-card,
+  .quem-somos-values-card,
+  .quem-somos-video-card {
+    border-radius: 18px;
+  }
+
+  .quem-somos-text-card {
+    padding: 1.5rem;
+  }
+
+  .quem-somos-values-card {
+    padding: 1.5rem;
+  }
+
+  .quem-somos-video-card {
+    padding: 1.2rem;
+  }
+
+  .quem-somos-video-close {
+    top: -10px;
+    right: -4px;
+  }
+
+  .quem-somos-info-card {
+    padding: 1.4rem;
+  }
+}

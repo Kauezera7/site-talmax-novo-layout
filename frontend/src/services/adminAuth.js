@@ -1,0 +1,88 @@
+const ADMIN_TOKEN_KEY = 'talmax-admin-token';
+const API_BASE_URL = 'http://localhost:5000/api/admin';
+
+const parseApiResponse = async (response) => {
+  const responseText = await response.text();
+  const contentType = response.headers.get('content-type') || '';
+
+  if (!contentType.includes('application/json')) {
+    throw new Error('A API de login nao respondeu em JSON. Verifique se o backend esta rodando em http://localhost:5000.');
+  }
+
+  try {
+    return JSON.parse(responseText);
+  } catch (error) {
+    throw new Error('A resposta da API de login veio invalida. Confira o backend do admin.');
+  }
+};
+
+export const getAdminToken = () => localStorage.getItem(ADMIN_TOKEN_KEY);
+
+export const setAdminToken = (token) => {
+  localStorage.setItem(ADMIN_TOKEN_KEY, token);
+};
+
+export const clearAdminToken = () => {
+  localStorage.removeItem(ADMIN_TOKEN_KEY);
+};
+
+export const loginAdmin = async (credentials) => {
+  const response = await fetch(`${API_BASE_URL}/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(credentials)
+  });
+
+  const data = await parseApiResponse(response);
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Nao foi possivel entrar no painel.');
+  }
+
+  if (data.token) {
+    setAdminToken(data.token);
+  }
+
+  return data;
+};
+
+export const validateAdminSession = async () => {
+  const token = getAdminToken();
+
+  if (!token) {
+    return { authenticated: false };
+  }
+
+  const response = await fetch(`${API_BASE_URL}/session`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    clearAdminToken();
+    return { authenticated: false };
+  }
+
+  const data = await parseApiResponse(response);
+  return { authenticated: true, ...data };
+};
+
+export const logoutAdmin = async () => {
+  const token = getAdminToken();
+
+  try {
+    if (token) {
+      await fetch(`${API_BASE_URL}/logout`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+    }
+  } finally {
+    clearAdminToken();
+  }
+};

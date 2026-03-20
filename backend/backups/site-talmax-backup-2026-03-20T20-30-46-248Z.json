@@ -1,0 +1,1556 @@
+{
+  "database": "site-talmax",
+  "generated_at": "2026-03-20T20:30:46.241Z",
+  "tables": {
+    "banners": [
+      {
+        "id": 1,
+        "title": "",
+        "subtitle": null,
+        "image_url": "/img/1773677729613-1773260693498-BANNER-A53.webp",
+        "link_url": "",
+        "display_order": 0,
+        "active": 1
+      },
+      {
+        "id": 2,
+        "title": "fresadora",
+        "subtitle": null,
+        "image_url": "/img/1773677764348-BANNER-microFit.webp",
+        "link_url": "",
+        "display_order": 0,
+        "active": 1
+      }
+    ],
+    "categorias": [
+      {
+        "id": 107,
+        "name": "Gesso e Troquelização",
+        "slug": "gesso-e-troquelizacao",
+        "icon_url": "/img/CAT-icon-gesso.png",
+        "display_order": 1,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 1
+      },
+      {
+        "id": 108,
+        "name": "Duplicadores",
+        "slug": "duplicadores",
+        "icon_url": "/img/CAT-icon-duplicadores.png",
+        "display_order": 2,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 1
+      },
+      {
+        "id": 109,
+        "name": "Ceras",
+        "slug": "ceras",
+        "icon_url": "/img/CATicon-ceras.png",
+        "display_order": 3,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 1
+      },
+      {
+        "id": 110,
+        "name": "Revestimentos",
+        "slug": "revestimentos",
+        "icon_url": "/img/CAT-icon-revestimentos-1.png",
+        "display_order": 4,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 1
+      },
+      {
+        "id": 111,
+        "name": "Zirkon Ice",
+        "slug": "zirkon-ice",
+        "icon_url": "/img/CAT-icon-zirkon-ice-1.png",
+        "display_order": 5,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 1
+      },
+      {
+        "id": 112,
+        "name": "Ligas Metálicas",
+        "slug": "ligas-metalicas",
+        "icon_url": "/img/CAT-icon-ligas-metalicas-1.png",
+        "display_order": 6,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 1
+      },
+      {
+        "id": 113,
+        "name": "Soldas",
+        "slug": "soldas",
+        "icon_url": "/img/CAT-icon-soldas-1.png",
+        "display_order": 7,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 1
+      },
+      {
+        "id": 114,
+        "name": "Corte e Acabamento",
+        "slug": "corte-e-acabamento",
+        "icon_url": "/img/CAT-icon-acabamentos-1.png",
+        "display_order": 8,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 1
+      },
+      {
+        "id": 115,
+        "name": "Microscópio e Lupa",
+        "slug": "microscopio-e-lupa",
+        "icon_url": "/img/CAT-icon-microscopio-lupa-1.png",
+        "display_order": 9,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 1
+      },
+      {
+        "id": 116,
+        "name": "Equipamentos",
+        "slug": "equipamentos",
+        "icon_url": "/img/CAT-icon-equipamentos-1.png",
+        "display_order": 10,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 1
+      },
+      {
+        "id": 117,
+        "name": "Acessórios para Cerâmica",
+        "slug": "acessorios-para-ceramica",
+        "icon_url": "/img/CAT-icon-ceramica-1.png",
+        "display_order": 11,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 1
+      },
+      {
+        "id": 118,
+        "name": "T-Lithium",
+        "slug": "t-lithium",
+        "icon_url": "/img/CAT.icon-tilithium-1.png",
+        "display_order": 12,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 1
+      },
+      {
+        "id": 119,
+        "name": "Talmax Digital",
+        "slug": "talmax-digital",
+        "icon_url": null,
+        "display_order": 13,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 0
+      },
+      {
+        "id": 120,
+        "name": "Blocos",
+        "slug": "blocos",
+        "icon_url": null,
+        "display_order": 14,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 0
+      },
+      {
+        "id": 121,
+        "name": "Linha Cad/Cam",
+        "slug": "linha-cad-cam",
+        "icon_url": null,
+        "display_order": 15,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 0
+      },
+      {
+        "id": 122,
+        "name": "Linha de Ceramicas",
+        "slug": "linha-de-ceramicas",
+        "icon_url": null,
+        "display_order": 16,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 0
+      },
+      {
+        "id": 123,
+        "name": "Resinas",
+        "slug": "resinas",
+        "icon_url": null,
+        "display_order": 17,
+        "created_at": "2026-03-13T19:19:09.000Z",
+        "is_visible": 0
+      },
+      {
+        "id": 126,
+        "name": "Prótese Dentária",
+        "slug": "protese-dentaria",
+        "icon_url": null,
+        "display_order": 0,
+        "created_at": "2026-03-16T18:34:45.000Z",
+        "is_visible": 0
+      },
+      {
+        "id": 127,
+        "name": "Nail e Podologia",
+        "slug": "nail-e-podologia",
+        "icon_url": null,
+        "display_order": 0,
+        "created_at": "2026-03-16T18:35:17.000Z",
+        "is_visible": 0
+      }
+    ],
+    "page_settings": [
+      {
+        "id": 1,
+        "page_name": "scanners",
+        "content": {
+          "title": "Digital Precision Engineering",
+          "description": "O ápice da captura digital para diagnósticos e planejamentos protéticos de precisão absoluta."
+        },
+        "updated_at": "2026-03-18T11:51:01.000Z"
+      },
+      {
+        "id": 2,
+        "page_name": "upcera",
+        "content": {
+          "title": "Upcera - Soluções em Zircônia",
+          "description": "Líder mundial em tecnologia de cerâmicas odontológicas."
+        },
+        "updated_at": "2026-03-18T11:51:01.000Z"
+      },
+      {
+        "id": 3,
+        "page_name": "equipamentos",
+        "content": {
+          "title": "Equipamentos Odontológicos de Alta Performance",
+          "description": "Tecnologia avançada para laboratórios e consultórios que buscam excelência e produtividade."
+        },
+        "updated_at": "2026-03-18T13:00:50.000Z"
+      }
+    ],
+    "product_categorias": [
+      {
+        "product_id": 12,
+        "category_id": 116
+      },
+      {
+        "product_id": 13,
+        "category_id": 116
+      },
+      {
+        "product_id": 14,
+        "category_id": 116
+      },
+      {
+        "product_id": 15,
+        "category_id": 116
+      },
+      {
+        "product_id": 16,
+        "category_id": 116
+      },
+      {
+        "product_id": 21,
+        "category_id": 116
+      },
+      {
+        "product_id": 22,
+        "category_id": 116
+      },
+      {
+        "product_id": 23,
+        "category_id": 116
+      },
+      {
+        "product_id": 12,
+        "category_id": 119
+      },
+      {
+        "product_id": 13,
+        "category_id": 119
+      },
+      {
+        "product_id": 14,
+        "category_id": 119
+      },
+      {
+        "product_id": 15,
+        "category_id": 119
+      },
+      {
+        "product_id": 16,
+        "category_id": 119
+      },
+      {
+        "product_id": 21,
+        "category_id": 119
+      },
+      {
+        "product_id": 22,
+        "category_id": 119
+      },
+      {
+        "product_id": 23,
+        "category_id": 119
+      },
+      {
+        "product_id": 25,
+        "category_id": 119
+      },
+      {
+        "product_id": 26,
+        "category_id": 119
+      },
+      {
+        "product_id": 27,
+        "category_id": 119
+      },
+      {
+        "product_id": 28,
+        "category_id": 119
+      },
+      {
+        "product_id": 18,
+        "category_id": 120
+      },
+      {
+        "product_id": 18,
+        "category_id": 121
+      },
+      {
+        "product_id": 19,
+        "category_id": 121
+      },
+      {
+        "product_id": 20,
+        "category_id": 121
+      },
+      {
+        "product_id": 24,
+        "category_id": 121
+      }
+    ],
+    "product_sub_categorias": [
+      {
+        "product_id": 13,
+        "sub_category_id": 13
+      },
+      {
+        "product_id": 12,
+        "sub_category_id": 15
+      },
+      {
+        "product_id": 14,
+        "sub_category_id": 15
+      },
+      {
+        "product_id": 15,
+        "sub_category_id": 15
+      },
+      {
+        "product_id": 16,
+        "sub_category_id": 15
+      },
+      {
+        "product_id": 24,
+        "sub_category_id": 21
+      },
+      {
+        "product_id": 12,
+        "sub_category_id": 61
+      },
+      {
+        "product_id": 13,
+        "sub_category_id": 61
+      },
+      {
+        "product_id": 14,
+        "sub_category_id": 61
+      },
+      {
+        "product_id": 15,
+        "sub_category_id": 61
+      },
+      {
+        "product_id": 16,
+        "sub_category_id": 61
+      },
+      {
+        "product_id": 21,
+        "sub_category_id": 62
+      },
+      {
+        "product_id": 22,
+        "sub_category_id": 62
+      },
+      {
+        "product_id": 23,
+        "sub_category_id": 62
+      },
+      {
+        "product_id": 25,
+        "sub_category_id": 63
+      },
+      {
+        "product_id": 26,
+        "sub_category_id": 63
+      },
+      {
+        "product_id": 27,
+        "sub_category_id": 63
+      },
+      {
+        "product_id": 28,
+        "sub_category_id": 63
+      }
+    ],
+    "products": [
+      {
+        "id": 12,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "Fresadora C41",
+        "description": "Alta performance e velocidade nas usinagens\r\nSpindle alemão Sycotec (considerado um dos melhores do mercado)\r\nTroca de fresas automaticamente\r\nPossui magazine de ferramentas com 5 posições fixas\r\nAlta durabilidade das brocas de origem do fabricante-\r\nSoftware CNC intuitivo, com apenas duas ações estará usinando\r\nEspaço interno ergonômico de fácil limpeza\r\nPossui computador interno com um sistema totalmente ",
+        "main_image": "/img/1773348982915-1773341906897-C41-900x900-1.png.webp",
+        "extra_data": {
+          "features": [
+            "Melhor custo e beneficio em relação a material e ferramentas",
+            "“TouchScreen” facilitando o manuseio com o software CNC",
+            "Compacto e de fácil instalação",
+            "Sistema de refrigeração somente usinagens irrigadas"
+          ],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Altura: 42cm",
+              "Largura: 45cm",
+              "Profundidade: 235cm",
+              "Peso: 55kg"
+            ]
+          },
+          "modelTitle": "Especificações",
+          "hideModelData": true,
+          "descriptionAsList": true
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-12T18:58:26.000Z",
+        "updated_at": "2026-03-20T16:46:02.000Z",
+        "is_upcera": 1,
+        "is_scanner": 0,
+        "is_3d_printer": 0,
+        "upcera_order": 3,
+        "scanner_order": 0,
+        "printer_order": 0
+      },
+      {
+        "id": 13,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "Forno De Sinterização De Zircônia Gt1 220v",
+        "description": "Possível usar dois suportes de sinterização\r\nVoltagem 220v\r\nPotência de consumo 2,5Kw\r\nEsferas de sinterização SIM\r\nProgramação Através de LCD\r\nTemperatura máxima 1550°\r\nElevador abertura e fechamento Automático\r\nCapacidade por suporte de até 20 elementos. Possibilita a sinterização de 2 protocolos\r\n",
+        "main_image": "/img/1773343943818-forno-GT1-1-1439x1536.png.webp",
+        "extra_data": {
+          "features": [],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Altura: 42cm",
+              "Largura: 45cm",
+              "Profundidade: 235cm",
+              "Peso: 55kg"
+            ]
+          },
+          "modelTitle": "Especificações",
+          "hideModelData": true,
+          "descriptionAsList": true
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-12T19:32:23.000Z",
+        "updated_at": "2026-03-20T16:46:02.000Z",
+        "is_upcera": 1,
+        "is_scanner": 0,
+        "is_3d_printer": 0,
+        "upcera_order": 5,
+        "scanner_order": 0,
+        "printer_order": 0
+      },
+      {
+        "id": 14,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "Fresadora B42",
+        "description": "Fresadora de pilar personalizada\r\nTela sensível ao toque de 12 polegadas\r\nTremenda estabilidade e alta precisão\r\nFuso de excelente desempenho\r\nUsinagem ininterrupta 24 horas por dia, 7 dias por semana\r\nSimples de usar\r\nEstrutura de aço fundido\r\nProteção de baixa pressão de ar\r\n",
+        "main_image": "/img/1773344947408-CTLG-FRIZADORA-B42-1-1.png.webp",
+        "extra_data": {
+          "features": [],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Altura: 42cm",
+              "Largura: 45cm",
+              "Profundidade: 235cm",
+              "Peso: 55kg"
+            ]
+          },
+          "modelTitle": "",
+          "hideModelData": true,
+          "descriptionAsList": true
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-12T19:49:07.000Z",
+        "updated_at": "2026-03-20T16:46:02.000Z",
+        "is_upcera": 1,
+        "is_scanner": 0,
+        "is_3d_printer": 0,
+        "upcera_order": 4,
+        "scanner_order": 0,
+        "printer_order": 0
+      },
+      {
+        "id": 15,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "Fresadora A52",
+        "description": "Alta performance e velocidade nas usinagens\r\nInvólucro de alumínio aeronáutico de alta performance\r\nCâmara de processamento totalmente integrada garante excelente selagem e proteção contra pó\r\nPC integrado com tela touch de 12 polegadas\r\nEquipada com servo-motores e fuso de esfera com precisão de menos de 0,01mm\r\n5 eixos e linkagem 3+2 para cortes de precisão\r\nÂngulo maior de até 90º para cortes bucais laterais\r\nCompacto e de fácil instalação\r\nSubstituição de fresas e alinhamento automáticos, com detecção de tool setter.\r\n",
+        "main_image": "/img/1773345126805-A52-900x900-1.png.webp",
+        "extra_data": {
+          "features": [],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Altura: 55cm",
+              "Largura: 49cm",
+              "Profundidade: 74cm",
+              "Peso: 110kg"
+            ]
+          },
+          "modelTitle": "",
+          "hideModelData": true,
+          "descriptionAsList": true
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-12T19:52:06.000Z",
+        "updated_at": "2026-03-20T16:46:02.000Z",
+        "is_upcera": 1,
+        "is_scanner": 0,
+        "is_3d_printer": 0,
+        "upcera_order": 2,
+        "scanner_order": 0,
+        "printer_order": 0
+      },
+      {
+        "id": 16,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "Fresadora A53",
+        "description": "Troca automático de blocos\r\nFresagem de 90°\r\nEstabilidade excepcional e alta precisão.\r\nFuso premium com trocador automático de ferramentas.\r\nPeças fundidas de alta performance, ligas de alumínio aeroespaciais.\r\nProteção contra baixa pressão de ar.\r\n",
+        "main_image": "/img/1773346956501-fresadora-a53.png.webp",
+        "extra_data": {
+          "features": [
+            "Troca automático de blocos",
+            "Tela sensível ao toque de 12 polegadas.",
+            "Monitoramento em tempo real.",
+            "Usinagem contínua 24 horas por dia 7 dias por semana."
+          ],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Altura: 85.5cm",
+              "Largura: 95cm",
+              "Profundidade: 67cm",
+              "Peso: 220kg"
+            ]
+          },
+          "modelTitle": "",
+          "hideModelData": true,
+          "descriptionAsList": true
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-12T20:22:36.000Z",
+        "updated_at": "2026-03-20T16:46:02.000Z",
+        "is_upcera": 1,
+        "is_scanner": 0,
+        "is_3d_printer": 0,
+        "upcera_order": 1,
+        "scanner_order": 0,
+        "printer_order": 0
+      },
+      {
+        "id": 18,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "teste",
+        "description": "rewrwertwre",
+        "main_image": "/img/1773773417785-impressoras3d.png",
+        "extra_data": {
+          "images": [
+            "/img/1773773417785-impressoras3d.png"
+          ],
+          "features": [
+            "trwwrtwrt",
+            "rtwretwr"
+          ],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Tipo / Referência",
+              "Código"
+            ]
+          },
+          "modelTitle": "",
+          "hideModelData": false,
+          "descriptionAsList": true
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-17T18:50:17.000Z",
+        "updated_at": "2026-03-17T18:50:17.000Z",
+        "is_upcera": 0,
+        "is_scanner": 0,
+        "is_3d_printer": 0,
+        "upcera_order": 0,
+        "scanner_order": 0,
+        "printer_order": 0
+      },
+      {
+        "id": 19,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "agtraeytret",
+        "description": "gasdfgfdga",
+        "main_image": "/img/1773773508498-componentesproteticos.png",
+        "extra_data": {
+          "images": [
+            "/img/1773773508498-componentesproteticos.png"
+          ],
+          "features": [
+            "fadfasd",
+            "fadsfsd"
+          ],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Tipo / Referência",
+              "Código"
+            ]
+          },
+          "modelTitle": "",
+          "hideModelData": false,
+          "descriptionAsList": true
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-17T18:51:48.000Z",
+        "updated_at": "2026-03-17T18:51:48.000Z",
+        "is_upcera": 0,
+        "is_scanner": 0,
+        "is_3d_printer": 0,
+        "upcera_order": 0,
+        "scanner_order": 0,
+        "printer_order": 0
+      },
+      {
+        "id": 20,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "fdasfdfasdfa",
+        "description": "fadsfadfasdfa",
+        "main_image": "/img/1773773534553-box-td-insumos-260x300.jpg.webp",
+        "extra_data": {
+          "images": [
+            "/img/1773773534553-box-td-insumos-260x300.jpg.webp"
+          ],
+          "features": [
+            "fdasfasdf",
+            "fadsfafa",
+            "fadsfadf"
+          ],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Tipo / Referência",
+              "Código"
+            ]
+          },
+          "modelTitle": "",
+          "hideModelData": false,
+          "descriptionAsList": false
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-17T18:52:14.000Z",
+        "updated_at": "2026-03-17T18:52:14.000Z",
+        "is_upcera": 0,
+        "is_scanner": 0,
+        "is_3d_printer": 0,
+        "upcera_order": 0,
+        "scanner_order": 0,
+        "printer_order": 0
+      },
+      {
+        "id": 21,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "Scanner de bancada Shining3D DS MIX",
+        "description": "Alta precisão de ≤ 7 μm. Scanner odontológico 3D de alta eficiência, capaz de digitalizar uma arcada completa em apenas 13 segundos. Equipado com câmeras de resolução 2 x 5.0 MP.\r\nA varredura dos maxilares é realizada simultaneamente (processo all-in-one), proporcionando um aumento de até 30% na velocidade do escaneamento.\r\nConta com pesquisa inteligente por meio de um software que detecta automaticamente superfícies não digitalizadas e realiza o add-scan automático. O DS-MIX oferece uma experiência intuitiva e otimizada.\r\nPossui aplicações versáteis, sendo ideal para digitalização de abutments, scan bodies, articuladores, facetas, modelos, moldagens, além de capturar textura, cor e outras superfícies.",
+        "main_image": "/img/1773780061725-30131-Scabancada-DS-Mix-01.jpg.webp",
+        "extra_data": {
+          "features": [
+            "Suporta escaneamento de articuladores, tanto dinâmico quanto estático, incluindo modelos como Artex, Kavo, SAM e Bio-Art.",
+            "O software permite o fechamento automático da malha do canal do parafuso, garantindo maior precisão no resultado final.",
+            "Conexão via USB. Design compacto, portátil e de fácil transporte.",
+            "Compatível com Exocad e todos os sistemas CAD/CAM. Sistema aberto com suporte aos formatos STL, OBJ e PLY."
+          ],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Código"
+            ]
+          },
+          "modelTitle": "",
+          "hideModelData": true,
+          "showModelSection": false,
+          "descriptionAsList": true
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-17T20:41:01.000Z",
+        "updated_at": "2026-03-18T18:51:59.000Z",
+        "is_upcera": 0,
+        "is_scanner": 1,
+        "is_3d_printer": 0,
+        "upcera_order": 0,
+        "scanner_order": 1,
+        "printer_order": 0
+      },
+      {
+        "id": 22,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "Scanner Intraoral Shining 3D",
+        "description": "Alta Precisão (25 segundos para escaneamento de uma arcada)\r\nDistância focal de 22mm para captação da imagem\r\nFacilidade de uso (Sensor de movimento e Inteligência Artificial)",
+        "main_image": "/img/1773780343895-shinning3d_para-site-1.png.webp",
+        "extra_data": {
+          "features": [
+            "Suporte online por 12 meses pela Talmax",
+            "Isento de taxa anual para atualizações e funcionamento",
+            "Alta definição da malha com intensificação em HD"
+          ],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Tipo / Referência",
+              "Código"
+            ]
+          },
+          "modelTitle": "",
+          "hideModelData": false,
+          "showModelSection": false,
+          "descriptionAsList": false
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-17T20:45:43.000Z",
+        "updated_at": "2026-03-18T18:51:59.000Z",
+        "is_upcera": 0,
+        "is_scanner": 1,
+        "is_3d_printer": 0,
+        "upcera_order": 0,
+        "scanner_order": 2,
+        "printer_order": 0
+      },
+      {
+        "id": 23,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "Scanner de bancada Shining3D DS EX-PRO",
+        "description": "Alta precisão de ≤ 10μm\r\nA varredura dos maxilares feito simultaneamente (processo All-in-one) agiliza em 30% a rapidez do escaneamento\r\nPesquisa Inteligente – o software de digitalização que suporta a detecção automática de superfícies não digitalizadas, add-scan automático, oferece uma experiência intuitiva\r\nEscaneamento de Articulador -suporta a digitalização dinâmica e estática de articuladores (Artex, Kavo, SAM e Bio-Art etc.)\r\n\r\n",
+        "main_image": "/img/1773780641454-DS-EX-PRO.png.webp",
+        "extra_data": {
+          "features": [
+            "Tamanho compacto e portátil",
+            "Sistema aberto STL, OBJ e PLY",
+            "O software permite o fechamento automático da malha do canal do parafuso",
+            "Aplicações Versáteis – Com desempenho excepcional,pode ser usado para digitalizar abutments, scan body, articulares, facetas, modelos, moldagem, textura, cor e outras superfícies",
+            "Compatibilidade com Exocad e todos os Sistemas CAD/CAM"
+          ],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Tipo / Referência",
+              "Código"
+            ]
+          },
+          "modelTitle": "",
+          "hideModelData": true,
+          "showModelSection": false,
+          "descriptionAsList": true
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-17T20:50:21.000Z",
+        "updated_at": "2026-03-18T18:51:59.000Z",
+        "is_upcera": 0,
+        "is_scanner": 1,
+        "is_3d_printer": 0,
+        "upcera_order": 0,
+        "scanner_order": 4,
+        "printer_order": 0
+      },
+      {
+        "id": 24,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "fdadfsdfsdsfafdsadsfafdsa",
+        "description": "gdsafdsfafdsfdsfdsa",
+        "main_image": "/img/1773841155507-logoupcera.webp",
+        "extra_data": {
+          "images": [
+            "/img/1773841155507-logoupcera.webp"
+          ],
+          "features": [
+            "fdfdafdasdfsafdsa",
+            "dfasfdsafdsafdsadfsa"
+          ],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Tipo / Referência",
+              "Código"
+            ]
+          },
+          "modelTitle": "",
+          "hideModelData": false,
+          "showModelSection": false,
+          "descriptionAsList": true
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-18T13:39:15.000Z",
+        "updated_at": "2026-03-18T13:39:15.000Z",
+        "is_upcera": 0,
+        "is_scanner": 0,
+        "is_3d_printer": 0,
+        "upcera_order": 0,
+        "scanner_order": 0,
+        "printer_order": 0
+      },
+      {
+        "id": 25,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "Impressora 3D Anycubic Photon MONO",
+        "description": "Volume de construção 130 x 80 x 165 mm\r\nResolução LCD 2560 x 1620 pixels (2K)\r\nResolução XY 0,051 mm (51 mícrons)\r\nTempo de cura 2-20s\\Camada\r\nSoftware Anycubic Photon Slicer, suporta anti-aliasing de até 8x",
+        "main_image": "/img/1773850988997-impressora.webp",
+        "extra_data": {
+          "features": [
+            "MELHOR CUSTO",
+            "Conectividade USB",
+            "Tela LCD, touch screen, colorida, 2,8 polegadas",
+            "Nivelamento da Placa Manual",
+            "Máx. Velocidade de impressão 50 mm/h",
+            "Materiais Resina UV 405nm"
+          ],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Tipo / Referência",
+              "Código"
+            ]
+          },
+          "modelTitle": "",
+          "hideModelData": false,
+          "showModelSection": false,
+          "descriptionAsList": true
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-18T16:23:09.000Z",
+        "updated_at": "2026-03-18T17:50:09.000Z",
+        "is_upcera": 0,
+        "is_scanner": 0,
+        "is_3d_printer": 1,
+        "upcera_order": 0,
+        "scanner_order": 0,
+        "printer_order": 4
+      },
+      {
+        "id": 26,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "Impressora 3D Anycubic Photon S",
+        "description": "Volume de construção 115 x 65 x 165 mm\r\nResolução LCD 2560 x 1440 pixels (2K)\r\nResolução XY 0,047 mm (47 mícrons)\r\nTempo de cura 6-20s\\CamadaMáx. \r\nVelocidade de impressão 20 mm/h\r\nTela LCD, touch screen, colorida, 2,8 polegadas \r\nSoftware Anycubic Photon Slicer, suporta anti-aliasing de até 8x",
+        "main_image": "/img/1773851207511-hs-anycubic-s.png.webp",
+        "extra_data": {
+          "features": [
+            "MELHOR CUSTO-BENEFÍCIO",
+            "Conectividade USB",
+            "Nivelamento da Placa Manual",
+            "Eixo Z duplo: proporcionando maior estabilidade e precisão",
+            "Materiais Resina UV 405nm"
+          ],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Tipo / Referência",
+              "Código"
+            ]
+          },
+          "modelTitle": "",
+          "hideModelData": false,
+          "showModelSection": false,
+          "descriptionAsList": true
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-18T16:25:29.000Z",
+        "updated_at": "2026-03-18T17:50:09.000Z",
+        "is_upcera": 0,
+        "is_scanner": 0,
+        "is_3d_printer": 1,
+        "upcera_order": 0,
+        "scanner_order": 0,
+        "printer_order": 3
+      },
+      {
+        "id": 27,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "Impressora 3D Anycubic Photon MONO SE",
+        "description": "Volume de construção 130 x 78 x 160 mm\r\nResolução LCD 2560 x 1620 pixels (2K)\r\nResolução XY 0,051 mm (51 mícrons)\r\nTempo de cura 1,5-20s\\Camada\r\nMáx. Velocidade de impressão 80 mm/h\r\nTela LCD, touch screen, colorida, 3,5 polegadas\r\nSoftware Anycubic Photon Slicer, suporta anti-aliasing de até 8x\r\n",
+        "main_image": "/img/1773851407415-hs-anycubic-mono-se.png.webp",
+        "extra_data": {
+          "features": [
+            "MAIS RAPIDEZ NA IMPRESSÃO",
+            "Materiais Resina UV 405nm",
+            "Eixo Z duplo: proporcionando maior estabilidade e precisão",
+            "Nivelamento da Placa Manual",
+            "Conectividade USB, Wi-Fi"
+          ],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Tipo / Referência",
+              "Código"
+            ]
+          },
+          "modelTitle": "",
+          "hideModelData": false,
+          "showModelSection": false,
+          "descriptionAsList": true
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-18T16:30:07.000Z",
+        "updated_at": "2026-03-18T17:50:09.000Z",
+        "is_upcera": 0,
+        "is_scanner": 0,
+        "is_3d_printer": 1,
+        "upcera_order": 0,
+        "scanner_order": 0,
+        "printer_order": 1
+      },
+      {
+        "id": 28,
+        "category_id": null,
+        "sub_category_id": null,
+        "name": "Impressora 3D Anycubic Photon MONO X",
+        "description": "Volume de construção 192 x 120 x 245 mm\r\nResolução LCD 3840 x 2400 pixels (4K)\r\nResolução XY 0,050 mm (50 mícrons)\r\nTempo de cura 1,5-20s\\Camada\r\nTela LCD, touch screen, colorida, 3,5polegadas\r\nAnycubic Photon Slicer, suporta anti-aliasing de até 8x\r\nEixo Z duplo: proporcionando maior\r\nestabilidade e precisão",
+        "main_image": "/img/1773851756565-hs-anycubic-mono-x.png.webp",
+        "extra_data": {
+          "features": [
+            "MAIOR ÁREA DE IMPRESSÃO",
+            "Materiais Resina UV 405nm Software",
+            "Conectividade USB, Wi-Fi",
+            "Máx. Velocidade de impressão 60 mm/h",
+            "Nivelamento da Placa Manual",
+            "Resolução LCD 3840 x 2400 pixels (4K)",
+            "teste"
+          ],
+          "modelTable": {
+            "rows": [],
+            "headers": [
+              "Tipo / Referência",
+              "Código"
+            ]
+          },
+          "modelTitle": "",
+          "hideModelData": false,
+          "showModelSection": false,
+          "descriptionAsList": true
+        },
+        "is_active": 1,
+        "is_featured": 0,
+        "created_at": "2026-03-18T16:35:56.000Z",
+        "updated_at": "2026-03-18T18:49:59.000Z",
+        "is_upcera": 0,
+        "is_scanner": 0,
+        "is_3d_printer": 1,
+        "upcera_order": 0,
+        "scanner_order": 0,
+        "printer_order": 2
+      }
+    ],
+    "sub_categorias": [
+      {
+        "id": 1,
+        "category_id": 109,
+        "name": "Ceras Galileo",
+        "slug": "ceras-galileo",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 2,
+        "category_id": 109,
+        "name": "Ceras Flex",
+        "slug": "ceras-flex",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 3,
+        "category_id": 109,
+        "name": "Equipamento para Cera",
+        "slug": "equipamento-para-cera",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 4,
+        "category_id": 109,
+        "name": "Utilitários para Cera",
+        "slug": "utilitrios-para-cera",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 5,
+        "category_id": 114,
+        "name": "Pedras Ninja - Para Metal",
+        "slug": "pedras-ninja-para-metal",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 6,
+        "category_id": 114,
+        "name": "Disco Ninja - Disco e Brocas Diamantada",
+        "slug": "disco-ninja-disco-e-brocas-diamantada",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 7,
+        "category_id": 114,
+        "name": "Borrachas Ninja",
+        "slug": "borrachas-ninja",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 8,
+        "category_id": 114,
+        "name": "Escovas Ninja",
+        "slug": "escovas-ninja",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 9,
+        "category_id": 114,
+        "name": "Utilitário para Corte e Acabamento",
+        "slug": "utilitrio-para-corte-e-acabamento",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 10,
+        "category_id": 114,
+        "name": "Pedras Ninja - Para Zircônia",
+        "slug": "pedras-ninja-para-zircnia",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 11,
+        "category_id": 114,
+        "name": "Brocas Sinterizadas",
+        "slug": "brocas-sinterizadas",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 12,
+        "category_id": 116,
+        "name": "Micromotores",
+        "slug": "micromotores",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 13,
+        "category_id": 116,
+        "name": "Fornos",
+        "slug": "fornos",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 14,
+        "category_id": 116,
+        "name": "Microscópios - Lupas",
+        "slug": "microscpios-lupas",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 15,
+        "category_id": 116,
+        "name": "Fresadoras",
+        "slug": "fresadoras",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 16,
+        "category_id": 116,
+        "name": "Ultra-som",
+        "slug": "ultra-som",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 17,
+        "category_id": 116,
+        "name": "Aspiradores",
+        "slug": "aspiradores",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 18,
+        "category_id": 116,
+        "name": "Poletriz",
+        "slug": "poletriz",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 19,
+        "category_id": 116,
+        "name": "Scanners de Mesa",
+        "slug": "scanners-de-mesa",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 20,
+        "category_id": 121,
+        "name": "Fit Plus Cera - Aman",
+        "slug": "fit-plus-cera-aman",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 21,
+        "category_id": 121,
+        "name": "Fit Plus Cera - Open",
+        "slug": "fit-plus-cera-open",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 22,
+        "category_id": 121,
+        "name": "Fit Plus Cera - ZZ",
+        "slug": "fit-plus-cera-zz",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 23,
+        "category_id": 121,
+        "name": "Fit Plus ZR - Aman",
+        "slug": "fit-plus-zr-aman",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 24,
+        "category_id": 121,
+        "name": "Fit Plus ZR - Open",
+        "slug": "fit-plus-zr-open",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 25,
+        "category_id": 121,
+        "name": "Fit Plus ZR - ZZ",
+        "slug": "fit-plus-zr-zz",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 26,
+        "category_id": 107,
+        "name": "Gesso Tuff Rock",
+        "slug": "gesso-tuff-rock",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 27,
+        "category_id": 107,
+        "name": "Pinos de Troquel",
+        "slug": "pinos-de-troquel",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 28,
+        "category_id": 107,
+        "name": "Pinos de Troquel in Box",
+        "slug": "pinos-de-troquel-in-box",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 29,
+        "category_id": 107,
+        "name": "Troquelizadores",
+        "slug": "troquelizadores",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 30,
+        "category_id": 107,
+        "name": "Articuladores",
+        "slug": "articuladores",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 31,
+        "category_id": 107,
+        "name": "Impermeabilizante",
+        "slug": "impermeabilizante",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 32,
+        "category_id": 107,
+        "name": "Espaçadores",
+        "slug": "espaadores",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 33,
+        "category_id": 107,
+        "name": "Isolante",
+        "slug": "isolante",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 34,
+        "category_id": 112,
+        "name": "Blocos e Núcleos - Ligas",
+        "slug": "blocos-e-ncleos-ligas",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 35,
+        "category_id": 112,
+        "name": "Metalocerâmica - Ligas",
+        "slug": "metalocermica-ligas",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 36,
+        "category_id": 112,
+        "name": "PPR - Ligas",
+        "slug": "ppr-ligas",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 37,
+        "category_id": 112,
+        "name": "Utilitários para Ligas (Cadinhos)",
+        "slug": "utilitrios-para-ligas-cadinhos",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 38,
+        "category_id": 122,
+        "name": "Pincéis",
+        "slug": "pincis",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 39,
+        "category_id": 122,
+        "name": "Godés",
+        "slug": "gods",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 40,
+        "category_id": 122,
+        "name": "Bases Refratárias",
+        "slug": "bases-refratrias",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 41,
+        "category_id": 110,
+        "name": "Revestimentos - Fundição - Prensagem - Refratários",
+        "slug": "revestimentos-fundio-prensagem-refratrios",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 42,
+        "category_id": 110,
+        "name": "Refratários",
+        "slug": "refratrios",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 43,
+        "category_id": 110,
+        "name": "Revestimento para Solda",
+        "slug": "revestimento-para-solda",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 44,
+        "category_id": 110,
+        "name": "Silicone",
+        "slug": "silicone",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 45,
+        "category_id": 110,
+        "name": "Utilitários para Fundição e Prensagem",
+        "slug": "utilitrios-para-fundio-e-prensagem",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 46,
+        "category_id": 110,
+        "name": "Micro Fit",
+        "slug": "micro-fit",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 47,
+        "category_id": 108,
+        "name": "Duplicador - Fundição - Prensagem - Refratários",
+        "slug": "duplicador-fundio-prensagem-refratrios",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 48,
+        "category_id": 108,
+        "name": "Refratários Duplicadores",
+        "slug": "refratrios-duplicadores",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 49,
+        "category_id": 108,
+        "name": "Revestimento para Solda Duplicadores",
+        "slug": "revestimento-para-solda-duplicadores",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 50,
+        "category_id": 108,
+        "name": "Silicone Duplicadores",
+        "slug": "silicone-duplicadores",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 51,
+        "category_id": 108,
+        "name": "Utilitários Duplicadores",
+        "slug": "utilitrios-duplicadores",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 52,
+        "category_id": 108,
+        "name": "Micro Fit Duplicadores",
+        "slug": "micro-fit-duplicadores",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 53,
+        "category_id": 113,
+        "name": "Metalocerâmica - Soldas",
+        "slug": "metalocermica-soldas",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 54,
+        "category_id": 113,
+        "name": "PPR - Soldas",
+        "slug": "ppr-soldas",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 55,
+        "category_id": 113,
+        "name": "Utilitários para Soldas",
+        "slug": "utilitrios-para-soldas",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 56,
+        "category_id": 118,
+        "name": "Press",
+        "slug": "press",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 57,
+        "category_id": 118,
+        "name": "Pad",
+        "slug": "pad",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 58,
+        "category_id": 118,
+        "name": "Acessórios T-Lithium",
+        "slug": "acessrios-t-lithium",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-13T19:30:29.000Z"
+      },
+      {
+        "id": 61,
+        "category_id": 119,
+        "name": "Upcera",
+        "slug": "upcera",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-17T14:31:21.000Z"
+      },
+      {
+        "id": 62,
+        "category_id": 119,
+        "name": "Scanner",
+        "slug": "scanner",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-17T20:37:53.000Z"
+      },
+      {
+        "id": 63,
+        "category_id": 119,
+        "name": "Impressora",
+        "slug": "impressora",
+        "display_order": 0,
+        "is_visible": 1,
+        "created_at": "2026-03-18T16:16:09.000Z"
+      }
+    ],
+    "users": [
+      {
+        "id": 1,
+        "username": "admin",
+        "password": "$2a$10$7vNfN.fBwZ7fVfS.Z7fVfO.7vNfN.fBwZ7fVfS.Z7fVfO",
+        "full_name": "Administrador Talmax",
+        "created_at": "2026-03-11T19:53:35.000Z"
+      }
+    ]
+  }
+}
