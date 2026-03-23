@@ -14,16 +14,25 @@ const specialSectionRoutes = require('./routes/specialSectionRoutes');
 
 const createApp = () => {
   const app = express();
+  const frontendDistPath = path.resolve(__dirname, '../../../frontend/dist');
 
   app.use(corsMiddleware);
   app.use(express.json());
-  app.use(express.static(path.resolve(__dirname, '../../../frontend/dist')));
+  app.use(express.static(frontendDistPath));
 
   app.use('/api/admin', adminAuthRoutes);
   app.use('/api/categories', categoryRoutes);
   app.use('/api/banners', bannerRoutes);
   app.use('/api/products', productRoutes);
   app.use('/api', specialSectionRoutes);
+
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+
+    return res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
 
   app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {

@@ -4,11 +4,21 @@
  */
 const cors = require('cors');
 
-const allowedOrigins = new Set([
+const defaultAllowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:4173',
   'http://127.0.0.1:4173'
+];
+
+const envAllowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = new Set([
+  ...defaultAllowedOrigins,
+  ...envAllowedOrigins
 ]);
 
 const corsMiddleware = cors({
