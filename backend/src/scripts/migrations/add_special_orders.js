@@ -1,3 +1,7 @@
+/**
+ * Adiciona colunas de ordenacao para secoes especiais.
+ * Permite definir a ordem de exibicao de produtos em areas destacadas do site.
+ */
 const db = require('./db');
 
 async function addOrderColumns() {

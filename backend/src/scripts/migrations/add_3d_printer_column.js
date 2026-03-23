@@ -1,3 +1,7 @@
+/**
+ * Adiciona a coluna is_3d_printer na tabela products.
+ * Essa flag marca os produtos que devem aparecer na secao de impressoras 3D.
+ */
 const db = require('./db');
 
 async function updateTable() {

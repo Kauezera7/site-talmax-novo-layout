@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LockKeyhole, User, ShieldCheck } from 'lucide-react';
-import { loginAdmin } from '../../services/adminAuth';
+import { loginAdmin, validateAdminSession } from '../../services/adminAuth';
 import './AdminLogin.css';
 
 const AdminLogin = () => {
@@ -12,6 +12,34 @@ const AdminLogin = () => {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    validateAdminSession()
+      .then((result) => {
+        if (!mounted) {
+          return;
+        }
+
+        if (result.authenticated) {
+          navigate('/admin/painel', { replace: true });
+          return;
+        }
+
+        setIsCheckingSession(false);
+      })
+      .catch(() => {
+        if (mounted) {
+          setIsCheckingSession(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [navigate]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -28,13 +56,17 @@ const AdminLogin = () => {
 
     try {
       await loginAdmin(formData);
-      navigate('/admin');
+      navigate('/admin/painel');
     } catch (loginError) {
       setError(loginError.message);
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (isCheckingSession) {
+    return <div className="admin-login-page"><div className="admin-login-shell">Carregando...</div></div>;
+  }
 
   return (
     <div className="admin-login-page">

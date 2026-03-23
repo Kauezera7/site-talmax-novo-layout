@@ -1,3 +1,7 @@
+/**
+ * Atualiza a visibilidade dos segmentos principais.
+ * Usa os slugs existentes para garantir que essas categorias fiquem ativas no site.
+ */
 const db = require('./db');
 
 async function update() {

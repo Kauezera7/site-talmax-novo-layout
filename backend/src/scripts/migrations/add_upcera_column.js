@@ -1,3 +1,7 @@
+/**
+ * Adiciona a coluna is_upcera na tabela products.
+ * Essa flag marca quais produtos aparecem na secao especial da Upcera.
+ */
 const db = require('./db');
 
 async function updateTable() {

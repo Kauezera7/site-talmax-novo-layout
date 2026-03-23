@@ -348,9 +348,10 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route
-            path="/admin"
+            path="/admin/painel"
             element={
               <ProtectedAdminRoute>
                 <Admin />

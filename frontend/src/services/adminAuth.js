@@ -1,4 +1,3 @@
-const ADMIN_TOKEN_KEY = 'talmax-admin-token';
 const API_BASE_URL = 'http://localhost:5000/api/admin';
 
 const parseApiResponse = async (response) => {
@@ -16,19 +15,10 @@ const parseApiResponse = async (response) => {
   }
 };
 
-export const getAdminToken = () => localStorage.getItem(ADMIN_TOKEN_KEY);
-
-export const setAdminToken = (token) => {
-  localStorage.setItem(ADMIN_TOKEN_KEY, token);
-};
-
-export const clearAdminToken = () => {
-  localStorage.removeItem(ADMIN_TOKEN_KEY);
-};
-
 export const loginAdmin = async (credentials) => {
   const response = await fetch(`${API_BASE_URL}/login`, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json'
     },
@@ -41,28 +31,15 @@ export const loginAdmin = async (credentials) => {
     throw new Error(data.error || 'Nao foi possivel entrar no painel.');
   }
 
-  if (data.token) {
-    setAdminToken(data.token);
-  }
-
   return data;
 };
 
 export const validateAdminSession = async () => {
-  const token = getAdminToken();
-
-  if (!token) {
-    return { authenticated: false };
-  }
-
   const response = await fetch(`${API_BASE_URL}/session`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+    credentials: 'include'
   });
 
   if (!response.ok) {
-    clearAdminToken();
     return { authenticated: false };
   }
 
@@ -71,18 +48,8 @@ export const validateAdminSession = async () => {
 };
 
 export const logoutAdmin = async () => {
-  const token = getAdminToken();
-
-  try {
-    if (token) {
-      await fetch(`${API_BASE_URL}/logout`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-    }
-  } finally {
-    clearAdminToken();
-  }
+  await fetch(`${API_BASE_URL}/logout`, {
+    method: 'POST',
+    credentials: 'include'
+  });
 };

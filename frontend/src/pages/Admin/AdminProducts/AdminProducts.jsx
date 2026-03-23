@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, AlertCircle, ChevronLeft } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../../../context/AdminContext';
 import ProductTable from './ProductTable';
@@ -8,14 +8,17 @@ import './AdminProducts.css';
 
 const AdminProducts = () => {
   const { products, categories, mainCategories, subCategories, productsHook, addToast } = useAdmin();
-  const [isCreating, setIsCreating] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
 
+  const handleCreate = () => {
+    setEditingProduct(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleEdit = (product) => {
     setEditingProduct(product);
-    setIsCreating(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -29,9 +32,13 @@ const AdminProducts = () => {
 
     const result = await productsHook.deleteProduct(productToDelete.id);
     if (result.success) {
-      addToast('Produto excluído com sucesso!');
+      addToast('Produto excluido com sucesso!');
       setShowDeleteModal(false);
       setProductToDelete(null);
+
+      if (editingProduct?.id === productToDelete.id) {
+        setEditingProduct(null);
+      }
     } else {
       addToast(result.error, 'error');
     }
@@ -47,7 +54,6 @@ const AdminProducts = () => {
 
     if (result.success) {
       addToast(editingProduct ? 'Produto atualizado!' : 'Produto cadastrado!');
-      setIsCreating(false);
       setEditingProduct(null);
     } else {
       addToast(result.error, 'error');
@@ -55,65 +61,56 @@ const AdminProducts = () => {
   };
 
   const handleCancel = () => {
-    setIsCreating(false);
     setEditingProduct(null);
   };
 
   return (
     <div className="admin-products">
-      {!isCreating ? (
-        <div className="admin-actions-bar admin-actions-bar-right">
-          <button className="btn-primary" onClick={() => setIsCreating(true)}>
-            <Plus size={18} /> Novo Produto
-          </button>
-        </div>
-      ) : (
-        <div className="admin-actions-bar">
-          <button className="btn-secondary admin-back-button" onClick={handleCancel}>
-            <ChevronLeft size={18} /> Voltar para a Lista
-          </button>
-        </div>
-      )}
+      <div className="admin-products-layout">
+        <motion.aside
+          className="admin-products-sidebar"
+          initial={{ opacity: 0, x: -16 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
+          <ProductTable
+            products={products}
+            onCreate={handleCreate}
+            onEdit={handleEdit}
+            onDelete={handleDeleteClick}
+            selectedProductId={editingProduct?.id || null}
+          />
+        </motion.aside>
 
-      <AnimatePresence mode="wait">
-        {isCreating ? (
-          <motion.div
-            key="form"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-          >
-            <div className="admin-card">
-              <div className="card-header">
+        <motion.section
+          className="admin-products-content"
+          key={editingProduct ? `edit-${editingProduct.id}` : 'create'}
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
+          <div className="admin-card product-form-card">
+            <div className="card-header product-form-header">
+              <div>
                 <h2>{editingProduct ? 'Editar Produto' : 'Novo Produto'}</h2>
-              </div>
-              <div className="card-body">
-                <ProductForm
-                  initialData={editingProduct}
-                  categories={categories}
-                  mainCategories={mainCategories}
-                  subCategories={subCategories}
-                  onSubmit={handleSubmit}
-                  onCancel={handleCancel}
-                />
+                <p>
+                  {editingProduct
+                    ? 'Atualize os dados do produto selecionado na lista lateral.'
+                    : 'Cadastre um novo produto mantendo a lista de produtos sempre visivel ao lado.'}
+                </p>
               </div>
             </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="table"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-          >
-            <ProductTable
-              products={products}
-              onEdit={handleEdit}
-              onDelete={handleDeleteClick}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div className="card-body">
+              <ProductForm
+                initialData={editingProduct}
+                categories={categories}
+                mainCategories={mainCategories}
+                subCategories={subCategories}
+                onSubmit={handleSubmit}
+                onCancel={handleCancel}
+              />
+            </div>
+          </div>
+        </motion.section>
+      </div>
 
       <AnimatePresence>
         {showDeleteModal && (
@@ -130,7 +127,7 @@ const AdminProducts = () => {
                 </div>
                 <h3>Excluir Produto?</h3>
                 <p>Tem certeza que deseja excluir o produto <strong>{productToDelete?.name}</strong>?</p>
-                <p className="product-delete-warning">Esta ação é irreversível.</p>
+                <p className="product-delete-warning">Esta acao e irreversivel.</p>
               </div>
               <div className="modal-footer">
                 <button className="btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancelar</button>

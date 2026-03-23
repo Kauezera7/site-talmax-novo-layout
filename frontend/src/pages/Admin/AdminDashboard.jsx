@@ -1,6 +1,6 @@
 /**
  * Pagina: AdminDashboard
- * Rota: /admin
+ * Rota: /admin/painel
  * Responsabilidade: servir como estrutura principal do painel administrativo
  * e alternar entre as secoes internas como dashboard, produtos, categorias e banners
  * container principal do painel administrativo.

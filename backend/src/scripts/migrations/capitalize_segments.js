@@ -1,3 +1,7 @@
+/**
+ * Ajusta o nome exibido dos segmentos principais.
+ * Mantem os slugs como estao e apenas corrige a capitalizacao dos titulos.
+ */
 const db = require('./db');
 
 async function update() {
