@@ -8,6 +8,8 @@ import { motion } from 'framer-motion';
 import { ChevronRight, ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ProductCard from '../ProductCard/ProductCard';
+import API_URL from '../../services/api';
+import { assetPath } from '../../utils/assets';
 import './Impressoras3D.css';
 import '../ProductCatalog/ProductCatalog.css';
 
@@ -28,7 +30,7 @@ const Impressoras3D = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/products');
+        const res = await fetch(`${API_URL}/products`);
         const data = await res.json();
 
         // 1. Filtra e Ordena os produtos marcados MANUALMENTE como Impressora 3D
@@ -42,7 +44,7 @@ const Impressoras3D = () => {
             id: p.id,
             name: p.name,
             description: p.description,
-            image: p.main_image || '/img/placeholder.png',
+            image: p.main_image || assetPath('img/placeholder.png'),
             ...extra
           };
         });
@@ -87,7 +89,7 @@ const Impressoras3D = () => {
            </motion.div>
            
            <div style={{ textAlign: 'center' }}>
-              <img src="/img/impressoras3d.png" alt="Impressoras 3D" style={{ height: '80px', marginBottom: '30px', maxWidth: '100%' }} />
+              <img src={assetPath('img/impressoras3d.png')} alt="Impressoras 3D" style={{ height: '80px', marginBottom: '30px', maxWidth: '100%' }} />
               <div style={{ width: '50px', height: '4px', background: accentColor, margin: '0 auto 40px' }}></div>
               <h1 style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '6px', textTransform: 'uppercase', color: accentColor, marginBottom: '20px' }}>High Precision Printing</h1>
               <p style={{ fontSize: '1.5rem', fontWeight: '300', color: '#000', maxWidth: '850px', margin: '0 auto', lineHeight: '1.4' }}>A revolução da manufatura aditiva com precisão industrial para o fluxo digital odontológico.</p>
@@ -199,7 +201,7 @@ const Impressoras3D = () => {
                   key={p.id} 
                   product={{
                     ...p,
-                    image: p.main_image || '/img/placeholder.png'
+                    image: p.main_image || assetPath('img/placeholder.png')
                   }} 
                   index={index} 
                 />

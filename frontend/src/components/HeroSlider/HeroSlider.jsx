@@ -4,12 +4,14 @@
  * Responsabilidade: banner principal da pagina inicial
  */
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 // Importação dos componentes core do Swiper (Biblioteca de Slider)
 import { Swiper, SwiperSlide } from 'swiper/react';
 // Importação dos módulos de funcionalidade (Autoplay, Efeitos, Paginação, Navegação)
 import { Autoplay, EffectFade, Pagination, Navigation } from 'swiper/modules';
 // Importação dos dados estáticos como fallback
 import { slides as staticSlides } from '../../data';
+import API_URL from '../../services/api';
 
 // Importação obrigatória dos estilos do Swiper para que ele funcione visualmente
 import 'swiper/css';
@@ -24,11 +26,23 @@ import './HeroSlider.css';
 const HeroSlider = () => {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const handleBannerClick = (linkUrl) => {
+    if (!linkUrl) return;
+
+    if (/^(?:[a-z]+:)?\/\//i.test(linkUrl)) {
+      window.location.href = linkUrl;
+      return;
+    }
+
+    navigate(linkUrl);
+  };
 
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/banners');
+        const response = await fetch(`${API_URL}/banners`);
         if (response.ok) {
           const data = await response.json();
           // Filtra apenas banners ativos e ordena
@@ -84,7 +98,7 @@ const HeroSlider = () => {
             <div 
               className="slide-content" 
               style={{ cursor: slide.link_url ? 'pointer' : 'default' }}
-              onClick={() => slide.link_url && (window.location.href = slide.link_url)}
+              onClick={() => handleBannerClick(slide.link_url)}
             >
               {/* Imagem do Banner */}
               <img 

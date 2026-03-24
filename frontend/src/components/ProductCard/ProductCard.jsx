@@ -7,6 +7,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
+import { assetPath } from '../../utils/assets';
 import './ProductCard.css';
 
 const ProductCard = ({ product, index }) => {
@@ -38,7 +39,9 @@ const ProductCard = ({ product, index }) => {
         <img 
           src={activeImage} 
           alt={product.name} 
-          onError={(e) => e.target.src = '/img/placeholder.webp'} 
+          onError={(e) => {
+            e.target.src = assetPath('img/placeholder.webp');
+          }} 
         />
         
         {product.images && product.images.length > 1 && (

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { assetPath } from '../../utils/assets';
 import './QuemSomos.css';
 
 const valores = [
@@ -28,7 +29,7 @@ const QuemSomos = () => {
 
       <section className="quem-somos-showcase">
         <div className="quem-somos-image-card">
-          <img src="/img/talmax-fachada.jpg" alt="Fachada Talmax" />
+          <img src={assetPath('img/talmax-fachada.jpg')} alt="Fachada Talmax" />
         </div>
       </section>
 
@@ -95,7 +96,7 @@ const QuemSomos = () => {
             className="quem-somos-video-trigger"
             onClick={() => setIsVideoOpen(true)}
           >
-            <img src="/img/imagemyoutube.webp" alt="Abrir video institucional Talmax" />
+            <img src={assetPath('img/imagemyoutube.webp')} alt="Abrir video institucional Talmax" />
             <span className="quem-somos-video-overlay">
               <span className="quem-somos-video-play" aria-hidden="true">
                 <span className="quem-somos-video-play-triangle" />

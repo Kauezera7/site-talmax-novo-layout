@@ -4,6 +4,7 @@
  * Responsabilidade: exibir uma tela provisoria para rotas em construcao
  */
 import React from 'react';
+import { assetPath } from '../../utils/assets';
 import './PagePlaceholder.css';
 
 const PagePlaceholder = ({ title }) => {
@@ -14,7 +15,7 @@ const PagePlaceholder = ({ title }) => {
         Esta pagina esta em desenvolvimento e em breve estara disponivel com todo o conteudo da Talmax.
       </p>
       <div className="page-placeholder-logo">
-        <img src="/img/Talmaxlogo.webp" alt="TALMAX" />
+        <img src={assetPath('img/Talmaxlogo.webp')} alt="TALMAX" />
       </div>
     </div>
   );

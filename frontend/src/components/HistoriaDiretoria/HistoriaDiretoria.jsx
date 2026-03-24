@@ -1,31 +1,32 @@
 import React from 'react';
+import { assetPath } from '../../utils/assets';
 import './HistoriaDiretoria.css';
 
 const HistoriaDiretoria = () => {
   const diretoriaCards = [
     {
-      image: '/img/imagejohnypresidente.png',
+      image: assetPath('img/imagejohnypresidente.png'),
       name: 'Johny de Oliveira',
       role: 'Presidente',
       quote: 'Como presidente e responsavel pelas areas Comercial e Comercio Exterior, estou muito entusiasmado com os proximos passos da empresa que visam dar enfase a centralidade do cliente, oferecendo produtos, servicos e facilidades que otimizem o trabalho diario dos profissionais.',
       responsibilities: 'Comercial | Comercio Exterior'
     },
     {
-      image: '/img/imagevorleidiretoradm.png',
+      image: assetPath('img/imagevorleidiretoradm.png'),
       name: 'Vorlei de Oliveira',
       role: 'Diretor Administrativo',
       quote: 'Estar a frente de setores que focam no atendimento ao cliente e um grande desafio, mas precisamos seguir a versatilidade do mercado, oferecendo nao apenas bons produtos e servicos, mas a confianca de uma empresa que se preocupa com detalhes que fazem a diferenca na vida e nos negocios dos nossos clientes.',
       responsibilities: 'Logistica | Producao | Marketing | Regulatorio | Recursos Humanos | Talmax Cursos'
     },
     {
-      image: '/img/imageclaudineyopera.png',
+      image: assetPath('img/imageclaudineyopera.png'),
       name: 'Claudiney Franco',
       role: 'Diretor Financeiro Operacional',
       quote: 'O objetivo e implantar novas tecnologias e processos que visem melhorar nao apenas o atendimento, mas tambem os servicos oferecidos aos clientes, desde a realizacao de pedidos, emissao de notas, ate a entrega dos produtos. Queremos oferecer a melhor experiencia aqui na Talmax.',
       responsibilities: 'Financeiro | Contabilidade | Tecnologia da Informacao | Compras | Pos-Vendas'
     },
     {
-      image: '/img/imagediogomob.png',
+      image: assetPath('img/imagediogomob.png'),
       name: 'Diogo de Oliveira',
       role: 'Diretor Mobiliario',
       quote: 'Estar a frente da area Moby Work, uma linha completa de moveis, acessorios e projetos planejados e um grande desafio. Queremos atender todas as clinicas e laboratorios do Brasil, oferecendo solucoes inteligentes que dinamizam o trabalho e aumentem a produtividade dos profissionais deste segmento.',
@@ -49,7 +50,7 @@ const HistoriaDiretoria = () => {
 
       <section className="historia-diretoria-image-section">
         <div className="historia-diretoria-image-card">
-          <img src="/img/diretoria.png" alt="Historia e Diretoria Talmax" />
+          <img src={assetPath('img/diretoria.png')} alt="Historia e Diretoria Talmax" />
         </div>
 
         <div className="historia-diretoria-text-block">
@@ -65,7 +66,7 @@ const HistoriaDiretoria = () => {
         </div>
 
         <div className="historia-diretoria-map-card">
-          <img src="/img/mapadiretoria.png.webp" alt="Mapa de diretoria Talmax" />
+          <img src={assetPath('img/mapadiretoria.png.webp')} alt="Mapa de diretoria Talmax" />
         </div>
 
         <div className="historia-diretoria-people-grid">

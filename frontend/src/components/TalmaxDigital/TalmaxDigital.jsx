@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ProductCard from '../ProductCard/ProductCard';
+import API_URL from '../../services/api';
+import { assetPath } from '../../utils/assets';
 import './TalmaxDigital.css';
 
 const TalmaxDigital = () => {
@@ -29,17 +31,17 @@ const TalmaxDigital = () => {
   const navigate = useNavigate();
 
   const categories = [
-    { id: 'upcera', title: 'UPCERA', desc: 'Cerâmicas e Discos de alta performance', icon: <Layers size={48} />, image: '/img/upcera.png', backIcon: '/img/logo-upcera-.webp' },
-    { id: 'scanners', title: 'SCANNERS', desc: 'Intraoral e Bancada com Precisão Digital', icon: <Scan size={48} />, image: '/img/box-td-scanners.jpg.webp', backIcon: '/img/scanner.png' },
-    { id: 'impressoras', title: 'IMPRESSORAS 3D', desc: 'Anycubic e Resinas Especializadas', icon: <Printer size={48} />, image: '/img/box-td-impressoras-1-260x300.jpg.webp', backIcon: '/img/impressoras3d.png' },
-    { id: 'componentes', title: 'COMPONENTES', desc: 'Peças e Estruturas Protéticas', icon: <Cpu size={48} />, image: '/img/box-td-componentes-260x300.jpg.webp', backIcon: '/img/componentesproteticos.png' },
-    { id: 'insumos', title: 'INSUMOS', desc: 'Blocos e Ceras de Alta Qualidade', icon: <Box size={48} />, image: '/img/box-td-insumos-260x300.jpg.webp', backIcon: '/img/icon-td-insumos.png' },
+    { id: 'upcera', title: 'UPCERA', desc: 'Cerâmicas e Discos de alta performance', icon: <Layers size={48} />, image: assetPath('img/upcera.png'), backIcon: assetPath('img/logo-upcera-.webp') },
+    { id: 'scanners', title: 'SCANNERS', desc: 'Intraoral e Bancada com Precisão Digital', icon: <Scan size={48} />, image: assetPath('img/box-td-scanners.jpg.webp'), backIcon: assetPath('img/scanner.png') },
+    { id: 'impressoras', title: 'IMPRESSORAS 3D', desc: 'Anycubic e Resinas Especializadas', icon: <Printer size={48} />, image: assetPath('img/box-td-impressoras-1-260x300.jpg.webp'), backIcon: assetPath('img/impressoras3d.png') },
+    { id: 'componentes', title: 'COMPONENTES', desc: 'Peças e Estruturas Protéticas', icon: <Cpu size={48} />, image: assetPath('img/box-td-componentes-260x300.jpg.webp'), backIcon: assetPath('img/componentesproteticos.png') },
+    { id: 'insumos', title: 'INSUMOS', desc: 'Blocos e Ceras de Alta Qualidade', icon: <Box size={48} />, image: assetPath('img/box-td-insumos-260x300.jpg.webp'), backIcon: assetPath('img/icon-td-insumos.png') },
   ];
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/products');
+        const res = await fetch(`${API_URL}/products`);
         const data = await res.json();
         
         const digitalProducts = data.filter(p => {
@@ -54,7 +56,7 @@ const TalmaxDigital = () => {
           return {
             id: p.id,
             name: p.name,
-            image: p.main_image || '/img/placeholder.png',
+            image: p.main_image || assetPath('img/placeholder.png'),
             ...extra
           };
         });
@@ -129,7 +131,7 @@ const TalmaxDigital = () => {
             className="digital-title-wrapper"
            >
               <div className="line-detail"></div>
-              <img src="/img/logo-talmax-digital-pos.png" alt="Talmax Digital" className="digital-logo-header" />
+              <img src={assetPath('img/logo-talmax-digital-pos.png')} alt="Talmax Digital" className="digital-logo-header" />
               <div className="line-detail"></div>
            </motion.div>
            <motion.p

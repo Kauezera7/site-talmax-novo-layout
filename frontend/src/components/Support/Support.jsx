@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { animate, useInView } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
+import { assetPath } from '../../utils/assets';
 import './Support.css';
 
 const FOUNDATION_DATE = new Date('1994-08-01T00:00:00');
@@ -157,19 +158,19 @@ const Support = () => {
   const supportCards = [
     {
       title: 'Suporte Digital',
-      image: '/img/suportedigital.webp',
+      image: assetPath('img/suportedigital.webp'),
       description: 'Uma equipe especializada em RESULTADOS, com atendimentos personalizados a partir da compra do Sistema CAD/CAM, no treinamento para utilizacao correta dos softwares e produtos, ate o atendimento pos-venda aos clientes de diversos laboratorios e clinicas, distribuidos em 24 estados e 95 municipios.',
       link: 'https://talmax.com.br/suportetalmax/',
     },
     {
       title: 'Suporte Produtos',
-      image: '/img/suporteproduto-2.jpg.webp',
+      image: assetPath('img/suporteproduto-2.jpg.webp'),
       description: 'Com o compromisso de oferecer um suporte tecnico singular, o time de produtos e especializado em SOLUCOES para suprir as mais diversas situacoes relacionadas ao uso de cada material, os quais passam por criteriosa pesquisa, analise e testes de qualidade e confiabilidade.',
       link: 'https://talmax.tomticket.com/?account=3097344P21072020051958',
     },
     {
       title: 'Assistencia Tecnica',
-      image: '/img/assistenciatecnica-2.jpg.webp',
+      image: assetPath('img/assistenciatecnica-2.jpg.webp'),
       description: 'Um time especializado em QUALIDADE, a Assistencia Tecnica proporciona rapidez e agilidade no servico de manutencao tecnica de todos os produtos comercializados pela Talmax, alem de ministrar treinamentos para a capacitacao da rede credenciada no Brasil.',
       link: 'https://talmax.tomticket.com/',
     },
@@ -180,7 +181,7 @@ const Support = () => {
       <section className="support-hero">
         <div className="support-hero-content">
           <img
-            src="/img/logo-talmax-suporte.png.webp"
+            src={assetPath('img/logo-talmax-suporte.png.webp')}
             alt="Logo Suporte Talmax"
             className="support-main-logo"
           />

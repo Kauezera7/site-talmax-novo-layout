@@ -1,11 +1,13 @@
-const API_BASE_URL = 'http://localhost:5000/api/admin';
+import API_URL from './api';
+
+const API_BASE_URL = `${API_URL}/admin`;
 
 const parseApiResponse = async (response) => {
   const responseText = await response.text();
   const contentType = response.headers.get('content-type') || '';
 
   if (!contentType.includes('application/json')) {
-    throw new Error('A API de login nao respondeu em JSON. Verifique se o backend esta rodando em http://localhost:5000.');
+    throw new Error(`A API de login nao respondeu em JSON. Verifique se o backend esta rodando em ${API_BASE_URL}.`);
   }
 
   try {

@@ -7,6 +7,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import API_URL from '../../services/api';
+import { assetPath } from '../../utils/assets';
 import './Scanners.css';
 
 const Scanners = () => {
@@ -20,7 +22,7 @@ const Scanners = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/products');
+        const res = await fetch(`${API_URL}/products`);
         const data = await res.json();
 
         // 1. Filtra e Ordena os produtos Scanners pelo scanner_order
@@ -34,7 +36,7 @@ const Scanners = () => {
               id: p.id,
               name: p.name,
               description: p.description,
-              image: p.main_image || '/img/placeholder.png',
+              image: p.main_image || assetPath('img/placeholder.png'),
               ...extra
             };
           });
@@ -70,7 +72,7 @@ const Scanners = () => {
            </motion.div>
            
            <div style={{ textAlign: 'center' }}>
-              <img src="/img/titulo-pag-scanners.png" alt="Scanners Title" style={{ height: '80px', marginBottom: '30px', maxWidth: '100%' }} />
+              <img src={assetPath('img/titulo-pag-scanners.png')} alt="Scanners Title" style={{ height: '80px', marginBottom: '30px', maxWidth: '100%' }} />
               <div style={{ width: '50px', height: '4px', background: accentColor, margin: '0 auto 40px' }}></div>
               <h1 style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '6px', textTransform: 'uppercase', color: accentColor, marginBottom: '20px' }}>Digital Reality Capture</h1>
               <p style={{ fontSize: '1.5rem', fontWeight: '300', color: '#000', maxWidth: '850px', margin: '0 auto', lineHeight: '1.4' }}>A mais alta tecnologia em digitalização 3D, transformando o fluxo físico em digital com precisão absoluta.</p>

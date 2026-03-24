@@ -12,6 +12,7 @@ if (!process.env.ADMIN_JWT_SECRET) {
 
 const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 const ADMIN_JWT_EXPIRES_IN_SECONDS = Number(process.env.ADMIN_JWT_EXPIRES_IN_SECONDS || 60 * 60 * 8);
+const isProduction = process.env.NODE_ENV === 'production';
 
 const safeEqual = (valueA, valueB) => {
   const bufferA = Buffer.from(String(valueA));
@@ -132,8 +133,8 @@ const getAdminSessionToken = (req) => {
 
 const getAdminCookieOptions = () => ({
   httpOnly: true,
-  sameSite: 'lax',
-  secure: process.env.NODE_ENV === 'production',
+  sameSite: isProduction ? 'none' : 'lax',
+  secure: isProduction,
   path: '/',
   maxAge: ADMIN_JWT_EXPIRES_IN_SECONDS * 1000
 });

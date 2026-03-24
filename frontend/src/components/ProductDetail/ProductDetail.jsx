@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ProductCard from '../ProductCard/ProductCard';
+import API_URL from '../../services/api';
+import { assetPath } from '../../utils/assets';
 import './ProductDetail.css';
 
 const ProductDetail = () => {
@@ -34,8 +36,8 @@ const ProductDetail = () => {
       setLoading(true);
       try {
         const [prodRes, allRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/products/${id}`),
-          fetch('http://localhost:5000/api/products')
+          fetch(`${API_URL}/products/${id}`),
+          fetch(`${API_URL}/products`)
         ]);
         
         if (!prodRes.ok) {
@@ -87,7 +89,7 @@ const ProductDetail = () => {
             .filter(name => !fixedSegmentNames.includes(name))
             .join(', ') || 'Sem categoria',
           description: data.description,
-          image: data.main_image || '/img/placeholder.png',
+          image: data.main_image || assetPath('img/placeholder.png'),
           ...extra,
           modelTable: finalTable
         };
@@ -101,7 +103,7 @@ const ProductDetail = () => {
             .split(', ')
             .filter(name => !fixedSegmentNames.includes(name))
             .join(', ') || 'Sem categoria',
-          image: p.main_image || '/img/placeholder.png'
+          image: p.main_image || assetPath('img/placeholder.png')
         })));
 
       } catch (err) {

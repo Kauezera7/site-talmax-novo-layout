@@ -1,41 +1,43 @@
 /**
  * SLIDES (BANNERS): Lista de imagens que aparecem no slider principal.
  */
+import { assetPath } from './utils/assets';
+
 export const slides = [
   {
     id: 1,
     title: 'B42 - Fresadora de Precisão',
-    image: '/img/BANNER_B42.webp',
+    image: assetPath('img/BANNER_B42.webp'),
   },
   {
     id: 2,
     title: 'A53 - Performance e Agilidade',
-    image: '/img/BANNER-A53.webp',
+    image: assetPath('img/BANNER-A53.webp'),
   },
   {
     id: 3,
     title: 'Aoralscan 3',
-    image: '/img/BANNER-AORALSCAN-3.webp',
+    image: assetPath('img/BANNER-AORALSCAN-3.webp'),
   },
   {
     id: 4,
     title: 'Sistema Ceramotion',
-    image: '/img/BANNER-CERAMOTION.webp',
+    image: assetPath('img/BANNER-CERAMOTION.webp'),
   },
   {
     id: 5,
     title: 'MicroFit',
-    image: '/img/BANNER-microFit.webp',
+    image: assetPath('img/BANNER-microFit.webp'),
   },
   {
     id: 6,
     title: 'Atendimento via Chatbot',
-    image: '/img/BANNERchat_bot.webp',
+    image: assetPath('img/BANNERchat_bot.webp'),
   },
   {
     id: 7,
     title: 'Suporte Técnico Especializado',
-    image: '/img/BANNERSUPORTE.MAQUINA.webp',
+    image: assetPath('img/BANNERSUPORTE.MAQUINA.webp'),
   },
 ];
 

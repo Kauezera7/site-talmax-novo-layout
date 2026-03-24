@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Save, CheckCircle, ChevronRight } from 'lucide-react';
+import { assetPath } from '../../../utils/assets';
 
 const SpecialSectionManager = ({
   sectionTitle,
@@ -203,7 +204,7 @@ const SpecialSectionManager = ({
                     <div className={`product-select-checkbox ${isSelected ? 'selected' : ''}`}>
                       {isSelected && <CheckCircle size={14} color="white" />}
                     </div>
-                    <img src={product.main_image || '/img/placeholder.png'} alt={product.name} className="product-select-image" />
+                    <img src={product.main_image || assetPath('img/placeholder.png')} alt={product.name} className="product-select-image" />
                     <div className="product-select-info">
                       <p className="product-select-name">{product.name}</p>
                     </div>

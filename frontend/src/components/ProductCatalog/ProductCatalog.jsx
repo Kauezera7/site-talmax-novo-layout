@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../ProductCard/ProductCard';
+import API_URL from '../../services/api';
+import { assetPath } from '../../utils/assets';
 import './ProductCatalog.css';
 
 const normalizeSearchText = (value = '') =>
@@ -64,8 +66,8 @@ const ProductCatalog = () => {
       setIsLoading(true);
       try {
         const [prodRes, catRes] = await Promise.all([
-          fetch('http://localhost:5000/api/products'),
-          fetch('http://localhost:5000/api/categories')
+          fetch(`${API_URL}/products`),
+          fetch(`${API_URL}/categories`)
         ]);
 
         const prodData = await prodRes.json();
@@ -100,7 +102,7 @@ const ProductCatalog = () => {
               productCatNames
                 .filter((name) => !segmentNames.includes(name))
                 .join(', ') || 'Sem categoria',
-            image: product.main_image || '/img/placeholder.png',
+            image: product.main_image || assetPath('img/placeholder.png'),
             ...extra
           };
         });

@@ -16,6 +16,8 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
 import ProductCard from '../ProductCard/ProductCard';
+import API_URL from '../../services/api';
+import { assetPath } from '../../utils/assets';
 import './Upcera.css';
 import '../ProductCatalog/ProductCatalog.css';
 
@@ -31,7 +33,7 @@ const Upcera = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/products');
+        const res = await fetch(`${API_URL}/products`);
         const data = await res.json();
 
         // 1. Filtra e Ordena os produtos Upcera pelo upcera_order
@@ -45,7 +47,7 @@ const Upcera = () => {
               id: p.id,
               name: p.name,
               description: p.description,
-              image: p.main_image || '/img/placeholder.png',
+              image: p.main_image || assetPath('img/placeholder.png'),
               ...extra
             };
           });
@@ -92,7 +94,7 @@ const Upcera = () => {
            </motion.div>
            
            <div style={{ textAlign: 'center' }}>
-              <img src="/img/logo-upcera-.webp" alt="Upcera Logo" style={{ height: '70px', marginBottom: '30px', maxWidth: '100%', objectFit: 'contain' }} />
+              <img src={assetPath('img/logo-upcera-.webp')} alt="Upcera Logo" style={{ height: '70px', marginBottom: '30px', maxWidth: '100%', objectFit: 'contain' }} />
               <div style={{ width: '50px', height: '4px', background: accentColor, margin: '0 auto 40px' }}></div>
               <h1 style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '6px', textTransform: 'uppercase', color: accentColor, marginBottom: '20px' }}>Innovation in Restorative Dentistry</h1>
               <p style={{ fontSize: '1.5rem', fontWeight: '300', color: '#000', maxWidth: '850px', margin: '0 auto', lineHeight: '1.4' }}>Líder mundial em cerâmicas odontológicas de alta performance, unindo estética natural e resistência extrema.</p>
@@ -166,7 +168,7 @@ const Upcera = () => {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
-            src="/img/na-pagina-dauoceracad-cam.webp"
+            src={assetPath('img/na-pagina-dauoceracad-cam.webp')}
             alt="Linha CAD/CAM e Insumos"
             style={{ width: '25%', height: 'auto', display: 'block', margin: '0 auto' }}
             />        </div>
@@ -227,7 +229,7 @@ const Upcera = () => {
                     <ProductCard 
                       product={{
                         ...p,
-                        image: p.main_image || '/img/placeholder.png'
+                        image: p.main_image || assetPath('img/placeholder.png')
                       }} 
                       index={index} 
                     />

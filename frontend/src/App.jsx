@@ -29,6 +29,7 @@ import Impressoras3D from './components/Impressoras3D/Impressoras3D';
 import Admin from './pages/Admin/AdminDashboard';
 import AdminLogin from './components/AdminLogin/AdminLogin';
 import { validateAdminSession } from './services/adminAuth';
+import { assetPath } from './utils/assets';
 import './App.css';
 
 const ScrollToTop = () => {
@@ -77,9 +78,10 @@ const ProtectedAdminRoute = ({ children }) => {
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '');
 
   return (
-    <Router>
+    <Router basename={routerBasename}>
       <ScrollToTop />
       <AppContent menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
     </Router>
@@ -187,7 +189,7 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
         <header className="header">
           <div className="header-top">
             <Link to="/" className="logo">
-              <img src="/img/Talmaxlogo.webp" alt="TALMAX" />
+              <img src={assetPath('img/Talmaxlogo.webp')} alt="TALMAX" />
             </Link>
 
             <nav className="nav-desktop hide-mobile">
@@ -391,7 +393,7 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
         <footer className="footer">
           <div className="footer-grid">
             <div className="footer-section">
-              <img src="/img/Talmaxlogo.webp" alt="TALMAX" className="footer-logo" />
+              <img src={assetPath('img/Talmaxlogo.webp')} alt="TALMAX" className="footer-logo" />
               <p>Inovacao e qualidade em produtos odontologicos.</p>
               <div className="social-links">
                 <Facebook size={20} />

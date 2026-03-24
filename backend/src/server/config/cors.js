@@ -4,16 +4,21 @@
  */
 const cors = require('cors');
 
+const normalizeOrigin = (origin) => origin.trim().replace(/\/+$/, '');
+
 const defaultAllowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:4173',
-  'http://127.0.0.1:4173'
-];
+  'http://127.0.0.1:4173',
+  'https://talmax-ti.com.br',
+  'https://www.talmax-ti.com.br',
+  'https://site-talmax.onrender.com'
+].map(normalizeOrigin);
 
 const envAllowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
   .split(',')
-  .map((origin) => origin.trim())
+  .map((origin) => normalizeOrigin(origin))
   .filter(Boolean);
 
 const allowedOrigins = new Set([
@@ -23,7 +28,13 @@ const allowedOrigins = new Set([
 
 const corsMiddleware = cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.has(origin)) {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    const normalizedOrigin = normalizeOrigin(origin);
+
+    if (allowedOrigins.has(normalizedOrigin)) {
       return callback(null, true);
     }
 

@@ -6,6 +6,7 @@
  * container principal do painel administrativo.
  */
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Package,
   Image as ImageIcon,
@@ -73,6 +74,7 @@ const DashboardHome = ({ onOpenTab }) => {
 };
 
 const AdminDashboardContent = () => {
+  const navigate = useNavigate();
   const {
     activeTab,
     setActiveTab,
@@ -114,7 +116,7 @@ const AdminDashboardContent = () => {
 
   const handleLogout = async () => {
     await logoutAdmin();
-    window.location.href = '/admin/login';
+    navigate('/admin/login', { replace: true });
   };
 
   return (
