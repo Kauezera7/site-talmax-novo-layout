@@ -28,6 +28,7 @@ const HeroSlider = () => {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const shouldUseStaticFallback = import.meta.env.DEV;
 
   const handleBannerClick = (linkUrl) => {
     if (!linkUrl) return;
@@ -48,13 +49,13 @@ const HeroSlider = () => {
           const data = await response.json();
           // Filtra apenas banners ativos e ordena
           const activeBanners = data.filter(b => b.active);
-          setBanners(activeBanners.length > 0 ? activeBanners : staticSlides);
+          setBanners(activeBanners.length > 0 ? activeBanners : (shouldUseStaticFallback ? staticSlides : []));
         } else {
-          setBanners(staticSlides);
+          setBanners(shouldUseStaticFallback ? staticSlides : []);
         }
       } catch (error) {
         console.error("Erro ao buscar banners:", error);
-        setBanners(staticSlides);
+        setBanners(shouldUseStaticFallback ? staticSlides : []);
       } finally {
         setLoading(false);
       }
@@ -69,6 +70,10 @@ const HeroSlider = () => {
         <div className="spinner"></div>
       </section>
     );
+  }
+
+  if (banners.length === 0) {
+    return null;
   }
 
   return (
