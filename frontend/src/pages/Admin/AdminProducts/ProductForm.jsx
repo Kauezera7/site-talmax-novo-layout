@@ -30,8 +30,8 @@ const ProductForm = ({
   onValidationError
 }) => {
   const [formData, setFormData] = useState(createInitialFormState);
-
   const [previews, setPreviews] = useState([]);
+  const [primaryPreview, setPrimaryPreview] = useState('');
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isSubCategoryDropdownOpen, setIsSubCategoryDropdownOpen] = useState(false);
 
@@ -71,13 +71,21 @@ const ProductForm = ({
         modelTable: extra.modelTable || { headers: ['Tipo / Referência', 'Código'], rows: [['', '']] }
       });
 
-      if (extra.images) setPreviews(extra.images);
-      else if (initialData.main_image) setPreviews([initialData.main_image]);
+      if (extra.images && extra.images.length > 0) {
+        setPreviews(extra.images);
+        setPrimaryPreview(initialData.main_image || extra.images[0]);
+      } else if (initialData.main_image) {
+        setPreviews([initialData.main_image]);
+        setPrimaryPreview(initialData.main_image);
+      } else {
+        setPrimaryPreview('');
+      }
       return;
     }
 
     setFormData(createInitialFormState());
     setPreviews([]);
+    setPrimaryPreview('');
   }, [initialData, categories]);
 
   const getFilteredSubCategories = () => {
@@ -87,10 +95,15 @@ const ProductForm = ({
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
-    setFormData({ ...formData, images: [...formData.images, ...files] });
+    if (files.length === 0) return;
 
     const newPreviews = files.map((file) => URL.createObjectURL(file));
-    setPreviews([...previews, ...newPreviews]);
+    setFormData((current) => ({ ...current, images: [...current.images, ...files] }));
+    setPreviews((current) => [...current, ...newPreviews]);
+
+    if (!primaryPreview && previews.length === 0) {
+      setPrimaryPreview(newPreviews[0]);
+    }
   };
 
   const removeImage = (index) => {
@@ -98,6 +111,10 @@ const ProductForm = ({
     const newPreviews = [...previews];
     newPreviews.splice(index, 1);
     setPreviews(newPreviews);
+
+    if (previewToRemove?.startsWith('blob:')) {
+      URL.revokeObjectURL(previewToRemove);
+    }
 
     if (previewToRemove?.startsWith('blob:')) {
       const blobIndex = previews
@@ -109,6 +126,10 @@ const ProductForm = ({
         ...current,
         images: current.images.filter((_, fileIndex) => fileIndex !== blobIndex)
       }));
+    }
+
+    if (primaryPreview === previewToRemove) {
+      setPrimaryPreview(newPreviews[0] || '');
     }
   };
 
@@ -162,9 +183,12 @@ const ProductForm = ({
       return;
     }
 
+    const primaryImageIndex = previews.findIndex((preview) => preview === primaryPreview);
+
     const data = new FormData();
     data.append('name', formData.name);
     data.append('description', formData.description);
+    data.append('primary_image_index', String(primaryImageIndex >= 0 ? primaryImageIndex : 0));
 
     const combinedCategoryIds = [...formData.category_ids, ...formData.sub_category_ids];
     data.append('category_ids', JSON.stringify(combinedCategoryIds));
@@ -393,10 +417,22 @@ const ProductForm = ({
           <UploadCloud size={40} color="var(--admin-primary)" />
           <p>Clique ou arraste fotos para o produto</p>
         </div>
+        {previews.length > 0 && (
+          <p className="product-form-helper">
+            Escolha qual foto deve ficar como principal. Essa sera a imagem usada na listagem e no detalhe do produto.
+          </p>
+        )}
         <div className="admin-previews">
           {previews.map((src, idx) => (
-            <div key={idx} className="preview-thumb">
+            <div key={idx} className={`preview-thumb ${primaryPreview === src ? 'is-primary' : ''}`}>
               <img src={src} alt="Preview" />
+              <button
+                type="button"
+                className={`preview-primary-toggle ${primaryPreview === src ? 'active' : ''}`}
+                onClick={() => setPrimaryPreview(src)}
+              >
+                {primaryPreview === src ? 'Imagem principal' : 'Definir como principal'}
+              </button>
               <button type="button" className="remove-preview" onClick={() => removeImage(idx)}><X size={14} /></button>
             </div>
           ))}

@@ -253,6 +253,33 @@
   line-height: 1.55;
 }
 
+.preview-thumb {
+  position: relative;
+}
+
+.preview-thumb.is-primary {
+  box-shadow: 0 0 0 2px #2563eb;
+}
+
+.preview-primary-toggle {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 10px;
+  background: rgba(15, 23, 42, 0.78);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.preview-primary-toggle.active {
+  background: #2563eb;
+}
+
 .product-form-group-disabled .dynamic-input-group input,
 .product-form-group-disabled .btn-add,
 .product-form-group-disabled .btn-icon.delete,

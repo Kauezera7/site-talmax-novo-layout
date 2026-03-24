@@ -20,6 +20,9 @@ const createApp = () => {
   app.use(corsMiddleware);
   app.use(express.json());
   app.use('/img', express.static(frontendPublicImagesPath));
+  app.use('/img', (req, res) => {
+    res.status(404).end();
+  });
   app.use(express.static(frontendDistPath));
 
   app.use('/api/admin', adminAuthRoutes);

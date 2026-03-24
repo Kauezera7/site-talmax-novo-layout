@@ -10,6 +10,7 @@ const { requireAdminSession } = require('../auth/adminSession');
 const {
   parseJsonObject,
   parseIdArray,
+  parseInteger,
   getUploadedImagePaths
 } = require('../utils/requestParsers');
 const {
@@ -26,6 +27,20 @@ const normalizeImageList = (value) => (
     ? value.map((imagePath) => safe(imagePath)).filter(Boolean)
     : []
 );
+
+const reorderImagePaths = (imagePaths, primaryIndex = 0) => {
+  if (imagePaths.length === 0) {
+    return [];
+  }
+
+  const boundedIndex = Math.min(Math.max(parseInteger(primaryIndex, 0), 0), imagePaths.length - 1);
+  const selectedImage = imagePaths[boundedIndex];
+
+  return [
+    selectedImage,
+    ...imagePaths.filter((_, index) => index !== boundedIndex)
+  ];
+};
 
 const findDuplicateProductByName = async (connection, name, excludeId = null) => {
   const query = `
@@ -87,10 +102,11 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
     const normalizedName = normalizeProductText(name);
     const normalizedDescription = normalizeProductText(description);
     const parsedCategoryIds = parseIdArray(category_ids);
+    const primaryImageIndex = parseInteger(req.body.primary_image_index, 0);
     const uploadedImagePaths = getUploadedImagePaths(req.files || []);
     const extra = parseJsonObject(extra_data);
     const retainedImagePaths = normalizeImageList(extra.images);
-    const mergedImagePaths = [...retainedImagePaths, ...uploadedImagePaths];
+    const mergedImagePaths = reorderImagePaths([...retainedImagePaths, ...uploadedImagePaths], primaryImageIndex);
 
     const duplicateProduct = await findDuplicateProductByName(connection, normalizedName);
 
@@ -141,12 +157,13 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     const description = normalizeProductText(req.body.description);
     const category_ids = req.body.category_ids;
     const parsedCategoryIds = parseIdArray(category_ids);
+    const primaryImageIndex = parseInteger(req.body.primary_image_index, 0);
     const extra_data = req.body.extra_data;
     const newImagePaths = getUploadedImagePaths(req.files || []);
     const extra = parseJsonObject(extra_data);
     const duplicateProduct = await findDuplicateProductByName(connection, name, productId);
     const retainedImagePaths = normalizeImageList(extra.images);
-    const mergedImagePaths = [...retainedImagePaths, ...newImagePaths];
+    const mergedImagePaths = reorderImagePaths([...retainedImagePaths, ...newImagePaths], primaryImageIndex);
 
     if (duplicateProduct) {
       await connection.rollback();
