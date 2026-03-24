@@ -128,18 +128,18 @@ CREATE TABLE IF NOT EXISTS page_settings (
 -- ======================================================
 
 INSERT INTO categorias (id, name, slug, icon_url, display_order, is_visible) VALUES
-(1, 'Gesso e Troquelizacao', 'gesso-e-troquelizacao', '/img/CAT-icon-gesso.png', 1, 0),
-(2, 'Duplicadores', 'duplicadores', '/img/CAT-icon-duplicadores.png', 2, 0),
-(3, 'Ceras', 'ceras', '/img/CATicon-ceras.png', 3, 0),
-(4, 'Revestimentos', 'revestimentos', '/img/CAT-icon-revestimentos-1.png', 4, 0),
-(5, 'Zirkon Ice', 'zirkon-ice', '/img/CAT-icon-zirkon-ice-1.png', 5, 0),
-(6, 'Ligas Metalicas', 'ligas-metalicas', '/img/CAT-icon-ligas-metalicas-1.png', 6, 0),
-(7, 'Soldas', 'soldas', '/img/CAT-icon-soldas-1.png', 7, 0),
-(8, 'Corte e Acabamento', 'corte-e-acabamento', '/img/CAT-icon-acabamentos-1.png', 8, 0),
-(9, 'Microscopio e Lupa', 'microscopio-e-lupa', '/img/CAT-icon-microscopio-lupa-1.png', 9, 0),
-(10, 'Equipamentos', 'equipamentos', '/img/CAT-icon-equipamentos-1.png', 10, 1),
-(11, 'Acessorios para Ceramica', 'acessorios-para-ceramica', '/img/CAT-icon-ceramica-1.png', 11, 0),
-(12, 'T-Lithium', 't-lithium', '/img/CAT.icon-tilithium-1.png', 12, 0),
+(1, 'Gesso e Troquelizacao', 'gesso-e-troquelizacao', NULL, 1, 0),
+(2, 'Duplicadores', 'duplicadores', NULL, 2, 0),
+(3, 'Ceras', 'ceras', NULL, 3, 0),
+(4, 'Revestimentos', 'revestimentos', NULL, 4, 0),
+(5, 'Zirkon Ice', 'zirkon-ice', NULL, 5, 0),
+(6, 'Ligas Metalicas', 'ligas-metalicas', NULL, 6, 0),
+(7, 'Soldas', 'soldas', NULL, 7, 0),
+(8, 'Corte e Acabamento', 'corte-e-acabamento', NULL, 8, 0),
+(9, 'Microscopio e Lupa', 'microscopio-e-lupa', NULL, 9, 0),
+(10, 'Equipamentos', 'equipamentos', NULL, 10, 1),
+(11, 'Acessorios para Ceramica', 'acessorios-para-ceramica', NULL, 11, 0),
+(12, 'T-Lithium', 't-lithium', NULL, 12, 0),
 (13, 'Talmax Digital', 'talmax-digital', NULL, 13, 0),
 (14, 'Blocos', 'blocos', NULL, 14, 0),
 (15, 'Linha Cad/Cam', 'linha-cad-cam', NULL, 15, 0),
@@ -253,7 +253,7 @@ ON DUPLICATE KEY UPDATE
     content = VALUES(content);
 
 INSERT INTO users (id, username, password, full_name) VALUES
-(1, 'admin', '$2a$10$7vNfN.fBwZ7fVfS.Z7fVfO.7vNfN.fBwZ7fVfS.Z7fVfO', 'Administrador Talmax')
+(1, 'admin', 'talmax123', 'Administrador Talmax')
 ON DUPLICATE KEY UPDATE
     username = VALUES(username),
     password = VALUES(password),
