@@ -6,6 +6,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const corsMiddleware = require('./config/cors');
+const { getServedImageDirs } = require('./config/imageStorage');
 const adminAuthRoutes = require('./routes/adminAuthRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const bannerRoutes = require('./routes/bannerRoutes');
@@ -15,11 +16,13 @@ const specialSectionRoutes = require('./routes/specialSectionRoutes');
 const createApp = () => {
   const app = express();
   const frontendDistPath = path.resolve(__dirname, '../../../frontend/dist');
-  const frontendPublicImagesPath = path.resolve(__dirname, '../../../frontend/public/img');
+  const imageDirectories = getServedImageDirs();
 
   app.use(corsMiddleware);
   app.use(express.json());
-  app.use('/img', express.static(frontendPublicImagesPath));
+  imageDirectories.forEach((directoryPath) => {
+    app.use('/img', express.static(directoryPath));
+  });
   app.use('/img', (req, res) => {
     res.status(404).end();
   });

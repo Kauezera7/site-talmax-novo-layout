@@ -3,8 +3,8 @@
  * Define onde imagens sao salvas e como os arquivos recebem nome.
  */
 const multer = require('multer');
-const path = require('path');
 const crypto = require('crypto');
+const { ensurePrimaryImageDir } = require('./imageStorage');
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
@@ -16,7 +16,7 @@ const ALLOWED_MIME_TYPES = new Set([
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.resolve(__dirname, '../../../../frontend/public/img'));
+    cb(null, ensurePrimaryImageDir());
   },
   filename: (req, file, cb) => {
     const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '-');
