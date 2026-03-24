@@ -26,8 +26,12 @@ const createApp = () => {
   app.use('/api/products', productRoutes);
   app.use('/api', specialSectionRoutes);
 
-  app.get('*', (req, res, next) => {
+  app.use((req, res, next) => {
     if (req.path.startsWith('/api')) {
+      return next();
+    }
+
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
       return next();
     }
 

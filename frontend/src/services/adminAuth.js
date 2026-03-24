@@ -2,6 +2,16 @@ import API_URL from './api';
 
 const API_BASE_URL = `${API_URL}/admin`;
 
+const normalizeAdminRequestError = (error) => {
+  if (error instanceof TypeError) {
+    return new Error(
+      'Falha de conexao com a API do painel. Verifique se o backend publicado liberou CORS para este dominio.'
+    );
+  }
+
+  return error;
+};
+
 const parseApiResponse = async (response) => {
   const responseText = await response.text();
   const contentType = response.headers.get('content-type') || '';
@@ -18,14 +28,20 @@ const parseApiResponse = async (response) => {
 };
 
 export const loginAdmin = async (credentials) => {
-  const response = await fetch(`${API_BASE_URL}/login`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(credentials)
-  });
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}/login`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(credentials)
+    });
+  } catch (error) {
+    throw normalizeAdminRequestError(error);
+  }
 
   const data = await parseApiResponse(response);
 
@@ -37,9 +53,15 @@ export const loginAdmin = async (credentials) => {
 };
 
 export const validateAdminSession = async () => {
-  const response = await fetch(`${API_BASE_URL}/session`, {
-    credentials: 'include'
-  });
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}/session`, {
+      credentials: 'include'
+    });
+  } catch (error) {
+    throw normalizeAdminRequestError(error);
+  }
 
   if (!response.ok) {
     return { authenticated: false };
@@ -50,8 +72,12 @@ export const validateAdminSession = async () => {
 };
 
 export const logoutAdmin = async () => {
-  await fetch(`${API_BASE_URL}/logout`, {
-    method: 'POST',
-    credentials: 'include'
-  });
+  try {
+    await fetch(`${API_BASE_URL}/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+  } catch (error) {
+    throw normalizeAdminRequestError(error);
+  }
 };
