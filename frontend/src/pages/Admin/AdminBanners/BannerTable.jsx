@@ -26,6 +26,7 @@ const BannerTable = ({ banners, onEdit, onDelete, onToggleStatus }) => {
                     className="banner-table-image-content"
                   />
                 </div>
+                <div className="banner-image-path">{banner.image_url || 'Sem imagem'}</div>
               </td>
               <td>{banner.title || <span className="banner-empty-title">Sem titulo</span>}</td>
               <td>{banner.display_order}</td>

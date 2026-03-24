@@ -60,6 +60,15 @@
   object-fit: cover;
 }
 
+.banner-image-path {
+  margin-top: 8px;
+  max-width: 220px;
+  color: var(--admin-text-light);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
 .banner-empty-title {
   color: #ccc;
 }
