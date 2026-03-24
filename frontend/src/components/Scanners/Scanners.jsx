@@ -8,7 +8,7 @@ import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../../services/api';
-import { assetPath } from '../../utils/assets';
+import { apiAssetPath, assetPath } from '../../utils/assets';
 import './Scanners.css';
 
 const Scanners = () => {
@@ -36,7 +36,7 @@ const Scanners = () => {
               id: p.id,
               name: p.name,
               description: p.description,
-              image: p.main_image || assetPath('img/placeholder.png'),
+              image: p.main_image ? apiAssetPath(p.main_image) : assetPath('img/placeholder.png'),
               ...extra
             };
           });

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Save, UploadCloud } from 'lucide-react';
+import { apiAssetPath } from '../../../utils/assets';
 
 const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -20,7 +21,7 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel }) => {
         is_visible: Boolean(initialData.is_visible),
         parent_id: initialData.parent_id || null
       });
-      setPreview(initialData.icon_url || null);
+      setPreview(initialData.icon_url ? apiAssetPath(initialData.icon_url) : null);
     }
   }, [initialData]);
 

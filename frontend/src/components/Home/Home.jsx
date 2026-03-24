@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { services } from '../../data';
 import HeroSlider from '../HeroSlider/HeroSlider';
 import API_URL from '../../services/api';
-import { assetPath } from '../../utils/assets';
+import { apiAssetPath, assetPath } from '../../utils/assets';
 import './Home.css';
 
 const Home = () => {
@@ -50,7 +50,7 @@ const Home = () => {
           >
               <div className="category-icon-wrapper">
                 <img 
-                  src={cat.icon_url || assetPath('img/placeholder.png')} 
+                  src={cat.icon_url ? apiAssetPath(cat.icon_url) : assetPath('img/placeholder.png')} 
                   alt={cat.name} 
                   className="category-custom-icon" 
                 />

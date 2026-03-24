@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Edit, Trash2, Search, List, Plus } from 'lucide-react';
-import { assetPath } from '../../../utils/assets';
+import { apiAssetPath, assetPath } from '../../../utils/assets';
 
 const ProductTable = ({ products, onCreate, onEdit, onDelete, selectedProductId }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,7 +42,7 @@ const ProductTable = ({ products, onCreate, onEdit, onDelete, selectedProductId 
             onClick={() => onEdit(product)}
           >
             <div className="product-cell">
-              <img src={product.main_image || assetPath('img/placeholder.png')} alt={product.name} />
+              <img src={product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.png')} alt={product.name} />
               <div className="product-info">
                 <h4>{product.name}</h4>
                 <p>ID: #{product.id}</p>

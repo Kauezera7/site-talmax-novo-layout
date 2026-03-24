@@ -15,7 +15,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
-import { assetPath } from '../../utils/assets';
+import { apiAssetPath, assetPath } from '../../utils/assets';
 import './ProductCatalog.css';
 
 const normalizeSearchText = (value = '') =>
@@ -102,8 +102,9 @@ const ProductCatalog = () => {
               productCatNames
                 .filter((name) => !segmentNames.includes(name))
                 .join(', ') || 'Sem categoria',
-            image: product.main_image || assetPath('img/placeholder.png'),
-            ...extra
+            image: product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.png'),
+            ...extra,
+            images: Array.isArray(extra.images) ? extra.images.map((image) => apiAssetPath(image)) : extra.images
           };
         });
 

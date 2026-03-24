@@ -1,5 +1,6 @@
 import React from 'react';
 import { Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import { apiAssetPath } from '../../../utils/assets';
 
 const BannerTable = ({ banners, onEdit, onDelete, onToggleStatus }) => {
   return (
@@ -20,7 +21,7 @@ const BannerTable = ({ banners, onEdit, onDelete, onToggleStatus }) => {
               <td>
                 <div className="banner-table-image">
                   <img
-                    src={banner.image_url}
+                    src={apiAssetPath(banner.image_url)}
                     alt={banner.title}
                     className="banner-table-image-content"
                   />

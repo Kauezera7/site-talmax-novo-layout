@@ -20,7 +20,7 @@ import {
 import { motion } from 'framer-motion';
 import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
-import { assetPath } from '../../utils/assets';
+import { apiAssetPath, assetPath } from '../../utils/assets';
 import './ProductDetail.css';
 
 const ProductDetail = () => {
@@ -89,8 +89,9 @@ const ProductDetail = () => {
             .filter(name => !fixedSegmentNames.includes(name))
             .join(', ') || 'Sem categoria',
           description: data.description,
-          image: data.main_image || assetPath('img/placeholder.png'),
+          image: data.main_image ? apiAssetPath(data.main_image) : assetPath('img/placeholder.png'),
           ...extra,
+          images: Array.isArray(extra.images) ? extra.images.map((image) => apiAssetPath(image)) : extra.images,
           modelTable: finalTable
         };
 
@@ -103,7 +104,7 @@ const ProductDetail = () => {
             .split(', ')
             .filter(name => !fixedSegmentNames.includes(name))
             .join(', ') || 'Sem categoria',
-          image: p.main_image || assetPath('img/placeholder.png')
+          image: p.main_image ? apiAssetPath(p.main_image) : assetPath('img/placeholder.png')
         })));
 
       } catch (err) {

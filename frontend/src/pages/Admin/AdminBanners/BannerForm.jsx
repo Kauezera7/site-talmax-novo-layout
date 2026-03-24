@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Save, UploadCloud } from 'lucide-react';
+import { apiAssetPath } from '../../../utils/assets';
 
 const initialFormState = {
   title: '',
@@ -22,7 +23,7 @@ const BannerForm = ({ initialData, onSubmit, onCancel }) => {
         active: Boolean(initialData.active),
         image: null
       });
-      setPreview(initialData.image_url || null);
+      setPreview(initialData.image_url ? apiAssetPath(initialData.image_url) : null);
       return;
     }
 

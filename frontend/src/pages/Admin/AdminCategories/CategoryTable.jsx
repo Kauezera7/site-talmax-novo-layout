@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Edit, Trash2, Eye, EyeOff, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { apiAssetPath } from '../../../utils/assets';
 
 const CategoryTable = ({ mainCategories, subCategories, products, onEdit, onDelete, onToggleVisibility }) => {
   const [expandedCategories, setExpandedCategories] = useState({});
@@ -44,7 +45,7 @@ const CategoryTable = ({ mainCategories, subCategories, products, onEdit, onDele
                       />
                     </button>
                     <div className="category-icon-cell">
-                      {cat.icon_url ? <img src={cat.icon_url} alt={cat.name} /> : <ImageIcon size={20} color="#94a3b8" />}
+                      {cat.icon_url ? <img src={apiAssetPath(cat.icon_url)} alt={cat.name} /> : <ImageIcon size={20} color="#94a3b8" />}
                     </div>
                     <strong>{cat.name}</strong>
                   </div>

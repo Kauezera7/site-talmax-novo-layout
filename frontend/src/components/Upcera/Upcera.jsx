@@ -17,7 +17,7 @@ import 'swiper/css/pagination';
 
 import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
-import { assetPath } from '../../utils/assets';
+import { apiAssetPath, assetPath } from '../../utils/assets';
 import './Upcera.css';
 import '../ProductCatalog/ProductCatalog.css';
 
@@ -47,7 +47,7 @@ const Upcera = () => {
               id: p.id,
               name: p.name,
               description: p.description,
-              image: p.main_image || assetPath('img/placeholder.png'),
+              image: p.main_image ? apiAssetPath(p.main_image) : assetPath('img/placeholder.png'),
               ...extra
             };
           });
@@ -229,7 +229,7 @@ const Upcera = () => {
                     <ProductCard 
                       product={{
                         ...p,
-                        image: p.main_image || assetPath('img/placeholder.png')
+                        image: p.main_image ? apiAssetPath(p.main_image) : assetPath('img/placeholder.png')
                       }} 
                       index={index} 
                     />

@@ -12,6 +12,7 @@ import { Autoplay, EffectFade, Pagination, Navigation } from 'swiper/modules';
 // Importação dos dados estáticos como fallback
 import { slides as staticSlides } from '../../data';
 import API_URL from '../../services/api';
+import { apiAssetPath } from '../../utils/assets';
 
 // Importação obrigatória dos estilos do Swiper para que ele funcione visualmente
 import 'swiper/css';
@@ -102,7 +103,7 @@ const HeroSlider = () => {
             >
               {/* Imagem do Banner */}
               <img 
-                src={slide.image_url || slide.image} 
+                src={slide.image_url ? apiAssetPath(slide.image_url) : slide.image} 
                 alt={slide.title} 
                 className="banner-img" 
               />

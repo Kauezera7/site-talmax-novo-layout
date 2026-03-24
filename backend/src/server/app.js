@@ -15,9 +15,11 @@ const specialSectionRoutes = require('./routes/specialSectionRoutes');
 const createApp = () => {
   const app = express();
   const frontendDistPath = path.resolve(__dirname, '../../../frontend/dist');
+  const frontendPublicImagesPath = path.resolve(__dirname, '../../../frontend/public/img');
 
   app.use(corsMiddleware);
   app.use(express.json());
+  app.use('/img', express.static(frontendPublicImagesPath));
   app.use(express.static(frontendDistPath));
 
   app.use('/api/admin', adminAuthRoutes);

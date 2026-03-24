@@ -9,7 +9,7 @@ import { ChevronRight, ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
-import { assetPath } from '../../utils/assets';
+import { apiAssetPath, assetPath } from '../../utils/assets';
 import './Impressoras3D.css';
 import '../ProductCatalog/ProductCatalog.css';
 
@@ -44,7 +44,7 @@ const Impressoras3D = () => {
             id: p.id,
             name: p.name,
             description: p.description,
-            image: p.main_image || assetPath('img/placeholder.png'),
+            image: p.main_image ? apiAssetPath(p.main_image) : assetPath('img/placeholder.png'),
             ...extra
           };
         });
@@ -201,7 +201,7 @@ const Impressoras3D = () => {
                   key={p.id} 
                   product={{
                     ...p,
-                    image: p.main_image || assetPath('img/placeholder.png')
+                    image: p.main_image ? apiAssetPath(p.main_image) : assetPath('img/placeholder.png')
                   }} 
                   index={index} 
                 />

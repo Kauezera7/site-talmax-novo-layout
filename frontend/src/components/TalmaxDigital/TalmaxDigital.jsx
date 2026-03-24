@@ -20,7 +20,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
-import { assetPath } from '../../utils/assets';
+import { apiAssetPath, assetPath } from '../../utils/assets';
 import './TalmaxDigital.css';
 
 const TalmaxDigital = () => {
@@ -56,7 +56,7 @@ const TalmaxDigital = () => {
           return {
             id: p.id,
             name: p.name,
-            image: p.main_image || assetPath('img/placeholder.png'),
+            image: p.main_image ? apiAssetPath(p.main_image) : assetPath('img/placeholder.png'),
             ...extra
           };
         });
