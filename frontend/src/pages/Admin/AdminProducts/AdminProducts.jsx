@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../../../context/AdminContext';
 import ProductTable from './ProductTable';
@@ -15,6 +15,7 @@ const AdminProducts = () => {
   const [productToDelete, setProductToDelete] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formSessionKey, setFormSessionKey] = useState(0);
+  const [isProductListCollapsed, setIsProductListCollapsed] = useState(false);
 
   const handleCreate = () => {
     setEditingProduct(null);
@@ -96,20 +97,25 @@ const AdminProducts = () => {
 
   return (
     <div className="admin-products">
-      <div className="admin-products-layout">
-        <motion.aside
-          className="admin-products-sidebar"
-          initial={{ opacity: 0, x: -16 }}
-          animate={{ opacity: 1, x: 0 }}
-        >
-          <ProductTable
-            products={products}
-            onCreate={handleCreate}
-            onEdit={handleEdit}
-            onDelete={handleDeleteClick}
-            selectedProductId={editingProduct?.id || null}
-          />
-        </motion.aside>
+      <div className={`admin-products-layout ${isProductListCollapsed ? 'is-list-collapsed' : ''}`}>
+        <AnimatePresence initial={false}>
+          {!isProductListCollapsed && (
+            <motion.aside
+              className="admin-products-sidebar"
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+            >
+              <ProductTable
+                products={products}
+                onCreate={handleCreate}
+                onEdit={handleEdit}
+                onDelete={handleDeleteClick}
+                selectedProductId={editingProduct?.id || null}
+              />
+            </motion.aside>
+          )}
+        </AnimatePresence>
 
         <motion.section
           className="admin-products-content"
@@ -123,9 +129,21 @@ const AdminProducts = () => {
                 <h2>{editingProduct ? 'Editar Produto' : 'Novo Produto'}</h2>
                 <p>
                   {editingProduct
-                    ? 'Atualize os dados do produto selecionado na lista lateral.'
-                    : 'Cadastre um novo produto mantendo a lista de produtos sempre visivel ao lado.'}
+                    ? 'Atualize os dados do produto selecionado e use o botao ao lado para recolher ou reabrir a lista.'
+                    : 'Cadastre um novo produto e controle a lista de produtos pelo botao ao lado.'}
                 </p>
+              </div>
+              <div className="product-form-header-actions">
+                <button
+                  type="button"
+                  className="btn-secondary product-list-toggle"
+                  onClick={() => setIsProductListCollapsed((current) => !current)}
+                  aria-expanded={!isProductListCollapsed}
+                  aria-label={isProductListCollapsed ? 'Mostrar lista de produtos' : 'Recolher lista de produtos'}
+                >
+                  {isProductListCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+                  {isProductListCollapsed ? 'Mostrar Lista' : 'Recolher Lista'}
+                </button>
               </div>
             </div>
             <div className="card-body">

@@ -295,20 +295,23 @@
   font-weight: 800;
 }
 
-.models-table {
-
+.table-container {
   overflow-x: auto;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  border-radius: 22px;
+  border: 1px solid #dbe5f1;
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 1)),
+    radial-gradient(circle at top right, rgba(0, 74, 153, 0.08), transparent 42%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
 }
 
 .models-table {
   width: 100%;
-  border-collapse: collapse;
-  background: white;
-  border-radius: 12px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: none;
 }
 
 .models-table.strip-mode {
@@ -345,24 +348,30 @@
 }
 
 .models-table th {
-  background: #f8fafc;
-  padding: 1.25rem;
+  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+  padding: 1.15rem 1.25rem;
   font-weight: 700;
-  color: #475569;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-  border-bottom: 2px solid #e2e8f0;
+  color: #eff6ff;
+  text-transform: none;
+  font-size: 0.84rem;
+  letter-spacing: 0.04em;
+  border-bottom: none;
   text-align: center;
+  white-space: nowrap;
 }
 
 .models-table td {
-  padding: 1.25rem;
+  padding: 1.15rem 1.25rem;
   color: #334155;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 1.05rem;
-  font-weight: 500;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 1rem;
+  font-weight: 600;
   text-align: center;
+  background: rgba(255,255,255,0.88);
+}
+
+.models-table tbody tr:nth-child(even) td {
+  background: rgba(248, 250, 252, 0.95);
 }
 
 .models-table tbody tr:last-child td {
@@ -375,9 +384,14 @@
   padding-left: 2rem;
 }
 
+.models-table:not(.strip-mode) tbody td:first-child {
+  font-weight: 700;
+  color: #0f172a;
+}
+
 .models-table tr:hover td {
-  background: #f8fafc;
-  color: var(--primary);
+  background: #eef4ff;
+  color: #0f3d91;
 }
 
 /* Related Products Section */
@@ -414,5 +428,17 @@
   }
   .full-width-models-section {
     padding: 1.5rem;
+  }
+  .table-container {
+    border-radius: 18px;
+  }
+  .models-table th,
+  .models-table td {
+    padding: 0.95rem 0.9rem;
+    font-size: 0.92rem;
+  }
+  .models-table:not(.strip-mode) tr td:first-child, 
+  .models-table:not(.strip-mode) th:first-child {
+    padding-left: 1rem;
   }
 }

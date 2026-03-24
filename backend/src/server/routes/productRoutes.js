@@ -28,6 +28,17 @@ const normalizeImageList = (value) => (
     : []
 );
 
+const buildStoredImageList = (mainImage, extraImages) => {
+  const normalizedMainImage = safe(mainImage);
+  const normalizedExtraImages = normalizeImageList(extraImages);
+
+  if (!normalizedMainImage) {
+    return Array.from(new Set(normalizedExtraImages));
+  }
+
+  return Array.from(new Set([normalizedMainImage, ...normalizedExtraImages]));
+};
+
 const reorderImagePaths = (imagePaths, primaryIndex = 0) => {
   if (imagePaths.length === 0) {
     return [];
@@ -62,7 +73,7 @@ const hasMainCategory = async (connection, categoryIds) => {
 
   const placeholders = categoryIds.map(() => '?').join(', ');
   const [rows] = await connection.query(
-    `SELECT id FROM categories WHERE parent_id IS NULL AND id IN (${placeholders}) LIMIT 1`,
+    `SELECT id FROM categorias WHERE id IN (${placeholders}) LIMIT 1`,
     categoryIds
   );
 
@@ -163,7 +174,23 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     const extra = parseJsonObject(extra_data);
     const duplicateProduct = await findDuplicateProductByName(connection, name, productId);
     const retainedImagePaths = normalizeImageList(extra.images);
-    const mergedImagePaths = reorderImagePaths([...retainedImagePaths, ...newImagePaths], primaryImageIndex);
+    const removedImagePaths = normalizeImageList(extra.removedImages);
+    const currentProduct = await findProductById(connection, productId);
+
+    if (!currentProduct) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Produto nao encontrado.' });
+    }
+
+    const currentExtra = parseJsonObject(currentProduct.extra_data);
+    const storedImagePaths = buildStoredImageList(currentProduct.main_image, currentExtra.images);
+    const preservedImagePaths = [
+      ...retainedImagePaths,
+      ...storedImagePaths.filter((imagePath) => (
+        !removedImagePaths.includes(imagePath) && !retainedImagePaths.includes(imagePath)
+      ))
+    ];
+    const mergedImagePaths = reorderImagePaths([...preservedImagePaths, ...newImagePaths], primaryImageIndex);
 
     if (duplicateProduct) {
       await connection.rollback();

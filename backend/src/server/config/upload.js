@@ -4,6 +4,7 @@
  */
 const multer = require('multer');
 const path = require('path');
+const crypto = require('crypto');
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
@@ -19,7 +20,8 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '-');
-    cb(null, `${Date.now()}-${sanitizedName}`);
+    const uniqueSuffix = crypto.randomBytes(6).toString('hex');
+    cb(null, `${Date.now()}-${uniqueSuffix}-${sanitizedName}`);
   }
 });
 
