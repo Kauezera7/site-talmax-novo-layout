@@ -21,6 +21,7 @@ import { motion } from 'framer-motion';
 import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
 import { apiAssetPath, assetPath } from '../../utils/assets';
+import { getVisibleCategoryLabel } from '../../utils/productCategories';
 import './ProductDetail.css';
 
 const ProductDetail = () => {
@@ -84,10 +85,7 @@ const ProductDetail = () => {
         const formattedProduct = {
           id: data.id,
           name: data.name,
-          category: (data.category_names || data.category_name || '')
-            .split(', ')
-            .filter(name => !fixedSegmentNames.includes(name))
-            .join(', ') || 'Sem categoria',
+          category: getVisibleCategoryLabel(data.category_names || data.category_name || '', fixedSegmentNames),
           description: data.description,
           image: data.main_image ? apiAssetPath(data.main_image) : assetPath('img/placeholder.png'),
           ...extra,
@@ -100,10 +98,7 @@ const ProductDetail = () => {
         setAllProducts(others.map(p => ({
           id: p.id,
           name: p.name,
-          category: (p.category_names || p.category_name || '')
-            .split(', ')
-            .filter(name => !fixedSegmentNames.includes(name))
-            .join(', ') || 'Sem categoria',
+          category: getVisibleCategoryLabel(p.category_names || p.category_name || '', fixedSegmentNames),
           image: p.main_image ? apiAssetPath(p.main_image) : assetPath('img/placeholder.png')
         })));
 
@@ -138,6 +133,18 @@ const ProductDetail = () => {
       .filter(p => p.category === product.category && p.id !== product.id)
       .slice(0, 4);
   }, [product, allProducts]);
+
+  const modelRowsToRender = useMemo(() => {
+    if (!product?.modelTable?.rows) {
+      return [];
+    }
+
+    if (product.hideModelData) {
+      return [];
+    }
+
+    return product.modelTable.rows;
+  }, [product]);
 
   if (loading) return <div className="detail-loader">Carregando...</div>;
   if (!product) return null;
@@ -247,7 +254,7 @@ const ProductDetail = () => {
                 </thead>
                 {!product.hideModelData && (
                   <tbody>
-                    {product.modelTable.rows.map((row, ri) => (
+                    {modelRowsToRender.map((row, ri) => (
                       <tr key={ri}>
                         {row.map((cell, ci) => <td key={ci}>{cell}</td>)}
                       </tr>

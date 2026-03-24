@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
 import { apiAssetPath, assetPath } from '../../utils/assets';
+import { getNormalizedCategoryNames, getVisibleCategoryLabel } from '../../utils/productCategories';
 import './ProductCatalog.css';
 
 const normalizeSearchText = (value = '') =>
@@ -90,18 +91,13 @@ const ProductCatalog = () => {
             .filter((category) => segmentSlugs.includes(category.slug))
             .map((category) => category.name);
 
-          const productCatNames = (product.category_names || '')
-            .split(', ')
-            .filter(Boolean);
+          const productCatNames = getNormalizedCategoryNames(product.category_names);
 
           return {
             id: product.id,
             name: product.name,
             allCategoryNames: productCatNames,
-            category:
-              productCatNames
-                .filter((name) => !segmentNames.includes(name))
-                .join(', ') || 'Sem categoria',
+            category: getVisibleCategoryLabel(productCatNames, segmentNames),
             image: product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.png'),
             ...extra,
             images: Array.isArray(extra.images) ? extra.images.map((image) => apiAssetPath(image)) : extra.images

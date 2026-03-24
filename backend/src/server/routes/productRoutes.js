@@ -20,6 +20,40 @@ const {
 
 const router = express.Router();
 
+const normalizeProductText = (value) => safe(value || '').trim();
+const normalizeImageList = (value) => (
+  Array.isArray(value)
+    ? value.map((imagePath) => safe(imagePath)).filter(Boolean)
+    : []
+);
+
+const findDuplicateProductByName = async (connection, name, excludeId = null) => {
+  const query = `
+    SELECT id
+    FROM products
+    WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))
+      ${excludeId ? 'AND id <> ?' : ''}
+    LIMIT 1
+  `;
+  const params = excludeId ? [name, excludeId] : [name];
+  const [rows] = await connection.query(query, params);
+  return rows[0] || null;
+};
+
+const hasMainCategory = async (connection, categoryIds) => {
+  if (categoryIds.length === 0) {
+    return false;
+  }
+
+  const placeholders = categoryIds.map(() => '?').join(', ');
+  const [rows] = await connection.query(
+    `SELECT id FROM categories WHERE parent_id IS NULL AND id IN (${placeholders}) LIMIT 1`,
+    categoryIds
+  );
+
+  return rows.length > 0;
+};
+
 router.get('/', async (req, res) => {
   try {
     const products = await listProducts(db);
@@ -50,18 +84,40 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
     await connection.beginTransaction();
 
     const { name, category_ids, description, extra_data } = req.body;
-    const imagePaths = getUploadedImagePaths(req.files || []);
-    const main_image = imagePaths.length > 0 ? imagePaths[0] : null;
+    const normalizedName = normalizeProductText(name);
+    const normalizedDescription = normalizeProductText(description);
+    const parsedCategoryIds = parseIdArray(category_ids);
+    const uploadedImagePaths = getUploadedImagePaths(req.files || []);
     const extra = parseJsonObject(extra_data);
-    extra.images = imagePaths;
+    const retainedImagePaths = normalizeImageList(extra.images);
+    const mergedImagePaths = [...retainedImagePaths, ...uploadedImagePaths];
+
+    const duplicateProduct = await findDuplicateProductByName(connection, normalizedName);
+
+    if (duplicateProduct) {
+      await connection.rollback();
+      return res.status(409).json({ error: 'Ja existe um produto com esse nome.' });
+    }
+
+    if (mergedImagePaths.length === 0) {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Adicione pelo menos uma foto para salvar o produto.' });
+    }
+
+    if (!(await hasMainCategory(connection, parsedCategoryIds))) {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Selecione pelo menos uma categoria principal para salvar o produto.' });
+    }
+
+    extra.images = mergedImagePaths;
 
     const [result] = await connection.query(
       'INSERT INTO products (name, description, main_image, extra_data) VALUES (?, ?, ?, ?)',
-      [safe(name) || '', safe(description) || '', safe(main_image), JSON.stringify(extra)]
+      [normalizedName, normalizedDescription, safe(mergedImagePaths[0]), JSON.stringify(extra)]
     );
 
     const productId = result.insertId;
-    await attachProductCategories(connection, productId, parseIdArray(category_ids));
+    await attachProductCategories(connection, productId, parsedCategoryIds);
 
     await connection.commit();
     return res.status(201).json({ message: 'Produto criado!' });
@@ -81,28 +137,42 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
   try {
     await connection.beginTransaction();
 
-    const name = req.body.name || '';
-    const description = req.body.description || '';
+    const name = normalizeProductText(req.body.name);
+    const description = normalizeProductText(req.body.description);
     const category_ids = req.body.category_ids;
+    const parsedCategoryIds = parseIdArray(category_ids);
     const extra_data = req.body.extra_data;
     const newImagePaths = getUploadedImagePaths(req.files || []);
     const extra = parseJsonObject(extra_data);
+    const duplicateProduct = await findDuplicateProductByName(connection, name, productId);
+    const retainedImagePaths = normalizeImageList(extra.images);
+    const mergedImagePaths = [...retainedImagePaths, ...newImagePaths];
 
-    let query = 'UPDATE products SET name=?, description=?, extra_data=?';
-    const params = [safe(name), safe(description), JSON.stringify(extra)];
-
-    if (newImagePaths.length > 0) {
-      extra.images = newImagePaths;
-      params[2] = JSON.stringify(extra);
-      query += ', main_image=?';
-      params.push(safe(newImagePaths[0]));
+    if (duplicateProduct) {
+      await connection.rollback();
+      return res.status(409).json({ error: 'Ja existe um produto com esse nome.' });
     }
+
+    if (mergedImagePaths.length === 0) {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Adicione pelo menos uma foto para salvar o produto.' });
+    }
+
+    if (!(await hasMainCategory(connection, parsedCategoryIds))) {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Selecione pelo menos uma categoria principal para salvar o produto.' });
+    }
+
+    extra.images = mergedImagePaths;
+
+    let query = 'UPDATE products SET name=?, description=?, extra_data=?, main_image=?';
+    const params = [name, description, JSON.stringify(extra), safe(mergedImagePaths[0])];
 
     query += ' WHERE id=?';
     params.push(productId);
 
     await connection.query(query, params.map(safe));
-    await attachProductCategories(connection, productId, parseIdArray(category_ids));
+    await attachProductCategories(connection, productId, parsedCategoryIds);
 
     await connection.commit();
     return res.json({ message: 'Produto atualizado!' });

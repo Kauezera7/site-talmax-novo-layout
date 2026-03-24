@@ -210,6 +210,64 @@
   flex: 0 0 38px;
 }
 
+.product-form-options {
+  display: grid;
+  gap: 12px;
+}
+
+.product-form-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 14px 16px;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.product-form-option input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.product-form-option strong {
+  display: block;
+  color: var(--admin-text);
+  font-size: 0.92rem;
+}
+
+.product-form-option span {
+  display: block;
+  margin-top: 4px;
+  color: var(--admin-text-light);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.product-form-helper {
+  margin: 0 0 10px;
+  color: var(--admin-text-light);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.product-form-group-disabled .dynamic-input-group input,
+.product-form-group-disabled .btn-add,
+.product-form-group-disabled .btn-icon.delete,
+.product-form-group-disabled .table-remove-button,
+.product-form-group-disabled .builder-table td input,
+.product-form-group-disabled .builder-table th input {
+  opacity: 0.55;
+}
+
+.product-form-group-disabled .btn-add,
+.product-form-group-disabled .btn-icon.delete,
+.product-form-group-disabled .table-remove-button {
+  cursor: not-allowed;
+}
+
 .btn-add {
   background: white;
   border: 1px dashed var(--admin-primary);
@@ -318,6 +376,11 @@
 }
 
 @media (max-width: 768px) {
+  .product-form-option {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
   .dynamic-input-group {
     flex-direction: column;
     gap: 5px;

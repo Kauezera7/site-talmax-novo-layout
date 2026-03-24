@@ -365,6 +365,10 @@
   text-align: center;
 }
 
+.models-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 .models-table:not(.strip-mode) tr td:first-child, 
 .models-table:not(.strip-mode) th:first-child {
   text-align: left;

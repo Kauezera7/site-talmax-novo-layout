@@ -4,20 +4,32 @@ import {
 } from 'lucide-react';
 import './AdminProducts.css';
 
-const ProductForm = ({ initialData, categories, mainCategories, subCategories, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    category_ids: [],
-    sub_category_ids: [],
-    description: '',
-    descriptionAsList: false,
-    hideModelData: false,
-    showModelSection: true,
-    images: [],
-    features: [''],
-    modelTitle: '',
-    modelTable: { headers: ['Tipo / Referência', 'Código'], rows: [['', '']] }
-  });
+const createInitialFormState = () => ({
+  name: '',
+  category_ids: [],
+  sub_category_ids: [],
+  description: '',
+  descriptionAsList: false,
+  showFeatures: false,
+  hideModelData: false,
+  showModelSection: true,
+  images: [],
+  features: [''],
+  modelTitle: '',
+  modelTable: { headers: ['Tipo / Referencia', 'Codigo'], rows: [['', '']] }
+});
+
+const ProductForm = ({
+  initialData,
+  categories,
+  mainCategories,
+  subCategories,
+  onSubmit,
+  onCancel,
+  isSubmitting = false,
+  onValidationError
+}) => {
+  const [formData, setFormData] = useState(createInitialFormState);
 
   const [previews, setPreviews] = useState([]);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
@@ -50,6 +62,7 @@ const ProductForm = ({ initialData, categories, mainCategories, subCategories, o
         sub_category_ids: selectedSubIds,
         description: initialData.description || '',
         descriptionAsList: extra.descriptionAsList || false,
+        showFeatures: extra.showFeatures !== false && Boolean(extra.features && extra.features.length > 0),
         hideModelData: extra.hideModelData || false,
         showModelSection: extra.showModelSection !== false,
         images: [],
@@ -63,6 +76,7 @@ const ProductForm = ({ initialData, categories, mainCategories, subCategories, o
       return;
     }
 
+    setFormData(createInitialFormState());
     setPreviews([]);
   }, [initialData, categories]);
 
@@ -80,9 +94,22 @@ const ProductForm = ({ initialData, categories, mainCategories, subCategories, o
   };
 
   const removeImage = (index) => {
+    const previewToRemove = previews[index];
     const newPreviews = [...previews];
     newPreviews.splice(index, 1);
     setPreviews(newPreviews);
+
+    if (previewToRemove?.startsWith('blob:')) {
+      const blobIndex = previews
+        .slice(0, index)
+        .filter((preview) => preview.startsWith('blob:'))
+        .length;
+
+      setFormData((current) => ({
+        ...current,
+        images: current.images.filter((_, fileIndex) => fileIndex !== blobIndex)
+      }));
+    }
   };
 
   const addTableHeader = () => {
@@ -123,6 +150,18 @@ const ProductForm = ({ initialData, categories, mainCategories, subCategories, o
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    if (formData.category_ids.length === 0) {
+      onValidationError?.('Selecione pelo menos uma categoria principal antes de salvar o produto.');
+      return;
+    }
+
+    if (previews.length === 0) {
+      onValidationError?.('Adicione pelo menos uma foto antes de salvar o produto.');
+      return;
+    }
+
     const data = new FormData();
     data.append('name', formData.name);
     data.append('description', formData.description);
@@ -132,9 +171,10 @@ const ProductForm = ({ initialData, categories, mainCategories, subCategories, o
 
     const extraData = {
       descriptionAsList: formData.descriptionAsList,
+      showFeatures: formData.showFeatures,
       hideModelData: formData.hideModelData,
       showModelSection: formData.showModelSection,
-      features: formData.features.filter((f) => f.trim() !== ''),
+      features: formData.showFeatures ? formData.features.filter((f) => f.trim() !== '') : [],
       modelTitle: formData.modelTitle,
       modelTable: formData.modelTable,
       images: previews.filter((p) => !p.startsWith('blob:'))
@@ -164,6 +204,11 @@ const ProductForm = ({ initialData, categories, mainCategories, subCategories, o
 
         <div className="form-group">
           <label>Categorias Principais</label>
+          {formData.category_ids.length === 0 && (
+            <p className="product-form-helper">
+              Selecione pelo menos uma categoria principal para o produto nao aparecer como sem categoria.
+            </p>
+          )}
           <div className="custom-multi-select">
             <div className="multi-select-header" onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}>
               <div className="selected-tags-container">
@@ -263,19 +308,56 @@ const ProductForm = ({ initialData, categories, mainCategories, subCategories, o
 
       <div className="admin-section-group">
         <span className="section-label">2. Descrição e Destaques</span>
+        <div className="product-form-options">
+          <label className="product-form-option">
+            <input
+              type="checkbox"
+              checked={formData.descriptionAsList}
+              onChange={(e) => setFormData({ ...formData, descriptionAsList: e.target.checked })}
+            />
+            <div>
+              <strong>Exibir descrição em tópicos</strong>
+              <span>Cada linha da descrição vira um item com marcador na página do produto.</span>
+            </div>
+          </label>
+
+          <label className="product-form-option">
+            <input
+              type="checkbox"
+              checked={formData.showFeatures}
+              onChange={(e) => setFormData({ ...formData, showFeatures: e.target.checked })}
+            />
+            <div>
+              <strong>Exibir destaques / diferenciais</strong>
+              <span>Ative apenas se quiser mostrar tópicos extras separados da descrição.</span>
+            </div>
+          </label>
+        </div>
+
         <div className="form-group">
           <label>Descrição</label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            placeholder={
+              formData.descriptionAsList
+                ? 'Escreva um item por linha para virar um tópico no site'
+                : 'Descreva o produto normalmente'
+            }
           />
         </div>
 
-        <div className="form-group">
+        <div className={`form-group ${formData.showFeatures ? '' : 'product-form-group-disabled'}`}>
           <label>Destaques / Diferenciais</label>
+          {!formData.showFeatures && (
+            <p className="product-form-helper">
+              Ative a opção acima se quiser adicionar tópicos extras de destaque para este produto.
+            </p>
+          )}
           {formData.features.map((feature, index) => (
             <div key={index} className="dynamic-input-group">
               <input
+                disabled={!formData.showFeatures}
                 value={feature}
                 onChange={(e) => {
                   const newFeatures = [...formData.features];
@@ -286,13 +368,19 @@ const ProductForm = ({ initialData, categories, mainCategories, subCategories, o
               <button
                 type="button"
                 className="btn-icon delete"
+                disabled={!formData.showFeatures}
                 onClick={() => setFormData({ ...formData, features: formData.features.filter((_, i) => i !== index) })}
               >
                 <Trash2 size={18} />
               </button>
             </div>
           ))}
-          <button type="button" className="btn-add" onClick={() => setFormData({ ...formData, features: [...formData.features, ''] })}>
+          <button
+            type="button"
+            className="btn-add"
+            disabled={!formData.showFeatures}
+            onClick={() => setFormData({ ...formData, features: [...formData.features, ''] })}
+          >
             <Plus size={16} /> Adicionar Destaque
           </button>
         </div>
@@ -317,47 +405,92 @@ const ProductForm = ({ initialData, categories, mainCategories, subCategories, o
 
       <div className="admin-section-group">
         <span className="section-label">4. Especificações (Tabela)</span>
+        <div className="product-form-options">
+          <label className="product-form-option">
+            <input
+              type="checkbox"
+              checked={formData.showModelSection}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  showModelSection: e.target.checked
+                })
+              }
+            />
+            <div>
+              <strong>Exibir tabela no site</strong>
+              <span>Desmarque se quiser salvar a tabela no painel, mas esconder a seção na página do produto.</span>
+            </div>
+          </label>
+
+          <label className="product-form-option">
+            <input
+              type="checkbox"
+              checked={formData.hideModelData}
+              disabled={!formData.showModelSection}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  hideModelData: e.target.checked
+                })
+              }
+            />
+            <div>
+              <strong>Mostrar apenas o cabeçalho</strong>
+              <span>Exibe só os títulos das colunas da tabela e oculta todas as linhas de dados.</span>
+            </div>
+          </label>
+        </div>
+
         <div className="form-group">
           <label>Título da Tabela</label>
           <input value={formData.modelTitle} onChange={(e) => setFormData({ ...formData, modelTitle: e.target.value })} />
         </div>
 
-        <div className="table-builder-container">
+        <div className={`table-builder-container ${formData.showModelSection ? '' : 'product-form-group-disabled'}`}>
           <table className="builder-table">
             <thead>
               <tr>
                 {formData.modelTable.headers.map((header, hIdx) => (
                   <th key={hIdx}>
                     <div>
-                      <input value={header} onChange={(e) => updateTableHeader(hIdx, e.target.value)} />
-                      <button type="button" className="table-remove-button" onClick={() => removeTableHeader(hIdx)}><X size={14} /></button>
+                      <input disabled={!formData.showModelSection} value={header} onChange={(e) => updateTableHeader(hIdx, e.target.value)} />
+                      <button disabled={!formData.showModelSection} type="button" className="table-remove-button" onClick={() => removeTableHeader(hIdx)}><X size={14} /></button>
                     </div>
                   </th>
                 ))}
-                <th><button type="button" className="btn-add" onClick={addTableHeader}><Plus size={14} /></button></th>
+                <th><button disabled={!formData.showModelSection} type="button" className="btn-add" onClick={addTableHeader}><Plus size={14} /></button></th>
               </tr>
             </thead>
-            <tbody>
-              {formData.modelTable.rows.map((row, rIdx) => (
-                <tr key={rIdx}>
-                  {row.map((cell, cIdx) => (
-                    <td key={cIdx}>
-                      <input value={cell} onChange={(e) => updateTableCell(rIdx, cIdx, e.target.value)} />
-                    </td>
-                  ))}
-                  <td><button type="button" className="btn-icon delete" onClick={() => removeTableRow(rIdx)}><Trash2 size={16} /></button></td>
-                </tr>
-              ))}
-            </tbody>
+            {!formData.hideModelData && (
+              <tbody>
+                {formData.modelTable.rows.map((row, rIdx) => (
+                  <tr key={rIdx}>
+                    {row.map((cell, cIdx) => (
+                      <td key={cIdx}>
+                        <input disabled={!formData.showModelSection} value={cell} onChange={(e) => updateTableCell(rIdx, cIdx, e.target.value)} />
+                      </td>
+                    ))}
+                    <td><button disabled={!formData.showModelSection} type="button" className="btn-icon delete" onClick={() => removeTableRow(rIdx)}><Trash2 size={16} /></button></td>
+                  </tr>
+                ))}
+              </tbody>
+            )}
           </table>
-          <button type="button" className="btn-add" onClick={addTableRow}><Plus size={16} /> Nova Linha</button>
+          {formData.hideModelData ? (
+            <p className="product-form-helper">
+              As linhas ficaram ocultas no painel porque esta tabela esta configurada para mostrar apenas o cabecalho no site.
+            </p>
+          ) : (
+            <button disabled={!formData.showModelSection} type="button" className="btn-add" onClick={addTableRow}><Plus size={16} /> Nova Linha</button>
+          )}
         </div>
       </div>
 
       <div className="product-form-actions">
-        <button type="button" className="btn-secondary" onClick={onCancel}>Cancelar</button>
-        <button type="submit" className="btn-primary product-submit-button">
-          <Save size={20} /> FINALIZAR E SALVAR PRODUTO
+        <button type="button" className="btn-secondary" onClick={onCancel} disabled={isSubmitting}>Cancelar</button>
+        <button type="submit" className="btn-primary product-submit-button" disabled={isSubmitting}>
+          <Save size={20} /> {isSubmitting ? 'SALVANDO PRODUTO...' : 'FINALIZAR E SALVAR PRODUTO'}
         </button>
       </div>
     </form>

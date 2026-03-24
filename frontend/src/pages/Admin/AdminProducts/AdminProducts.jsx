@@ -6,14 +6,19 @@ import ProductTable from './ProductTable';
 import ProductForm from './ProductForm';
 import './AdminProducts.css';
 
+const normalizeProductName = (value) => (value || '').trim().toLocaleLowerCase('pt-BR');
+
 const AdminProducts = () => {
   const { products, categories, mainCategories, subCategories, productsHook, addToast } = useAdmin();
   const [editingProduct, setEditingProduct] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formSessionKey, setFormSessionKey] = useState(0);
 
   const handleCreate = () => {
     setEditingProduct(null);
+    setFormSessionKey((current) => current + 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -45,16 +50,41 @@ const AdminProducts = () => {
   };
 
   const handleSubmit = async (formData) => {
+    if (isSubmitting) return;
+
+    const incomingName = normalizeProductName(formData.get('name'));
+    const duplicateProduct = products.find((product) => (
+      normalizeProductName(product.name) === incomingName
+      && product.id !== editingProduct?.id
+    ));
+
+    if (duplicateProduct) {
+      addToast('Ja existe um produto com esse nome.', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
     let result;
-    if (editingProduct) {
-      result = await productsHook.updateProduct(editingProduct.id, formData);
-    } else {
-      result = await productsHook.createProduct(formData);
+
+    try {
+      if (editingProduct) {
+        result = await productsHook.updateProduct(editingProduct.id, formData);
+      } else {
+        result = await productsHook.createProduct(formData);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
 
     if (result.success) {
-      addToast(editingProduct ? 'Produto atualizado!' : 'Produto cadastrado!');
-      setEditingProduct(null);
+      addToast(editingProduct ? 'Produto atualizado com sucesso!' : 'Produto cadastrado com sucesso!');
+
+      if (editingProduct) {
+        setEditingProduct(null);
+        setFormSessionKey((current) => current + 1);
+      } else {
+        handleCreate();
+      }
     } else {
       addToast(result.error, 'error');
     }
@@ -83,7 +113,7 @@ const AdminProducts = () => {
 
         <motion.section
           className="admin-products-content"
-          key={editingProduct ? `edit-${editingProduct.id}` : 'create'}
+          key={editingProduct ? `edit-${editingProduct.id}-${formSessionKey}` : `create-${formSessionKey}`}
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
         >
@@ -106,6 +136,8 @@ const AdminProducts = () => {
                 subCategories={subCategories}
                 onSubmit={handleSubmit}
                 onCancel={handleCancel}
+                isSubmitting={isSubmitting}
+                onValidationError={(message) => addToast(message, 'error')}
               />
             </div>
           </div>

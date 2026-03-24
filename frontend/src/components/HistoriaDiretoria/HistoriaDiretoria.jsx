@@ -1,8 +1,14 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { assetPath } from '../../utils/assets';
 import './HistoriaDiretoria.css';
 
 const HistoriaDiretoria = () => {
+  const [isMobileCards, setIsMobileCards] = useState(false);
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const cardRefs = useRef([]);
+  const activeCardIndexRef = useRef(0);
+  const manualSelectionUntilRef = useRef(0);
+
   const diretoriaCards = [
     {
       image: assetPath('img/imagejohnypresidente.png'),
@@ -33,6 +39,99 @@ const HistoriaDiretoria = () => {
       responsibilities: 'Moby Work'
     }
   ];
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+    const syncMobileState = (event) => {
+      setIsMobileCards(event.matches);
+    };
+
+    setIsMobileCards(mediaQuery.matches);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', syncMobileState);
+      return () => mediaQuery.removeEventListener('change', syncMobileState);
+    }
+
+    mediaQuery.addListener(syncMobileState);
+    return () => mediaQuery.removeListener(syncMobileState);
+  }, []);
+
+  useEffect(() => {
+    activeCardIndexRef.current = activeCardIndex;
+  }, [activeCardIndex]);
+
+  useEffect(() => {
+    if (!isMobileCards) {
+      return undefined;
+    }
+
+    let animationFrameId = 0;
+
+    const updateActiveCard = () => {
+      animationFrameId = 0;
+
+      if (Date.now() < manualSelectionUntilRef.current) {
+        return;
+      }
+
+      const availableCards = cardRefs.current.filter(Boolean);
+
+      if (availableCards.length === 0) {
+        return;
+      }
+
+      const viewportAnchor = window.innerHeight * 0.42;
+      let nextIndex = activeCardIndexRef.current;
+      let bestScore = Number.POSITIVE_INFINITY;
+
+      availableCards.forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        const cardCenter = rect.top + (rect.height / 2);
+        const distanceToAnchor = Math.abs(cardCenter - viewportAnchor);
+        const cardIndex = Number(card.dataset.cardIndex);
+
+        if (Number.isNaN(cardIndex)) {
+          return;
+        }
+
+        const stabilityBias = cardIndex === activeCardIndexRef.current ? 80 : 0;
+        const score = distanceToAnchor - stabilityBias;
+
+        if (score < bestScore) {
+          bestScore = score;
+          nextIndex = cardIndex;
+        }
+      });
+
+      if (nextIndex !== activeCardIndexRef.current) {
+        activeCardIndexRef.current = nextIndex;
+        setActiveCardIndex(nextIndex);
+      }
+    };
+
+    const requestActiveCardUpdate = () => {
+      if (animationFrameId) {
+        return;
+      }
+
+      animationFrameId = window.requestAnimationFrame(updateActiveCard);
+    };
+
+    requestActiveCardUpdate();
+    window.addEventListener('scroll', requestActiveCardUpdate, { passive: true });
+    window.addEventListener('resize', requestActiveCardUpdate);
+
+    return () => {
+      if (animationFrameId) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+
+      window.removeEventListener('scroll', requestActiveCardUpdate);
+      window.removeEventListener('resize', requestActiveCardUpdate);
+    };
+  }, [isMobileCards]);
 
   return (
     <div className="historia-diretoria-page">
@@ -71,7 +170,21 @@ const HistoriaDiretoria = () => {
 
         <div className="historia-diretoria-people-grid">
           {diretoriaCards.map((card, index) => (
-            <div key={card.image} className="flip-card">
+            <div
+              key={card.image}
+              ref={(element) => {
+                cardRefs.current[index] = element;
+              }}
+              data-card-index={index}
+              className={`flip-card ${isMobileCards && activeCardIndex === index ? 'is-active' : ''}`}
+              onClick={() => {
+                if (isMobileCards) {
+                  manualSelectionUntilRef.current = Date.now() + 450;
+                  activeCardIndexRef.current = index;
+                  setActiveCardIndex(index);
+                }
+              }}
+            >
               <div className="flip-card-inner">
                 <div className="flip-card-front historia-diretoria-person-card">
                   <img

@@ -8,7 +8,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Menu,
   X,
   ChevronDown
 } from 'lucide-react';
@@ -269,8 +268,15 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
               </div>
             </nav>
 
-            <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
-              {menuOpen ? <X size={28} /> : <Menu size={28} />}
+            <button
+              className={`menu-toggle ${menuOpen ? 'is-open' : ''}`}
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+              aria-expanded={menuOpen}
+            >
+              <span className="menu-toggle-bar" />
+              <span className="menu-toggle-bar" />
+              <span className="menu-toggle-bar" />
             </button>
           </div>
 
