@@ -110,7 +110,9 @@ const ProductForm = ({
   }, [initialData, categories]);
 
   const getFilteredSubCategories = () => {
-    if (formData.category_ids.length === 0) return [];
+    // Se nenhuma categoria principal selecionada, mostra todas as subcategorias
+    if (formData.category_ids.length === 0) return subCategories;
+    // Se há categorias principais selecionadas, mostra apenas as subcategorias dessas categorias
     return subCategories.filter((s) => formData.category_ids.includes(Number(s.parent_id)));
   };
 

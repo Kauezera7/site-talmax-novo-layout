@@ -23,23 +23,31 @@ const buildRemoteImageUrl = (fileName) => {
 };
 
 const uploadFileToCloudinary = async (file) => {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-    secure: true
-  });
+  try {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+      secure: true
+    });
 
-  const uploadOptions = {
-    resource_type: 'image'
-  };
+    const uploadOptions = {
+      resource_type: 'image'
+    };
 
-  if (process.env.CLOUDINARY_FOLDER) {
-    uploadOptions.folder = process.env.CLOUDINARY_FOLDER;
+    if (process.env.CLOUDINARY_FOLDER) {
+      uploadOptions.folder = process.env.CLOUDINARY_FOLDER;
+    }
+
+    const result = await cloudinary.uploader.upload(file.path, uploadOptions);
+    console.log(`✓ Cloudinary upload success: ${file.filename}`);
+    return result.secure_url || result.url;
+  } catch (error) {
+    console.error(`✗ Cloudinary upload failed for ${file.filename}:`, error.message);
+    console.log(`→ Falling back to local storage...`);
+    // Retorna URL local em caso de falha no Cloudinary
+    return buildLocalImageUrl(file);
   }
-
-  const result = await cloudinary.uploader.upload(file.path, uploadOptions);
-  return result.secure_url || result.url;
 };
 
 const uploadFileToSftp = async (file) => {
@@ -78,9 +86,26 @@ const persistUploadedFile = async (file) => {
   }
 
   if (hasCloudinaryConfig()) {
-    const publicUrl = await uploadFileToCloudinary(file);
-    cleanupLocalTempFile(file);
-    return publicUrl;
+    try {
+      const publicUrl = await uploadFileToCloudinary(file);
+      cleanupLocalTempFile(file);
+      return publicUrl;
+    } catch (error) {
+      console.warn(`Cloudinary failed, trying SFTP...`);
+      // Try SFTP fallback if Cloudinary fails
+      if (hasSftpConfig()) {
+        try {
+          const publicUrl = await uploadFileToSftp(file);
+          cleanupLocalTempFile(file);
+          return publicUrl;
+        } catch (sftpError) {
+          console.warn(`SFTP failed, using local storage...`);
+          return buildLocalImageUrl(file);
+        }
+      }
+      // Use local storage as final fallback
+      return buildLocalImageUrl(file);
+    }
   }
 
   if (!hasSftpConfig()) {
