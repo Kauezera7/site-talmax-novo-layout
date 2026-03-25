@@ -76,3 +76,4 @@ AdminDashboard
   Gestao da secao de scanners
 - `AdminPrinters/`
   Gestao da secao de impressoras
+te
