@@ -3,16 +3,12 @@ const path = require('path');
 const { v2: cloudinary } = require('cloudinary');
 const SftpClient = require('ssh2-sftp-client');
 
-// Carrega dotenv para garantir que as variaveis estejam disponiveis no servico
-const envPath = path.resolve(__dirname, '../../../.env');
-require('dotenv').config({ path: envPath });
+// As variaveis de ambiente ja sao carregadas pelo server.js (entry point)
 
 const hasCloudinaryConfig = () => {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
-
-  console.log(`[Cloudinary Check] Cloud: ${cloudName ? 'OK' : 'MISSING'}, Key: ${apiKey ? 'OK' : 'MISSING'}, Secret: ${apiSecret ? 'OK' : 'MISSING'}`);
 
   return Boolean(cloudName && apiKey && apiSecret);
 };

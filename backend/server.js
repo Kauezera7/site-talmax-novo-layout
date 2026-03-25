@@ -3,16 +3,28 @@
  * Carrega variaveis de ambiente, cria a app e inicia o servidor HTTP.
  */
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+const fs = require('fs');
+
+// Carrega o .env correto baseado no ambiente
+const nodeEnv = process.env.NODE_ENV || 'development';
+const envFiles = [
+  `.env.${nodeEnv}`,
+  '.env'
+];
+
+for (const file of envFiles) {
+  const envPath = path.resolve(__dirname, file);
+  if (fs.existsSync(envPath)) {
+    require('dotenv').config({ path: envPath });
+    break;
+  }
+}
 
 const createApp = require('./src/server/app');
-
-const app = createApp();
-const PORT = process.env.PORT || 5000;
-
+...
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Servidor rodando em http://localhost:${PORT}`);
-  console.log(`📦 NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`📦 Ambiente: ${process.env.NODE_ENV || 'development'}`);
   
   // Log qual storage está sendo usado
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
@@ -20,7 +32,8 @@ app.listen(PORT, '0.0.0.0', () => {
   const hasSftp = Boolean(process.env.SFTP_HOST) && Boolean(process.env.SFTP_USER);
   
   if (hasCloudinary) {
-    console.log(`☁️  Storage: Cloudinary (Cloud: ${cloudName})\n`);
+    console.log(`☁️  Storage: Cloudinary (Cloud: ${cloudName})`);
+    console.log(`📁 Pasta: ${process.env.CLOUDINARY_FOLDER || 'talmax'}\n`);
   } else if (hasSftp) {
     console.log(`📤 Storage: SFTP\n`);
   } else {
