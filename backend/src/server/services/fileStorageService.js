@@ -1,13 +1,20 @@
 const fs = require('fs');
+const path = require('path');
 const { v2: cloudinary } = require('cloudinary');
 const SftpClient = require('ssh2-sftp-client');
 
+// Carrega dotenv para garantir que as variaveis estejam disponiveis no servico
+const envPath = path.resolve(__dirname, '../../../.env');
+require('dotenv').config({ path: envPath });
+
 const hasCloudinaryConfig = () => {
-  return (
-    Boolean(process.env.CLOUDINARY_CLOUD_NAME)
-    && Boolean(process.env.CLOUDINARY_API_KEY)
-    && Boolean(process.env.CLOUDINARY_API_SECRET)
-  );
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  console.log(`[Cloudinary Check] Cloud: ${cloudName ? 'OK' : 'MISSING'}, Key: ${apiKey ? 'OK' : 'MISSING'}, Secret: ${apiSecret ? 'OK' : 'MISSING'}`);
+
+  return Boolean(cloudName && apiKey && apiSecret);
 };
 
 const hasSftpConfig = () => {
@@ -27,6 +34,8 @@ const buildRemoteImageUrl = (fileName) => {
 };
 
 const uploadFileToCloudinary = async (file) => {
+  console.log(`[Cloudinary] Configuring with cloud: ${process.env.CLOUDINARY_CLOUD_NAME}`);
+  
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -35,11 +44,19 @@ const uploadFileToCloudinary = async (file) => {
   });
 
   const uploadOptions = {
-    resource_type: 'auto',
-    folder: process.env.CLOUDINARY_FOLDER || 'talmax'
+    resource_type: 'image',
+    folder: process.env.CLOUDINARY_FOLDER || 'talmax',
+    use_filename: true,
+    unique_filename: true
   };
 
+  console.log(`[Cloudinary] Attempting upload of ${file.path}...`);
   const result = await cloudinary.uploader.upload(file.path, uploadOptions);
+  
+  if (!result.secure_url && !result.url) {
+    throw new Error('Cloudinary upload returned no URL');
+  }
+
   return result.secure_url || result.url;
 };
 
@@ -82,53 +99,29 @@ const persistUploadedFile = async (file) => {
   const hasCloudinary = hasCloudinaryConfig();
   const hasSftp = hasSftpConfig();
   console.log(`\n🔍 Storage Decision for ${file.filename}:`);
-  console.log(`   NODE_ENV: ${process.env.NODE_ENV}`);
   console.log(`   Has Cloudinary Config: ${hasCloudinary}`);
   console.log(`   Has SFTP Config: ${hasSftp}`);
 
-  if (hasCloudinaryConfig()) {
-    try {
-      console.log(`📤 [Cloudinary] Uploading ${file.filename}...`);
-      const publicUrl = await uploadFileToCloudinary(file);
-      cleanupLocalTempFile(file);
-      console.log(`✅ [Cloudinary] Success: ${publicUrl}`);
-      return publicUrl;
-    } catch (error) {
-      console.warn(`❌ [Cloudinary] Failed: ${error.message}`);
-      console.warn(`⚡ Falling back to SFTP...`);
-      // Try SFTP fallback if Cloudinary fails
-      if (hasSftpConfig()) {
-        try {
-          const publicUrl = await uploadFileToSftp(file);
-          cleanupLocalTempFile(file);
-          console.log(`✅ [SFTP] Success: ${publicUrl}`);
-          return publicUrl;
-        } catch (sftpError) {
-          console.warn(`❌ [SFTP] Failed: ${sftpError.message}`);
-          console.log(`⚡ Falling back to local storage...`);
-          const localUrl = buildLocalImageUrl(file);
-          console.log(`✅ [Local] Using: ${localUrl}`);
-          return localUrl;
-        }
-      }
-      // Use local storage as final fallback
-      const localUrl = buildLocalImageUrl(file);
-      console.log(`⚡ [Local] Using fallback: ${localUrl}`);
-      return localUrl;
-    }
+  if (hasCloudinary) {
+    console.log(`📤 [Cloudinary] Uploading ${file.filename}...`);
+    const publicUrl = await uploadFileToCloudinary(file);
+    cleanupLocalTempFile(file);
+    console.log(`✅ [Cloudinary] Success: ${publicUrl}`);
+    return publicUrl;
   }
 
-  if (!hasSftpConfig()) {
-    const localUrl = buildLocalImageUrl(file);
-    console.log(`📁 [Local Storage] ${file.filename} → ${localUrl}`);
-    return localUrl;
+  if (hasSftp) {
+    console.log(`📤 [SFTP] Uploading ${file.filename}...`);
+    const publicUrl = await uploadFileToSftp(file);
+    cleanupLocalTempFile(file);
+    console.log(`✅ [SFTP] Success: ${publicUrl}`);
+    return publicUrl;
   }
 
-  console.log(`📤 [SFTP] Uploading ${file.filename}...`);
-  const publicUrl = await uploadFileToSftp(file);
-  cleanupLocalTempFile(file);
-  console.log(`✅ [SFTP] Success: ${publicUrl}`);
-  return publicUrl;
+  // Use local storage only if no remote storage is configured
+  const localUrl = buildLocalImageUrl(file);
+  console.log(`📁 [Local Storage] ${file.filename} → ${localUrl}`);
+  return localUrl;
 };
 
 const persistUploadedFiles = async (files = []) => Promise.all(

@@ -2,7 +2,8 @@
  * Ponto de entrada do backend.
  * Carrega variaveis de ambiente, cria a app e inicia o servidor HTTP.
  */
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 const createApp = require('./src/server/app');
 
@@ -14,11 +15,12 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📦 NODE_ENV: ${process.env.NODE_ENV}`);
   
   // Log qual storage está sendo usado
-  const hasCloudinary = Boolean(process.env.CLOUDINARY_CLOUD_NAME) && Boolean(process.env.CLOUDINARY_API_KEY);
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const hasCloudinary = Boolean(cloudName) && Boolean(process.env.CLOUDINARY_API_KEY);
   const hasSftp = Boolean(process.env.SFTP_HOST) && Boolean(process.env.SFTP_USER);
   
   if (hasCloudinary) {
-    console.log(`☁️  Storage: Cloudinary\n`);
+    console.log(`☁️  Storage: Cloudinary (Cloud: ${cloudName})\n`);
   } else if (hasSftp) {
     console.log(`📤 Storage: SFTP\n`);
   } else {
