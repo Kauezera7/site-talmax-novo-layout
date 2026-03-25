@@ -10,14 +10,14 @@ const { requireAdminSession } = require('../auth/adminSession');
 const {
   parseJsonObject,
   parseIdArray,
-  parseInteger,
-  getUploadedImagePaths
+  parseInteger
 } = require('../utils/requestParsers');
 const {
   listProducts,
   findProductById,
   attachProductCategories
 } = require('../services/productService');
+const { persistUploadedFiles } = require('../services/fileStorageService');
 
 const router = express.Router();
 
@@ -114,7 +114,7 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
     const normalizedDescription = normalizeProductText(description);
     const parsedCategoryIds = parseIdArray(category_ids);
     const primaryImageIndex = parseInteger(req.body.primary_image_index, 0);
-    const uploadedImagePaths = getUploadedImagePaths(req.files || []);
+    const uploadedImagePaths = await persistUploadedFiles(req.files || []);
     const extra = parseJsonObject(extra_data);
     const retainedImagePaths = normalizeImageList(extra.images);
     const mergedImagePaths = reorderImagePaths([...retainedImagePaths, ...uploadedImagePaths], primaryImageIndex);
@@ -170,7 +170,7 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     const parsedCategoryIds = parseIdArray(category_ids);
     const primaryImageIndex = parseInteger(req.body.primary_image_index, 0);
     const extra_data = req.body.extra_data;
-    const newImagePaths = getUploadedImagePaths(req.files || []);
+    const newImagePaths = await persistUploadedFiles(req.files || []);
     const extra = parseJsonObject(extra_data);
     const duplicateProduct = await findDuplicateProductByName(connection, name, productId);
     const retainedImagePaths = normalizeImageList(extra.images);

@@ -52,7 +52,7 @@ const parseIdArray = (value) => {
   );
 };
 
-const getUploadedImagePaths = (files = []) => files.map((file) => `/img/${file.filename}`);
+const getUploadedImagePaths = (files = []) => files.map((file) => file?.filename ? `/img/${file.filename}` : null).filter(Boolean);
 
 module.exports = {
   parseBooleanFlag,

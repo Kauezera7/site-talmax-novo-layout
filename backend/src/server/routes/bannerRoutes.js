@@ -8,6 +8,7 @@ const upload = require('../config/upload');
 const { safe } = require('../utils/common');
 const { requireAdminSession } = require('../auth/adminSession');
 const { parseBooleanFlag, parseInteger } = require('../utils/requestParsers');
+const { persistUploadedFile } = require('../services/fileStorageService');
 
 const router = express.Router();
 
@@ -23,7 +24,7 @@ router.get('/', async (req, res) => {
 router.post('/', requireAdminSession, upload.single('image'), async (req, res) => {
   try {
     const { title, link_url, display_order, active } = req.body;
-    const image_url = req.file ? `/img/${req.file.filename}` : null;
+    const image_url = req.file ? await persistUploadedFile(req.file) : null;
 
     if (!image_url) {
       return res.status(400).json({ error: 'A imagem do banner e obrigatoria.' });
@@ -54,7 +55,7 @@ router.put('/:id', requireAdminSession, upload.single('image'), async (req, res)
 
     if (req.file) {
       query += ', image_url = ?';
-      params.push(`/img/${req.file.filename}`);
+      params.push(await persistUploadedFile(req.file));
     }
 
     query += ' WHERE id = ?';

@@ -8,6 +8,7 @@ const upload = require('../config/upload');
 const { safe } = require('../utils/common');
 const { requireAdminSession } = require('../auth/adminSession');
 const { parseBooleanFlag } = require('../utils/requestParsers');
+const { persistUploadedFile } = require('../services/fileStorageService');
 
 const router = express.Router();
 
@@ -31,7 +32,7 @@ router.get('/', async (req, res) => {
 router.post('/', requireAdminSession, upload.single('icon'), async (req, res) => {
   try {
     const { name, slug, is_visible, parent_id } = req.body;
-    const icon_url = req.file ? `/img/${req.file.filename}` : null;
+    const icon_url = req.file ? await persistUploadedFile(req.file) : null;
     const visible = parseBooleanFlag(is_visible) ? 1 : 0;
 
     if (parent_id && parent_id !== 'null' && parent_id !== '') {
@@ -71,7 +72,7 @@ router.put('/:id', requireAdminSession, upload.single('icon'), async (req, res) 
 
     if (req.file) {
       query += ', icon_url = ?';
-      params.push(`/img/${req.file.filename}`);
+      params.push(await persistUploadedFile(req.file));
     }
 
     query += ' WHERE id = ?';
