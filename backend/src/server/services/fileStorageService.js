@@ -95,33 +95,46 @@ const persistUploadedFile = async (file) => {
 
   if (hasCloudinaryConfig()) {
     try {
+      console.log(`📤 [Cloudinary] Uploading ${file.filename}...`);
       const publicUrl = await uploadFileToCloudinary(file);
       cleanupLocalTempFile(file);
+      console.log(`✅ [Cloudinary] Success: ${publicUrl}`);
       return publicUrl;
     } catch (error) {
-      console.warn(`Cloudinary failed, trying SFTP...`);
+      console.warn(`❌ [Cloudinary] Failed: ${error.message}`);
+      console.warn(`⚡ Falling back to SFTP...`);
       // Try SFTP fallback if Cloudinary fails
       if (hasSftpConfig()) {
         try {
           const publicUrl = await uploadFileToSftp(file);
           cleanupLocalTempFile(file);
+          console.log(`✅ [SFTP] Success: ${publicUrl}`);
           return publicUrl;
         } catch (sftpError) {
-          console.warn(`SFTP failed, using local storage...`);
-          return buildLocalImageUrl(file);
+          console.warn(`❌ [SFTP] Failed: ${sftpError.message}`);
+          console.log(`⚡ Falling back to local storage...`);
+          const localUrl = buildLocalImageUrl(file);
+          console.log(`✅ [Local] Using: ${localUrl}`);
+          return localUrl;
         }
       }
       // Use local storage as final fallback
-      return buildLocalImageUrl(file);
+      const localUrl = buildLocalImageUrl(file);
+      console.log(`⚡ [Local] Using fallback: ${localUrl}`);
+      return localUrl;
     }
   }
 
   if (!hasSftpConfig()) {
-    return buildLocalImageUrl(file);
+    const localUrl = buildLocalImageUrl(file);
+    console.log(`📁 [Local Storage] ${file.filename} → ${localUrl}`);
+    return localUrl;
   }
 
+  console.log(`📤 [SFTP] Uploading ${file.filename}...`);
   const publicUrl = await uploadFileToSftp(file);
   cleanupLocalTempFile(file);
+  console.log(`✅ [SFTP] Success: ${publicUrl}`);
   return publicUrl;
 };
 
