@@ -19,6 +19,7 @@ console.log('🚀 Iniciando deploy para PRODUÇÃO...\n');
 if (!fs.existsSync(envProdPath)) {
   console.error('❌ ERRO: Arquivo .env.production não encontrado!');
   console.log(`📍 Procurando em: ${envProdPath}`);
+  console.log('\n💡 Dica: Se está em produção, copie as credenciais para .env manualmente');
   process.exit(1);
 }
 
