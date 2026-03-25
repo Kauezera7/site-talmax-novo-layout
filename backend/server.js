@@ -21,7 +21,10 @@ for (const file of envFiles) {
 }
 
 const createApp = require('./src/server/app');
-...
+
+const app = createApp();
+const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Servidor rodando em http://localhost:${PORT}`);
   console.log(`📦 Ambiente: ${process.env.NODE_ENV || 'development'}`);
