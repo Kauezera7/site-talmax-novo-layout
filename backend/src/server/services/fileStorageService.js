@@ -2,18 +2,26 @@ const fs = require('fs');
 const { v2: cloudinary } = require('cloudinary');
 const SftpClient = require('ssh2-sftp-client');
 
-const hasCloudinaryConfig = () => (
-  Boolean(process.env.CLOUDINARY_CLOUD_NAME)
-  && Boolean(process.env.CLOUDINARY_API_KEY)
-  && Boolean(process.env.CLOUDINARY_API_SECRET)
-);
+const hasCloudinaryConfig = () => {
+  // Usa Cloudinary apenas em produção
+  const isProduction = process.env.NODE_ENV === 'production';
+  return isProduction && (
+    Boolean(process.env.CLOUDINARY_CLOUD_NAME)
+    && Boolean(process.env.CLOUDINARY_API_KEY)
+    && Boolean(process.env.CLOUDINARY_API_SECRET)
+  );
+};
 
-const hasSftpConfig = () => (
-  Boolean(process.env.SFTP_HOST)
-  && Boolean(process.env.SFTP_USER)
-  && Boolean(process.env.SFTP_REMOTE_DIR)
-  && Boolean(process.env.SFTP_PUBLIC_BASE_URL)
-);
+const hasSftpConfig = () => {
+  // Usa SFTP apenas em produção
+  const isProduction = process.env.NODE_ENV === 'production';
+  return isProduction && (
+    Boolean(process.env.SFTP_HOST)
+    && Boolean(process.env.SFTP_USER)
+    && Boolean(process.env.SFTP_REMOTE_DIR)
+    && Boolean(process.env.SFTP_PUBLIC_BASE_URL)
+  );
+};
 
 const buildLocalImageUrl = (file) => `/img/${file.filename}`;
 
