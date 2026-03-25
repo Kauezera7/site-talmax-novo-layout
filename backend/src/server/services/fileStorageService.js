@@ -93,6 +93,14 @@ const persistUploadedFile = async (file) => {
     return null;
   }
 
+  // Debug: Show which storage method will be used
+  const hasCloudinary = hasCloudinaryConfig();
+  const hasSftp = hasSftpConfig();
+  console.log(`\n🔍 Storage Decision for ${file.filename}:`);
+  console.log(`   NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`   Has Cloudinary Config: ${hasCloudinary}`);
+  console.log(`   Has SFTP Config: ${hasSftp}`);
+
   if (hasCloudinaryConfig()) {
     try {
       console.log(`📤 [Cloudinary] Uploading ${file.filename}...`);
