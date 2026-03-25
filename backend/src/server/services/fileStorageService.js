@@ -3,9 +3,7 @@ const { v2: cloudinary } = require('cloudinary');
 const SftpClient = require('ssh2-sftp-client');
 
 const hasCloudinaryConfig = () => {
-  // Usa Cloudinary apenas em produção
-  const isProduction = process.env.NODE_ENV === 'production';
-  return isProduction && (
+  return (
     Boolean(process.env.CLOUDINARY_CLOUD_NAME)
     && Boolean(process.env.CLOUDINARY_API_KEY)
     && Boolean(process.env.CLOUDINARY_API_SECRET)
@@ -13,9 +11,7 @@ const hasCloudinaryConfig = () => {
 };
 
 const hasSftpConfig = () => {
-  // Usa SFTP apenas em produção
-  const isProduction = process.env.NODE_ENV === 'production';
-  return isProduction && (
+  return (
     Boolean(process.env.SFTP_HOST)
     && Boolean(process.env.SFTP_USER)
     && Boolean(process.env.SFTP_REMOTE_DIR)
@@ -31,31 +27,20 @@ const buildRemoteImageUrl = (fileName) => {
 };
 
 const uploadFileToCloudinary = async (file) => {
-  try {
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-      secure: true
-    });
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true
+  });
 
-    const uploadOptions = {
-      resource_type: 'image'
-    };
+  const uploadOptions = {
+    resource_type: 'auto',
+    folder: process.env.CLOUDINARY_FOLDER || 'talmax'
+  };
 
-    if (process.env.CLOUDINARY_FOLDER) {
-      uploadOptions.folder = process.env.CLOUDINARY_FOLDER;
-    }
-
-    const result = await cloudinary.uploader.upload(file.path, uploadOptions);
-    console.log(`✓ Cloudinary upload success: ${file.filename}`);
-    return result.secure_url || result.url;
-  } catch (error) {
-    console.error(`✗ Cloudinary upload failed for ${file.filename}:`, error.message);
-    console.log(`→ Falling back to local storage...`);
-    // Retorna URL local em caso de falha no Cloudinary
-    return buildLocalImageUrl(file);
-  }
+  const result = await cloudinary.uploader.upload(file.path, uploadOptions);
+  return result.secure_url || result.url;
 };
 
 const uploadFileToSftp = async (file) => {

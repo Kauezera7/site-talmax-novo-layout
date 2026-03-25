@@ -14,8 +14,8 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📦 NODE_ENV: ${process.env.NODE_ENV}`);
   
   // Log qual storage está sendo usado
-  const hasCloudinary = Boolean(process.env.CLOUDINARY_CLOUD_NAME) && process.env.NODE_ENV === 'production';
-  const hasSftp = Boolean(process.env.SFTP_HOST) && process.env.NODE_ENV === 'production';
+  const hasCloudinary = Boolean(process.env.CLOUDINARY_CLOUD_NAME) && Boolean(process.env.CLOUDINARY_API_KEY);
+  const hasSftp = Boolean(process.env.SFTP_HOST) && Boolean(process.env.SFTP_USER);
   
   if (hasCloudinary) {
     console.log(`☁️  Storage: Cloudinary\n`);
