@@ -2,7 +2,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node setup-development.js && node server.js",
-    "deploy": "node deploy-production.js && node server.js"
+    "dev:check": "node debug-storage.js"
   },
   "dependencies": {
     "cloudinary": "^2.9.0",
