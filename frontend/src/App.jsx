@@ -301,7 +301,7 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
                 <span>Institucional <ChevronDown size={14} /></span>
                 <div className="dropdown">
                   <Link to="/quem-somos">Quem Somos</Link>
-                  <Link to="/historia-diretoria">Historia & Diretoria</Link>
+                  <Link to="/historia-diretoria">História & Diretoria</Link>
                   <Link to="/depoimentos">Depoimentos</Link>
                 </div>
               </div>
@@ -312,7 +312,7 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
                   <Link to="/produtos" className="highlight-link">Ver Todos os Produtos</Link>
                   <hr />
                   <Link to="/categoria/talmax-digital" style={{ fontWeight: '700', color: 'var(--primary)' }}>Talmax Digital</Link>
-                  <Link to="/categoria/protese-dentaria" style={{ fontWeight: '700', color: 'var(--primary)' }}>Protese Dentaria</Link>
+                  <Link to="/categoria/protese-dentaria" style={{ fontWeight: '700', color: 'var(--primary)' }}>Prótese Dentária</Link>
                   <Link to="/categoria/nail-e-podologia" style={{ fontWeight: '700', color: 'var(--primary)' }}>Nail e Podologia</Link>
                 </div>
               </div>
@@ -326,17 +326,17 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
               </div>
 
               <div className="nav-item">
-                <span>Servicos <ChevronDown size={14} /></span>
+                <span>Serviços <ChevronDown size={14} /></span>
                 <div className="dropdown">
                   <Link to="/suporte">Suporte</Link>
-                  <Link to="/assistencia-tecnica">Assistencia Tecnica</Link>
+                  <Link to="/assistencia-tecnica">Assistência Técnica</Link>
                 </div>
               </div>
 
               <div className="nav-item">
                 <span>Contato <ChevronDown size={14} /></span>
                 <div className="dropdown">
-                  <Link to="/contato">Formulario de Contato</Link>
+                  <Link to="/contato">Formulário de Contato</Link>
                   <Link to="/comercial-comex">Comercial / Comex</Link>
                   <a href="https://www.bne.com.br/talmax" target="_blank" rel="noopener noreferrer">Trabalhe Conosco</a>
                 </div>
@@ -354,7 +354,7 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
                 <span>SAC <ChevronDown size={14} /></span>
                 <div className="dropdown">
                   <Link to="/sac">Fale Conosco</Link>
-                  <Link to="/politicas-troca">Politicas de Troca</Link>
+                  <Link to="/politicas-troca">Políticas de Troca</Link>
                 </div>
               </div>
             </nav>
@@ -380,7 +380,7 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
                   type="text"
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Digite o que voce procura..."
+                  placeholder="Digite o que você procura..."
                 />
                 <button
                   type="button"
@@ -416,7 +416,7 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
               <span>Institucional</span>
               <div className="nav-mobile-sub">
                 <Link to="/quem-somos" onClick={() => setMenuOpen(false)}>Quem Somos</Link>
-                <Link to="/historia-diretoria" onClick={() => setMenuOpen(false)}>Historia & Diretoria</Link>
+                <Link to="/historia-diretoria" onClick={() => setMenuOpen(false)}>História & Diretoria</Link>
               </div>
             </div>
 
@@ -426,7 +426,7 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
                 <Link to="/produtos" onClick={() => setMenuOpen(false)} style={{ fontWeight: 'bold', color: 'var(--primary)' }}>Ver Todos os Produtos</Link>
                 <hr style={{ border: '0', borderTop: '1px solid #eee', margin: '5px 0' }} />
                 <Link to="/categoria/talmax-digital" onClick={() => setMenuOpen(false)} style={{ fontWeight: '700' }}>Talmax Digital</Link>
-                <Link to="/categoria/protese-dentaria" onClick={() => setMenuOpen(false)} style={{ fontWeight: '700' }}>Protese Dentaria</Link>
+                <Link to="/categoria/protese-dentaria" onClick={() => setMenuOpen(false)} style={{ fontWeight: '700' }}>Prótese Dentária</Link>
                 <Link to="/categoria/nail-e-podologia" onClick={() => setMenuOpen(false)} style={{ fontWeight: '700' }}>Nail e Podologia</Link>
               </div>
             </div>
@@ -474,15 +474,15 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
           <Route path="/blog" element={<PagePlaceholder title="Blog" />} />
 
           <Route path="/suporte" element={<Support />} />
-          <Route path="/assistencia-tecnica" element={<PagePlaceholder title="Assistencia Tecnica" />} />
+          <Route path="/assistencia-tecnica" element={<PagePlaceholder title="Assistência Técnica" />} />
 
-          <Route path="/contato" element={<PagePlaceholder title="Formulario de Contato" />} />
+          <Route path="/contato" element={<PagePlaceholder title="Formulário de Contato" />} />
           <Route path="/comercial-comex" element={<PagePlaceholder title="Comercial / Comex" />} />
 
           <Route path="/cursos" element={<PagePlaceholder title="Cursos" />} />
           <Route path="/portal-cliente" element={<PagePlaceholder title="Portal do Cliente" />} />
           <Route path="/sac" element={<PagePlaceholder title="SAC - Fale Conosco" />} />
-          <Route path="/politicas-troca" element={<PagePlaceholder title="Politicas de Troca" />} />
+          <Route path="/politicas-troca" element={<PagePlaceholder title="Políticas de Troca" />} />
         </Routes>
       </main>
 
@@ -491,7 +491,7 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
           <div className="footer-grid">
             <div className="footer-section">
               <img src={assetPath('img/Talmaxlogo.webp')} alt="TALMAX" className="footer-logo" />
-              <p>Inovacao e qualidade em produtos odontologicos.</p>
+              <p>Inovação e qualidade em produtos odontológicos.</p>
               <div className="social-links">
                 <Facebook size={20} />
                 <Instagram size={20} />
@@ -504,13 +504,13 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
               <p><Phone size={16} /> (41) 3012-3456</p>
             </div>
             <div className="footer-section">
-              <h4>Endereco</h4>
+              <h4>Endereço</h4>
               <p><MapPin size={16} /> Rua Benedito Carollo, 890 - Cidade Industrial de Curitiba</p>
               <p>Curitiba - PR - 81290-060</p>
             </div>
           </div>
           <div className="footer-bottom">
-            <p>&copy; {new Date().getFullYear()} Talmax. Todos os direitos reservados. | <Link to="/privacidade">Politica de Privacidade</Link></p>
+            <p>&copy; {new Date().getFullYear()} Talmax. Todos os direitos reservados. | <Link to="/privacidade">Política de Privacidade</Link></p>
           </div>
         </footer>
       )}

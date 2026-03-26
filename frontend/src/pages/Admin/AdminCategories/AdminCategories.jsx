@@ -8,7 +8,7 @@ import './AdminCategories.css';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Ver Todas' },
-  { value: 'visible', label: 'Somente Visiveis' },
+  { value: 'visible', label: 'Somente Visíveis' },
   { value: 'hidden', label: 'Somente Ocultas' }
 ];
 
@@ -82,7 +82,7 @@ const AdminCategories = () => {
 
     const result = await categoriesHook.deleteCategory(categoryToDelete.id);
     if (result.success) {
-      addToast('Categoria excluida!');
+      addToast('Categoria excluída!');
       setShowDeleteModal(false);
       setCategoryToDelete(null);
     } else {
@@ -99,7 +99,7 @@ const AdminCategories = () => {
 
     const result = await categoriesHook.updateCategory(category.id, data);
     if (result.success) {
-      addToast(`Categoria ${!category.is_visible ? 'visivel' : 'oculta'}!`);
+      addToast(`Categoria ${!category.is_visible ? 'visível' : 'oculta'}!`);
     } else {
       addToast(result.error, 'error');
     }
@@ -235,7 +235,7 @@ const AdminCategories = () => {
                 <h3>Excluir Categoria?</h3>
                 <p>Tem certeza que deseja excluir <strong>{categoryToDelete?.name}</strong>?</p>
                 <p style={{ fontSize: '0.85rem', color: '#ef4444', marginTop: '10px' }}>
-                  Atencao: produtos vinculados a esta categoria ficarao "Sem Categoria".
+                  Atenção: produtos vinculados a esta categoria ficarão "Sem Categoria".
                 </p>
               </div>
               <div className="modal-footer">

@@ -245,7 +245,7 @@ const ProductForm = ({
           <label>Categorias Principais</label>
           {formData.category_ids.length === 0 && (
             <p className="product-form-helper">
-              Selecione pelo menos uma categoria principal para o produto nao aparecer como sem categoria.
+              Selecione pelo menos uma categoria principal para o produto não aparecer como sem categoria.
             </p>
           )}
           <div className="custom-multi-select">
@@ -552,7 +552,7 @@ const ProductForm = ({
           </table>
           {formData.hideModelData ? (
             <p className="product-form-helper">
-              As linhas ficaram ocultas no painel porque esta tabela esta configurada para mostrar apenas o cabecalho no site.
+              As linhas ficaram ocultas no painel porque esta tabela está configurada para mostrar apenas o cabeçalho no site.
             </p>
           ) : (
             <button disabled={!formData.showModelSection} type="button" className="btn-add" onClick={addTableRow}><Plus size={16} /> Adicionar Linha</button>

@@ -77,10 +77,10 @@ const BannerForm = ({ initialData, onSubmit, onCancel, isSubmitting = false }) =
         </div>
 
         <div className="form-group">
-          <label>Titulo / Texto do Banner (Opcional)</label>
+          <label>Título / Texto do Banner (Opcional)</label>
           <input
             type="text"
-            placeholder="Ex: Lancamento Nova Frizadora"
+            placeholder="Ex: Lançamento Nova Frizadora"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           />
@@ -98,7 +98,7 @@ const BannerForm = ({ initialData, onSubmit, onCancel, isSubmitting = false }) =
 
         <div className="banner-form-grid">
           <div className="form-group">
-            <label>Ordem de Exibicao</label>
+          <label>Ordem de Exibição</label>
             <input
               type="number"
               value={formData.display_order}
@@ -121,7 +121,7 @@ const BannerForm = ({ initialData, onSubmit, onCancel, isSubmitting = false }) =
         <button type="button" className="btn-secondary" onClick={onCancel} disabled={isSubmitting}>Cancelar</button>
         <button type="submit" className="btn-primary" disabled={isSubmitting}>
           {isSubmitting ? <ButtonSavingIndicator /> : <Save size={18} />}
-          {isSubmitting ? 'Salvando' : (initialData ? 'Salvar alteracoes' : 'Criar banner')}
+          {isSubmitting ? 'Salvando' : (initialData ? 'Salvar alterações' : 'Criar banner')}
         </button>
       </div>
     </form>

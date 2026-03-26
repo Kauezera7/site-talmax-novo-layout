@@ -94,7 +94,7 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel, isSubmi
         </div>
 
         <div className="form-group">
-          <label>Slug (URL amigavel)</label>
+          <label>Slug (URL amigável)</label>
           <input
             type="text"
             required
@@ -116,7 +116,7 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel, isSubmi
 
         {!formData.parent_id && (
           <div className="form-group">
-            <label>Icone da Categoria</label>
+            <label>Ícone da Categoria</label>
             <div className="file-upload-area" style={{ padding: '15px' }}>
               <input
                 type="file"
@@ -130,7 +130,7 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel, isSubmi
                 }}
               />
               <UploadCloud size={32} color="var(--admin-primary)" style={{ marginBottom: '5px' }} />
-              <p style={{ fontSize: '0.85rem' }}>Clique para enviar o icone</p>
+              <p style={{ fontSize: '0.85rem' }}>Clique para enviar o ícone</p>
             </div>
             {preview && (
               <div className="preview-thumb" style={{ marginTop: '10px', width: '60px', height: '60px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
@@ -144,7 +144,7 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel, isSubmi
         <button type="button" className="btn-secondary" onClick={onCancel} disabled={isSubmitting}>Cancelar</button>
         <button type="submit" className="btn-primary" disabled={isSubmitting}>
           {isSubmitting ? <ButtonSavingIndicator /> : <Save size={18} />}
-          {isSubmitting ? 'Salvando' : (initialData ? 'Salvar alteracoes' : 'Criar categoria')}
+          {isSubmitting ? 'Salvando' : (initialData ? 'Salvar alterações' : 'Criar categoria')}
         </button>
       </div>
     </form>

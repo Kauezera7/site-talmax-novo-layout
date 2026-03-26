@@ -3,7 +3,7 @@ import { Search, Save, CheckCircle, ChevronRight } from 'lucide-react';
 import { apiAssetPath, assetPath } from '../../../utils/assets';
 
 const DISPLAY_MODE_OPTIONS = [
-  { value: 'description', label: 'Descricao' },
+  { value: 'description', label: 'Descrição' },
   { value: 'features', label: 'Destaques' },
   { value: 'none', label: 'Sem nada' }
 ];
@@ -172,9 +172,9 @@ const SpecialSectionManager = ({
   return (
     <div className="admin-card">
       <div className="card-header special-section-header">
-        <h2><Search size={20} /> Selecao de {sectionTitle}</h2>
+        <h2><Search size={20} /> Seleção de {sectionTitle}</h2>
         <button className="btn-primary" onClick={() => onSave(normalizedSelectedProducts)}>
-          <Save size={18} /> Salvar Alteracoes
+          <Save size={18} /> Salvar Alterações
         </button>
       </div>
       <div className="card-body special-section-body">
@@ -238,7 +238,7 @@ const SpecialSectionManager = ({
 
           <div className="admin-section-group special-section-card">
             <p className="special-section-hint">
-              Selecione quais produtos devem aparecer na pagina de {sectionTitle} e defina a ordem.
+              Selecione quais produtos devem aparecer na página de {sectionTitle} e defina a ordem.
             </p>
 
             <div className="special-products-list">

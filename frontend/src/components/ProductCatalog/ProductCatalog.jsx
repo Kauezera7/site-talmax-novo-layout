@@ -33,19 +33,19 @@ const featuredCategoryOrder = [
   'Ceras',
   'Revestimentos',
   'Zirkon Ice',
-  'Ligas Metalicas',
+  'Ligas Metálicas',
   'Soldas',
   'Corte e Acabamento',
-  'Microscopio e Lupa',
+  'Microscópio e Lupa',
   'Equipamentos',
-  'Acessorios para Ceramica',
+  'Acessórios para Cerâmica',
   'T-Lithium',
   'Talmax Digital',
   'Blocos',
   'Linha Cad/Cam',
   'Linha de Ceramicas',
   'Resinas',
-  'Protese Dentaria',
+  'Prótese Dentária',
   'Nail e Podologia'
 ];
 
@@ -106,7 +106,7 @@ const ProductCatalog = () => {
 
         setProducts(formattedProducts);
       } catch (error) {
-        console.error('Erro ao carregar dados do catalogo:', error);
+        console.error('Erro ao carregar dados do catálogo:', error);
       } finally {
         setIsLoading(false);
       }
@@ -234,7 +234,7 @@ const ProductCatalog = () => {
     <div className="catalog-container">
       <div className="catalog-hero-minimal">
         <div className="container-inner">
-          <span className="top-tag">Tecnologia Odontologica</span>
+          <span className="top-tag">Tecnologia Odontológica</span>
           {activeCategories.length === 1 && activeCategories[0] === 'Talmax Digital' ? (
             <div className="digital-standard-header">
               <div className="digital-title-standard">
@@ -244,14 +244,14 @@ const ProductCatalog = () => {
                 </h1>
                 <div className="line"></div>
               </div>
-              <p>O futuro da protese dentaria com tecnologia de ponta e precisao absoluta.</p>
+              <p>O futuro da prótese dentária com tecnologia de ponta e precisão absoluta.</p>
             </div>
           ) : (
             <>
               <h1>
-                Catalogo <span className="thin">Digital</span>
+                Catálogo <span className="thin">Digital</span>
               </h1>
-              <p>Explore nossa linha completa de solucoes para protese e estetica dental.</p>
+              <p>Explore nossa linha completa de soluções para prótese e estética dental.</p>
             </>
           )}
         </div>
@@ -261,10 +261,10 @@ const ProductCatalog = () => {
         <section className="digital-quick-nav">
           <div className="quick-nav-grid">
             {[
-              { id: 'upcera', title: 'UPCERA', desc: 'Ceramicas e Discos', icon: 'U' },
+              { id: 'upcera', title: 'UPCERA', desc: 'Cerâmicas e Discos', icon: 'U' },
               { id: 'scanners', title: 'SCANNERS', desc: 'Intraoral e Bancada', icon: 'S' },
               { id: 'impressoras', title: 'IMPRESSORAS 3D', desc: 'Anycubic e Resinas', icon: '3D' },
-              { id: 'componentes', title: 'COMPONENTES', desc: 'Pecas e Estruturas', icon: 'C' },
+              { id: 'componentes', title: 'COMPONENTES', desc: 'Peças e Estruturas', icon: 'C' },
               { id: 'insumos', title: 'INSUMOS', desc: 'Blocos e Ceras', icon: 'I' }
             ].map((item) => (
               <div
@@ -304,7 +304,7 @@ const ProductCatalog = () => {
                 <Search size={18} color="#86868b" />
                 <input
                   type="text"
-                  placeholder="O que voce procura?"
+                  placeholder="O que você procura?"
                   value={searchTerm}
                   onChange={(event) => handleSearchChange(event.target.value)}
                 />
@@ -385,7 +385,7 @@ const ProductCatalog = () => {
         {isLoading ? (
           <div className="pro-loader">
             <div className="spinner-lux"></div>
-            <p>Sincronizando catalogo...</p>
+            <p>Sincronizando catálogo...</p>
           </div>
         ) : activeCategories.length === 1 && activeCategories[0] === 'Talmax Digital' ? null : (
           <div className={`catalog-grid-lux ${activeCategories.length === 1 && activeCategories[0] === 'Talmax Digital' ? 'five-cols' : ''}`}>

@@ -159,19 +159,19 @@ const Support = () => {
     {
       title: 'Suporte Digital',
       image: assetPath('img/suportedigital.webp'),
-      description: 'Uma equipe especializada em RESULTADOS, com atendimentos personalizados a partir da compra do Sistema CAD/CAM, no treinamento para utilizacao correta dos softwares e produtos, ate o atendimento pos-venda aos clientes de diversos laboratorios e clinicas, distribuidos em 24 estados e 95 municipios.',
+      description: 'Uma equipe especializada em RESULTADOS, com atendimentos personalizados a partir da compra do Sistema CAD/CAM, no treinamento para utilização correta dos softwares e produtos, até o atendimento pós-venda aos clientes de diversos laboratórios e clínicas, distribuídos em 24 estados e 95 municípios.',
       link: 'https://talmax.com.br/suportetalmax/',
     },
     {
       title: 'Suporte Produtos',
       image: assetPath('img/suporteproduto-2.jpg.webp'),
-      description: 'Com o compromisso de oferecer um suporte tecnico singular, o time de produtos e especializado em SOLUCOES para suprir as mais diversas situacoes relacionadas ao uso de cada material, os quais passam por criteriosa pesquisa, analise e testes de qualidade e confiabilidade.',
+      description: 'Com o compromisso de oferecer um suporte técnico singular, o time de produtos é especializado em SOLUÇÕES para suprir as mais diversas situações relacionadas ao uso de cada material, os quais passam por criteriosa pesquisa, análise e testes de qualidade e confiabilidade.',
       link: 'https://talmax.tomticket.com/?account=3097344P21072020051958',
     },
     {
-      title: 'Assistencia Tecnica',
+      title: 'Assistência Técnica',
       image: assetPath('img/assistenciatecnica-2.jpg.webp'),
-      description: 'Um time especializado em QUALIDADE, a Assistencia Tecnica proporciona rapidez e agilidade no servico de manutencao tecnica de todos os produtos comercializados pela Talmax, alem de ministrar treinamentos para a capacitacao da rede credenciada no Brasil.',
+      description: 'Um time especializado em QUALIDADE, a Assistência Técnica proporciona rapidez e agilidade no serviço de manutenção técnica de todos os produtos comercializados pela Talmax, além de ministrar treinamentos para a capacitação da rede credenciada no Brasil.',
       link: 'https://talmax.tomticket.com/',
     },
   ];
@@ -185,7 +185,7 @@ const Support = () => {
             alt="Logo Suporte Talmax"
             className="support-main-logo"
           />
-          <p>Estamos com voce todos os dias, investindo em solucoes, tecnologias e pessoas.</p>
+          <p>Estamos com você todos os dias, investindo em soluções, tecnologias e pessoas.</p>
         </div>
       </section>
 
@@ -216,10 +216,10 @@ const Support = () => {
       <section className="support-info">
         <div className="support-description">
           <p>
-            <strong>A Talmax esta com voce todos os dias, investindo em solucoes, tecnologias e pessoas.</strong> Por isso contamos com um time que realmente quer entender a sua necessidade, visando agregar mais dinamismo, facilidades e excelencia aos trabalhos realizados pelos tecnicos e dentistas de laboratorios, clinicas e dentais de todo o Brasil.
+            <strong>A Talmax está com você todos os dias, investindo em soluções, tecnologias e pessoas.</strong> Por isso contamos com um time que realmente quer entender a sua necessidade, visando agregar mais dinamismo, facilidades e excelência aos trabalhos realizados pelos técnicos e dentistas de laboratórios, clínicas e dentais de todo o Brasil.
           </p>
           <p>
-            Com atendimentos online por meio de uma plataforma completa que oferece abertura de ticket e chat, base colaborativa com o historico de cada caso e portal do conhecimento, o Suporte Talmax e dividido em tres areas: Suporte Digital, Suporte Produtos e Assistencia Tecnica.
+            Com atendimentos online por meio de uma plataforma completa que oferece abertura de ticket e chat, base colaborativa com o histórico de cada caso e portal do conhecimento, o Suporte Talmax é dividido em três áreas: Suporte Digital, Suporte Produtos e Assistência Técnica.
           </p>
         </div>
 
@@ -243,7 +243,7 @@ const Support = () => {
             <h2 className="stat-number">
               <Counter value={stats.hours} />
             </h2>
-            <span className="stat-label">horas de dedicacao</span>
+            <span className="stat-label">horas de dedicação</span>
           </div>
         </div>
       </section>

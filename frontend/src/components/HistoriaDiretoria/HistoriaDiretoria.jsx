@@ -14,28 +14,28 @@ const HistoriaDiretoria = () => {
       image: assetPath('img/imagejohnypresidente.png'),
       name: 'Johny de Oliveira',
       role: 'Presidente',
-      quote: 'Como presidente e responsavel pelas areas Comercial e Comercio Exterior, estou muito entusiasmado com os proximos passos da empresa que visam dar enfase a centralidade do cliente, oferecendo produtos, servicos e facilidades que otimizem o trabalho diario dos profissionais.',
-      responsibilities: 'Comercial | Comercio Exterior'
+      quote: 'Como presidente e responsável pelas áreas Comercial e Comércio Exterior, estou muito entusiasmado com os próximos passos da empresa que visam dar ênfase à centralidade do cliente, oferecendo produtos, serviços e facilidades que otimizem o trabalho diário dos profissionais.',
+      responsibilities: 'Comercial | Comércio Exterior'
     },
     {
       image: assetPath('img/imagevorleidiretoradm.png'),
       name: 'Vorlei de Oliveira',
       role: 'Diretor Administrativo',
-      quote: 'Estar a frente de setores que focam no atendimento ao cliente e um grande desafio, mas precisamos seguir a versatilidade do mercado, oferecendo nao apenas bons produtos e servicos, mas a confianca de uma empresa que se preocupa com detalhes que fazem a diferenca na vida e nos negocios dos nossos clientes.',
-      responsibilities: 'Logistica | Producao | Marketing | Regulatorio | Recursos Humanos | Talmax Cursos'
+      quote: 'Estar à frente de setores que focam no atendimento ao cliente é um grande desafio, mas precisamos seguir a versatilidade do mercado, oferecendo não apenas bons produtos e serviços, mas a confiança de uma empresa que se preocupa com detalhes que fazem a diferença na vida e nos negócios dos nossos clientes.',
+      responsibilities: 'Logística | Produção | Marketing | Regulatório | Recursos Humanos | Talmax Cursos'
     },
     {
       image: assetPath('img/imageclaudineyopera.png'),
       name: 'Claudiney Franco',
       role: 'Diretor Financeiro Operacional',
-      quote: 'O objetivo e implantar novas tecnologias e processos que visem melhorar nao apenas o atendimento, mas tambem os servicos oferecidos aos clientes, desde a realizacao de pedidos, emissao de notas, ate a entrega dos produtos. Queremos oferecer a melhor experiencia aqui na Talmax.',
-      responsibilities: 'Financeiro | Contabilidade | Tecnologia da Informacao | Compras | Pos-Vendas'
+      quote: 'O objetivo é implantar novas tecnologias e processos que visem melhorar não apenas o atendimento, mas também os serviços oferecidos aos clientes, desde a realização de pedidos, emissão de notas, até a entrega dos produtos. Queremos oferecer a melhor experiência aqui na Talmax.',
+      responsibilities: 'Financeiro | Contabilidade | Tecnologia da Informação | Compras | Pós-Vendas'
     },
     {
       image: assetPath('img/imagediogomob.png'),
       name: 'Diogo de Oliveira',
-      role: 'Diretor Mobiliario',
-      quote: 'Estar a frente da area Moby Work, uma linha completa de moveis, acessorios e projetos planejados e um grande desafio. Queremos atender todas as clinicas e laboratorios do Brasil, oferecendo solucoes inteligentes que dinamizam o trabalho e aumentem a produtividade dos profissionais deste segmento.',
+      role: 'Diretor Mobiliário',
+      quote: 'Estar à frente da área Moby Work, uma linha completa de móveis, acessórios e projetos planejados é um grande desafio. Queremos atender todas as clínicas e laboratórios do Brasil, oferecendo soluções inteligentes que dinamizam o trabalho e aumentam a produtividade dos profissionais deste segmento.',
       responsibilities: 'Moby Work'
     }
   ];
@@ -139,7 +139,7 @@ const HistoriaDiretoria = () => {
       <section className="historia-diretoria-hero">
         <div className="historia-diretoria-content">
           <span className="historia-diretoria-tag">Institucional</span>
-          <h1>Historia & Diretoria</h1>
+          <h1>História & Diretoria</h1>
           <p>
             Conheça a trajetória da Talmax e a liderança que construiu nossa história com
             visão, inovação e compromisso com a excelência.
@@ -149,7 +149,7 @@ const HistoriaDiretoria = () => {
 
       <section className="historia-diretoria-image-section">
         <div className="historia-diretoria-image-card">
-          <img src={assetPath('img/diretoria.png')} alt="Historia e Diretoria Talmax" />
+          <img src={assetPath('img/diretoria.png')} alt="História e Diretoria Talmax" />
         </div>
 
         <div className="historia-diretoria-text-block">
@@ -197,7 +197,7 @@ const HistoriaDiretoria = () => {
                   <p className="title">{card.name}</p>
                   <p className="flip-card-role">{card.role}</p>
                   <p className="flip-card-quote">"{card.quote}"</p>
-                  <p className="flip-card-label">Responsavel pelas areas:</p>
+                  <p className="flip-card-label">Responsável pelas áreas:</p>
                   <p className="flip-card-responsibilities">{card.responsibilities}</p>
                 </div>
               </div>

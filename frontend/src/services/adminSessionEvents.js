@@ -1,5 +1,5 @@
 const ADMIN_SESSION_EXPIRED_EVENT = 'talmax-admin-session-expired';
-export const ADMIN_SESSION_EXPIRED_MESSAGE = 'Sua sessao expirou. Entre novamente para continuar no painel.';
+export const ADMIN_SESSION_EXPIRED_MESSAGE = 'Sua sessão expirou. Entre novamente para continuar no painel.';
 
 export const dispatchAdminSessionExpired = () => {
   window.dispatchEvent(new CustomEvent(ADMIN_SESSION_EXPIRED_EVENT));

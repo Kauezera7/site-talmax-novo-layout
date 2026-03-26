@@ -9,10 +9,10 @@ const BannerTable = ({ banners, onEdit, onDelete, onToggleStatus }) => {
         <thead>
           <tr>
             <th>Imagem</th>
-            <th>Titulo</th>
+            <th>Título</th>
             <th>Ordem</th>
             <th>Status</th>
-            <th>Acoes</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -28,7 +28,7 @@ const BannerTable = ({ banners, onEdit, onDelete, onToggleStatus }) => {
                 </div>
                 <div className="banner-image-path">{banner.image_url || 'Sem imagem'}</div>
               </td>
-              <td>{banner.title || <span className="banner-empty-title">Sem titulo</span>}</td>
+              <td>{banner.title || <span className="banner-empty-title">Sem título</span>}</td>
               <td>{banner.display_order}</td>
               <td>
                 <span

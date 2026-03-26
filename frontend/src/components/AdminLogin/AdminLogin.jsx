@@ -95,7 +95,7 @@ const AdminLogin = () => {
           </div>
 
           <label className="admin-login-field">
-            <span>Usuario</span>
+            <span>Usuário</span>
             <div className="admin-login-input">
               <User size={18} />
               <input
@@ -103,7 +103,7 @@ const AdminLogin = () => {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                placeholder="Digite seu usuario"
+                placeholder="Digite seu usuário"
                 autoComplete="username"
                 required
               />

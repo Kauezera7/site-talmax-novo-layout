@@ -88,6 +88,15 @@
   color: var(--admin-text-light);
 }
 
+.admin-table th:nth-child(4),
+.admin-table td:nth-child(4) {
+  text-align: center;
+}
+
+.admin-table td:nth-child(4) .banner-status-badge {
+  margin: 0 auto;
+}
+
 @media (max-width: 768px) {
   .banner-form-grid {
     grid-template-columns: 1fr;

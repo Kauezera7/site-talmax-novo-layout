@@ -81,11 +81,11 @@ const CategoryTable = ({ mainCategories, subCategories, products, searchTerm, fi
       <table className="admin-table">
         <thead>
           <tr>
-            <th>Icone / Nome</th>
+            <th>Ícone / Nome</th>
             <th>Slug</th>
             <th>Status</th>
             <th>Produtos</th>
-            <th>Acoes</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -126,7 +126,7 @@ const CategoryTable = ({ mainCategories, subCategories, products, searchTerm, fi
                       onClick={() => onToggleVisibility(cat)}
                     >
                       {cat.is_visible ? <Eye size={12} /> : <EyeOff size={12} />}
-                      {cat.is_visible ? 'Visivel' : 'Oculta'}
+                      {cat.is_visible ? 'Visível' : 'Oculta'}
                     </span>
                   </td>
                   <td>{getProductCount(cat.id)}</td>
@@ -151,7 +151,7 @@ const CategoryTable = ({ mainCategories, subCategories, products, searchTerm, fi
                           onClick={() => onToggleVisibility(subCat)}
                         >
                           {subCat.is_visible ? <Eye size={12} /> : <EyeOff size={12} />}
-                          {subCat.is_visible ? 'Visivel' : 'Oculta'}
+                          {subCat.is_visible ? 'Visível' : 'Oculta'}
                         </span>
                       </td>
                       <td>{getProductCount(subCat.id)}</td>
