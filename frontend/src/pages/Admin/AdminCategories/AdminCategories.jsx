@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
-import { Plus, Layers, AlertCircle, X, Search, Filter } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Plus, Layers, AlertCircle, X, Search, Filter, Check, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../../../context/AdminContext';
 import CategoryTable from './CategoryTable';
 import CategoryForm from './CategoryForm';
 import './AdminCategories.css';
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Ver Todas' },
+  { value: 'visible', label: 'Somente Visiveis' },
+  { value: 'hidden', label: 'Somente Ocultas' }
+];
 
 const AdminCategories = () => {
   const { mainCategories, subCategories, products, categoriesHook, addToast } = useAdmin();
@@ -13,8 +19,24 @@ const AdminCategories = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'visible', 'hidden'
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const statusDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!statusDropdownRef.current?.contains(event.target)) {
+        setIsStatusDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleCreate = (isSub = false) => {
     setEditingCategory(isSub ? { parent_id: mainCategories[0]?.id || true } : null);
@@ -60,7 +82,7 @@ const AdminCategories = () => {
 
     const result = await categoriesHook.deleteCategory(categoryToDelete.id);
     if (result.success) {
-      addToast('Categoria excluída!');
+      addToast('Categoria excluida!');
       setShowDeleteModal(false);
       setCategoryToDelete(null);
     } else {
@@ -77,7 +99,7 @@ const AdminCategories = () => {
 
     const result = await categoriesHook.updateCategory(category.id, data);
     if (result.success) {
-      addToast(`Categoria ${!category.is_visible ? 'visível' : 'oculta'}!`);
+      addToast(`Categoria ${!category.is_visible ? 'visivel' : 'oculta'}!`);
     } else {
       addToast(result.error, 'error');
     }
@@ -89,7 +111,7 @@ const AdminCategories = () => {
         <div className="card-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
             <h2><Layers size={20} /> Gerenciar Categorias</h2>
-            
+
             <div className="search-box">
               <Search size={16} />
               <input
@@ -106,17 +128,48 @@ const AdminCategories = () => {
             </div>
 
             <div className="filter-group">
-              <div className="filter-control">
-                <Filter size={14} />
-                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-                  <option value="all">Ver Todas</option>
-                  <option value="visible">Somente Visíveis</option>
-                  <option value="hidden">Somente Ocultas</option>
-                </select>
+              <div className="filter-control filter-control-status" ref={statusDropdownRef}>
+                <button
+                  type="button"
+                  className={`filter-control-status-trigger ${isStatusDropdownOpen ? 'is-open' : ''}`}
+                  onClick={() => setIsStatusDropdownOpen((current) => !current)}
+                  aria-haspopup="listbox"
+                  aria-expanded={isStatusDropdownOpen}
+                >
+                  <div className="filter-control-icon">
+                    <Filter size={14} />
+                  </div>
+                  <div className="filter-control-copy">
+                    <span className="filter-control-label">Status</span>
+                    <span className="filter-control-value">
+                      {STATUS_OPTIONS.find((option) => option.value === filterStatus)?.label}
+                    </span>
+                  </div>
+                  <ChevronDown size={16} className="filter-control-chevron-icon" />
+                </button>
+
+                {isStatusDropdownOpen && (
+                  <div className="filter-control-status-menu" role="listbox" aria-label="Filtrar categorias por status">
+                    {STATUS_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={`filter-control-status-option ${filterStatus === option.value ? 'is-selected' : ''}`}
+                        onClick={() => {
+                          setFilterStatus(option.value);
+                          setIsStatusDropdownOpen(false);
+                        }}
+                      >
+                        <span>{option.label}</span>
+                        {filterStatus === option.value && <Check size={15} />}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
-          
+
           <div style={{ display: 'flex', gap: '10px' }}>
             <button className="btn-secondary" onClick={() => handleCreate(false)}>
               <Plus size={18} /> Nova Categoria
@@ -140,7 +193,6 @@ const AdminCategories = () => {
         </div>
       </div>
 
-      {/* Modal de Formulário */}
       <AnimatePresence>
         {showModal && (
           <div className="modal-overlay">
@@ -167,7 +219,6 @@ const AdminCategories = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal de Confirmação de Exclusão */}
       <AnimatePresence>
         {showDeleteModal && (
           <div className="modal-overlay">
@@ -184,7 +235,7 @@ const AdminCategories = () => {
                 <h3>Excluir Categoria?</h3>
                 <p>Tem certeza que deseja excluir <strong>{categoryToDelete?.name}</strong>?</p>
                 <p style={{ fontSize: '0.85rem', color: '#ef4444', marginTop: '10px' }}>
-                  Atenção: produtos vinculados a esta categoria ficarão "Sem Categoria".
+                  Atencao: produtos vinculados a esta categoria ficarao "Sem Categoria".
                 </p>
               </div>
               <div className="modal-footer">

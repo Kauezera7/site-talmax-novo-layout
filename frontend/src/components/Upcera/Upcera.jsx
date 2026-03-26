@@ -21,6 +21,11 @@ import { apiAssetPath, assetPath } from '../../utils/assets';
 import './Upcera.css';
 import '../ProductCatalog/ProductCatalog.css';
 
+const normalizeText = (value) => (value || '')
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '');
+
 const Upcera = () => {
   const [products, setProducts] = useState([]);
   const [cadCamProducts, setCadCamProducts] = useState([]);
@@ -52,15 +57,16 @@ const Upcera = () => {
             };
           });
 
-        // 2. Filtra produtos relacionados da Linha CAD/CAM / Insumos Upcera
-        const relatedItems = data.filter(p => 
-          (p.category_names && (
-            p.category_names.toLowerCase().includes('zirconia') || 
-            p.category_names.toLowerCase().includes('upcera') ||
-            p.category_names.toLowerCase().includes('cad') ||
-            p.category_names.toLowerCase().includes('cam')
-          )) && !p.is_upcera
-        );
+        // 2. Filtra produtos relacionados da categoria principal Linha Cad/Cam
+        const relatedItems = data.filter((product) => {
+          const normalizedCategoryNames = normalizeText(product.category_names);
+          const isCadCamLine = (product.category_ids || []).includes(15)
+            || normalizedCategoryNames.includes('linha cad/cam')
+            || normalizedCategoryNames.includes('linha cadcam')
+            || normalizedCategoryNames.includes('cad/cam');
+
+          return isCadCamLine && !product.is_upcera;
+        });
 
         setProducts(upceraItems);
         setCadCamProducts(relatedItems);
@@ -181,11 +187,11 @@ const Upcera = () => {
             <div style={{ textAlign: 'center', marginBottom: '60px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 800, color: accentColor, letterSpacing: '2px', textTransform: 'uppercase' }}>Portfólio Completo</span>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginTop: '5px', flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#000000', margin: 0 }}>PRODUTOS RELACIONADOS</h2>
+                <h2 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#000000', margin: 0 }}>LINHA CAD/CAM</h2>
                 <motion.button 
                   whileHover={{ scale: 1.05 }} 
                   whileTap={{ scale: 0.95 }} 
-                  onClick={() => navigate('/produtos?categoria=upcera')}
+                  onClick={() => navigate('/produtos?categoria=linha-cad-cam')}
                   style={{ 
                     padding: '10px 25px', 
                     background: accentColor, 

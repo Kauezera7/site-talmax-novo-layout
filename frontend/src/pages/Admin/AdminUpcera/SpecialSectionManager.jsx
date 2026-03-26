@@ -29,19 +29,30 @@ const SpecialSectionManager = ({
     }
 
     return products.filter((product) =>
-      product.category_ids && product.category_ids.some((id) => allowedSubCategoryIds.includes(id))
+      product.sub_category_ids && product.sub_category_ids.some((id) => allowedSubCategoryIds.includes(id))
     );
   }, [products, allowedSubCategoryIds]);
 
   const availableMainCategories = useMemo(() => {
-    const mainCategoryIds = new Set(
-      scopedProducts.flatMap((product) =>
-        (product.category_ids || []).filter((id) => mainCategories.some((category) => category.id === id))
-      )
-    );
+    const mainCategoryIds = new Set();
+
+    scopedProducts.forEach((product) => {
+      (product.category_ids || []).forEach((id) => {
+        if (mainCategories.some((category) => category.id === id)) {
+          mainCategoryIds.add(id);
+        }
+      });
+
+      (product.sub_category_ids || []).forEach((subCategoryId) => {
+        const subCategory = subCategories.find((category) => category.id === subCategoryId);
+        if (subCategory?.parent_id) {
+          mainCategoryIds.add(Number(subCategory.parent_id));
+        }
+      });
+    });
 
     return mainCategories.filter((category) => mainCategoryIds.has(category.id));
-  }, [scopedProducts, mainCategories]);
+  }, [scopedProducts, mainCategories, subCategories]);
 
   useEffect(() => {
     const initial = scopedProducts
@@ -93,8 +104,15 @@ const SpecialSectionManager = ({
     return [...scopedProducts]
       .filter((product) => {
         const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const productMainCategoryIds = new Set([
+          ...(product.category_ids || []),
+          ...(product.sub_category_ids || [])
+            .map((subCategoryId) => subCategories.find((category) => category.id === subCategoryId)?.parent_id)
+            .filter(Boolean)
+            .map(Number)
+        ]);
         const matchesCat = selectedCats.length === 0
-          || (product.category_ids && product.category_ids.some((id) => selectedCats.includes(id)));
+          || Array.from(productMainCategoryIds).some((id) => selectedCats.includes(id));
 
         return matchesSearch && matchesCat;
       })
@@ -116,7 +134,7 @@ const SpecialSectionManager = ({
 
         return a.name.localeCompare(b.name, 'pt-BR');
       });
-  }, [scopedProducts, searchTerm, selectedCats, selectedProductsMap]);
+  }, [scopedProducts, searchTerm, selectedCats, selectedProductsMap, subCategories]);
 
   return (
     <div className="admin-card">

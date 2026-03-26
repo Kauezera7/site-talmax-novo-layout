@@ -28,6 +28,7 @@ import Impressoras3D from './components/Impressoras3D/Impressoras3D';
 import Admin from './pages/Admin/AdminDashboard';
 import AdminLogin from './components/AdminLogin/AdminLogin';
 import { validateAdminSession } from './services/adminAuth';
+import { subscribeToAdminSessionExpired } from './services/adminSessionEvents';
 import { assetPath } from './utils/assets';
 import './App.css';
 
@@ -159,6 +160,19 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
       searchInputRef.current.focus();
     }
   }, [searchOpen]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToAdminSessionExpired(() => {
+      if (location.pathname.startsWith('/admin') && location.pathname !== '/admin/login') {
+        navigate('/admin/login', {
+          replace: true,
+          state: { sessionExpired: true }
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, [location.pathname, navigate]);
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();

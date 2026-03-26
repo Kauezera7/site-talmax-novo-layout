@@ -11,6 +11,12 @@ import API_URL from '../../services/api';
 import { apiAssetPath, assetPath } from '../../utils/assets';
 import './Scanners.css';
 
+const SCANNER_SUBCATEGORY_ID = 62;
+const normalizeText = (value) => (value || '')
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '');
+
 const Scanners = () => {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,7 +33,13 @@ const Scanners = () => {
 
         // 1. Filtra e Ordena os produtos Scanners pelo scanner_order
         const scannerItems = data
-          .filter(p => p.is_scanner)
+          .filter((product) => {
+            const normalizedCategoryNames = normalizeText(product.category_names);
+            const hasScannerSubcategory = (product.sub_category_ids || []).includes(SCANNER_SUBCATEGORY_ID)
+              || normalizedCategoryNames.includes('scanner');
+
+            return product.is_scanner && hasScannerSubcategory;
+          })
           .sort((a, b) => (a.scanner_order || 0) - (b.scanner_order || 0))
           .map(p => {
             let extra = {};

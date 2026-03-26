@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { LockKeyhole, User, ShieldCheck } from 'lucide-react';
 import { loginAdmin, validateAdminSession } from '../../services/adminAuth';
+import { ADMIN_SESSION_EXPIRED_MESSAGE } from '../../services/adminSessionEvents';
 import './AdminLogin.css';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -13,6 +15,13 @@ const AdminLogin = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  useEffect(() => {
+    if (location.state?.sessionExpired) {
+      setError(ADMIN_SESSION_EXPIRED_MESSAGE);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
     let mounted = true;

@@ -22,7 +22,7 @@ const AdminScanners = () => {
       products={products}
       mainCategories={mainCategories}
       subCategories={subCategories}
-      categoryMatcher={(category) => ['scanner', 'scanners-de-mesa'].includes(category.slug)}
+      categoryMatcher={(category) => category.slug === 'scanner'}
       onSave={handleSave}
     />
   );
