@@ -109,10 +109,11 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
   try {
     await connection.beginTransaction();
 
-    const { name, category_ids, description, extra_data } = req.body;
+    const { name, category_ids, sub_category_ids, description, extra_data } = req.body;
     const normalizedName = normalizeProductText(name);
     const normalizedDescription = normalizeProductText(description);
     const parsedCategoryIds = parseIdArray(category_ids);
+    const parsedSubCategoryIds = parseIdArray(sub_category_ids);
     const primaryImageIndex = parseInteger(req.body.primary_image_index, 0);
     const uploadedImagePaths = await persistUploadedFiles(req.files || []);
     const extra = parseJsonObject(extra_data);
@@ -144,7 +145,7 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
     );
 
     const productId = result.insertId;
-    await attachProductCategories(connection, productId, parsedCategoryIds);
+    await attachProductCategories(connection, productId, parsedCategoryIds, parsedSubCategoryIds);
 
     await connection.commit();
     return res.status(201).json({ message: 'Produto criado!' });
@@ -167,7 +168,9 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     const name = normalizeProductText(req.body.name);
     const description = normalizeProductText(req.body.description);
     const category_ids = req.body.category_ids;
+    const sub_category_ids = req.body.sub_category_ids;
     const parsedCategoryIds = parseIdArray(category_ids);
+    const parsedSubCategoryIds = parseIdArray(sub_category_ids);
     const primaryImageIndex = parseInteger(req.body.primary_image_index, 0);
     const extra_data = req.body.extra_data;
     const newImagePaths = await persistUploadedFiles(req.files || []);
@@ -216,7 +219,7 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     params.push(productId);
 
     await connection.query(query, params.map(safe));
-    await attachProductCategories(connection, productId, parsedCategoryIds);
+    await attachProductCategories(connection, productId, parsedCategoryIds, parsedSubCategoryIds);
 
     await connection.commit();
     return res.json({ message: 'Produto atualizado!' });

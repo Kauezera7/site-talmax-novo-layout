@@ -9,17 +9,15 @@ const PRODUCT_SELECT_QUERY = `
              UNION ALL
              SELECT name, product_id FROM sub_categorias sc JOIN product_sub_categorias psc ON sc.id = psc.sub_category_id
          ) as combined WHERE combined.product_id = p.id) as category_names,
-         (SELECT GROUP_CONCAT(id) FROM (
-             SELECT c.id, pc.product_id FROM categorias c JOIN product_categorias pc ON c.id = pc.category_id
-             UNION ALL
-             SELECT sc.id, psc.product_id FROM sub_categorias sc JOIN product_sub_categorias psc ON sc.id = psc.sub_category_id
-         ) as combined_ids WHERE combined_ids.product_id = p.id) as category_ids
+         (SELECT GROUP_CONCAT(category_id) FROM product_categorias WHERE product_id = p.id) as main_category_ids,
+         (SELECT GROUP_CONCAT(sub_category_id) FROM product_sub_categorias WHERE product_id = p.id) as sub_category_ids
   FROM products p
 `;
 
 const formatProductRow = (row) => ({
   ...row,
-  category_ids: row.category_ids ? row.category_ids.split(',').map(Number) : [],
+  category_ids: row.main_category_ids ? row.main_category_ids.split(',').map(Number) : [],
+  sub_category_ids: row.sub_category_ids ? row.sub_category_ids.split(',').map(Number) : [],
   is_upcera: row.is_upcera === 1,
   is_scanner: row.is_scanner === 1,
   is_3d_printer: row.is_3d_printer === 1
@@ -35,28 +33,27 @@ const findProductById = async (db, productId) => {
   return rows[0] ? formatProductRow(rows[0]) : null;
 };
 
-const attachProductCategories = async (connection, productId, categoryIds) => {
-  const validIds = Array.isArray(categoryIds) ? categoryIds : [];
+const attachProductCategories = async (connection, productId, mainCategoryIds, subCategoryIds) => {
+  const validMainIds = Array.isArray(mainCategoryIds) ? mainCategoryIds : [];
+  const validSubIds = Array.isArray(subCategoryIds) ? subCategoryIds : [];
 
   await connection.query('DELETE FROM product_categorias WHERE product_id = ?', [productId]);
   await connection.query('DELETE FROM product_sub_categorias WHERE product_id = ?', [productId]);
 
-  if (validIds.length === 0) {
-    return;
+  if (validMainIds.length > 0) {
+    const [categories] = await connection.query('SELECT id FROM categorias WHERE id IN (?)', [validMainIds]);
+    const categoryValues = categories.map((category) => [productId, category.id]);
+    if (categoryValues.length > 0) {
+      await connection.query('INSERT INTO product_categorias (product_id, category_id) VALUES ?', [categoryValues]);
+    }
   }
 
-  const [categories] = await connection.query('SELECT id FROM categorias WHERE id IN (?)', [validIds]);
-  const [subCategories] = await connection.query('SELECT id FROM sub_categorias WHERE id IN (?)', [validIds]);
-
-  const categoryValues = categories.map((category) => [productId, category.id]);
-  const subCategoryValues = subCategories.map((subCategory) => [productId, subCategory.id]);
-
-  if (categoryValues.length > 0) {
-    await connection.query('INSERT INTO product_categorias (product_id, category_id) VALUES ?', [categoryValues]);
-  }
-
-  if (subCategoryValues.length > 0) {
-    await connection.query('INSERT INTO product_sub_categorias (product_id, sub_category_id) VALUES ?', [subCategoryValues]);
+  if (validSubIds.length > 0) {
+    const [subCategories] = await connection.query('SELECT id FROM sub_categorias WHERE id IN (?)', [validSubIds]);
+    const subCategoryValues = subCategories.map((subCategory) => [productId, subCategory.id]);
+    if (subCategoryValues.length > 0) {
+      await connection.query('INSERT INTO product_sub_categorias (product_id, sub_category_id) VALUES ?', [subCategoryValues]);
+    }
   }
 };
 
