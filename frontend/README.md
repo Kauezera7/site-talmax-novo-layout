@@ -1,16 +1,58 @@
-# React + Vite
+# Frontend Talmax
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicacao React do projeto `site-talmax`.
 
-Currently, two official plugins are available:
+## Tecnologias
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 19
+- React Router 7
+- Vite
+- Framer Motion
+- Lucide React
 
-## React Compiler
+## Scripts
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `npm run dev`
+  Sobe o frontend em modo desenvolvimento.
+- `npm run build`
+  Gera a pasta `dist/`.
+- `npm run preview`
+  Publica localmente a build gerada.
+- `npm run lint`
+  Executa o ESLint.
 
-## Expanding the ESLint configuration
+## Estrutura
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```txt
+frontend/
+|-- public/
+|-- dist/
+`-- src/
+    |-- components/
+    |-- context/
+    |-- hooks/
+    |-- pages/
+    |-- services/
+    `-- utils/
+```
+
+## Pontos De Entrada
+
+- `src/main.jsx`
+  Inicializa o React.
+- `src/App.jsx`
+  Define layout, rotas publicas, busca do site e rotas do painel.
+
+## Integracao Com Backend
+
+- A URL base da API fica em `src/services/api.js`.
+- Em desenvolvimento, o fallback padrao e `http://localhost:5000/api`.
+- Em producao, o fallback padrao e `/api`.
+- Tambem e possivel definir `VITE_API_URL`.
+
+## Rotas Do Painel
+
+- `/admin/login`
+  Tela de login
+- `/admin/painel`
+  Painel protegido

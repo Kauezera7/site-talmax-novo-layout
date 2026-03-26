@@ -1,211 +1,127 @@
 # Mapa Da Estrutura Do Projeto
 
-Este documento mostra a estrutura principal do projeto `site-talmax` e a funcao de cada parte.
+Este documento mostra a estrutura principal do projeto `site-talmax` com foco nas pastas que entram na manutencao do codigo.
 
-## Estrutura Completa De Arquivos
+## Estrutura Principal
 
 ```txt
 site-talmax/
-├── .vite/                              # Cache/local do Vite
-├── backend/
-│   ├── .env                            # Configuracoes sensiveis do backend
-│   ├── database_schema.sql             # Script principal de estrutura do banco
-│   ├── list_categories.js              # Script utilitario para listar categorias
-│   ├── package.json                    # Dependencias do backend
-│   ├── package-lock.json               # Lock de dependencias do backend
-│   ├── server.js                       # Arquivo principal da API hoje
-│   ├── node_modules/                   # Dependencias instaladas do backend
-│   └── src/
-│       ├── config/
-│       │   └── database.js             # Conexao com MySQL
-│       ├── controllers/                # Pasta preparada para separar regras por modulo
-│       ├── middleware/                 # Pasta preparada para middlewares
-│       ├── models/                     # Pasta preparada para models
-│       ├── routes/                     # Pasta preparada para rotas
-│       ├── services/                   # Pasta preparada para services
-│       ├── scripts/
-│       │   ├── migrations/
-│       │   │   ├── add_3d_printer_column.js
-│       │   │   ├── add_special_orders.js
-│       │   │   ├── add_upcera_column.js
-│       │   │   ├── capitalize_segments.js
-│       │   │   └── update_segments.js
-│       │   └── seeds/                  # Pasta reservada para seeds
-│       └── utils/
-│           ├── helpers.js              # Funcoes auxiliares
-│           └── queries.js              # Queries SQL reutilizaveis
-├── docs/
-│   └── MAPA_ESTRUTURA_PROJETO.md       # Este guia
-├── frontend/
-│   ├── .gitignore
-│   ├── eslint.config.js                # Configuracao do ESLint
-│   ├── index.html                      # HTML base do frontend
-│   ├── package.json                    # Dependencias do frontend
-│   ├── package-lock.json               # Lock de dependencias do frontend
-│   ├── vite.config.js                  # Configuracao do Vite
-│   ├── dist/                           # Build gerada para producao
-│   ├── public/
-│   │   ├── vite.svg
-│   │   └── img/                        # Imagens publicas do site e uploads
-│   └── src/
-│       ├── App.css                     # Estilos globais da aplicacao
-│       ├── App.jsx                     # Rotas e layout principal
-│       ├── data.js                     # Dados estaticos/fallback
-│       ├── index.css                   # Estilos base
-│       ├── main.jsx                    # Entrada do React
-│       ├── assets/                     # Arquivos estaticos importados no codigo
-│       ├── components/                 # Paginas e componentes publicos
-│       │   ├── CookieBanner/
-│       │   │   ├── CookieBanner.css
-│       │   │   └── CookieBanner.jsx
-│       │   ├── HeroSlider/
-│       │   │   ├── HeroSlider.css
-│       │   │   └── HeroSlider.jsx
-│       │   ├── Home/
-│       │   │   ├── Home.css
-│       │   │   └── Home.jsx
-│       │   ├── Impressoras3D/
-│       │   │   ├── Impressoras3D.css
-│       │   │   └── Impressoras3D.jsx
-│       │   ├── PagePlaceholder/
-│       │   │   ├── PagePlaceholder.css
-│       │   │   └── PagePlaceholder.jsx
-│       │   ├── PrivacyPolicy/
-│       │   │   ├── PrivacyPolicy.css
-│       │   │   └── PrivacyPolicy.jsx
-│       │   ├── ProductCard/
-│       │   │   ├── ProductCard.css
-│       │   │   └── ProductCard.jsx
-│       │   ├── ProductCatalog/
-│       │   │   ├── ProductCatalog.css
-│       │   │   └── ProductCatalog.jsx
-│       │   ├── ProductDetail/
-│       │   │   ├── ProductDetail.css
-│       │   │   └── ProductDetail.jsx
-│       │   ├── Scanners/
-│       │   │   ├── Scanners.css
-│       │   │   └── Scanners.jsx
-│       │   ├── TalmaxDigital/
-│       │   │   ├── TalmaxDigital.css
-│       │   │   └── TalmaxDigital.jsx
-│       │   └── Upcera/
-│       │       ├── Upcera.css
-│       │       └── Upcera.jsx
-│       ├── context/
-│       │   └── AdminContext.jsx        # Estado compartilhado do admin
-│       ├── hooks/
-│       │   ├── useBanners.js
-│       │   ├── useCategories.js
-│       │   └── useProducts.js
-│       ├── pages/
-│       │   └── Admin/
-│       │       ├── AdminBase.css
-│       │       ├── AdminDashboard.jsx
-│       │       ├── README.md
-│       │       ├── AdminBanners/
-│       │       │   ├── AdminBanners.css
-│       │       │   ├── AdminBanners.jsx
-│       │       │   ├── BannerForm.jsx
-│       │       │   └── BannerTable.jsx
-│       │       ├── AdminCategories/
-│       │       │   ├── AdminCategories.css
-│       │       │   ├── AdminCategories.jsx
-│       │       │   ├── CategoryForm.jsx
-│       │       │   └── CategoryTable.jsx
-│       │       ├── AdminPrinters/
-│       │       │   ├── AdminPrinters.css
-│       │       │   └── AdminPrinters.jsx
-│       │       ├── AdminProducts/
-│       │       │   ├── AdminProducts.css
-│       │       │   ├── AdminProducts.jsx
-│       │       │   ├── ProductForm.jsx
-│       │       │   └── ProductTable.jsx
-│       │       ├── AdminScanners/
-│       │       │   ├── AdminScanners.css
-│       │       │   └── AdminScanners.jsx
-│       │       └── AdminUpcera/
-│       │           ├── AdminUpcera.jsx
-│       │           ├── SpecialSectionManager.css
-│       │           └── SpecialSectionManager.jsx
-│       └── services/
-│           ├── api.js
-│           ├── bannerService.js
-│           ├── categoryService.js
-│           └── productService.js
-├── .gitignore
-├── GEMINI.md
-└── package-lock.json
+|-- backend/
+|   |-- .env
+|   |-- database_schema.sql
+|   |-- list_categories.js
+|   |-- package.json
+|   |-- server.js
+|   |-- storage/
+|   |   `-- img/
+|   `-- src/
+|       |-- config/
+|       |   `-- database.js
+|       |-- scripts/
+|       |   `-- migrations/
+|       `-- server/
+|           |-- app.js
+|           |-- auth/
+|           |-- config/
+|           |-- routes/
+|           |-- services/
+|           `-- utils/
+|-- docs/
+|   |-- MAPA_ESTRUTURA_PROJETO.md
+|   `-- explicacao/
+|-- frontend/
+|   |-- .env.production
+|   |-- index.html
+|   |-- package.json
+|   |-- vite.config.js
+|   |-- public/
+|   |   `-- img/
+|   |-- dist/
+|   `-- src/
+|       |-- App.jsx
+|       |-- App.css
+|       |-- main.jsx
+|       |-- components/
+|       |-- context/
+|       |-- hooks/
+|       |-- pages/
+|       |-- services/
+|       `-- utils/
+|-- .gitignore
+|-- GEMINI.md
+|-- KINGHOST_DEPLOY.md
+|-- package.json
+`-- package-lock.json
 ```
 
-## O Que Foi Corrigido Em Relacao Ao Exemplo
-
-- Em `docs/`, hoje existe `MAPA_ESTRUTURA_PROJETO.md`. O `.txt` nao esta nessa pasta.
-- O `backend/src/` tem mais pastas do que no exemplo: `controllers`, `middleware`, `models`, `routes`, `services` e `scripts/seeds`.
-- O `frontend/src/components/` esta organizado por pastas, com `jsx + css` juntos.
-- O admin tem mais modulos do que o exemplo mostrava: `AdminScanners` e `AdminPrinters`.
-- Em `frontend/` existe `dist/`, que e a build gerada para producao.
-- Em `backend/` existe `node_modules/`, mas ele nao faz parte da manutencao manual do codigo.
-
-## Arquivos Chave Para Manutencao
-
-### Backend
+## Backend
 
 - `backend/server.js`
-  Ponto central da API hoje.
-- `backend/database_schema.sql`
-  Estrutura principal do banco.
+  Entrada do servidor. Carrega `.env`, cria a app Express e inicia o listener.
+- `backend/src/server/app.js`
+  Registra CORS, JSON, `/img`, `frontend/dist` e todas as rotas `/api`.
+- `backend/src/server/auth/`
+  Autenticacao e protecao de sessao do admin.
+- `backend/src/server/config/`
+  CORS, upload e resolucao de diretorios de imagem.
+- `backend/src/server/routes/`
+  Endpoints de admin, banners, categorias, produtos e secoes especiais.
+- `backend/src/server/services/`
+  Regras auxiliares, principalmente de produto e persistencia de arquivos.
+- `backend/src/server/utils/`
+  Parsers e funcoes utilitarias das rotas.
 - `backend/src/config/database.js`
-  Conexao com MySQL.
-- `backend/src/utils/queries.js`
-  Queries reaproveitadas.
+  Pool do MySQL.
+- `backend/src/scripts/migrations/`
+  Scripts manuais de evolucao do schema.
 
-### Frontend Publico
+## Frontend
 
 - `frontend/src/App.jsx`
-  Define as rotas do site.
-- `frontend/src/App.css`
-  Estilos globais.
-- `frontend/src/components/Home/Home.jsx`
-  Pagina inicial.
-- `frontend/src/components/ProductCatalog/ProductCatalog.jsx`
-  Catalogo de produtos.
-- `frontend/src/components/ProductDetail/ProductDetail.jsx`
-  Detalhe de produto.
-
-### Admin
-
-- `frontend/src/pages/Admin/AdminDashboard.jsx`
-  Entrada da rota `/admin`.
-- `frontend/src/pages/Admin/AdminBase.css`
-  Base visual do painel.
+  Router principal do site e do painel.
+- `frontend/src/components/`
+  Componentes e paginas publicas.
+- `frontend/src/components/AdminLogin/`
+  Tela de login do painel.
+- `frontend/src/pages/Admin/`
+  Dashboard do painel e modulos internos.
 - `frontend/src/context/AdminContext.jsx`
   Estado compartilhado do admin.
 - `frontend/src/hooks/`
-  Regras de carregamento e CRUD.
+  Hooks de banners, categorias e produtos.
 - `frontend/src/services/`
-  Comunicacao com a API.
+  API base, autenticacao admin e CRUD.
+- `frontend/src/utils/assets.js`
+  Resolve caminhos de assets.
+- `frontend/src/utils/productCategories.js`
+  Regras auxiliares de categorias no frontend.
+
+## Rotas Importantes
+
+- Frontend publico:
+  `/`, `/quem-somos`, `/historia-diretoria`, `/produtos`, `/categoria/:slug`, `/produto/:id`, `/upcera`, `/scanners`, `/impressoras-3d`, `/suporte`
+- Admin:
+  `/admin/login` e `/admin/painel`
+- API:
+  `/api/admin`, `/api/categories`, `/api/banners`, `/api/products`, `/api/upcera/products`, `/api/scanners/products`, `/api/3d-printers/products`
 
 ## Regra Rapida Para Se Achar
 
-- Quer mexer em rota publica:
+- Quer mexer em rotas da interface:
   `frontend/src/App.jsx`
-- Quer mexer na home:
-  `frontend/src/components/Home/`
-- Quer mexer em uma pagina publica:
+- Quer mexer em pagina publica:
   `frontend/src/components/NOME_DA_PASTA/`
-- Quer mexer no admin:
+- Quer mexer em login do admin:
+  `frontend/src/components/AdminLogin/`
+- Quer mexer em uma area do painel:
   `frontend/src/pages/Admin/`
-- Quer mexer em chamadas da API:
+- Quer mexer em chamadas HTTP do frontend:
   `frontend/src/services/`
 - Quer mexer em estado compartilhado do admin:
   `frontend/src/context/AdminContext.jsx`
-- Quer mexer no backend:
-  `backend/server.js`
-- Quer mexer no banco:
+- Quer mexer em endpoints:
+  `backend/src/server/routes/`
+- Quer mexer na montagem geral do servidor:
+  `backend/src/server/app.js`
+- Quer mexer em banco:
   `backend/database_schema.sql`
-
-## Observacao
-
-O projeto ja esta mais organizado no frontend do que no backend.
-No frontend, boa parte das paginas e componentes ja esta separada por pasta.
-No backend, a estrutura de pastas existe, mas a maior parte da logica ainda esta concentrada em `server.js`.

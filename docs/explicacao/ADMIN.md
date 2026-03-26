@@ -2,41 +2,60 @@
 
 ## Funcao
 
-O admin e o painel usado para gerenciar:
+O painel administrativo gerencia:
 
 - produtos
-- categorias
+- categorias e subcategorias
 - banners
-- secoes especiais
+- selecoes especiais de paginas como Upcera, Scanners e Impressoras 3D
+
+## Rotas Do Painel
+
+- `/admin`
+  Redireciona para o login
+- `/admin/login`
+  Tela de autenticacao
+- `/admin/painel`
+  Area protegida do painel
 
 ## Entrada Principal
 
-- Rota: `/admin`
-- Arquivo principal:
+O arquivo principal do painel e:
 
 ```txt
 frontend/src/pages/Admin/AdminDashboard.jsx
+```
+
+O formulario de login fica em:
+
+```txt
+frontend/src/components/AdminLogin/AdminLogin.jsx
 ```
 
 ## Estrutura Atual
 
 ```txt
 frontend/src/pages/Admin/
-├── AdminBase.css
-├── AdminDashboard.jsx
-├── README.md
-├── AdminBanners/
-├── AdminCategories/
-├── AdminPrinters/
-├── AdminProducts/
-├── AdminScanners/
-└── AdminUpcera/
+|-- AdminBase.css
+|-- AdminDashboard.jsx
+|-- README.md
+|-- AdminBanners/
+|-- AdminCategories/
+|-- AdminPrinters/
+|-- AdminProducts/
+|-- AdminScanners/
+`-- AdminUpcera/
 ```
 
 ## Como Funciona
 
 ```txt
+AdminLogin
+-> adminAuth.js
+-> /api/admin/login
+
 AdminDashboard
+-> AdminProvider
 -> AdminContext
 -> hooks
 -> services
@@ -45,24 +64,20 @@ AdminDashboard
 
 ## Arquivos Mais Importantes
 
-- `AdminDashboard.jsx`
-  Estrutura principal do painel.
-- `AdminBase.css`
-  Estilo base do admin.
-- ```txt
-  frontend/src/context/AdminContext.jsx
-  ```
-  Estado compartilhado do admin.
-- ```txt
-  frontend/src/hooks/
-  ```
-  Regras de carregamento e atualizacao.
-- ```txt
-  frontend/src/services/
-  ```
-  Comunicacao com a API.
+- `frontend/src/pages/Admin/AdminDashboard.jsx`
+  Estrutura principal do painel, menu lateral, abas e logout.
+- `frontend/src/pages/Admin/AdminBase.css`
+  Base visual compartilhada do painel.
+- `frontend/src/context/AdminContext.jsx`
+  Estado compartilhado e acesso consolidado a produtos, categorias, banners e toasts.
+- `frontend/src/hooks/`
+  Hooks de leitura e mutacao.
+- `frontend/src/services/adminAuth.js`
+  Login, sessao e logout.
+- `frontend/src/services/adminRequest.js`
+  Requisicoes autenticadas.
 
-## Modulos
+## Modulos Internos
 
 - `AdminProducts/`
   Cadastro e listagem de produtos
@@ -71,9 +86,14 @@ AdminDashboard
 - `AdminBanners/`
   Banners do site
 - `AdminUpcera/`
-  Gestao da secao Upcera
+  Gestao da pagina Upcera
 - `AdminScanners/`
-  Gestao da secao de scanners
+  Gestao da pagina de scanners
 - `AdminPrinters/`
-  Gestao da secao de impressoras
-te
+  Gestao da pagina de impressoras 3D
+
+## Observacoes Importantes
+
+- A rota protegida real do painel e `/admin/painel`, nao `/admin`.
+- O `AdminDashboard` abre modulos internos por estado local, sem rotas separadas para cada aba.
+- A autenticacao depende de sessao HTTP validada em `/api/admin/session`.

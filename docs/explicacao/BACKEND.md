@@ -2,55 +2,93 @@
 
 ## Funcao
 
-O backend responde as APIs usadas pelo frontend e conversa com o banco MySQL.
+O backend expoe a API usada pelo frontend, valida sessao do admin, faz CRUD no MySQL e trata upload de imagens.
 
 ## Estrutura Atual
 
 ```txt
 backend/
-├── .env
-├── database_schema.sql
-├── list_categories.js
-├── package.json
-├── server.js
-└── src/
-    ├── config/
-    │   └── database.js
-    ├── controllers/
-    ├── middleware/
-    ├── models/
-    ├── routes/
-    ├── services/
-    ├── scripts/
-    │   ├── migrations/
-    │   └── seeds/
-    └── utils/
-        ├── helpers.js
-        └── queries.js
+|-- .env
+|-- database_schema.sql
+|-- list_categories.js
+|-- package.json
+|-- server.js
+|-- storage/
+|   `-- img/
+`-- src/
+    |-- config/
+    |   `-- database.js
+    |-- scripts/
+    |   `-- migrations/
+    |-- server/
+    |   |-- app.js
+    |   |-- auth/
+    |   |-- config/
+    |   |-- routes/
+    |   |-- services/
+    |   `-- utils/
+    `-- utils/
 ```
 
-## Arquivos Mais Importantes
+## Como O Backend Esta Organizado Hoje
 
 - `server.js`
-  Centraliza as rotas e a lógica principal hoje.
+  Carrega variaveis de ambiente e sobe o servidor HTTP.
+- `src/server/app.js`
+  Monta a aplicacao Express e registra:
+  - CORS
+  - `express.json()`
+  - servico de `/img`
+  - servico de `frontend/dist`
+  - rotas da API
+- `src/server/routes/`
+  Endpoints separados por dominio.
+- `src/server/auth/adminSession.js`
+  Login do admin, middleware de sessao, leitura de sessao e logout.
+- `src/server/config/upload.js`
+  Configuracao de upload com Multer.
+- `src/server/services/fileStorageService.js`
+  Persistencia de arquivos enviados.
 - `src/config/database.js`
-  Configuração da conexão com MySQL.
-- `database_schema.sql`
-  Script base de estrutura do banco.
-- `src/utils/queries.js`
-  Queries reutilizadas.
+  Pool de conexoes MySQL.
 
-## APIs Principais
+## Endpoints Principais
 
+- `/api/admin/login`
+- `/api/admin/session`
+- `/api/admin/logout`
 - `/api/categories`
 - `/api/banners`
 - `/api/products`
-- endpoints das seções especiais como Upcera, Scanners e Impressoras
+- `/api/upcera/products`
+- `/api/scanners/products`
+- `/api/3d-printers/products`
 
-## Leitura Rápida
+## Regras Importantes Do Servidor
 
-Se você quiser entender o backend pela primeira vez:
+- O backend serve `frontend/dist` em producao.
+- Requisicoes `GET` fora de `/api` caem no `index.html` do frontend.
+- Uploads sao limitados e tratados com resposta amigavel quando falham.
+- Imagens ficam expostas em `/img`.
+- Variaveis do Cloudinary definem se o storage sera remoto ou local.
 
-1. Abra `server.js`
-2. Veja `database.js`
-3. Depois veja `database_schema.sql`
+## Scripts NPM
+
+Os scripts do backend hoje sao:
+
+- `npm start`
+  Inicia o servidor com `node server.js`
+- `npm run dev`
+  Executa `setup-development.js` e sobe o servidor
+- `npm run dev:check`
+  Executa `debug-storage.js`
+
+## Leitura Rapida
+
+Se voce quiser entender o backend pela primeira vez:
+
+1. Abra `backend/server.js`
+2. Abra `backend/src/server/app.js`
+3. Veja `backend/src/server/routes/`
+4. Veja `backend/src/config/database.js`
+5. Consulte `backend/database_schema.sql`
