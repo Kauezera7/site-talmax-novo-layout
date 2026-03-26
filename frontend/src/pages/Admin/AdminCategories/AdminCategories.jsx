@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Layers, AlertCircle, X } from 'lucide-react';
+import { Plus, Layers, AlertCircle, X, Search, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../../../context/AdminContext';
 import CategoryTable from './CategoryTable';
@@ -12,6 +12,9 @@ const AdminCategories = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'visible', 'hidden'
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCreate = (isSub = false) => {
     setEditingCategory(isSub ? { parent_id: mainCategories[0]?.id || true } : null);
@@ -24,11 +27,19 @@ const AdminCategories = () => {
   };
 
   const handleSubmit = async (formData) => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
     let result;
-    if (editingCategory && editingCategory.id) {
-      result = await categoriesHook.updateCategory(editingCategory.id, formData);
-    } else {
-      result = await categoriesHook.createCategory(formData);
+
+    try {
+      if (editingCategory && editingCategory.id) {
+        result = await categoriesHook.updateCategory(editingCategory.id, formData);
+      } else {
+        result = await categoriesHook.createCategory(formData);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
 
     if (result.success) {
@@ -76,7 +87,36 @@ const AdminCategories = () => {
     <div className="admin-categories">
       <div className="admin-card">
         <div className="card-header">
-          <h2><Layers size={20} /> Gerenciar Categorias</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+            <h2><Layers size={20} /> Gerenciar Categorias</h2>
+            
+            <div className="search-box">
+              <Search size={16} />
+              <input
+                type="text"
+                placeholder="Buscar categoria..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button className="clear-search" onClick={() => setSearchTerm('')}>
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            <div className="filter-group">
+              <div className="filter-control">
+                <Filter size={14} />
+                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                  <option value="all">Ver Todas</option>
+                  <option value="visible">Somente Visíveis</option>
+                  <option value="hidden">Somente Ocultas</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
           <div style={{ display: 'flex', gap: '10px' }}>
             <button className="btn-secondary" onClick={() => handleCreate(false)}>
               <Plus size={18} /> Nova Categoria
@@ -91,6 +131,8 @@ const AdminCategories = () => {
             mainCategories={mainCategories}
             subCategories={subCategories}
             products={products}
+            searchTerm={searchTerm}
+            filterStatus={filterStatus}
             onEdit={handleEdit}
             onDelete={handleDeleteClick}
             onToggleVisibility={handleToggleVisibility}
@@ -118,6 +160,7 @@ const AdminCategories = () => {
                 mainCategories={mainCategories}
                 onSubmit={handleSubmit}
                 onCancel={() => setShowModal(false)}
+                isSubmitting={isSubmitting}
               />
             </motion.div>
           </div>

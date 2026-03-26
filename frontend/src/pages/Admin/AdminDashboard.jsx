@@ -32,6 +32,15 @@ import AdminUpcera from './AdminUpcera/AdminUpcera';
 import AdminScanners from './AdminScanners/AdminScanners';
 import AdminPrinters from './AdminPrinters/AdminPrinters';
 
+const AdminLoadingScreen = ({ label = 'Carregando painel...' }) => (
+  <div className="app-loader-overlay app-loader-overlay-admin" role="status" aria-live="polite" aria-label={label}>
+    <div className="app-loader-shell">
+      <div className="loader loader_bubble" aria-hidden="true" />
+      <span className="app-loader-text">{label}</span>
+    </div>
+  </div>
+);
+
 const DashboardHome = ({ onOpenTab }) => {
   const { products, categories, banners } = useAdmin();
 
@@ -76,6 +85,7 @@ const DashboardHome = ({ onOpenTab }) => {
 const AdminDashboardContent = () => {
   const navigate = useNavigate();
   const {
+    loading,
     activeTab,
     setActiveTab,
     isSidebarCollapsed,
@@ -86,6 +96,10 @@ const AdminDashboardContent = () => {
     setIsPagesOpen,
     toasts
   } = useAdminState();
+
+  if (loading) {
+    return <AdminLoadingScreen label="Carregando dados do painel..." />;
+  }
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
@@ -244,9 +258,10 @@ const useAdminState = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isPagesOpen, setIsPagesOpen] = useState(true);
-  const { toasts } = useAdmin();
+  const { loading, toasts } = useAdmin();
 
   return {
+    loading,
     activeTab,
     setActiveTab,
     isSidebarCollapsed,

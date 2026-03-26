@@ -31,6 +31,15 @@ import { validateAdminSession } from './services/adminAuth';
 import { assetPath } from './utils/assets';
 import './App.css';
 
+const FullScreenLoader = ({ label = 'Carregando...' }) => (
+  <div className="app-loader-overlay" role="status" aria-live="polite" aria-label={label}>
+    <div className="app-loader-shell">
+      <div className="loader loader_bubble" aria-hidden="true" />
+      <span className="app-loader-text">{label}</span>
+    </div>
+  </div>
+);
+
 const ScrollToTop = () => {
   const { pathname } = useLocation();
 
@@ -65,7 +74,7 @@ const ProtectedAdminRoute = ({ children }) => {
   }, []);
 
   if (status === 'checking') {
-    return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>Carregando...</div>;
+    return <FullScreenLoader label="Carregando painel..." />;
   }
 
   if (status === 'unauthenticated') {
@@ -77,11 +86,40 @@ const ProtectedAdminRoute = ({ children }) => {
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [appReady, setAppReady] = useState(false);
   const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+  useEffect(() => {
+    let mounted = true;
+    let releaseTimeout;
+
+    const releaseApp = () => {
+      releaseTimeout = window.setTimeout(() => {
+        if (mounted) {
+          setAppReady(true);
+        }
+      }, 450);
+    };
+
+    if (document.readyState === 'complete') {
+      releaseApp();
+    } else {
+      window.addEventListener('load', releaseApp, { once: true });
+    }
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('load', releaseApp);
+      if (releaseTimeout) {
+        window.clearTimeout(releaseTimeout);
+      }
+    };
+  }, []);
 
   return (
     <Router basename={routerBasename}>
       <ScrollToTop />
+      {!appReady && <FullScreenLoader label="Carregando site..." />}
       <AppContent menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
     </Router>
   );

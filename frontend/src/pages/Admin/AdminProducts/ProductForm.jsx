@@ -32,6 +32,10 @@ const buildInitialPreviewList = (mainImage, extraImages) => {
   return Array.from(new Set([mainImage, ...normalizedImages]));
 };
 
+const ButtonSavingIndicator = () => (
+  <span className="loader loader_bubble admin-button-loader" aria-hidden="true" />
+);
+
 const ProductForm = ({
   initialData,
   categories,
@@ -60,22 +64,10 @@ const ProductForm = ({
         extra = {};
       }
 
-      const allIds = Array.isArray(initialData.category_ids) ? initialData.category_ids : [];
-      const selectedCatIds = [];
-      const selectedSubIds = [];
-
-      allIds.forEach((id) => {
-        const cat = categories.find((c) => c.id === id);
-        if (cat) {
-          if (!cat.parent_id) selectedCatIds.push(id);
-          else selectedSubIds.push(id);
-        }
-      });
-
       setFormData({
         name: initialData.name || '',
-        category_ids: selectedCatIds,
-        sub_category_ids: selectedSubIds,
+        category_ids: initialData.category_ids || [],
+        sub_category_ids: initialData.sub_category_ids || [],
         description: initialData.description || '',
         descriptionAsList: extra.descriptionAsList || false,
         showFeatures: extra.showFeatures !== false && Boolean(extra.features && extra.features.length > 0),
@@ -210,8 +202,10 @@ const ProductForm = ({
     data.append('description', formData.description);
     data.append('primary_image_index', String(primaryImageIndex >= 0 ? primaryImageIndex : 0));
 
-    const combinedCategoryIds = [...formData.category_ids, ...formData.sub_category_ids];
+    const combinedCategoryIds = formData.category_ids;
+    const combinedSubCategoryIds = formData.sub_category_ids;
     data.append('category_ids', JSON.stringify(combinedCategoryIds));
+    data.append('sub_category_ids', JSON.stringify(combinedSubCategoryIds));
 
     const extraData = {
       descriptionAsList: formData.descriptionAsList,
@@ -569,7 +563,8 @@ const ProductForm = ({
       <div className="product-form-actions">
         <button type="button" className="btn-secondary" onClick={onCancel} disabled={isSubmitting}>Cancelar</button>
         <button type="submit" className="btn-primary product-submit-button" disabled={isSubmitting}>
-          <Save size={20} /> {isSubmitting ? 'SALVANDO PRODUTO...' : 'FINALIZAR E SALVAR PRODUTO'}
+          {isSubmitting ? <ButtonSavingIndicator /> : <Save size={20} />}
+          {isSubmitting ? 'Salvando' : 'Finalizar e salvar produto'}
         </button>
       </div>
     </form>

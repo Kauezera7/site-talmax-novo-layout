@@ -10,7 +10,11 @@ const initialFormState = {
   image: null
 };
 
-const BannerForm = ({ initialData, onSubmit, onCancel }) => {
+const ButtonSavingIndicator = () => (
+  <span className="loader loader_bubble admin-button-loader" aria-hidden="true" />
+);
+
+const BannerForm = ({ initialData, onSubmit, onCancel, isSubmitting = false }) => {
   const [formData, setFormData] = useState(initialFormState);
   const [preview, setPreview] = useState(null);
 
@@ -33,6 +37,8 @@ const BannerForm = ({ initialData, onSubmit, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     const data = new FormData();
     data.append('title', formData.title);
     data.append('link_url', formData.link_url);
@@ -71,10 +77,10 @@ const BannerForm = ({ initialData, onSubmit, onCancel }) => {
         </div>
 
         <div className="form-group">
-          <label>Título / Texto do Banner (Opcional)</label>
+          <label>Titulo / Texto do Banner (Opcional)</label>
           <input
             type="text"
-            placeholder="Ex: Lançamento Nova Frizadora"
+            placeholder="Ex: Lancamento Nova Frizadora"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           />
@@ -92,7 +98,7 @@ const BannerForm = ({ initialData, onSubmit, onCancel }) => {
 
         <div className="banner-form-grid">
           <div className="form-group">
-            <label>Ordem de Exibição</label>
+            <label>Ordem de Exibicao</label>
             <input
               type="number"
               value={formData.display_order}
@@ -107,14 +113,15 @@ const BannerForm = ({ initialData, onSubmit, onCancel }) => {
               checked={formData.active}
               onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
             />
-            <label htmlFor="bannerActive" style={{ marginBottom: 0, fontWeight: 600 }}>Banner Ativo</label>
+            <label htmlFor="bannerActive" style={{ marginBottom: 0, fontWeight: 600 }}>Banner ativo</label>
           </div>
         </div>
       </div>
       <div className="modal-footer">
-        <button type="button" className="btn-secondary" onClick={onCancel}>Cancelar</button>
-        <button type="submit" className="btn-primary">
-          <Save size={18} /> {initialData ? 'Salvar Alterações' : 'Criar Banner'}
+        <button type="button" className="btn-secondary" onClick={onCancel} disabled={isSubmitting}>Cancelar</button>
+        <button type="submit" className="btn-primary" disabled={isSubmitting}>
+          {isSubmitting ? <ButtonSavingIndicator /> : <Save size={18} />}
+          {isSubmitting ? 'Salvando' : (initialData ? 'Salvar alteracoes' : 'Criar banner')}
         </button>
       </div>
     </form>

@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Save, UploadCloud } from 'lucide-react';
 import { apiAssetPath } from '../../../utils/assets';
 
-const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel }) => {
+const ButtonSavingIndicator = () => (
+  <span className="loader loader_bubble admin-button-loader" aria-hidden="true" />
+);
+
+const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel, isSubmitting = false }) => {
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -22,7 +26,17 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel }) => {
         parent_id: initialData.parent_id || null
       });
       setPreview(initialData.icon_url ? apiAssetPath(initialData.icon_url) : null);
+      return;
     }
+
+    setFormData({
+      name: '',
+      slug: '',
+      icon: null,
+      is_visible: true,
+      parent_id: null
+    });
+    setPreview(null);
   }, [initialData]);
 
   const handleNameChange = (e) => {
@@ -37,6 +51,8 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     const data = new FormData();
     data.append('name', formData.name);
     data.append('slug', formData.slug);
@@ -78,7 +94,7 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel }) => {
         </div>
 
         <div className="form-group">
-          <label>Slug (URL amigável)</label>
+          <label>Slug (URL amigavel)</label>
           <input
             type="text"
             required
@@ -100,7 +116,7 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel }) => {
 
         {!formData.parent_id && (
           <div className="form-group">
-            <label>Ícone da Categoria</label>
+            <label>Icone da Categoria</label>
             <div className="file-upload-area" style={{ padding: '15px' }}>
               <input
                 type="file"
@@ -114,7 +130,7 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel }) => {
                 }}
               />
               <UploadCloud size={32} color="var(--admin-primary)" style={{ marginBottom: '5px' }} />
-              <p style={{ fontSize: '0.85rem' }}>Clique para enviar o ícone</p>
+              <p style={{ fontSize: '0.85rem' }}>Clique para enviar o icone</p>
             </div>
             {preview && (
               <div className="preview-thumb" style={{ marginTop: '10px', width: '60px', height: '60px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
@@ -125,9 +141,10 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel }) => {
         )}
       </div>
       <div className="modal-footer">
-        <button type="button" className="btn-secondary" onClick={onCancel}>Cancelar</button>
-        <button type="submit" className="btn-primary">
-          <Save size={18} /> {initialData ? 'Salvar Alterações' : 'Criar Categoria'}
+        <button type="button" className="btn-secondary" onClick={onCancel} disabled={isSubmitting}>Cancelar</button>
+        <button type="submit" className="btn-primary" disabled={isSubmitting}>
+          {isSubmitting ? <ButtonSavingIndicator /> : <Save size={18} />}
+          {isSubmitting ? 'Salvando' : (initialData ? 'Salvar alteracoes' : 'Criar categoria')}
         </button>
       </div>
     </form>

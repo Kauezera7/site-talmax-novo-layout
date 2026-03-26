@@ -12,6 +12,7 @@ const AdminBanners = () => {
   const [editingBanner, setEditingBanner] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [bannerToDelete, setBannerToDelete] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCreate = () => {
     setEditingBanner(null);
@@ -24,11 +25,19 @@ const AdminBanners = () => {
   };
 
   const handleSubmit = async (formData) => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
     let result;
-    if (editingBanner) {
-      result = await bannersHook.updateBanner(editingBanner.id, formData);
-    } else {
-      result = await bannersHook.createBanner(formData);
+
+    try {
+      if (editingBanner) {
+        result = await bannersHook.updateBanner(editingBanner.id, formData);
+      } else {
+        result = await bannersHook.createBanner(formData);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
 
     if (result.success) {
@@ -108,6 +117,7 @@ const AdminBanners = () => {
                 initialData={editingBanner}
                 onSubmit={handleSubmit}
                 onCancel={() => setShowModal(false)}
+                isSubmitting={isSubmitting}
               />
             </motion.div>
           </div>
