@@ -1,20 +1,12 @@
 import API_URL from './api';
-
-const parseError = async (response, fallbackMessage) => {
-  try {
-    const data = await response.json();
-    return data.error || fallbackMessage;
-  } catch (error) {
-    return fallbackMessage;
-  }
-};
+import { ensureAdminResponse } from './adminRequest';
 
 export const categoryService = {
   getAll: async () => {
     const res = await fetch(`${API_URL}/categories`, {
       credentials: 'include'
     });
-    if (!res.ok) throw new Error('Erro ao carregar categorias');
+    await ensureAdminResponse(res, 'Erro ao carregar categorias');
     return res.json();
   },
 
@@ -24,7 +16,7 @@ export const categoryService = {
       credentials: 'include',
       body: formData
     });
-    if (!res.ok) throw new Error(await parseError(res, 'Erro ao criar categoria'));
+    await ensureAdminResponse(res, 'Erro ao criar categoria');
     return res.json();
   },
 
@@ -34,7 +26,7 @@ export const categoryService = {
       credentials: 'include',
       body: formData
     });
-    if (!res.ok) throw new Error(await parseError(res, 'Erro ao atualizar categoria'));
+    await ensureAdminResponse(res, 'Erro ao atualizar categoria');
     return res.json();
   },
 
@@ -43,7 +35,7 @@ export const categoryService = {
       method: 'DELETE',
       credentials: 'include'
     });
-    if (!res.ok) throw new Error(await parseError(res, 'Erro ao excluir categoria'));
+    await ensureAdminResponse(res, 'Erro ao excluir categoria');
     return res.json();
   }
 };

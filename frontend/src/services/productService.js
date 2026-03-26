@@ -1,20 +1,12 @@
 import API_URL from './api';
-
-const parseError = async (response, fallbackMessage) => {
-  try {
-    const data = await response.json();
-    return data.error || fallbackMessage;
-  } catch (error) {
-    return fallbackMessage;
-  }
-};
+import { ensureAdminResponse } from './adminRequest';
 
 export const productService = {
   getAll: async () => {
     const res = await fetch(`${API_URL}/products`, {
       credentials: 'include'
     });
-    if (!res.ok) throw new Error('Erro ao carregar produtos');
+    await ensureAdminResponse(res, 'Erro ao carregar produtos');
     return res.json();
   },
 
@@ -32,7 +24,7 @@ export const productService = {
       credentials: 'include',
       body: formData
     });
-    if (!res.ok) throw new Error(await parseError(res, 'Erro ao criar produto'));
+    await ensureAdminResponse(res, 'Erro ao criar produto');
     return res.json();
   },
 
@@ -42,7 +34,7 @@ export const productService = {
       credentials: 'include',
       body: formData
     });
-    if (!res.ok) throw new Error(await parseError(res, 'Erro ao atualizar produto'));
+    await ensureAdminResponse(res, 'Erro ao atualizar produto');
     return res.json();
   },
 
@@ -51,7 +43,7 @@ export const productService = {
       method: 'DELETE',
       credentials: 'include'
     });
-    if (!res.ok) throw new Error(await parseError(res, 'Erro ao excluir produto'));
+    await ensureAdminResponse(res, 'Erro ao excluir produto');
     return res.json();
   },
 
@@ -62,7 +54,7 @@ export const productService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ selected_products: selectedProducts })
     });
-    if (!res.ok) throw new Error(await parseError(res, 'Erro ao atualizar produtos Upcera'));
+    await ensureAdminResponse(res, 'Erro ao atualizar produtos Upcera');
     return res.json();
   },
 
@@ -73,7 +65,7 @@ export const productService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ selected_products: selectedProducts })
     });
-    if (!res.ok) throw new Error(await parseError(res, 'Erro ao atualizar produtos Scanners'));
+    await ensureAdminResponse(res, 'Erro ao atualizar produtos Scanners');
     return res.json();
   },
 
@@ -84,7 +76,7 @@ export const productService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ selected_products: selectedProducts })
     });
-    if (!res.ok) throw new Error(await parseError(res, 'Erro ao atualizar produtos de Impressoras 3D'));
+    await ensureAdminResponse(res, 'Erro ao atualizar produtos de Impressoras 3D');
     return res.json();
   }
 };

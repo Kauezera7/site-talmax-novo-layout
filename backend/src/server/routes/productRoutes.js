@@ -53,6 +53,30 @@ const reorderImagePaths = (imagePaths, primaryIndex = 0) => {
   ];
 };
 
+const rollbackIfPossible = async (connection) => {
+  if (!connection) {
+    return;
+  }
+
+  try {
+    await connection.rollback();
+  } catch (rollbackError) {
+    console.error('Falha ao executar rollback da transacao de produto:', rollbackError.message);
+  }
+};
+
+const releaseIfPossible = (connection) => {
+  if (!connection) {
+    return;
+  }
+
+  try {
+    connection.release();
+  } catch (releaseError) {
+    console.error('Falha ao liberar conexao do pool de produtos:', releaseError.message);
+  }
+};
+
 const findDuplicateProductByName = async (connection, name, excludeId = null) => {
   const query = `
     SELECT id
@@ -123,17 +147,17 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
     const duplicateProduct = await findDuplicateProductByName(connection, normalizedName);
 
     if (duplicateProduct) {
-      await connection.rollback();
+      await rollbackIfPossible(connection);
       return res.status(409).json({ error: 'Ja existe um produto com esse nome.' });
     }
 
     if (mergedImagePaths.length === 0) {
-      await connection.rollback();
+      await rollbackIfPossible(connection);
       return res.status(400).json({ error: 'Adicione pelo menos uma foto para salvar o produto.' });
     }
 
     if (!(await hasMainCategory(connection, parsedCategoryIds))) {
-      await connection.rollback();
+      await rollbackIfPossible(connection);
       return res.status(400).json({ error: 'Selecione pelo menos uma categoria principal para salvar o produto.' });
     }
 
@@ -150,11 +174,11 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
     await connection.commit();
     return res.status(201).json({ message: 'Produto criado!' });
   } catch (err) {
-    await connection.rollback();
+    await rollbackIfPossible(connection);
     console.error('ERRO NO POST PRODUCT:', err.message);
     return res.status(500).json({ error: err.message });
   } finally {
-    connection.release();
+    releaseIfPossible(connection);
   }
 });
 
@@ -181,7 +205,7 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     const currentProduct = await findProductById(connection, productId);
 
     if (!currentProduct) {
-      await connection.rollback();
+      await rollbackIfPossible(connection);
       return res.status(404).json({ error: 'Produto nao encontrado.' });
     }
 
@@ -196,17 +220,17 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     const mergedImagePaths = reorderImagePaths([...preservedImagePaths, ...newImagePaths], primaryImageIndex);
 
     if (duplicateProduct) {
-      await connection.rollback();
+      await rollbackIfPossible(connection);
       return res.status(409).json({ error: 'Ja existe um produto com esse nome.' });
     }
 
     if (mergedImagePaths.length === 0) {
-      await connection.rollback();
+      await rollbackIfPossible(connection);
       return res.status(400).json({ error: 'Adicione pelo menos uma foto para salvar o produto.' });
     }
 
     if (!(await hasMainCategory(connection, parsedCategoryIds))) {
-      await connection.rollback();
+      await rollbackIfPossible(connection);
       return res.status(400).json({ error: 'Selecione pelo menos uma categoria principal para salvar o produto.' });
     }
 
@@ -224,11 +248,11 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     await connection.commit();
     return res.json({ message: 'Produto atualizado!' });
   } catch (err) {
-    await connection.rollback();
+    await rollbackIfPossible(connection);
     console.error('ERRO NO UPDATE PRODUCT:', err.message);
     return res.status(500).json({ error: err.message });
   } finally {
-    connection.release();
+    releaseIfPossible(connection);
   }
 });
 

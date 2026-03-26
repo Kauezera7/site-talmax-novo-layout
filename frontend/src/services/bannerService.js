@@ -1,20 +1,12 @@
 import API_URL from './api';
-
-const parseError = async (response, fallbackMessage) => {
-  try {
-    const data = await response.json();
-    return data.error || fallbackMessage;
-  } catch (error) {
-    return fallbackMessage;
-  }
-};
+import { ensureAdminResponse } from './adminRequest';
 
 export const bannerService = {
   getAll: async () => {
     const res = await fetch(`${API_URL}/banners`, {
       credentials: 'include'
     });
-    if (!res.ok) throw new Error('Erro ao carregar banners');
+    await ensureAdminResponse(res, 'Erro ao carregar banners');
     return res.json();
   },
 
@@ -24,7 +16,7 @@ export const bannerService = {
       credentials: 'include',
       body: formData
     });
-    if (!res.ok) throw new Error(await parseError(res, 'Erro ao criar banner'));
+    await ensureAdminResponse(res, 'Erro ao criar banner');
     return res.json();
   },
 
@@ -34,7 +26,7 @@ export const bannerService = {
       credentials: 'include',
       body: formData
     });
-    if (!res.ok) throw new Error(await parseError(res, 'Erro ao atualizar banner'));
+    await ensureAdminResponse(res, 'Erro ao atualizar banner');
     return res.json();
   },
 
@@ -43,7 +35,7 @@ export const bannerService = {
       method: 'DELETE',
       credentials: 'include'
     });
-    if (!res.ok) throw new Error(await parseError(res, 'Erro ao excluir banner'));
+    await ensureAdminResponse(res, 'Erro ao excluir banner');
     return res.json();
   }
 };
