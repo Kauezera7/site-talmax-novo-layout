@@ -4,6 +4,12 @@ Este documento descreve os endpoints ativos do backend no estado atual do projet
 
 Base da API:
 
+GET	= Buscar
+POST	= Criar
+PUT	= Atualizar tudo
+PATCH	= Atualizar parte
+DELETE	= Deletar
+
 - desenvolvimento: `http://localhost:5000/api`
 - produção: `/api`
 

@@ -1,6 +1,6 @@
 /**
- * Define as rotas de autenticacao do admin.
- * Expõe login, consulta da sessao atual e logout do painel.
+ * Define as rotas de autenticação do admin.
+ * Expõe login, consulta da sessão atual e logout do painel.
  */
 const express = require('express');
 const {

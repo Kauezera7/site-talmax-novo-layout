@@ -1,6 +1,6 @@
 /**
  * Define as rotas de categorias e subcategorias.
- * Cuida de listagem publica e operacoes administrativas de CRUD.
+ * Cuida de listagem pública e operações administrativas de CRUD.
  */
 const express = require('express');
 const db = require('../../config/database');

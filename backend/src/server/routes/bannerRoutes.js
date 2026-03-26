@@ -1,6 +1,6 @@
 /**
  * Define as rotas de banners do site.
- * Cuida da leitura publica e da manutencao protegida pelo admin.
+ * Cuida da leitura pública e da manutenção protegida pelo admin.
  */
 const express = require('express');
 const db = require('../../config/database');
@@ -27,7 +27,7 @@ router.post('/', requireAdminSession, upload.single('image'), async (req, res) =
     const image_url = req.file ? await persistUploadedFile(req.file) : null;
 
     if (!image_url) {
-      return res.status(400).json({ error: 'A imagem do banner e obrigatoria.' });
+      return res.status(400).json({ error: 'A imagem do banner é obrigatória.' });
     }
 
     const isActive = parseBooleanFlag(active) ? 1 : 0;
@@ -71,7 +71,7 @@ router.put('/:id', requireAdminSession, upload.single('image'), async (req, res)
 router.delete('/:id', requireAdminSession, async (req, res) => {
   try {
     await db.query('DELETE FROM banners WHERE id = ?', [req.params.id]);
-    return res.json({ message: 'Banner excluido!' });
+    return res.json({ message: 'Banner excluído!' });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
