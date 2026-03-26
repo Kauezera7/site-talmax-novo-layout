@@ -1,32 +1,32 @@
 # Admin
 
-## Funcao
+## Função
 
 O painel administrativo gerencia:
 
 - produtos
 - categorias e subcategorias
 - banners
-- selecoes especiais de paginas como Upcera, Scanners e Impressoras 3D
+- seleções especiais de páginas como Upcera, Scanners e Impressoras 3D
 
-## Rotas Do Painel
+## Rotas do Painel
 
 - `/admin`
   Redireciona para o login
 - `/admin/login`
-  Tela de autenticacao
+  Tela de autenticação
 - `/admin/painel`
-  Area protegida do painel
+  Área protegida do painel
 
 ## Entrada Principal
 
-O arquivo principal do painel e:
+O arquivo principal do painel é:
 
 ```txt
 frontend/src/pages/Admin/AdminDashboard.jsx
 ```
 
-O formulario de login fica em:
+O formulário de login fica em:
 
 ```txt
 frontend/src/components/AdminLogin/AdminLogin.jsx
@@ -71,13 +71,13 @@ AdminDashboard
 - `frontend/src/context/AdminContext.jsx`
   Estado compartilhado e acesso consolidado a produtos, categorias, banners e toasts.
 - `frontend/src/hooks/`
-  Hooks de leitura e mutacao.
+  Hooks de leitura e mutação.
 - `frontend/src/services/adminAuth.js`
-  Login, sessao e logout.
+  Login, sessão e logout.
 - `frontend/src/services/adminRequest.js`
-  Requisicoes autenticadas.
+  Requisições autenticadas.
 
-## Modulos Internos
+## Módulos Internos
 
 - `AdminProducts/`
   Cadastro e listagem de produtos
@@ -86,14 +86,14 @@ AdminDashboard
 - `AdminBanners/`
   Banners do site
 - `AdminUpcera/`
-  Gestao da pagina Upcera
+  Gestão da página Upcera
 - `AdminScanners/`
-  Gestao da pagina de scanners
+  Gestão da página de scanners
 - `AdminPrinters/`
-  Gestao da pagina de impressoras 3D
+  Gestão da página de impressoras 3D
 
-## Observacoes Importantes
+## Observações Importantes
 
-- A rota protegida real do painel e `/admin/painel`, nao `/admin`.
-- O `AdminDashboard` abre modulos internos por estado local, sem rotas separadas para cada aba.
-- A autenticacao depende de sessao HTTP validada em `/api/admin/session`.
+- A rota protegida real do painel é `/admin/painel`, não `/admin`.
+- O `AdminDashboard` abre módulos internos por estado local, sem rotas separadas para cada aba.
+- A autenticação depende de sessão HTTP validada em `/api/admin/session`.

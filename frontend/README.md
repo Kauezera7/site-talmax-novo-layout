@@ -1,6 +1,6 @@
 # Frontend Talmax
 
-Aplicacao React do projeto `site-talmax`.
+Aplicação React do projeto `site-talmax`.
 
 ## Tecnologias
 
@@ -36,21 +36,21 @@ frontend/
     `-- utils/
 ```
 
-## Pontos De Entrada
+## Pontos de Entrada
 
 - `src/main.jsx`
   Inicializa o React.
 - `src/App.jsx`
-  Define layout, rotas publicas, busca do site e rotas do painel.
+  Define layout, rotas públicas, busca do site e rotas do painel.
 
-## Integracao Com Backend
+## Integração com Backend
 
 - A URL base da API fica em `src/services/api.js`.
-- Em desenvolvimento, o fallback padrao e `http://localhost:5000/api`.
-- Em producao, o fallback padrao e `/api`.
-- Tambem e possivel definir `VITE_API_URL`.
+- Em desenvolvimento, o fallback padrão é `http://localhost:5000/api`.
+- Em produção, o fallback padrão é `/api`.
+- Também é possível definir `VITE_API_URL`.
 
-## Rotas Do Painel
+## Rotas do Painel
 
 - `/admin/login`
   Tela de login

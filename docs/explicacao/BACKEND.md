@@ -1,8 +1,8 @@
 # Backend
 
-## Funcao
+## Função
 
-O backend expoe a API usada pelo frontend, valida sessao do admin, faz CRUD no MySQL e trata upload de imagens.
+O backend expõe a API usada pelo frontend, valida sessão do admin, faz CRUD no MySQL e trata upload de imagens.
 
 ## Estrutura Atual
 
@@ -30,27 +30,27 @@ backend/
     `-- utils/
 ```
 
-## Como O Backend Esta Organizado Hoje
+## Como o Backend Está Organizado Hoje
 
 - `server.js`
-  Carrega variaveis de ambiente e sobe o servidor HTTP.
+  Carrega variáveis de ambiente e sobe o servidor HTTP.
 - `src/server/app.js`
-  Monta a aplicacao Express e registra:
+  Monta a aplicação Express e registra:
   - CORS
   - `express.json()`
-  - servico de `/img`
-  - servico de `frontend/dist`
+  - serviço de `/img`
+  - serviço de `frontend/dist`
   - rotas da API
 - `src/server/routes/`
-  Endpoints separados por dominio.
+  Endpoints separados por domínio.
 - `src/server/auth/adminSession.js`
-  Login do admin, middleware de sessao, leitura de sessao e logout.
+  Login do admin, middleware de sessão, leitura de sessão e logout.
 - `src/server/config/upload.js`
-  Configuracao de upload com Multer.
+  Configuração de upload com Multer.
 - `src/server/services/fileStorageService.js`
-  Persistencia de arquivos enviados.
+  Persistência de arquivos enviados.
 - `src/config/database.js`
-  Pool de conexoes MySQL.
+  Pool de conexões MySQL.
 
 ## Endpoints Principais
 
@@ -64,28 +64,30 @@ backend/
 - `/api/scanners/products`
 - `/api/3d-printers/products`
 
-## Regras Importantes Do Servidor
+## Regras Importantes do Servidor
 
-- O backend serve `frontend/dist` em producao.
-- Requisicoes `GET` fora de `/api` caem no `index.html` do frontend.
-- Uploads sao limitados e tratados com resposta amigavel quando falham.
+- O backend serve `frontend/dist` em produção.
+- Requisições `GET` fora de `/api` caem no `index.html` do frontend.
+- Uploads são limitados e tratados com resposta amigável quando falham.
 - Imagens ficam expostas em `/img`.
-- Variaveis do Cloudinary definem se o storage sera remoto ou local.
+- Variáveis do Cloudinary definem se o storage será remoto ou local.
 
 ## Scripts NPM
 
-Os scripts do backend hoje sao:
+Os scripts do backend hoje são:
 
 - `npm start`
   Inicia o servidor com `node server.js`
 - `npm run dev`
-  Executa `setup-development.js` e sobe o servidor
+  Está configurado para executar `setup-development.js` e subir o servidor, mas esse arquivo não está presente no repositório atual
 - `npm run dev:check`
-  Executa `debug-storage.js`
+  Está configurado para executar `debug-storage.js`, mas esse arquivo não está presente no repositório atual
 
-## Leitura Rapida
+Para subir o backend sem dependências ausentes, prefira `npm start`.
 
-Se voce quiser entender o backend pela primeira vez:
+## Leitura Rápida
+
+Se você quiser entender o backend pela primeira vez:
 
 1. Abra `backend/server.js`
 2. Abra `backend/src/server/app.js`

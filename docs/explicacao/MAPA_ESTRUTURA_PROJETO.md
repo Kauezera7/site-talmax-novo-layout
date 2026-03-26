@@ -1,6 +1,6 @@
-# Mapa Da Estrutura Do Projeto
+# Mapa da Estrutura do Projeto
 
-Este documento mostra a estrutura principal do projeto `site-talmax` com foco nas pastas que entram na manutencao do codigo.
+Este documento mostra a estrutura principal do projeto `site-talmax` com foco nas pastas que entram na manutenção do código.
 
 ## Estrutura Principal
 
@@ -61,36 +61,36 @@ site-talmax/
 - `backend/src/server/app.js`
   Registra CORS, JSON, `/img`, `frontend/dist` e todas as rotas `/api`.
 - `backend/src/server/auth/`
-  Autenticacao e protecao de sessao do admin.
+  Autenticação e proteção de sessão do admin.
 - `backend/src/server/config/`
-  CORS, upload e resolucao de diretorios de imagem.
+  CORS, upload e resolução de diretórios de imagem.
 - `backend/src/server/routes/`
-  Endpoints de admin, banners, categorias, produtos e secoes especiais.
+  Endpoints de admin, banners, categorias, produtos e seções especiais.
 - `backend/src/server/services/`
-  Regras auxiliares, principalmente de produto e persistencia de arquivos.
+  Regras auxiliares, principalmente de produto e persistência de arquivos.
 - `backend/src/server/utils/`
-  Parsers e funcoes utilitarias das rotas.
+  Parsers e funções utilitárias das rotas.
 - `backend/src/config/database.js`
   Pool do MySQL.
 - `backend/src/scripts/migrations/`
-  Scripts manuais de evolucao do schema.
+  Scripts manuais de evolução do schema.
 
 ## Frontend
 
 - `frontend/src/App.jsx`
   Router principal do site e do painel.
 - `frontend/src/components/`
-  Componentes e paginas publicas.
+  Componentes e páginas públicas.
 - `frontend/src/components/AdminLogin/`
   Tela de login do painel.
 - `frontend/src/pages/Admin/`
-  Dashboard do painel e modulos internos.
+  Dashboard do painel e módulos internos.
 - `frontend/src/context/AdminContext.jsx`
   Estado compartilhado do admin.
 - `frontend/src/hooks/`
   Hooks de banners, categorias e produtos.
 - `frontend/src/services/`
-  API base, autenticacao admin e CRUD.
+  API base, autenticação admin e CRUD.
 - `frontend/src/utils/assets.js`
   Resolve caminhos de assets.
 - `frontend/src/utils/productCategories.js`
@@ -98,22 +98,22 @@ site-talmax/
 
 ## Rotas Importantes
 
-- Frontend publico:
+- Frontend público:
   `/`, `/quem-somos`, `/historia-diretoria`, `/produtos`, `/categoria/:slug`, `/produto/:id`, `/upcera`, `/scanners`, `/impressoras-3d`, `/suporte`
 - Admin:
   `/admin/login` e `/admin/painel`
 - API:
   `/api/admin`, `/api/categories`, `/api/banners`, `/api/products`, `/api/upcera/products`, `/api/scanners/products`, `/api/3d-printers/products`
 
-## Regra Rapida Para Se Achar
+## Regra Rápida Para se Achar
 
 - Quer mexer em rotas da interface:
   `frontend/src/App.jsx`
-- Quer mexer em pagina publica:
+- Quer mexer em página pública:
   `frontend/src/components/NOME_DA_PASTA/`
 - Quer mexer em login do admin:
   `frontend/src/components/AdminLogin/`
-- Quer mexer em uma area do painel:
+- Quer mexer em uma área do painel:
   `frontend/src/pages/Admin/`
 - Quer mexer em chamadas HTTP do frontend:
   `frontend/src/services/`

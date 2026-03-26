@@ -1,13 +1,13 @@
 # Frontend
 
-## Funcao
+## Função
 
-O frontend entrega duas experiencias:
+O frontend entrega duas experiências:
 
-- site publico da Talmax
+- site público da Talmax
 - painel administrativo acessado pelo navegador
 
-Ele foi construido com React, React Router e Vite.
+Ele foi construído com React, React Router e Vite.
 
 ## Estrutura Atual
 
@@ -32,15 +32,15 @@ frontend/
 - `src/main.jsx`
   Entrada do React.
 - `src/App.jsx`
-  Define o router, layout publico, tema do admin, busca e protecao das rotas do painel.
+  Define o router, layout público, tema do admin, busca e proteção das rotas do painel.
 - `src/App.css`
-  Estilos globais da aplicacao.
+  Estilos globais da aplicação.
 - `src/services/api.js`
   Define a base da API via `VITE_API_URL` ou fallback local.
 
-## Parte Publica
+## Parte Pública
 
-As paginas publicas ficam principalmente em:
+As páginas públicas ficam principalmente em:
 
 ```txt
 frontend/src/components/
@@ -62,9 +62,9 @@ Pastas principais usadas hoje:
 - `PagePlaceholder/`
 - `CookieBanner/`
 
-## Rotas Publicas Reais
+## Rotas Públicas Reais
 
-As rotas registradas hoje em `App.jsx` sao:
+As rotas registradas hoje em `App.jsx` são:
 
 - `/`
 - `/privacidade`
@@ -88,18 +88,18 @@ As rotas registradas hoje em `App.jsx` sao:
 - `/sac`
 - `/politicas-troca`
 
-Parte dessas rotas usa `PagePlaceholder` enquanto o conteudo definitivo nao existe.
+Parte dessas rotas usa `PagePlaceholder` enquanto o conteúdo definitivo não existe.
 
-## Admin No Frontend
+## Admin no Frontend
 
-As rotas do painel definidas no frontend sao:
+As rotas do painel definidas no frontend são:
 
 - `/admin`
   Redireciona para `/admin/login`
 - `/admin/login`
-  Tela de autenticacao
+  Tela de autenticação
 - `/admin/painel`
-  Painel protegido por validacao de sessao
+  Painel protegido por validação de sessão
 
 Arquivos importantes:
 
@@ -108,7 +108,7 @@ Arquivos importantes:
 - `src/services/adminSessionEvents.js`
 - `src/pages/Admin/AdminDashboard.jsx`
 
-## Services Do Frontend
+## Services do Frontend
 
 Os services ficam em:
 
@@ -121,19 +121,19 @@ Arquivos principais:
 - `api.js`
   URL base da API.
 - `adminAuth.js`
-  Login, validacao de sessao e logout.
+  Login, validação de sessão e logout.
 - `adminRequest.js`
-  Utilitarios de requisicao autenticada.
+  Utilitários de requisição autenticada.
 - `bannerService.js`
 - `categoryService.js`
 - `productService.js`
 
-## Regra De Organizacao
+## Regra de Organização
 
-O padrao atual do frontend e:
+O padrão atual do frontend é:
 
-- cada componente importante fica em uma pasta propria
+- cada componente importante fica em uma pasta própria
 - o CSS da feature fica junto do componente
 - rotas e layout principal ficam em `App.jsx`
 - telas internas do painel ficam em `src/pages/Admin/`
-- integracoes com backend ficam em `src/services/`
+- integrações com backend ficam em `src/services/`

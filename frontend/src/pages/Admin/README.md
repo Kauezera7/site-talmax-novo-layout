@@ -1,8 +1,8 @@
-# Documentacao Do Painel Admin
+# Documentação do Painel Admin
 
-Este arquivo resume a organizacao do painel administrativo do projeto.
+Este arquivo resume a organização do painel administrativo do projeto.
 
-## Entrada E Rotas
+## Entrada e Rotas
 
 - componente principal:
   [AdminDashboard.jsx](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/pages/Admin/AdminDashboard.jsx)
@@ -25,7 +25,7 @@ frontend/src/pages/Admin/
 `-- AdminPrinters/
 ```
 
-## Como O Painel Funciona
+## Como o Painel Funciona
 
 ```txt
 AdminLogin.jsx
@@ -49,24 +49,24 @@ AdminDashboard.jsx
 - [AdminContext.jsx](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/context/AdminContext.jsx)
   Estado compartilhado para produtos, categorias, banners, loading, erro e toasts.
 - [adminAuth.js](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/services/adminAuth.js)
-  Login, validacao de sessao e logout.
+  Login, validação de sessão e logout.
 
-## Modulos
+## Módulos
 
 - [AdminProducts](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/pages/Admin/AdminProducts)
   CRUD de produtos.
-- [AdminCategories](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/pages/Admin/AdminCategories)
+- [AdminCategories](/c:/Users/ti6/Desktop/Desenvolvimento/site-talmax/frontend/src/pages/Admin/AdminCategories)
   CRUD de categorias e subcategorias.
-- [AdminBanners](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/pages/Admin/AdminBanners)
+- [AdminBanners](/c:/Users/ti6/Desktop/Desenvolvimento/site-talmax/frontend/src/pages/Admin/AdminBanners)
   CRUD de banners.
-- [AdminUpcera](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/pages/Admin/AdminUpcera)
-  Selecao de produtos da pagina Upcera.
-- [AdminScanners](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/pages/Admin/AdminScanners)
-  Selecao de produtos da pagina Scanners.
-- [AdminPrinters](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/pages/Admin/AdminPrinters)
-  Selecao de produtos da pagina Impressoras 3D.
+- [AdminUpcera](/c:/Users/ti6/Desktop/Desenvolvimento/site-talmax/frontend/src/pages/Admin/AdminUpcera)
+  Seleção de produtos da página Upcera.
+- [AdminScanners](/c:/Users/ti6/Desktop/Desenvolvimento/site-talmax/frontend/src/pages/Admin/AdminScanners)
+  Seleção de produtos da página Scanners.
+- [AdminPrinters](/c:/Users/ti6/Desktop/Desenvolvimento/site-talmax/frontend/src/pages/Admin/AdminPrinters)
+  Seleção de produtos da página Impressoras 3D.
 
-## Observacoes
+## Observações
 
-- O painel nao usa sub-rotas internas por modulo; a troca entre areas acontece por estado em `AdminDashboard.jsx`.
-- O acesso depende de sessao valida retornada por `/api/admin/session`.
+- O painel não usa sub-rotas internas por módulo; a troca entre áreas acontece por estado em `AdminDashboard.jsx`.
+- O acesso depende de sessão válida retornada por `/api/admin/session`.
