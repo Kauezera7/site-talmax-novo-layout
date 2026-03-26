@@ -17,7 +17,7 @@ const {
   findProductById,
   attachProductCategories
 } = require('../services/productService');
-const { persistUploadedFiles } = require('../services/fileStorageService');
+const { persistUploadedFilesByType } = require('../services/fileStorageService');
 
 const router = express.Router();
 
@@ -139,7 +139,7 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
     const parsedCategoryIds = parseIdArray(category_ids);
     const parsedSubCategoryIds = parseIdArray(sub_category_ids);
     const primaryImageIndex = parseInteger(req.body.primary_image_index, 0);
-    const uploadedImagePaths = await persistUploadedFiles(req.files || []);
+    const uploadedImagePaths = await persistUploadedFilesByType(req.files || [], { resourceType: 'produtos' });
     const extra = parseJsonObject(extra_data);
     const retainedImagePaths = normalizeImageList(extra.images);
     const mergedImagePaths = reorderImagePaths([...retainedImagePaths, ...uploadedImagePaths], primaryImageIndex);
@@ -197,7 +197,7 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     const parsedSubCategoryIds = parseIdArray(sub_category_ids);
     const primaryImageIndex = parseInteger(req.body.primary_image_index, 0);
     const extra_data = req.body.extra_data;
-    const newImagePaths = await persistUploadedFiles(req.files || []);
+    const newImagePaths = await persistUploadedFilesByType(req.files || [], { resourceType: 'produtos' });
     const extra = parseJsonObject(extra_data);
     const duplicateProduct = await findDuplicateProductByName(connection, name, productId);
     const retainedImagePaths = normalizeImageList(extra.images);

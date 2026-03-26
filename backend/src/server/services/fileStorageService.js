@@ -30,7 +30,16 @@ const buildRemoteImageUrl = (fileName) => {
   return `${publicBaseUrl}/${encodeURIComponent(fileName)}`;
 };
 
-const uploadFileToCloudinary = async (file) => {
+const buildCloudinaryFolder = (resourceType = 'geral') => {
+  const baseFolder = (process.env.CLOUDINARY_FOLDER || 'talmax').replace(/^\/+|\/+$/g, '');
+  const normalizedResourceType = String(resourceType || 'geral').replace(/^\/+|\/+$/g, '');
+
+  return normalizedResourceType ? `${baseFolder}/${normalizedResourceType}` : baseFolder;
+};
+
+const uploadFileToCloudinary = async (file, options = {}) => {
+  const folder = buildCloudinaryFolder(options.resourceType);
+
   console.log(`[Storage] Configurando Cloudinary para upload: ${process.env.CLOUDINARY_CLOUD_NAME}`);
   
   cloudinary.config({
@@ -42,7 +51,7 @@ const uploadFileToCloudinary = async (file) => {
 
   const uploadOptions = {
     resource_type: 'image',
-    folder: process.env.CLOUDINARY_FOLDER || 'talmax',
+    folder,
     use_filename: true,
     unique_filename: true
   };
@@ -88,7 +97,7 @@ const cleanupLocalTempFile = (file) => {
   });
 };
 
-const persistUploadedFile = async (file) => {
+const persistUploadedFile = async (file, options = {}) => {
   if (!file) return null;
 
   const useCloudinary = hasCloudinaryConfig();
@@ -101,7 +110,7 @@ const persistUploadedFile = async (file) => {
 
   if (useCloudinary) {
     try {
-      const publicUrl = await uploadFileToCloudinary(file);
+      const publicUrl = await uploadFileToCloudinary(file, options);
       cleanupLocalTempFile(file);
       return publicUrl;
     } catch (error) {
@@ -129,13 +138,18 @@ const persistUploadedFile = async (file) => {
 };
 
 const persistUploadedFiles = async (files = []) => {
-  return Promise.all(files.map(file => persistUploadedFile(file)));
+  return Promise.all(files.map((file) => persistUploadedFile(file)));
+};
+
+const persistUploadedFilesByType = async (files = [], options = {}) => {
+  return Promise.all(files.map((file) => persistUploadedFile(file, options)));
 };
 
 module.exports = {
   hasCloudinaryConfig,
   hasSftpConfig,
+  buildCloudinaryFolder,
   persistUploadedFile,
-  persistUploadedFiles
+  persistUploadedFiles,
+  persistUploadedFilesByType
 };
-

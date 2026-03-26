@@ -32,7 +32,9 @@ router.get('/', async (req, res) => {
 router.post('/', requireAdminSession, upload.single('icon'), async (req, res) => {
   try {
     const { name, slug, is_visible, parent_id } = req.body;
-    const icon_url = req.file ? await persistUploadedFile(req.file) : null;
+    const icon_url = req.file
+      ? await persistUploadedFile(req.file, { resourceType: 'categorias' })
+      : null;
     const visible = parseBooleanFlag(is_visible) ? 1 : 0;
 
     if (parent_id && parent_id !== 'null' && parent_id !== '') {
@@ -72,7 +74,7 @@ router.put('/:id', requireAdminSession, upload.single('icon'), async (req, res) 
 
     if (req.file) {
       query += ', icon_url = ?';
-      params.push(await persistUploadedFile(req.file));
+      params.push(await persistUploadedFile(req.file, { resourceType: 'categorias' }));
     }
 
     query += ' WHERE id = ?';

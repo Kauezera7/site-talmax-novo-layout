@@ -24,7 +24,9 @@ router.get('/', async (req, res) => {
 router.post('/', requireAdminSession, upload.single('image'), async (req, res) => {
   try {
     const { title, link_url, display_order, active } = req.body;
-    const image_url = req.file ? await persistUploadedFile(req.file) : null;
+    const image_url = req.file
+      ? await persistUploadedFile(req.file, { resourceType: 'banners' })
+      : null;
 
     if (!image_url) {
       return res.status(400).json({ error: 'A imagem do banner é obrigatória.' });
@@ -55,7 +57,7 @@ router.put('/:id', requireAdminSession, upload.single('image'), async (req, res)
 
     if (req.file) {
       query += ', image_url = ?';
-      params.push(await persistUploadedFile(req.file));
+      params.push(await persistUploadedFile(req.file, { resourceType: 'banners' }));
     }
 
     query += ' WHERE id = ?';
