@@ -102,8 +102,7 @@ const CategoryTable = ({ mainCategories, subCategories, products, searchTerm, fi
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <button
-                        className="btn-icon"
-                        style={{ width: '24px', height: '24px', border: 'none', background: '#f1f5f9' }}
+                        className="btn-icon category-expand-button"
                         onClick={() => toggleExpand(cat.id)}
                       >
                         <ChevronRight

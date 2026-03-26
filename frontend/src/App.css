@@ -4,12 +4,33 @@
   --bg-light: #f8f9fa;
   --white: #ffffff;
   --text: #333;
+  --surface: #ffffff;
+  --surface-soft: #f8fafc;
+  --surface-muted: #eef3f8;
+  --border-soft: rgba(15, 23, 42, 0.08);
+  --heading: #0f172a;
   --header-height: 70px;
   --header-height-mobile: 64px;
   --site-bg:
     radial-gradient(circle at top, rgba(0, 74, 153, 0.08), transparent 35%),
     linear-gradient(180deg, #f8fbff 0%, #eef3f8 100%);
   --transition: 0.3s ease;
+}
+
+body[data-theme='dark'] {
+  --primary: #60a5fa;
+  --secondary: #94a3b8;
+  --bg-light: #0f172a;
+  --white: #08111f;
+  --text: #d7e3f4;
+  --surface: #0f172a;
+  --surface-soft: #111c2e;
+  --surface-muted: #0b1525;
+  --border-soft: rgba(148, 163, 184, 0.2);
+  --heading: #f8fafc;
+  --site-bg:
+    radial-gradient(circle at top, rgba(96, 165, 250, 0.16), transparent 35%),
+    linear-gradient(180deg, #07111f 0%, #0b1525 100%);
 }
 
 /* Reset Global */
@@ -32,6 +53,52 @@ body {
   width: 100%;
   min-height: 100vh;
   background: var(--site-bg);
+}
+
+.theme-toggle-button {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 6000;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--heading);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+  backdrop-filter: blur(14px);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.theme-toggle-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 46px rgba(15, 23, 42, 0.18);
+}
+
+.theme-toggle-icon {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(0, 74, 153, 0.12) 0%, rgba(96, 165, 250, 0.18) 100%);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.theme-toggle-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+body[data-theme='dark'] .theme-toggle-button {
+  background: rgba(10, 18, 31, 0.92);
 }
 
 .app-loader-overlay {
@@ -856,6 +923,59 @@ body {
   .social-links {
     justify-content: center;
   }
+}
+
+body[data-theme='dark'] .header,
+body[data-theme='dark'] .dropdown,
+body[data-theme='dark'] .nav-mobile,
+body[data-theme='dark'] .site-search-content,
+body[data-theme='dark'] .search-trigger,
+body[data-theme='dark'] .header-search-input-wrap,
+body[data-theme='dark'] .site-search-input-wrap,
+body[data-theme='dark'] .site-search-result,
+body[data-theme='dark'] .site-search-empty,
+body[data-theme='dark'] .footer,
+body[data-theme='dark'] .footer-bottom,
+body[data-theme='dark'] .nav-mobile a,
+body[data-theme='dark'] .header-search-close,
+body[data-theme='dark'] .site-search-close {
+  background: var(--surface) !important;
+  color: var(--text);
+  border-color: var(--border-soft) !important;
+}
+
+body[data-theme='dark'] .header-search-input-wrap,
+body[data-theme='dark'] .site-search-input-wrap,
+body[data-theme='dark'] .nav-mobile a,
+body[data-theme='dark'] .site-search-result,
+body[data-theme='dark'] .header-search-close,
+body[data-theme='dark'] .site-search-close {
+  background: var(--surface-soft) !important;
+}
+
+body[data-theme='dark'] .nav-item > a,
+body[data-theme='dark'] .nav-item > span,
+body[data-theme='dark'] .dropdown a,
+body[data-theme='dark'] .site-search-header h3,
+body[data-theme='dark'] .footer-section h4,
+body[data-theme='dark'] .footer-bottom a,
+body[data-theme='dark'] .header-search-input-wrap input,
+body[data-theme='dark'] .site-search-input-wrap input {
+  color: var(--heading) !important;
+}
+
+body[data-theme='dark'] .footer-section p,
+body[data-theme='dark'] .site-search-empty,
+body[data-theme='dark'] .header-search-input-wrap input::placeholder,
+body[data-theme='dark'] .site-search-input-wrap input::placeholder {
+  color: var(--secondary) !important;
+}
+
+body[data-theme='dark'] .header,
+body[data-theme='dark'] .dropdown,
+body[data-theme='dark'] .nav-mobile,
+body[data-theme='dark'] .site-search-content {
+  box-shadow: 0 14px 34px rgba(2, 6, 23, 0.45);
 }
 
 

@@ -9,7 +9,9 @@ import {
   Phone,
   MapPin,
   X,
-  ChevronDown
+  ChevronDown,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 import Home from './components/Home/Home';
@@ -31,6 +33,8 @@ import { validateAdminSession } from './services/adminAuth';
 import { subscribeToAdminSessionExpired } from './services/adminSessionEvents';
 import { assetPath } from './utils/assets';
 import './App.css';
+
+const THEME_STORAGE_KEY = 'talmax-theme';
 
 const FullScreenLoader = ({ label = 'Carregando...' }) => (
   <div className="app-loader-overlay" role="status" aria-live="polite" aria-label={label}>
@@ -88,6 +92,13 @@ const ProtectedAdminRoute = ({ children }) => {
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [appReady, setAppReady] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === 'undefined') {
+      return 'light';
+    }
+
+    return window.localStorage.getItem(THEME_STORAGE_KEY) || 'light';
+  });
   const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '');
 
   useEffect(() => {
@@ -121,12 +132,17 @@ function App() {
     <Router basename={routerBasename}>
       <ScrollToTop />
       {!appReady && <FullScreenLoader label="Carregando site..." />}
-      <AppContent menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+      <AppContent
+        menuOpen={menuOpen}
+        setMenuOpen={setMenuOpen}
+        theme={theme}
+        onToggleTheme={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+      />
     </Router>
   );
 }
 
-const AppContent = ({ menuOpen, setMenuOpen }) => {
+const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const isAdmin = location.pathname.startsWith('/admin');
@@ -173,6 +189,12 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
 
     return unsubscribe;
   }, [location.pathname, navigate]);
+
+  useEffect(() => {
+    const appliedTheme = isAdmin ? theme : 'light';
+    document.body.dataset.theme = appliedTheme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, appliedTheme);
+  }, [isAdmin, theme]);
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
@@ -236,6 +258,23 @@ const AppContent = ({ menuOpen, setMenuOpen }) => {
 
   return (
     <div className="app">
+      {isAdmin && (
+        <button
+          type="button"
+          className="theme-toggle-button"
+          onClick={onToggleTheme}
+          aria-label={theme === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'}
+          title={theme === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'}
+        >
+          <span className="theme-toggle-icon">
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </span>
+          <span className="theme-toggle-text">
+            {theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+          </span>
+        </button>
+      )}
+
       {!isAdmin && (
         <header className="header">
           <div className="header-top">

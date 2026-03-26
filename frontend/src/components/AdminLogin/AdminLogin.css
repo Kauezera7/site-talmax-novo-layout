@@ -166,3 +166,48 @@
     margin: 0 auto;
   }
 }
+
+body[data-theme='dark'] .admin-login-page {
+  background:
+    radial-gradient(circle at top, rgba(96, 165, 250, 0.16), transparent 35%),
+    linear-gradient(180deg, #07111f 0%, #0b1525 100%);
+}
+
+body[data-theme='dark'] .admin-login-brand h1,
+body[data-theme='dark'] .admin-login-card-header h2,
+body[data-theme='dark'] .admin-login-input input {
+  color: #f8fafc;
+}
+
+body[data-theme='dark'] .admin-login-brand p,
+body[data-theme='dark'] .admin-login-field span {
+  color: #94a3b8;
+}
+
+body[data-theme='dark'] .admin-login-badge {
+  background: rgba(96, 165, 250, 0.12);
+  color: #93c5fd;
+}
+
+body[data-theme='dark'] .admin-login-card {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(148, 163, 184, 0.16);
+  box-shadow: 0 24px 60px rgba(2, 6, 23, 0.34);
+}
+
+body[data-theme='dark'] .admin-login-input {
+  background: #08111f;
+  border-color: rgba(148, 163, 184, 0.18);
+  color: #94a3b8;
+}
+
+body[data-theme='dark'] .admin-login-input:focus-within {
+  border-color: rgba(96, 165, 250, 0.34);
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.08);
+}
+
+body[data-theme='dark'] .admin-login-error {
+  background: rgba(127, 29, 29, 0.22);
+  border-color: rgba(248, 113, 113, 0.26);
+  color: #fecaca;
+}

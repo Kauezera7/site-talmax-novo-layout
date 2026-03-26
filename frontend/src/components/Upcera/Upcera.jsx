@@ -26,6 +26,59 @@ const normalizeText = (value) => (value || '')
   .normalize('NFD')
   .replace(/[\u0300-\u036f]/g, '');
 
+const getSectionDisplayMode = (product, sectionKey) => (
+  product.specialSectionDisplay?.[sectionKey] || 'features'
+);
+
+const renderSpecialSectionContent = (product, accentColor, sectionKey) => {
+  const preferredDisplayMode = getSectionDisplayMode(product, sectionKey);
+  const descriptionItems = (product.description || '').split('\n').map((item) => item.trim()).filter(Boolean);
+  const hasDescription = Boolean((product.description || '').trim());
+  const hasFeatures = Array.isArray(product.features) && product.features.length > 0;
+
+  const displayMode = preferredDisplayMode === 'none'
+    ? 'none'
+    : preferredDisplayMode === 'description'
+      ? (hasDescription ? 'description' : (hasFeatures ? 'features' : 'none'))
+      : (hasFeatures ? 'features' : (hasDescription ? 'description' : 'none'));
+
+  if (displayMode === 'none') {
+    return null;
+  }
+
+  if (displayMode === 'description') {
+    if (product.descriptionAsList && descriptionItems.length > 0) {
+      return (
+        <div className="features-container" style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+          {descriptionItems.slice(0, 5).map((item, index) => (
+            <div key={index} className="feature-item" style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
+              <div style={{ width: '10px', height: '10px', background: accentColor, borderRadius: '2px', marginTop: '8px', flexShrink: 0 }}></div>
+              <span className="feature-text" style={{ fontSize: '1.4rem', color: '#000', fontWeight: '300', lineHeight: '1.2' }}>{item}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <p style={{ fontSize: '1.2rem', color: '#000', fontWeight: '300', lineHeight: '1.7', maxWidth: '720px' }}>
+        {product.description}
+      </p>
+    );
+  }
+
+  return (
+    <div className="features-container" style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+      {(product.features || []).slice(0, 5).map((feat, i) => (
+        <div key={i} className="feature-item" style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
+          <div style={{ width: '10px', height: '10px', background: accentColor, borderRadius: '2px', marginTop: '8px', flexShrink: 0 }}></div>
+          <span className="feature-text" style={{ fontSize: '1.4rem', color: '#000', fontWeight: '300', lineHeight: '1.2' }}>{feat}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const Upcera = () => {
   const [products, setProducts] = useState([]);
   const [cadCamProducts, setCadCamProducts] = useState([]);
@@ -142,14 +195,7 @@ const Upcera = () => {
                       <span style={{ fontSize: '0.85rem', fontWeight: '900', letterSpacing: '4px', color: accentColor, textTransform: 'uppercase' }}>High Tech Ceramics</span>
                     </div>
                     <h2 style={{ fontSize: '3.5rem', fontWeight: '900', lineHeight: '1', letterSpacing: '-2px', marginBottom: '40px', color: '#020202', textTransform: 'uppercase', cursor: 'pointer' }} onClick={() => navigate(`/produto/${product.id}`)}>{product.name}</h2>
-                    <div className="features-container" style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-                      {(product.features || []).slice(0, 5).map((feat, i) => (
-                        <div key={i} className="feature-item" style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
-                          <div style={{ width: '10px', height: '10px', background: accentColor, borderRadius: '2px', marginTop: '8px', flexShrink: 0 }}></div>
-                          <span className="feature-text" style={{ fontSize: '1.4rem', color: '#000', fontWeight: '300', lineHeight: '1.2' }}>{feat}</span>
-                        </div>
-                      ))}
-                    </div>
+                    {renderSpecialSectionContent(product, accentColor, 'upcera')}
                     <motion.button 
                       whileHover={{ scale: 1.05 }} 
                       whileTap={{ scale: 0.95 }} 

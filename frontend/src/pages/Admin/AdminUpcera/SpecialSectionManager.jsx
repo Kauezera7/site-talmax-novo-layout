@@ -2,6 +2,32 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Save, CheckCircle, ChevronRight } from 'lucide-react';
 import { apiAssetPath, assetPath } from '../../../utils/assets';
 
+const DISPLAY_MODE_OPTIONS = [
+  { value: 'description', label: 'Descricao' },
+  { value: 'features', label: 'Destaques' },
+  { value: 'none', label: 'Sem nada' }
+];
+
+const parseExtraData = (value) => {
+  if (!value) return {};
+
+  try {
+    return typeof value === 'string' ? JSON.parse(value) : value;
+  } catch (error) {
+    return {};
+  }
+};
+
+const getInitialDisplayMode = (product, sectionKey) => {
+  const extra = parseExtraData(product.extra_data);
+  const storedMode = extra.specialSectionDisplay?.[sectionKey];
+
+  if (storedMode) return storedMode;
+  if (Array.isArray(extra.features) && extra.features.length > 0) return 'features';
+  if ((product.description || '').trim()) return 'description';
+  return 'none';
+};
+
 const SpecialSectionManager = ({
   sectionTitle,
   sectionKey,
@@ -64,6 +90,7 @@ const SpecialSectionManager = ({
       })
       .map((product) => ({
         id: product.id,
+        displayMode: getInitialDisplayMode(product, sectionKey),
         order: (sectionKey === 'upcera'
           ? product.upcera_order
           : (sectionKey === 'scanners' ? product.scanner_order : product.printer_order)) || ''
@@ -80,12 +107,18 @@ const SpecialSectionManager = ({
       return;
     }
 
-    setSelectedProducts([...selectedProducts, { id: product.id, order: '' }]);
+    setSelectedProducts([...selectedProducts, { id: product.id, order: '', displayMode: getInitialDisplayMode(product, sectionKey) }]);
   };
 
   const updateOrder = (id, order) => {
     setSelectedProducts(selectedProducts.map((item) =>
       item.id === id ? { ...item, order } : item
+    ));
+  };
+
+  const updateDisplayMode = (id, displayMode) => {
+    setSelectedProducts(selectedProducts.map((item) =>
+      item.id === id ? { ...item, displayMode } : item
     ));
   };
 
@@ -236,6 +269,15 @@ const SpecialSectionManager = ({
                           placeholder="--"
                           className="product-order-input"
                         />
+                        <select
+                          value={selected.displayMode || 'features'}
+                          onChange={(e) => updateDisplayMode(product.id, e.target.value)}
+                          className="product-display-mode-select"
+                        >
+                          {DISPLAY_MODE_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
                       </div>
                     )}
                   </div>
