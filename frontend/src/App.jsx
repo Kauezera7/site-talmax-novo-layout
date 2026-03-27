@@ -148,7 +148,10 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
   const isAdmin = location.pathname.startsWith('/admin');
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [navVisible, setNavVisible] = useState(true);
   const searchInputRef = useRef(null);
+  const lastScrollYRef = useRef(0);
+  const tickingScrollRef = useRef(false);
   const searchRoutes = [
     { path: '/', keywords: ['home', 'inicio', 'principal'] },
     { path: '/quem-somos', keywords: ['quem somos', 'empresa', 'talmax'] },
@@ -189,6 +192,37 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
 
     return unsubscribe;
   }, [location.pathname, navigate]);
+
+  useEffect(() => {
+    if (isAdmin) return undefined;
+    lastScrollYRef.current = window.scrollY;
+
+    const handleScroll = () => {
+      if (tickingScrollRef.current) return;
+
+      tickingScrollRef.current = true;
+
+      window.requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY;
+        const delta = currentScrollY - lastScrollYRef.current;
+
+        if (currentScrollY <= 24) {
+          setNavVisible(true);
+        } else if (delta > 14 && currentScrollY > 160) {
+          setNavVisible((current) => (current ? false : current));
+        } else if (delta < -14) {
+          setNavVisible((current) => (current ? current : true));
+        }
+
+        lastScrollYRef.current = currentScrollY;
+        tickingScrollRef.current = false;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isAdmin]);
 
   useEffect(() => {
     const appliedTheme = isAdmin ? theme : 'light';
@@ -276,88 +310,36 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
       )}
 
       {!isAdmin && (
-        <header className="header">
+        <header className={`header ${navVisible ? 'nav-expanded' : 'nav-collapsed'}`}>
           <div className="header-top">
             <Link to="/" className="logo">
               <img src={assetPath('img/Talmaxlogo.webp')} alt="TALMAX" />
             </Link>
 
-            <nav className="nav-desktop hide-mobile">
-              <div className="nav-item nav-search-item">
-                <button
-                  className="search-trigger nav-search-button"
-                  onClick={() => setSearchOpen((current) => !current)}
-                  aria-label="Abrir busca"
-                >
-                  <Search size={18} />
-                </button>
-              </div>
+            <div className="header-search-desktop hide-mobile">
+              <form className="header-search-inline" onSubmit={handleSearchSubmit}>
+                <Search size={18} />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Buscar produtos, categorias e conteudos..."
+                />
+                <button type="submit">Buscar</button>
+              </form>
+            </div>
 
-              <div className="nav-item">
-                <Link to="/">Home</Link>
-              </div>
-
-              <div className="nav-item">
-                <span>Institucional <ChevronDown size={14} /></span>
-                <div className="dropdown">
-                  <Link to="/quem-somos">Quem Somos</Link>
-                  <Link to="/historia-diretoria">História & Diretoria</Link>
-                  <Link to="/depoimentos">Depoimentos</Link>
-                </div>
-              </div>
-
-              <div className="nav-item">
-                <span>Produtos <ChevronDown size={14} /></span>
-                <div className="dropdown">
-                  <Link to="/produtos" className="highlight-link">Ver Todos os Produtos</Link>
-                  <hr />
-                  <Link to="/categoria/talmax-digital" style={{ fontWeight: '700', color: 'var(--primary)' }}>Talmax Digital</Link>
-                  <Link to="/categoria/protese-dentaria" style={{ fontWeight: '700', color: 'var(--primary)' }}>Prótese Dentária</Link>
-                  <Link to="/categoria/nail-e-podologia" style={{ fontWeight: '700', color: 'var(--primary)' }}>Nail e Podologia</Link>
-                </div>
-              </div>
-
-              <div className="nav-item">
-                <a href="https://mobywork.com.br" target="_blank" rel="noopener noreferrer">Moby Work</a>
-              </div>
-
-              <div className="nav-item">
-                <Link to="/blog">Blog</Link>
-              </div>
-
-              <div className="nav-item">
-                <span>Serviços <ChevronDown size={14} /></span>
-                <div className="dropdown">
-                  <Link to="/suporte">Suporte</Link>
-                  <Link to="/assistencia-tecnica">Assistência Técnica</Link>
-                </div>
-              </div>
-
-              <div className="nav-item">
-                <span>Contato <ChevronDown size={14} /></span>
-                <div className="dropdown">
-                  <Link to="/contato">Formulário de Contato</Link>
-                  <Link to="/comercial-comex">Comercial / Comex</Link>
-                  <a href="https://www.bne.com.br/talmax" target="_blank" rel="noopener noreferrer">Trabalhe Conosco</a>
-                </div>
-              </div>
-
-              <div className="nav-item">
-                <Link to="/cursos">Cursos</Link>
-              </div>
-
-              <div className="nav-item">
-                <Link to="https://talmax.com.br/portalcliente/" target="_blank" rel="noopener noreferrer">Portal do Cliente</Link>
-              </div>
-
-              <div className="nav-item">
-                <span>SAC <ChevronDown size={14} /></span>
-                <div className="dropdown">
-                  <Link to="/sac">Fale Conosco</Link>
-                  <Link to="/politicas-troca">Políticas de Troca</Link>
-                </div>
-              </div>
-            </nav>
+            <div className="header-socials hide-mobile">
+              <a href="https://www.instagram.com/talmaxprodutosodontologicos/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                <Instagram size={16} />
+              </a>
+              <a href="https://www.facebook.com/talmaxprodutosodontologicos" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                <Facebook size={16} />
+              </a>
+              <a href="https://www.youtube.com/@talmaxdigital" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+                <Youtube size={16} />
+              </a>
+            </div>
 
             <button
               className={`menu-toggle ${menuOpen ? 'is-open' : ''}`}
@@ -369,6 +351,77 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
               <span className="menu-toggle-bar" />
               <span className="menu-toggle-bar" />
             </button>
+          </div>
+
+          <div className={`sub-header hide-mobile ${navVisible ? 'is-visible' : 'is-hidden'}`}>
+            <div className="sub-header-inner">
+              <nav className="nav-desktop">
+                <div className="nav-item">
+                  <Link to="/">Home</Link>
+                </div>
+
+                <div className="nav-item">
+                  <span>Institucional <ChevronDown size={14} /></span>
+                  <div className="dropdown">
+                    <Link to="/quem-somos">Quem Somos</Link>
+                    <Link to="/historia-diretoria">História & Diretoria</Link>
+                    <Link to="/depoimentos">Depoimentos</Link>
+                  </div>
+                </div>
+
+                <div className="nav-item">
+                  <span>Produtos <ChevronDown size={14} /></span>
+                  <div className="dropdown">
+                    <Link to="/produtos" className="highlight-link">Ver Todos os Produtos</Link>
+                    <hr />
+                    <Link to="/categoria/talmax-digital" style={{ fontWeight: '700', color: 'var(--primary)' }}>Talmax Digital</Link>
+                    <Link to="/categoria/protese-dentaria" style={{ fontWeight: '700', color: 'var(--primary)' }}>Prótese Dentária</Link>
+                    <Link to="/categoria/nail-e-podologia" style={{ fontWeight: '700', color: 'var(--primary)' }}>Nail e Podologia</Link>
+                  </div>
+                </div>
+
+                <div className="nav-item">
+                  <a href="https://mobywork.com.br" target="_blank" rel="noopener noreferrer">Moby Work</a>
+                </div>
+
+                <div className="nav-item">
+                  <Link to="/blog">Blog</Link>
+                </div>
+
+                <div className="nav-item">
+                  <span>Serviços <ChevronDown size={14} /></span>
+                  <div className="dropdown">
+                    <Link to="/suporte">Suporte</Link>
+                    <Link to="/assistencia-tecnica">Assistência Técnica</Link>
+                  </div>
+                </div>
+
+                <div className="nav-item">
+                  <span>Contato <ChevronDown size={14} /></span>
+                  <div className="dropdown">
+                    <Link to="/contato">Formulário de Contato</Link>
+                    <Link to="/comercial-comex">Comercial / Comex</Link>
+                    <a href="https://www.bne.com.br/talmax" target="_blank" rel="noopener noreferrer">Trabalhe Conosco</a>
+                  </div>
+                </div>
+
+                <div className="nav-item">
+                  <Link to="/cursos">Cursos</Link>
+                </div>
+
+                <div className="nav-item">
+                  <Link to="https://talmax.com.br/portalcliente/" target="_blank" rel="noopener noreferrer">Portal do Cliente</Link>
+                </div>
+
+                <div className="nav-item">
+                  <span>SAC <ChevronDown size={14} /></span>
+                  <div className="dropdown">
+                    <Link to="/sac">Fale Conosco</Link>
+                    <Link to="/politicas-troca">Políticas de Troca</Link>
+                  </div>
+                </div>
+              </nav>
+            </div>
           </div>
 
           {searchOpen && (

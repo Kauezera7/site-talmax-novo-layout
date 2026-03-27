@@ -3,25 +3,44 @@
   margin: 0;
   overflow: hidden;
   position: relative;
-  background-color: #f0f0f0;
+  background: transparent;
+  transition: height 0.35s ease;
+}
+
+.hero-slider-loading {
+  min-height: min(60vw, 600px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .hero-swiper {
   width: 100%;
-  height: auto;
+  height: 100% !important;
+  background: transparent;
+  transition: height 0.35s ease;
+}
+
+.hero-swiper .swiper-wrapper,
+.hero-swiper .swiper-slide {
+  height: 100% !important;
+  background: transparent;
 }
 
 .slide-content {
   position: relative;
   width: 100%;
-  height: auto;
+  height: 100%;
+  background: transparent;
 }
 
 .banner-img {
   width: 100%;
   height: auto;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
+  background: transparent;
 }
 
 .swiper-button-next,

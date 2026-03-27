@@ -45,8 +45,49 @@ export const slides = [
  * SERVIÇOS: Banners coloridos fixos no final da página Home.
  */
 export const services = [
-  { id: 1, name: 'Moby Work', color: '#1a237e' },
-  { id: 2, name: 'Talmax Digital', color: '#01579b' },
-  { id: 3, name: 'Cursos', color: '#006064' },
-  { id: 4, name: 'Suporte', color: '#1b5e20' },
+  {
+    id: 1,
+    name: 'Moby Work',
+    color: '#1a237e',
+    description: 'Conheca a linha de moveis e projetos planejados para clinicas e laboratorios.',
+    href: 'https://mobywork.com.br',
+    external: true,
+    actions: [
+      { label: 'Acessar Site', href: 'https://mobywork.com.br', external: true },
+    ],
+  },
+  {
+    id: 2,
+    name: 'Talmax Digital',
+    color: '#01579b',
+    description: 'Explore nossas solucoes digitais e tecnologias para fluxo CAD/CAM odontologico.',
+    href: '/categoria/talmax-digital',
+    external: false,
+    actions: [
+      { label: 'Ver Solucoes', href: '/categoria/talmax-digital' },
+    ],
+  },
+  {
+    id: 3,
+    name: 'Cursos',
+    color: '#006064',
+    description: 'Acesse treinamentos, atualizacoes e conteudos para evoluir com a Talmax.',
+    href: '/cursos',
+    external: false,
+    actions: [
+      { label: 'Ver Cursos', href: '/cursos' },
+    ],
+  },
+  {
+    id: 4,
+    name: 'Serviços',
+    color: '#1b5e20',
+    description: 'Escolha o canal ideal para atendimento especializado e suporte da Talmax.',
+    href: '/suporte',
+    external: false,
+    actions: [
+      { label: 'Assistencia Tecnica', href: '/assistencia-tecnica' },
+      { label: 'Suporte', href: '/suporte' },
+    ],
+  },
 ];
