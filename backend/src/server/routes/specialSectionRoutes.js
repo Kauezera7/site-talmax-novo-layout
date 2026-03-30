@@ -24,6 +24,10 @@ const normalizeDisplayMode = (value) => (
   VALID_DISPLAY_MODES.has(value) ? value : 'features'
 );
 
+const parseSectionLabel = (config) => (
+  config.sectionKey ? config.sectionKey.toUpperCase() : config.flagColumn.toUpperCase()
+);
+
 const saveSpecialSectionProducts = async (req, res, config) => {
   const connection = await db.getConnection();
 
@@ -55,19 +59,29 @@ const saveSpecialSectionProducts = async (req, res, config) => {
       selectedIds
     );
 
-    await connection.query(`UPDATE products SET ${config.flagColumn} = FALSE, ${config.orderColumn} = 0`);
+    if (config.orderColumn) {
+      await connection.query(`UPDATE products SET ${config.flagColumn} = FALSE, ${config.orderColumn} = 0`);
+    } else {
+      await connection.query(`UPDATE products SET ${config.flagColumn} = FALSE`);
+    }
 
     for (const product of affectedProducts) {
       if (selectedIdSet.has(product.id)) continue;
 
       const extra = parseExtraData(product.extra_data);
-      const specialSectionDisplay = { ...(extra.specialSectionDisplay || {}) };
-      delete specialSectionDisplay[config.sectionKey];
+      if (config.sectionKey) {
+        const specialSectionDisplay = { ...(extra.specialSectionDisplay || {}) };
+        delete specialSectionDisplay[config.sectionKey];
 
-      if (Object.keys(specialSectionDisplay).length === 0) {
-        delete extra.specialSectionDisplay;
-      } else {
-        extra.specialSectionDisplay = specialSectionDisplay;
+        if (Object.keys(specialSectionDisplay).length === 0) {
+          delete extra.specialSectionDisplay;
+        } else {
+          extra.specialSectionDisplay = specialSectionDisplay;
+        }
+      }
+
+      if (config.extraOrderKey) {
+        delete extra[config.extraOrderKey];
       }
 
       await connection.query('UPDATE products SET extra_data = ? WHERE id = ?', [JSON.stringify(extra), product.id]);
@@ -76,21 +90,34 @@ const saveSpecialSectionProducts = async (req, res, config) => {
     for (const item of normalizedProducts) {
       const existingProduct = affectedProducts.find((product) => product.id === item.id);
       const extra = parseExtraData(existingProduct?.extra_data);
-      const specialSectionDisplay = { ...(extra.specialSectionDisplay || {}) };
-      specialSectionDisplay[config.sectionKey] = item.displayMode;
-      extra.specialSectionDisplay = specialSectionDisplay;
+      if (config.sectionKey) {
+        const specialSectionDisplay = { ...(extra.specialSectionDisplay || {}) };
+        specialSectionDisplay[config.sectionKey] = item.displayMode;
+        extra.specialSectionDisplay = specialSectionDisplay;
+      }
 
-      await connection.query(
-        `UPDATE products SET ${config.flagColumn} = TRUE, ${config.orderColumn} = ?, extra_data = ? WHERE id = ?`,
-        [item.order, JSON.stringify(extra), item.id]
-      );
+      if (config.extraOrderKey) {
+        extra[config.extraOrderKey] = item.order;
+      }
+
+      if (config.orderColumn) {
+        await connection.query(
+          `UPDATE products SET ${config.flagColumn} = TRUE, ${config.orderColumn} = ?, extra_data = ? WHERE id = ?`,
+          [item.order, JSON.stringify(extra), item.id]
+        );
+      } else {
+        await connection.query(
+          `UPDATE products SET ${config.flagColumn} = TRUE, extra_data = ? WHERE id = ?`,
+          [JSON.stringify(extra), item.id]
+        );
+      }
     }
 
     await connection.commit();
     return res.json({ message: config.successMessage });
   } catch (err) {
     await connection.rollback().catch(() => {});
-    console.error(`ERRO AO SALVAR ${config.sectionKey.toUpperCase()} NO BACKEND:`, err.message);
+    console.error(`ERRO AO SALVAR ${parseSectionLabel(config)} NO BACKEND:`, err.message);
     return res.status(500).json({ error: err.message });
   } finally {
     connection.release();
@@ -121,6 +148,14 @@ router.put('/3d-printers/products', requireAdminSession, async (req, res) => {
     orderColumn: 'printer_order',
     sectionKey: 'printers',
     successMessage: 'Produtos Impressoras 3D atualizados com sucesso!'
+  });
+});
+
+router.put('/featured-products', requireAdminSession, async (req, res) => {
+  await saveSpecialSectionProducts(req, res, {
+    flagColumn: 'is_featured',
+    extraOrderKey: 'featured_order',
+    successMessage: 'Produtos em destaque atualizados com sucesso!'
   });
 });
 

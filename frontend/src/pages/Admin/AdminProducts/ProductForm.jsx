@@ -7,6 +7,7 @@ import './AdminProducts.css';
 
 const createInitialFormState = () => ({
   name: '',
+  is_active: true,
   category_ids: [],
   sub_category_ids: [],
   description: '',
@@ -66,6 +67,7 @@ const ProductForm = ({
 
       setFormData({
         name: initialData.name || '',
+        is_active: initialData.is_active !== false,
         category_ids: initialData.category_ids || [],
         sub_category_ids: initialData.sub_category_ids || [],
         description: initialData.description || '',
@@ -199,6 +201,7 @@ const ProductForm = ({
 
     const data = new FormData();
     data.append('name', formData.name);
+    data.append('is_active', String(formData.is_active));
     data.append('description', formData.description);
     data.append('primary_image_index', String(primaryImageIndex >= 0 ? primaryImageIndex : 0));
 
@@ -239,6 +242,20 @@ const ProductForm = ({
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           />
+        </div>
+
+        <div className="product-form-options">
+          <label className="product-form-option">
+            <input
+              type="checkbox"
+              checked={formData.is_active}
+              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+            />
+            <div>
+              <strong>Produto ativo no catalogo</strong>
+              <span>Quando desativado, ele some do catalogo e das paginas publicas, mas continua no painel administrativo.</span>
+            </div>
+          </label>
         </div>
 
         <div className="form-group">

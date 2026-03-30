@@ -215,13 +215,14 @@ body[data-theme='dark'] .theme-toggle-button {
   background: rgba(255, 255, 255, 0.9);
   transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
   will-change: opacity, transform;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .sub-header-inner {
   max-width: 1600px;
   margin: 0 auto;
   padding: 0 clamp(1rem, 3vw, 2.5rem);
+  overflow: visible;
 }
 
 .sub-header.is-visible {

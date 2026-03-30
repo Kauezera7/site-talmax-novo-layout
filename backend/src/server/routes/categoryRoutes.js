@@ -9,6 +9,7 @@ const { safe } = require('../utils/common');
 const { requireAdminSession } = require('../auth/adminSession');
 const { parseBooleanFlag } = require('../utils/requestParsers');
 const { persistUploadedFile } = require('../services/fileStorageService');
+const { listBackupCategories } = require('../services/backupContentService');
 
 const router = express.Router();
 
@@ -25,7 +26,11 @@ router.get('/', async (req, res) => {
     const [rows] = await db.query(query);
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    try {
+      res.json(listBackupCategories());
+    } catch (backupError) {
+      res.status(500).json({ error: err.message });
+    }
   }
 });
 

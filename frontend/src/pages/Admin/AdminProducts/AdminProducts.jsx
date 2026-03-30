@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../../../context/AdminContext';
@@ -8,7 +8,7 @@ import './AdminProducts.css';
 
 const normalizeProductName = (value) => (value || '').trim().toLocaleLowerCase('pt-BR');
 
-const AdminProducts = () => {
+const AdminProducts = ({ productToEdit = null, onProductEditHandled }) => {
   const { products, categories, mainCategories, subCategories, productsHook, addToast } = useAdmin();
   const [editingProduct, setEditingProduct] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -16,6 +16,32 @@ const AdminProducts = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formSessionKey, setFormSessionKey] = useState(0);
   const [isProductListCollapsed, setIsProductListCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (!productToEdit) return;
+
+    setEditingProduct(productToEdit);
+    setFormSessionKey((current) => current + 1);
+    setIsProductListCollapsed(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    onProductEditHandled?.();
+  }, [productToEdit, onProductEditHandled]);
+
+  useEffect(() => {
+    const handleAdminEditProduct = (event) => {
+      if (!event.detail) return;
+      setEditingProduct(event.detail);
+      setFormSessionKey((current) => current + 1);
+      setIsProductListCollapsed(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.addEventListener('admin-edit-product', handleAdminEditProduct);
+
+    return () => {
+      window.removeEventListener('admin-edit-product', handleAdminEditProduct);
+    };
+  }, []);
 
   const handleCreate = () => {
     setEditingProduct(null);
@@ -31,6 +57,19 @@ const AdminProducts = () => {
   const handleDeleteClick = (product) => {
     setProductToDelete(product);
     setShowDeleteModal(true);
+  };
+
+  const handleToggleActive = async (product) => {
+    const result = await productsHook.updateProductActiveStatus(product.id, !product.is_active);
+
+    if (result.success) {
+      addToast(`Produto ${product.is_active ? 'inativado' : 'ativado'} com sucesso!`);
+      if (editingProduct?.id === product.id) {
+        setEditingProduct({ ...product, is_active: !product.is_active });
+      }
+    } else {
+      addToast(result.error, 'error');
+    }
   };
 
   const confirmDelete = async () => {
@@ -111,6 +150,7 @@ const AdminProducts = () => {
                 onCreate={handleCreate}
                 onEdit={handleEdit}
                 onDelete={handleDeleteClick}
+                onToggleActive={handleToggleActive}
                 selectedProductId={editingProduct?.id || null}
               />
             </motion.aside>

@@ -5,16 +5,14 @@
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  CheckCircle2, 
-  MessageCircle, 
-  Info, 
+import {
+  ArrowLeft,
+  CheckCircle2,
+  MessageCircle,
+  Info,
   ChevronRight,
   ChevronLeft,
   Package,
-  Layers,
-  Settings,
   Sparkles
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -30,6 +28,7 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [allProducts, setAllProducts] = useState([]);
   const [activeImage, setActiveImage] = useState('');
+  const [isFeaturesCollapsed, setIsFeaturesCollapsed] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,7 +39,7 @@ const ProductDetail = () => {
           fetch(`${API_URL}/products/${id}`),
           fetch(`${API_URL}/products`)
         ]);
-        
+
         if (!prodRes.ok) {
           navigate('/produtos');
           return;
@@ -48,39 +47,30 @@ const ProductDetail = () => {
 
         const data = await prodRes.json();
         const others = await allRes.json();
-        
+
         let extra = {};
         try {
           if (data.extra_data) {
             extra = typeof data.extra_data === 'string' ? JSON.parse(data.extra_data) : data.extra_data;
           }
-        } catch(e) { 
-          console.error("Erro ao processar dados extras:", e);
-          extra = {}; 
+        } catch (e) {
+          console.error('Erro ao processar dados extras:', e);
+          extra = {};
         }
 
-        // Garantir que extra seja um objeto e não null
         if (!extra) extra = {};
 
-        // Normalização de dados: Se o produto é antigo e não tem modelTable, converte aqui para exibição
         let finalTable = extra.modelTable;
         if (!finalTable && extra.models && extra.models.length > 0) {
           finalTable = {
-            headers: extra.modelHeaders || ['Tipo / Referência', 'Código'],
-            rows: (typeof extra.models[0] === 'object' && !Array.isArray(extra.models[0])) 
-                  ? extra.models.map(m => [m.type || '', m.code || ''])
-                  : extra.models
+            headers: extra.modelHeaders || ['Tipo / Referencia', 'Codigo'],
+            rows: (typeof extra.models[0] === 'object' && !Array.isArray(extra.models[0]))
+              ? extra.models.map((model) => [model.type || '', model.code || ''])
+              : extra.models
           };
         }
 
-        const segmentSlugs = ['talmax-digital', 'protese-dentaria', 'nail-e-podologia'];
-        const segmentNames = others
-          .filter(p => p.category_name && segmentSlugs.some(slug => p.category_name.toLowerCase().includes(slug.replace('-', ' '))))
-          // Na verdade, melhor buscar as categorias reais para ter os nomes exatos
-          .map(p => p.category_name);
-
-        // Como não temos a lista de categorias aqui, vamos carregar ou usar um filtro fixo baseado nos nomes conhecidos
-        const fixedSegmentNames = ['Talmax Digital', 'Prótese Dentária', 'Nail e Podologia'];
+        const fixedSegmentNames = ['Talmax Digital', 'Protese Dentaria', 'Nail e Podologia'];
 
         const formattedProduct = {
           id: data.id,
@@ -95,15 +85,20 @@ const ProductDetail = () => {
 
         setProduct(formattedProduct);
         setActiveImage(formattedProduct.image);
-        setAllProducts(others.map(p => ({
-          id: p.id,
-          name: p.name,
-          category: getVisibleCategoryLabel(p.category_names || p.category_name || '', fixedSegmentNames),
-          image: p.main_image ? apiAssetPath(p.main_image) : assetPath('img/placeholder.png')
+        setIsFeaturesCollapsed(true);
+        setAllProducts(others.map((currentProduct) => ({
+          id: currentProduct.id,
+          name: currentProduct.name,
+          category: getVisibleCategoryLabel(
+            currentProduct.category_names || currentProduct.category_name || '',
+            fixedSegmentNames
+          ),
+          image: currentProduct.main_image
+            ? apiAssetPath(currentProduct.main_image)
+            : assetPath('img/placeholder.png')
         })));
-
       } catch (err) {
-        console.error("Erro ao carregar detalhes:", err);
+        console.error('Erro ao carregar detalhes:', err);
       } finally {
         setLoading(false);
       }
@@ -130,7 +125,7 @@ const ProductDetail = () => {
   const relatedProducts = useMemo(() => {
     if (!product) return [];
     return allProducts
-      .filter(p => p.category === product.category && p.id !== product.id)
+      .filter((currentProduct) => currentProduct.category === product.category && currentProduct.id !== product.id)
       .slice(0, 4);
   }, [product, allProducts]);
 
@@ -149,7 +144,7 @@ const ProductDetail = () => {
   if (loading) return <div className="detail-loader">Carregando...</div>;
   if (!product) return null;
 
-  const whatsappMessage = encodeURIComponent(`Olá! Gostaria de mais informações sobre o produto: ${product.name}`);
+  const whatsappMessage = encodeURIComponent(`Ola! Gostaria de mais informacoes sobre o produto: ${product.name}`);
   const whatsappUrl = `https://wa.me/554130123456?text=${whatsappMessage}`;
 
   return (
@@ -169,7 +164,7 @@ const ProductDetail = () => {
         </button>
 
         <div className="product-detail-grid">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="product-images-section"
@@ -186,7 +181,11 @@ const ProductDetail = () => {
             {product.images && product.images.length > 1 && (
               <div className="thumbnail-grid">
                 {product.images.map((img, idx) => (
-                  <div key={idx} className={`thumb-item ${activeImage === img ? 'active' : ''}`} onClick={() => setActiveImage(img)}>
+                  <div
+                    key={idx}
+                    className={`thumb-item ${activeImage === img ? 'active' : ''}`}
+                    onClick={() => setActiveImage(img)}
+                  >
                     <img src={img} alt={`${product.name} ${idx}`} />
                   </div>
                 ))}
@@ -194,7 +193,7 @@ const ProductDetail = () => {
             )}
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             className="product-info-section"
@@ -204,7 +203,7 @@ const ProductDetail = () => {
             <div className="product-description">
               {product.descriptionAsList ? (
                 <ul className="description-list">
-                  {product.description.split('\n').filter(line => line.trim() !== '').map((line, idx) => (
+                  {product.description.split('\n').filter((line) => line.trim() !== '').map((line, idx) => (
                     <li key={idx}><CheckCircle2 size={16} className="text-primary" /> {line}</li>
                   ))}
                 </ul>
@@ -215,26 +214,43 @@ const ProductDetail = () => {
 
             {product.features && product.features.length > 0 && (
               <div className="product-features">
-                <h3><Info size={18} /> Características Principais</h3>
-                <ul>
-                  {product.features.map((feature, idx) => (
-                    <li key={idx}><CheckCircle2 size={16} className="text-primary" /><span>{feature}</span></li>
-                  ))}
-                </ul>
+                <button
+                  type="button"
+                  className="product-features__toggle"
+                  onClick={() => setIsFeaturesCollapsed((current) => !current)}
+                  aria-expanded={!isFeaturesCollapsed}
+                >
+                  <span className="product-features__title">
+                    <Info size={18} /> Caracteristicas Principais
+                  </span>
+                  <span className="product-features__action">
+                    {isFeaturesCollapsed ? 'Expandir' : 'Recolher'}
+                    <ChevronRight
+                      size={18}
+                      className={`product-features__chevron ${isFeaturesCollapsed ? 'is-collapsed' : ''}`}
+                    />
+                  </span>
+                </button>
+                {!isFeaturesCollapsed && (
+                  <ul>
+                    {product.features.map((feature, idx) => (
+                      <li key={idx}><CheckCircle2 size={16} className="text-primary" /><span>{feature}</span></li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
 
             <div className="product-actions">
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp-quote">
-                <MessageCircle size={20} /> Solicitar Orçamento
+                <MessageCircle size={20} /> Solicitar Orcamento
               </a>
             </div>
           </motion.div>
         </div>
 
-        {/* TABELA DE MODELOS - LARGURA TOTAL */}
         {product.modelTable && product.showModelSection !== false && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -242,28 +258,27 @@ const ProductDetail = () => {
           >
             <div className="section-title-group">
               <Package size={24} className="text-primary" />
-              <h2>{product.modelTitle || "Modelos / Códigos"}</h2>
+              <h2>{product.modelTitle || 'Modelos / Codigos'}</h2>
             </div>
 
             <div className="table-container">
               <table className={`models-table ${product.hideModelData ? 'strip-mode' : ''}`}>
                 <thead>
                   <tr>
-                    {product.modelTable.headers.map((h, i) => <th key={i}>{h}</th>)}
+                    {product.modelTable.headers.map((header, index) => <th key={index}>{header}</th>)}
                   </tr>
                 </thead>
                 {!product.hideModelData && (
                   <tbody>
-                    {modelRowsToRender.map((row, ri) => (
-                      <tr key={ri}>
-                        {row.map((cell, ci) => <td key={ci}>{cell}</td>)}
+                    {modelRowsToRender.map((row, rowIndex) => (
+                      <tr key={rowIndex}>
+                        {row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}
                       </tr>
                     ))}
                   </tbody>
                 )}
               </table>
             </div>
-
           </motion.div>
         )}
 
@@ -271,7 +286,7 @@ const ProductDetail = () => {
           <div className="related-products-section">
             <div className="section-header">
               <h2><Sparkles size={24} className="text-primary" /> Produtos Relacionados</h2>
-              <p>Confira outras soluções da categoria <strong>{product.category}</strong></p>
+              <p>Confira outras solucoes da categoria <strong>{product.category}</strong></p>
             </div>
             <div className="related-grid">
               {relatedProducts.map((related, index) => (

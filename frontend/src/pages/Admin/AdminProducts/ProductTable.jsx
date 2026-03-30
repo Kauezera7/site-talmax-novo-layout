@@ -1,15 +1,32 @@
-import React, { useState } from 'react';
-import { Edit, Trash2, Search, List, Plus } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Edit, Trash2, Search, List, Plus, Eye, EyeOff, Filter } from 'lucide-react';
 import { apiAssetPath, assetPath } from '../../../utils/assets';
 
-const ProductTable = ({ products, onCreate, onEdit, onDelete, selectedProductId }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Ver Todos' },
+  { value: 'active', label: 'Somente Ativos' },
+  { value: 'hidden', label: 'Somente Ocultos' }
+];
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.id.toString().includes(searchTerm) ||
-    (product.category_names && product.category_names.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+const ProductTable = ({ products, onCreate, onEdit, onDelete, onToggleActive, selectedProductId }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+
+  const filteredProducts = useMemo(() => {
+    let result = products.filter((product) =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.id.toString().includes(searchTerm) ||
+      (product.category_names && product.category_names.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    if (filterStatus === 'active') {
+      result = result.filter((product) => product.is_active);
+    } else if (filterStatus === 'hidden') {
+      result = result.filter((product) => !product.is_active);
+    }
+
+    return result;
+  }, [products, searchTerm, filterStatus]);
 
   return (
     <div className="admin-card">
@@ -34,6 +51,17 @@ const ProductTable = ({ products, onCreate, onEdit, onDelete, selectedProductId 
         />
       </div>
 
+      <div className="filter-group product-list-filter-group">
+        <div className="filter-control">
+          <Filter size={14} />
+          <select value={filterStatus} onChange={(event) => setFilterStatus(event.target.value)}>
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div className="product-sidebar-list">
         {filteredProducts.map((product) => (
           <div
@@ -50,6 +78,9 @@ const ProductTable = ({ products, onCreate, onEdit, onDelete, selectedProductId 
             </div>
 
             <div className="product-badge-container">
+              <span className={`status-badge ${product.is_active ? 'status-active' : 'status-inactive'}`}>
+                {product.is_active ? 'Ativo' : 'Oculto'}
+              </span>
               {product.category_names ? (
                 product.category_names.split(', ').slice(0, 2).map((category, index) => (
                   <span key={index} className="badge-soft-blue">{category}</span>
@@ -60,6 +91,17 @@ const ProductTable = ({ products, onCreate, onEdit, onDelete, selectedProductId 
             </div>
 
             <div className="product-sidebar-actions">
+              <button
+                type="button"
+                className="btn-icon"
+                title={product.is_active ? 'Ocultar' : 'Ativar'}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleActive(product);
+                }}
+              >
+                {product.is_active ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
               <button
                 type="button"
                 className="btn-icon edit"

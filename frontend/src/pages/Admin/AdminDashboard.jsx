@@ -26,8 +26,10 @@ import { logoutAdmin } from '../../services/adminAuth';
 import './AdminBase.css';
 
 import AdminProducts from './AdminProducts/AdminProducts';
+import AdminProductsList from './AdminProducts/AdminProductsList';
 import AdminCategories from './AdminCategories/AdminCategories';
 import AdminBanners from './AdminBanners/AdminBanners';
+import AdminFeatured from './AdminFeatured/AdminFeatured';
 import AdminUpcera from './AdminUpcera/AdminUpcera';
 import AdminScanners from './AdminScanners/AdminScanners';
 import AdminPrinters from './AdminPrinters/AdminPrinters';
@@ -88,10 +90,14 @@ const AdminDashboardContent = () => {
     loading,
     activeTab,
     setActiveTab,
+    productToEdit,
+    setProductToEdit,
     isSidebarCollapsed,
     setIsSidebarCollapsed,
     isMobileMenuOpen,
     setIsMobileMenuOpen,
+    isCatalogOpen,
+    setIsCatalogOpen,
     isPagesOpen,
     setIsPagesOpen,
     toasts
@@ -103,24 +109,49 @@ const AdminDashboardContent = () => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-    { id: 'products', label: 'Produtos', icon: <Package size={20} /> },
     { id: 'categories', label: 'Categorias', icon: <Layers size={20} /> },
     { id: 'banners', label: 'Banners', icon: <ImageIcon size={20} /> }
   ];
+  const catalogItems = [
+    { id: 'products', label: 'Cadastro de Produtos', icon: <Package size={18} /> },
+    { id: 'products-list', label: 'Lista de Produtos', icon: <Search size={18} /> }
+  ];
   const pageItems = [
+    { id: 'featured', label: 'Home Destaques', icon: <Package size={18} /> },
     { id: 'upcera', label: 'Upcera', icon: <CheckCircle size={18} /> },
     { id: 'scanners', label: 'Scanners', icon: <Search size={18} /> },
     { id: 'printers', label: 'Impressoras 3D', icon: <ImageIcon size={18} /> }
   ];
-  const activeItem = [...menuItems, ...pageItems].find((item) => item.id === activeTab);
+  const activeItem = [...menuItems, ...catalogItems, ...pageItems].find((item) => item.id === activeTab);
+  const isCatalogSectionActive = catalogItems.some((item) => item.id === activeTab);
   const isPagesSectionActive = pageItems.some((item) => item.id === activeTab);
 
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'dashboard': return <DashboardHome onOpenTab={setActiveTab} />;
-      case 'products': return <AdminProducts />;
+      case 'products':
+        return (
+          <AdminProducts
+            productToEdit={productToEdit}
+            onProductEditHandled={() => setProductToEdit(null)}
+          />
+        );
+      case 'products-list':
+        return (
+          <AdminProductsList
+            onOpenRegister={() => {
+              setProductToEdit(null);
+              setActiveTab('products');
+            }}
+            onEditProduct={(product) => {
+              setProductToEdit(product);
+              setActiveTab('products');
+            }}
+          />
+        );
       case 'categories': return <AdminCategories />;
       case 'banners': return <AdminBanners />;
+      case 'featured': return <AdminFeatured />;
       case 'upcera': return <AdminUpcera />;
       case 'scanners': return <AdminScanners />;
       case 'printers': return <AdminPrinters />;
@@ -160,6 +191,44 @@ const AdminDashboardContent = () => {
             </div>
           ))}
 
+          <div className={`nav-dropdown ${isCatalogOpen ? 'open' : ''}`}>
+            <div
+              className={`nav-link ${isCatalogSectionActive ? 'active' : ''}`}
+              onClick={() => {
+                if (isSidebarCollapsed) {
+                  setIsSidebarCollapsed(false);
+                  setIsCatalogOpen(true);
+                } else {
+                  setIsCatalogOpen(!isCatalogOpen);
+                }
+              }}
+            >
+              <Package size={20} />
+              {!isSidebarCollapsed && <span>Catálogo</span>}
+              {!isSidebarCollapsed && <ChevronRight size={16} className="dropdown-arrow" />}
+            </div>
+
+            {!isSidebarCollapsed && (
+              <div className="dropdown-content">
+                {catalogItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`nav-link sub-link ${activeTab === item.id ? 'active' : ''}`}
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setIsCatalogOpen(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <div className="dot" />
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className={`nav-dropdown ${isPagesOpen ? 'open' : ''}`}>
             <div
               className={`nav-link ${isPagesSectionActive ? 'active' : ''}`}
@@ -173,7 +242,7 @@ const AdminDashboardContent = () => {
               }}
             >
               <Layers size={20} />
-              {!isSidebarCollapsed && <span>Paginas</span>}
+              {!isSidebarCollapsed && <span>Páginas</span>}
               {!isSidebarCollapsed && <ChevronRight size={16} className="dropdown-arrow" />}
             </div>
 
@@ -255,8 +324,10 @@ const AdminDashboardContent = () => {
 
 const useAdminState = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [productToEdit, setProductToEdit] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCatalogOpen, setIsCatalogOpen] = useState(true);
   const [isPagesOpen, setIsPagesOpen] = useState(true);
   const { loading, toasts } = useAdmin();
 
@@ -264,10 +335,14 @@ const useAdminState = () => {
     loading,
     activeTab,
     setActiveTab,
+    productToEdit,
+    setProductToEdit,
     isSidebarCollapsed,
     setIsSidebarCollapsed,
     isMobileMenuOpen,
     setIsMobileMenuOpen,
+    isCatalogOpen,
+    setIsCatalogOpen,
     isPagesOpen,
     setIsPagesOpen,
     toasts

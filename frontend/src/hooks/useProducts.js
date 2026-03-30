@@ -53,12 +53,23 @@ export const useProducts = () => {
     }
   };
 
+  const updateProductActiveStatus = async (id, isActive) => {
+    try {
+      await productService.updateActiveStatus(id, isActive);
+      await fetchProducts();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
   const updateSpecialSection = async (section, selectedProducts) => {
     try {
       let res;
       if (section === 'upcera') res = await productService.updateUpcera(selectedProducts);
       else if (section === 'scanners') res = await productService.updateScanners(selectedProducts);
       else if (section === 'printers') res = await productService.updatePrinters(selectedProducts);
+      else if (section === 'featured') res = await productService.updateFeatured(selectedProducts);
       
       await fetchProducts();
       return { success: true };
@@ -74,6 +85,7 @@ export const useProducts = () => {
     refresh: fetchProducts,
     createProduct,
     updateProduct,
+    updateProductActiveStatus,
     deleteProduct,
     updateSpecialSection
   };

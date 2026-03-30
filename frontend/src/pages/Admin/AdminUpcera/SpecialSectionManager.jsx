@@ -28,6 +28,18 @@ const getInitialDisplayMode = (product, sectionKey) => {
   return 'none';
 };
 
+const getInitialOrder = (product, sectionKey) => {
+  const extra = parseExtraData(product.extra_data);
+
+  if (sectionKey === 'featured') {
+    return extra.featured_order || '';
+  }
+
+  return (sectionKey === 'upcera'
+    ? product.upcera_order
+    : (sectionKey === 'scanners' ? product.scanner_order : product.printer_order)) || '';
+};
+
 const SpecialSectionManager = ({
   sectionTitle,
   sectionKey,
@@ -35,6 +47,7 @@ const SpecialSectionManager = ({
   mainCategories,
   subCategories = [],
   categoryMatcher,
+  supportsDisplayMode = true,
   onSave
 }) => {
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -83,6 +96,7 @@ const SpecialSectionManager = ({
   useEffect(() => {
     const initial = scopedProducts
       .filter((product) => {
+        if (sectionKey === 'featured') return product.is_featured;
         if (sectionKey === 'upcera') return product.is_upcera;
         if (sectionKey === 'scanners') return product.is_scanner;
         if (sectionKey === 'printers') return product.is_3d_printer;
@@ -91,9 +105,7 @@ const SpecialSectionManager = ({
       .map((product) => ({
         id: product.id,
         displayMode: getInitialDisplayMode(product, sectionKey),
-        order: (sectionKey === 'upcera'
-          ? product.upcera_order
-          : (sectionKey === 'scanners' ? product.scanner_order : product.printer_order)) || ''
+        order: getInitialOrder(product, sectionKey)
       }));
 
     setSelectedProducts(initial);
@@ -238,7 +250,9 @@ const SpecialSectionManager = ({
 
           <div className="admin-section-group special-section-card">
             <p className="special-section-hint">
-              Selecione quais produtos devem aparecer na página de {sectionTitle} e defina a ordem.
+              {supportsDisplayMode
+                ? `Selecione quais produtos devem aparecer na página de ${sectionTitle} e defina a ordem.`
+                : `Selecione quais produtos devem aparecer em ${sectionTitle} e defina a ordem de exibição.`}
             </p>
 
             <div className="special-products-list">
@@ -269,15 +283,17 @@ const SpecialSectionManager = ({
                           placeholder="--"
                           className="product-order-input"
                         />
-                        <select
-                          value={selected.displayMode || 'features'}
-                          onChange={(e) => updateDisplayMode(product.id, e.target.value)}
-                          className="product-display-mode-select"
-                        >
-                          {DISPLAY_MODE_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                          ))}
-                        </select>
+                        {supportsDisplayMode && (
+                          <select
+                            value={selected.displayMode || 'features'}
+                            onChange={(e) => updateDisplayMode(product.id, e.target.value)}
+                            className="product-display-mode-select"
+                          >
+                            {DISPLAY_MODE_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                          </select>
+                        )}
                       </div>
                     )}
                   </div>

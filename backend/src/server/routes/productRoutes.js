@@ -10,7 +10,8 @@ const { requireAdminSession } = require('../auth/adminSession');
 const {
   parseJsonObject,
   parseIdArray,
-  parseInteger
+  parseInteger,
+  parseBooleanFlag
 } = require('../utils/requestParsers');
 const {
   listProducts,
@@ -18,6 +19,10 @@ const {
   attachProductCategories
 } = require('../services/productService');
 const { persistUploadedFilesByType } = require('../services/fileStorageService');
+const {
+  listBackupProducts,
+  findBackupProductById
+} = require('../services/backupContentService');
 
 const router = express.Router();
 
@@ -105,17 +110,25 @@ const hasMainCategory = async (connection, categoryIds) => {
 };
 
 router.get('/', async (req, res) => {
+  const includeInactive = parseBooleanFlag(req.query.include_inactive);
+
   try {
-    const products = await listProducts(db);
+    const products = await listProducts(db, { includeInactive });
     res.json(products);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    try {
+      res.json(listBackupProducts({ includeInactive }));
+    } catch (backupError) {
+      res.status(500).json({ error: err.message });
+    }
   }
 });
 
 router.get('/:id', async (req, res) => {
+  const includeInactive = parseBooleanFlag(req.query.include_inactive);
+
   try {
-    const product = await findProductById(db, req.params.id);
+    const product = await findProductById(db, req.params.id, { includeInactive });
 
     if (!product) {
       return res.status(404).json({ error: 'Produto nao encontrado' });
@@ -123,7 +136,17 @@ router.get('/:id', async (req, res) => {
 
     return res.json(product);
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    try {
+      const backupProduct = findBackupProductById(req.params.id, { includeInactive });
+
+      if (!backupProduct) {
+        return res.status(404).json({ error: 'Produto nao encontrado' });
+      }
+
+      return res.json(backupProduct);
+    } catch (backupError) {
+      return res.status(500).json({ error: err.message });
+    }
   }
 });
 
@@ -133,7 +156,7 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
   try {
     await connection.beginTransaction();
 
-    const { name, category_ids, sub_category_ids, description, extra_data } = req.body;
+    const { name, category_ids, sub_category_ids, description, extra_data, is_active } = req.body;
     const normalizedName = normalizeProductText(name);
     const normalizedDescription = normalizeProductText(description);
     const parsedCategoryIds = parseIdArray(category_ids);
@@ -162,10 +185,11 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
     }
 
     extra.images = mergedImagePaths;
+    const isActive = parseBooleanFlag(is_active) ? 1 : 0;
 
     const [result] = await connection.query(
-      'INSERT INTO products (name, description, main_image, extra_data) VALUES (?, ?, ?, ?)',
-      [normalizedName, normalizedDescription, safe(mergedImagePaths[0]), JSON.stringify(extra)]
+      'INSERT INTO products (name, description, main_image, extra_data, is_active) VALUES (?, ?, ?, ?, ?)',
+      [normalizedName, normalizedDescription, safe(mergedImagePaths[0]), JSON.stringify(extra), isActive]
     );
 
     const productId = result.insertId;
@@ -197,6 +221,7 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     const parsedSubCategoryIds = parseIdArray(sub_category_ids);
     const primaryImageIndex = parseInteger(req.body.primary_image_index, 0);
     const extra_data = req.body.extra_data;
+    const isActive = parseBooleanFlag(req.body.is_active) ? 1 : 0;
     const newImagePaths = await persistUploadedFilesByType(req.files || [], { resourceType: 'produtos' });
     const extra = parseJsonObject(extra_data);
     const duplicateProduct = await findDuplicateProductByName(connection, name, productId);
@@ -236,8 +261,8 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
 
     extra.images = mergedImagePaths;
 
-    let query = 'UPDATE products SET name=?, description=?, extra_data=?, main_image=?';
-    const params = [name, description, JSON.stringify(extra), safe(mergedImagePaths[0])];
+    let query = 'UPDATE products SET name=?, description=?, extra_data=?, main_image=?, is_active=?';
+    const params = [name, description, JSON.stringify(extra), safe(mergedImagePaths[0]), isActive];
 
     query += ' WHERE id=?';
     params.push(productId);
@@ -260,6 +285,16 @@ router.delete('/:id', requireAdminSession, async (req, res) => {
   try {
     await db.query('DELETE FROM products WHERE id = ?', [req.params.id]);
     return res.json({ message: 'Produto excluido!' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/:id/active', requireAdminSession, async (req, res) => {
+  try {
+    const isActive = parseBooleanFlag(req.body?.is_active) ? 1 : 0;
+    await db.query('UPDATE products SET is_active = ? WHERE id = ?', [isActive, req.params.id]);
+    return res.json({ message: `Produto ${isActive ? 'ativado' : 'inativado'}!` });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

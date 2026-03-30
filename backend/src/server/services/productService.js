@@ -16,20 +16,32 @@ const PRODUCT_SELECT_QUERY = `
 
 const formatProductRow = (row) => ({
   ...row,
-  category_ids: row.main_category_ids ? row.main_category_ids.split(',').map(Number) : [],
-  sub_category_ids: row.sub_category_ids ? row.sub_category_ids.split(',').map(Number) : [],
-  is_upcera: row.is_upcera === 1,
-  is_scanner: row.is_scanner === 1,
-  is_3d_printer: row.is_3d_printer === 1
+  category_ids: row.main_category_ids
+    ? String(row.main_category_ids).split(',').filter(Boolean).map(Number)
+    : [],
+  sub_category_ids: row.sub_category_ids
+    ? String(row.sub_category_ids).split(',').filter(Boolean).map(Number)
+    : [],
+  is_active: Number(row.is_active ?? 1) === 1,
+  is_featured: Number(row.is_featured) === 1,
+  is_upcera: Number(row.is_upcera) === 1,
+  is_scanner: Number(row.is_scanner) === 1,
+  is_3d_printer: Number(row.is_3d_printer) === 1
 });
 
-const listProducts = async (db) => {
-  const [rows] = await db.query(`${PRODUCT_SELECT_QUERY} ORDER BY p.id DESC`);
+const listProducts = async (db, options = {}) => {
+  const { includeInactive = false } = options;
+  const whereClause = includeInactive ? '' : ' WHERE p.is_active = 1';
+  const [rows] = await db.query(`${PRODUCT_SELECT_QUERY}${whereClause} ORDER BY p.id DESC`);
   return rows.map(formatProductRow);
 };
 
-const findProductById = async (db, productId) => {
-  const [rows] = await db.query(`${PRODUCT_SELECT_QUERY} WHERE p.id = ?`, [productId]);
+const findProductById = async (db, productId, options = {}) => {
+  const { includeInactive = false } = options;
+  const [rows] = await db.query(
+    `${PRODUCT_SELECT_QUERY} WHERE p.id = ?${includeInactive ? '' : ' AND p.is_active = 1'}`,
+    [productId]
+  );
   return rows[0] ? formatProductRow(rows[0]) : null;
 };
 
@@ -58,6 +70,7 @@ const attachProductCategories = async (connection, productId, mainCategoryIds, s
 };
 
 module.exports = {
+  formatProductRow,
   listProducts,
   findProductById,
   attachProductCategories

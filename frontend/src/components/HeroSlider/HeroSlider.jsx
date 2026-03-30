@@ -24,7 +24,6 @@ const HeroSlider = () => {
   const swiperRef = useRef(null);
   const containerRef = useRef(null);
   const navigate = useNavigate();
-  const shouldUseStaticFallback = import.meta.env.DEV;
 
   const measureActiveBanner = () => {
     const swiper = swiperRef.current;
@@ -74,20 +73,20 @@ const HeroSlider = () => {
         if (response.ok) {
           const data = await response.json();
           const activeBanners = data.filter((banner) => banner.active);
-          setBanners(activeBanners.length > 0 ? activeBanners : (shouldUseStaticFallback ? staticSlides : []));
+          setBanners(activeBanners.length > 0 ? activeBanners : staticSlides);
         } else {
-          setBanners(shouldUseStaticFallback ? staticSlides : []);
+          setBanners(staticSlides);
         }
       } catch (error) {
         console.error('Erro ao buscar banners:', error);
-        setBanners(shouldUseStaticFallback ? staticSlides : []);
+        setBanners(staticSlides);
       } finally {
         setLoading(false);
       }
     };
 
     fetchBanners();
-  }, [shouldUseStaticFallback]);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => measureActiveBanner();
