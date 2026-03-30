@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Pagina: Home
  * Rota: /
  * Responsabilidade: montar a pagina inicial e carregar categorias visiveis
@@ -9,6 +9,7 @@ import { services } from '../../data';
 import HeroSlider from '../HeroSlider/HeroSlider';
 import API_URL from '../../services/api';
 import { apiAssetPath, assetPath } from '../../utils/assets';
+import testeServicosImage from '../../assets/testeservicos.png';
 import './Home.css';
 
 const Home = () => {
@@ -41,13 +42,13 @@ const Home = () => {
 
       <section className="service-banners">
         {services.map((service) => {
-          const bannerClassName = `service-banner${service.name === 'Moby Work' ? ' service-banner-moby' : ''}${service.name === 'Talmax Digital' ? ' service-banner-talmax-digital' : ''}${service.name === 'Cursos' ? ' service-banner-cursos' : ''}${service.name === 'Serviços' ? ' service-banner-suporte' : ''}`;
+          const bannerClassName = `service-banner${service.name === 'Moby Work' ? ' service-banner-moby' : ''}${service.name === 'Talmax Digital' ? ' service-banner-talmax-digital' : ''}${service.name === 'Cursos' ? ' service-banner-cursos' : ''}${service.name === 'ServiÃ§os' ? ' service-banner-suporte' : ''}`;
 
           const imageByService = {
             'Moby Work': { src: assetPath('img/mobywork.png'), alt: 'Moby Work' },
             'Talmax Digital': { src: assetPath('img/talmaxdigita1.png'), alt: 'Talmax Digital' },
             Cursos: { src: assetPath('img/cursostalmax.png'), alt: 'Cursos Talmax' },
-            'Serviços': { src: assetPath('img/serviçostalmax.png'), alt: 'Servicos Talmax' },
+            'ServiÃ§os': { src: testeServicosImage, alt: 'ServiÃ§os Talmax' },
           };
 
           const image = imageByService[service.name];
@@ -159,3 +160,4 @@ const Home = () => {
 };
 
 export default Home;
+
