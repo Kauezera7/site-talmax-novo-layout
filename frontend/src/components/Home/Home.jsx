@@ -9,7 +9,6 @@ import { services } from '../../data';
 import HeroSlider from '../HeroSlider/HeroSlider';
 import API_URL from '../../services/api';
 import { apiAssetPath, assetPath } from '../../utils/assets';
-import testeServicosImage from '../../assets/testeservicos.png';
 import './Home.css';
 
 const Home = () => {
@@ -44,25 +43,20 @@ const Home = () => {
         {services.map((service) => {
           const bannerClassName = `service-banner${service.name === 'Moby Work' ? ' service-banner-moby' : ''}${service.name === 'Talmax Digital' ? ' service-banner-talmax-digital' : ''}${service.name === 'Cursos' ? ' service-banner-cursos' : ''}${service.name === 'ServiÃ§os' ? ' service-banner-suporte' : ''}`;
 
-          const imageByService = {
-            'Moby Work': { src: assetPath('img/mobywork.png'), alt: 'Moby Work' },
-            'Talmax Digital': { src: assetPath('img/talmaxdigita1.png'), alt: 'Talmax Digital' },
-            Cursos: { src: assetPath('img/cursostalmax.png'), alt: 'Cursos Talmax' },
-            'ServiÃ§os': { src: testeServicosImage, alt: 'ServiÃ§os Talmax' },
+          const imageByServiceId = {
+            1: { src: assetPath('img/mobywork.png'), alt: 'Moby Work' },
+            2: { src: assetPath('img/talmaxdigita1.png'), alt: 'Talmax Digital' },
+            3: { src: assetPath('img/cursostalmax.png'), alt: 'Cursos Talmax' },
+            4: { src: assetPath('img/testeservicos.png'), alt: 'Servicos Talmax' },
           };
 
-          const image = imageByService[service.name];
+          const image = imageByServiceId[service.id];
+          const bannerStyle = image
+            ? { backgroundImage: `url(${image.src})` }
+            : undefined;
 
           const bannerContent = (
             <>
-              {image ? (
-                <img
-                  src={image.src}
-                  alt={image.alt}
-                  className="service-banner-logo"
-                />
-              ) : null}
-
               <div className="service-banner-overlay">
                 <strong>{service.name}</strong>
                 <p>{service.description}</p>
@@ -102,6 +96,8 @@ const Home = () => {
               <div
                 key={service.id}
                 className={bannerClassName}
+                style={bannerStyle}
+                aria-label={image?.alt || service.name}
               >
                 {bannerContent}
               </div>
@@ -116,6 +112,8 @@ const Home = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={bannerClassName}
+                style={bannerStyle}
+                aria-label={image?.alt || service.name}
               >
                 {bannerContent}
               </a>
@@ -127,6 +125,8 @@ const Home = () => {
               key={service.id}
               to={service.href}
               className={bannerClassName}
+              style={bannerStyle}
+              aria-label={image?.alt || service.name}
             >
               {bannerContent}
             </Link>
@@ -160,4 +160,3 @@ const Home = () => {
 };
 
 export default Home;
-
