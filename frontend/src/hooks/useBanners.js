@@ -53,6 +53,29 @@ export const useBanners = () => {
     }
   };
 
+  const updateBannerStatus = async (banner, isActive) => {
+    const previousBanners = banners;
+    setBanners((currentBanners) => currentBanners.map((currentBanner) => (
+      currentBanner.id === banner.id
+        ? { ...currentBanner, active: isActive }
+        : currentBanner
+    )));
+
+    const formData = new FormData();
+    formData.append('active', isActive);
+    formData.append('title', banner.title || '');
+    formData.append('link_url', banner.link_url || '');
+    formData.append('display_order', banner.display_order ?? 0);
+
+    try {
+      await bannerService.update(banner.id, formData);
+      return { success: true };
+    } catch (err) {
+      setBanners(previousBanners);
+      return { success: false, error: err.message };
+    }
+  };
+
   return {
     banners,
     loading,
@@ -60,6 +83,7 @@ export const useBanners = () => {
     refresh: fetchBanners,
     createBanner,
     updateBanner,
+    updateBannerStatus,
     deleteBanner
   };
 };

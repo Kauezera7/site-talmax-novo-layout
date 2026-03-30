@@ -56,6 +56,32 @@ export const useCategories = () => {
     }
   };
 
+  const updateCategoryVisibility = async (category, isVisible) => {
+    const previousCategories = categories;
+    setCategories((currentCategories) => currentCategories.map((currentCategory) => (
+      currentCategory.id === category.id
+        ? { ...currentCategory, is_visible: isVisible }
+        : currentCategory
+    )));
+
+    const formData = new FormData();
+    formData.append('is_visible', isVisible);
+    formData.append('name', category.name || '');
+    formData.append('slug', category.slug || '');
+
+    if (category.parent_id) {
+      formData.append('parent_id', category.parent_id);
+    }
+
+    try {
+      await categoryService.update(category.id, formData);
+      return { success: true };
+    } catch (err) {
+      setCategories(previousCategories);
+      return { success: false, error: err.message };
+    }
+  };
+
   return {
     categories,
     mainCategories,
@@ -65,6 +91,7 @@ export const useCategories = () => {
     refresh: fetchCategories,
     createCategory,
     updateCategory,
+    updateCategoryVisibility,
     deleteCategory
   };
 };

@@ -195,9 +195,7 @@ const AdminProductsList = ({ onOpenRegister, onEditProduct }) => {
                         disabled={togglingId === product.id}
                         title={product.is_active ? 'Clique para ocultar do catálogo' : 'Clique para ativar no catálogo'}
                       >
-                        {togglingId === product.id ? (
-                          <span className="status-badge-spinner" />
-                        ) : product.is_active ? (
+                        {product.is_active ? (
                           <Eye size={12} />
                         ) : (
                           <EyeOff size={12} />

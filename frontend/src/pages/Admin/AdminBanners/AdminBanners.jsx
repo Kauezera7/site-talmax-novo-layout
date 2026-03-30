@@ -67,13 +67,7 @@ const AdminBanners = () => {
   };
 
   const handleToggleStatus = async (banner) => {
-    const data = new FormData();
-    data.append('active', !banner.active);
-    data.append('title', banner.title || '');
-    data.append('link_url', banner.link_url || '');
-    data.append('display_order', banner.display_order ?? 0);
-
-    const result = await bannersHook.updateBanner(banner.id, data);
+    const result = await bannersHook.updateBannerStatus(banner, !banner.active);
     if (result.success) {
       addToast(`Banner ${!banner.active ? 'ativado' : 'desativado'}!`);
     } else {

@@ -6,8 +6,13 @@ export const useProducts = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
+  const fetchProducts = useCallback(async (options = {}) => {
+    const { silent = false } = options;
+
+    if (!silent) {
+      setLoading(true);
+    }
+
     try {
       const data = await productService.getAll();
       setProducts(data);
@@ -15,7 +20,9 @@ export const useProducts = () => {
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -54,11 +61,16 @@ export const useProducts = () => {
   };
 
   const updateProductActiveStatus = async (id, isActive) => {
+    const previousProducts = products;
+    setProducts((currentProducts) => currentProducts.map((product) => (
+      product.id === id ? { ...product, is_active: isActive } : product
+    )));
+
     try {
       await productService.updateActiveStatus(id, isActive);
-      await fetchProducts();
       return { success: true };
     } catch (err) {
+      setProducts(previousProducts);
       return { success: false, error: err.message };
     }
   };

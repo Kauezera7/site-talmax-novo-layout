@@ -133,7 +133,7 @@ const getAdminSessionToken = (req) => {
 
 const getAdminCookieOptions = () => ({
   httpOnly: true,
-  sameSite: isProduction ? 'none' : 'lax',
+  sameSite: isProduction ? 'strict' : 'lax',
   secure: isProduction,
   path: '/',
   maxAge: ADMIN_JWT_EXPIRES_IN_SECONDS * 1000

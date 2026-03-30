@@ -91,13 +91,7 @@ const AdminCategories = () => {
   };
 
   const handleToggleVisibility = async (category) => {
-    const data = new FormData();
-    data.append('is_visible', !category.is_visible);
-    data.append('name', category.name);
-    data.append('slug', category.slug);
-    if (category.parent_id) data.append('parent_id', category.parent_id);
-
-    const result = await categoriesHook.updateCategory(category.id, data);
+    const result = await categoriesHook.updateCategoryVisibility(category, !category.is_visible);
     if (result.success) {
       addToast(`Categoria ${!category.is_visible ? 'visível' : 'oculta'}!`);
     } else {
