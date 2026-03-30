@@ -1,32 +1,17 @@
 import React, { useMemo, useState } from 'react';
-import { Edit, Trash2, Search, List, Plus, Eye, EyeOff, Filter } from 'lucide-react';
+import { Edit, Trash2, Search, List, Plus, Eye, EyeOff } from 'lucide-react';
 import { apiAssetPath, assetPath } from '../../../utils/assets';
-
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'Ver Todos' },
-  { value: 'active', label: 'Somente Ativos' },
-  { value: 'hidden', label: 'Somente Ocultos' }
-];
 
 const ProductTable = ({ products, onCreate, onEdit, onDelete, onToggleActive, selectedProductId }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
 
-  const filteredProducts = useMemo(() => {
-    let result = products.filter((product) =>
+  const filteredProducts = useMemo(() => (
+    products.filter((product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.id.toString().includes(searchTerm) ||
       (product.category_names && product.category_names.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-
-    if (filterStatus === 'active') {
-      result = result.filter((product) => product.is_active);
-    } else if (filterStatus === 'hidden') {
-      result = result.filter((product) => !product.is_active);
-    }
-
-    return result;
-  }, [products, searchTerm, filterStatus]);
+    )
+  ), [products, searchTerm]);
 
   return (
     <div className="admin-card">
@@ -49,17 +34,6 @@ const ProductTable = ({ products, onCreate, onEdit, onDelete, onToggleActive, se
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
         />
-      </div>
-
-      <div className="filter-group product-list-filter-group">
-        <div className="filter-control">
-          <Filter size={14} />
-          <select value={filterStatus} onChange={(event) => setFilterStatus(event.target.value)}>
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </div>
       </div>
 
       <div className="product-sidebar-list">

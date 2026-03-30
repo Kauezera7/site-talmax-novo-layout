@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Package, Search, ExternalLink, Filter, Check, ChevronDown, Edit } from 'lucide-react';
+import { Package, Search, ExternalLink, Filter, Check, ChevronDown, Edit, Eye, EyeOff } from 'lucide-react';
 import { useAdmin } from '../../../context/AdminContext';
 import { apiAssetPath, assetPath } from '../../../utils/assets';
 import './AdminProducts.css';
@@ -13,10 +13,11 @@ const STATUS_OPTIONS = [
 ];
 
 const AdminProductsList = ({ onOpenRegister, onEditProduct }) => {
-  const { products } = useAdmin();
+  const { products, productsHook, addToast } = useAdmin();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const [togglingId, setTogglingId] = useState(null);
   const statusDropdownRef = useRef(null);
 
   useEffect(() => {
@@ -57,6 +58,25 @@ const AdminProductsList = ({ onOpenRegister, onEditProduct }) => {
 
     return result;
   }, [products, searchTerm, filterStatus]);
+
+  const handleToggleStatus = async (event, product) => {
+    event.stopPropagation();
+    if (togglingId === product.id) return;
+    setTogglingId(product.id);
+    const newStatus = !product.is_active;
+    const result = await productsHook.updateProductActiveStatus(product.id, newStatus);
+    setTogglingId(null);
+    if (result.success) {
+      addToast(
+        newStatus
+          ? `"${product.name}" ativado no catálogo.`
+          : `"${product.name}" ocultado do catálogo.`,
+        'success'
+      );
+    } else {
+      addToast('Erro ao atualizar status do produto.', 'error');
+    }
+  };
 
   return (
     <div className="admin-products-list-page">
@@ -168,9 +188,22 @@ const AdminProductsList = ({ onOpenRegister, onEditProduct }) => {
                       </div>
                     </td>
                     <td>
-                      <span className={`status-badge ${product.is_active ? 'status-active' : 'status-inactive'}`}>
+                      <button
+                        type="button"
+                        className={`status-badge ${product.is_active ? 'status-active' : 'status-inactive'}${togglingId === product.id ? ' is-toggling' : ''}`}
+                        onClick={(event) => handleToggleStatus(event, product)}
+                        disabled={togglingId === product.id}
+                        title={product.is_active ? 'Clique para ocultar do catálogo' : 'Clique para ativar no catálogo'}
+                      >
+                        {togglingId === product.id ? (
+                          <span className="status-badge-spinner" />
+                        ) : product.is_active ? (
+                          <Eye size={12} />
+                        ) : (
+                          <EyeOff size={12} />
+                        )}
                         {product.is_active ? 'Ativo' : 'Oculto'}
-                      </span>
+                      </button>
                     </td>
                     <td className="actions-cell">
                       <button

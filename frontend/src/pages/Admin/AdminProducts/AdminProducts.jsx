@@ -16,6 +16,7 @@ const AdminProducts = ({ productToEdit = null, onProductEditHandled }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formSessionKey, setFormSessionKey] = useState(0);
   const [isProductListCollapsed, setIsProductListCollapsed] = useState(false);
+  const activeProducts = products.filter((product) => product.is_active);
 
   useEffect(() => {
     if (!productToEdit) return;
@@ -93,7 +94,7 @@ const AdminProducts = ({ productToEdit = null, onProductEditHandled }) => {
     if (isSubmitting) return;
 
     const incomingName = normalizeProductName(formData.get('name'));
-    const duplicateProduct = products.find((product) => (
+    const duplicateProduct = activeProducts.find((product) => (
       normalizeProductName(product.name) === incomingName
       && product.id !== editingProduct?.id
     ));
@@ -146,7 +147,7 @@ const AdminProducts = ({ productToEdit = null, onProductEditHandled }) => {
               exit={{ opacity: 0, x: -16 }}
             >
               <ProductTable
-                products={products}
+                products={activeProducts}
                 onCreate={handleCreate}
                 onEdit={handleEdit}
                 onDelete={handleDeleteClick}
