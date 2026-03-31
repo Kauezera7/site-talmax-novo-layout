@@ -24,6 +24,11 @@ const AdminLogin = () => {
   }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
+    if (location.state?.sessionExpired) {
+      setIsCheckingSession(false);
+      return undefined;
+    }
+
     let mounted = true;
 
     validateAdminSession()
@@ -48,7 +53,7 @@ const AdminLogin = () => {
     return () => {
       mounted = false;
     };
-  }, [navigate]);
+  }, [location.state, navigate]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
