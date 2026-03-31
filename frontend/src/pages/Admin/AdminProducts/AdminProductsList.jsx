@@ -5,6 +5,38 @@ import { apiAssetPath, assetPath } from '../../../utils/assets';
 import './AdminProducts.css';
 
 const normalizeSearchValue = (value = '') => value.toString().toLowerCase().trim();
+const parseExtraData = (value) => {
+  if (!value) return {};
+  try {
+    return typeof value === 'string' ? JSON.parse(value) : value;
+  } catch (error) {
+    return {};
+  }
+};
+
+const shouldShowQuoteButton = (value) => !(
+  value === false ||
+  value === 'false' ||
+  value === 0 ||
+  value === '0'
+);
+
+const getCategoryCount = (product) => {
+  const mainCount = Array.isArray(product.category_ids) ? product.category_ids.length : 0;
+  const subCount = Array.isArray(product.sub_category_ids) ? product.sub_category_ids.length : 0;
+
+  if (mainCount || subCount) {
+    return mainCount + subCount;
+  }
+
+  return product.category_names
+    ? product.category_names.split(',').map((item) => item.trim()).filter(Boolean).length
+    : 0;
+};
+
+const getNextQuoteButtonValue = (product) => (
+  !shouldShowQuoteButton(parseExtraData(product.extra_data).showQuoteButton)
+);
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Ver Todos' },
@@ -75,6 +107,23 @@ const AdminProductsList = ({ onOpenRegister, onEditProduct }) => {
       );
     } else {
       addToast('Erro ao atualizar status do produto.', 'error');
+    }
+  };
+
+  const handleToggleQuoteButton = async (event, product) => {
+    event.stopPropagation();
+    const nextValue = getNextQuoteButtonValue(product);
+    const result = await productsHook.updateProductQuoteButtonStatus(product.id, nextValue);
+
+    if (result.success) {
+      addToast(
+        nextValue
+          ? `"${product.name}" com botão de orçamento ativado.`
+          : `"${product.name}" com botão de orçamento desativado.`,
+        'success'
+      );
+    } else {
+      addToast('Erro ao atualizar botão de orçamento.', 'error');
     }
   };
 
@@ -154,6 +203,7 @@ const AdminProductsList = ({ onOpenRegister, onEditProduct }) => {
                 <tr>
                   <th>Produto</th>
                   <th>Categorias</th>
+                  <th>Orçamento</th>
                   <th>Status</th>
                   <th>Ações</th>
                 </tr>
@@ -177,15 +227,19 @@ const AdminProductsList = ({ onOpenRegister, onEditProduct }) => {
                       </div>
                     </td>
                     <td>
-                      <div className="admin-products-table__badges">
-                        {product.category_names ? (
-                          product.category_names.split(', ').map((category, index) => (
-                            <span key={`${product.id}-${index}`} className="badge-soft-blue">{category}</span>
-                          ))
-                        ) : (
-                          <span className="badge-soft-blue badge-secondary">Sem categoria</span>
-                        )}
-                      </div>
+                      <span className={`badge-soft-blue ${getCategoryCount(product) === 0 ? 'badge-secondary' : ''}`}>
+                        {getCategoryCount(product)} categoria(s)
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className={`status-badge product-quote-toggle ${shouldShowQuoteButton(parseExtraData(product.extra_data).showQuoteButton) ? 'status-active' : 'status-inactive'}`}
+                        onClick={(event) => handleToggleQuoteButton(event, product)}
+                        title="Alternar botão de orçamento"
+                      >
+                        {shouldShowQuoteButton(parseExtraData(product.extra_data).showQuoteButton) ? 'Com botão' : 'Sem botão'}
+                      </button>
                     </td>
                     <td>
                       <button
@@ -220,7 +274,7 @@ const AdminProductsList = ({ onOpenRegister, onEditProduct }) => {
                 ))}
                 {filteredProducts.length === 0 && (
                   <tr>
-                    <td colSpan={4}>
+                    <td colSpan={5}>
                       <div className="product-empty-state">Nenhum produto encontrado.</div>
                     </td>
                   </tr>

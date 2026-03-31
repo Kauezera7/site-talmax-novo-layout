@@ -6,6 +6,9 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { ensurePrimaryImageDir } = require('./imageStorage');
 
+const MAX_FILE_SIZE_MB = Number(process.env.UPLOAD_MAX_FILE_SIZE_MB || 15);
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
   'image/png',
@@ -36,7 +39,7 @@ const fileFilter = (req, file, cb) => {
 module.exports = multer({
   storage,
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: MAX_FILE_SIZE_BYTES,
     files: 20
   },
   fileFilter

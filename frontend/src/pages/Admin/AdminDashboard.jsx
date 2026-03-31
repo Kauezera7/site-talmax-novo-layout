@@ -33,6 +33,7 @@ import AdminFeatured from './AdminFeatured/AdminFeatured';
 import AdminUpcera from './AdminUpcera/AdminUpcera';
 import AdminScanners from './AdminScanners/AdminScanners';
 import AdminPrinters from './AdminPrinters/AdminPrinters';
+import AdminSegments from './AdminSegments/AdminSegments';
 
 const AdminLoadingScreen = ({ label = 'Carregando painel...' }) => (
   <div className="app-loader-overlay app-loader-overlay-admin" role="status" aria-live="polite" aria-label={label}>
@@ -118,6 +119,7 @@ const AdminDashboardContent = () => {
   ];
   const pageItems = [
     { id: 'featured', label: 'Home Destaques', icon: <Package size={18} /> },
+    { id: 'segments', label: 'Segmentos (Home)', icon: <Layers size={18} /> },
     { id: 'upcera', label: 'Upcera', icon: <CheckCircle size={18} /> },
     { id: 'scanners', label: 'Scanners', icon: <Search size={18} /> },
     { id: 'printers', label: 'Impressoras 3D', icon: <ImageIcon size={18} /> }
@@ -152,6 +154,7 @@ const AdminDashboardContent = () => {
       case 'categories': return <AdminCategories />;
       case 'banners': return <AdminBanners />;
       case 'featured': return <AdminFeatured />;
+      case 'segments': return <AdminSegments />;
       case 'upcera': return <AdminUpcera />;
       case 'scanners': return <AdminScanners />;
       case 'printers': return <AdminPrinters />;

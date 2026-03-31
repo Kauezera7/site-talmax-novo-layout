@@ -7,7 +7,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
-import { services } from '../../data';
 import HeroSlider from '../HeroSlider/HeroSlider';
 import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
@@ -31,8 +30,23 @@ const parseExtraData = (value) => {
 const Home = () => {
   const [categories, setCategories] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [services, setServices] = useState([]);
 
   useEffect(() => {
+    const fetchHomeServices = async () => {
+      try {
+        const response = await fetch(`${API_URL}/home-services`);
+        if (!response.ok) {
+          throw new Error('Falha ao carregar serviços da home');
+        }
+        const data = await response.json();
+        setServices(data.filter(s => s.active));
+      } catch (err) {
+        console.error('Erro ao carregar serviços da home:', err);
+        setServices([]);
+      }
+    };
+
     const fetchCategories = async () => {
       try {
         const categoriesResponse = await fetch(`${API_URL}/categories`);
@@ -93,106 +107,97 @@ const Home = () => {
 
     fetchCategories();
     fetchFeaturedProducts();
+    fetchHomeServices();
   }, []);
+
+  const renderServiceBanner = (service) => {
+    const bannerClassName = 'service-banner';
+
+    const bannerStyle = service.image_url
+      ? { backgroundImage: `url(${apiAssetPath(service.image_url)})` }
+      : { backgroundImage: `url(${assetPath('img/placeholder.png')})` };
+
+    const bannerContent = (
+      <div className="service-banner-overlay">
+        <strong>{service.name}</strong>
+        <p>{service.description}</p>
+      </div>
+    );
+
+    if (service.is_external) {
+      return (
+        <a
+          key={service.id}
+          href={service.link_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={bannerClassName}
+          style={bannerStyle}
+          aria-label={service.name}
+        >
+          {bannerContent}
+        </a>
+      );
+    }
+
+    return (
+      <Link
+        key={service.id}
+        to={service.link_url}
+        className={bannerClassName}
+        style={bannerStyle}
+        aria-label={service.name}
+      >
+        {bannerContent}
+      </Link>
+    );
+  };
 
   return (
     <>
       <HeroSlider />
 
-      <section className="service-banners">
-        {services.map((service) => {
-          const bannerClassName = `service-banner${service.name === 'Moby Work' ? ' service-banner-moby' : ''}${service.name === 'Talmax Digital' ? ' service-banner-talmax-digital' : ''}${service.name === 'Cursos' ? ' service-banner-cursos' : ''}${service.name === 'ServiÃ§os' ? ' service-banner-suporte' : ''}`;
+      {services.length > 4 ? (
+        <section className="service-banners service-banners--carousel">
+          <button
+            type="button"
+            className="service-banners__nav service-banners__nav-prev"
+            aria-label="Banner anterior"
+          />
+          <button
+            type="button"
+            className="service-banners__nav service-banners__nav-next"
+            aria-label="Próximo banner"
+          />
 
-          const imageByServiceId = {
-            1: { src: assetPath('img/mobywork.png'), alt: 'Moby Work' },
-            2: { src: assetPath('img/talmaxdigita1.png'), alt: 'Talmax Digital' },
-            3: { src: assetPath('img/cursostalmax.png'), alt: 'Cursos Talmax' },
-            4: { src: assetPath('img/testeservicos.png'), alt: 'Servicos Talmax' },
-          };
-
-          const image = imageByServiceId[service.id];
-          const bannerStyle = image
-            ? { backgroundImage: `url(${image.src})` }
-            : undefined;
-
-          const bannerContent = (
-            <>
-              <div className="service-banner-overlay">
-                <strong>{service.name}</strong>
-                <p>{service.description}</p>
-                {service.actions?.length ? (
-                  <div className="service-banner-actions">
-                    {service.actions.map((action) => (
-                      action.external ? (
-                        <a
-                          key={action.href}
-                          href={action.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="service-banner-action"
-                        >
-                          {action.label}
-                        </a>
-                      ) : (
-                        <Link
-                          key={action.href}
-                          to={action.href}
-                          className="service-banner-action"
-                        >
-                          {action.label}
-                        </Link>
-                      )
-                    ))}
-                  </div>
-                ) : (
-                  <span className="service-banner-cta">Clique para acessar</span>
-                )}
-              </div>
-            </>
-          );
-
-          if (service.actions?.length) {
-            return (
-              <div
-                key={service.id}
-                className={bannerClassName}
-                style={bannerStyle}
-                aria-label={image?.alt || service.name}
-              >
-                {bannerContent}
-              </div>
-            );
-          }
-
-          if (service.external) {
-            return (
-              <a
-                key={service.id}
-                href={service.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={bannerClassName}
-                style={bannerStyle}
-                aria-label={image?.alt || service.name}
-              >
-                {bannerContent}
-              </a>
-            );
-          }
-
-          return (
-            <Link
-              key={service.id}
-              to={service.href}
-              className={bannerClassName}
-              style={bannerStyle}
-              aria-label={image?.alt || service.name}
-            >
-              {bannerContent}
-            </Link>
-          );
-        })}
-      </section>
+          <Swiper
+            modules={[Autoplay, Navigation]}
+            spaceBetween={16}
+            slidesPerView={1}
+            loop={services.length > 1}
+            navigation={{
+              prevEl: '.service-banners__nav-prev',
+              nextEl: '.service-banners__nav-next'
+            }}
+            autoplay={{ delay: 3500, disableOnInteraction: false }}
+            breakpoints={{
+              640: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 },
+              1400: { slidesPerView: 4 }
+            }}
+          >
+            {services.map((service) => (
+              <SwiperSlide key={service.id}>
+                {renderServiceBanner(service)}
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </section>
+      ) : (
+        <section className="service-banners">
+          {services.map((service) => renderServiceBanner(service))}
+        </section>
+      )}
       
       {featuredProducts.length > 0 && (
         <section className="home-featured-products">
@@ -218,6 +223,7 @@ const Home = () => {
                 modules={[Autoplay, Navigation, Pagination]}
                 spaceBetween={24}
                 slidesPerView={1}
+                loop={featuredProducts.length > 1}
                 navigation={{
                   prevEl: '.home-featured-products__nav-prev',
                   nextEl: '.home-featured-products__nav-next'

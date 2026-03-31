@@ -502,6 +502,43 @@
   line-height: 1.55;
 }
 
+.product-form-toggle-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  margin-top: 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.product-form-toggle-copy strong {
+  display: block;
+  color: var(--admin-text);
+  font-size: 0.92rem;
+}
+
+.product-form-toggle-copy span {
+  display: block;
+  margin-top: 4px;
+  color: var(--admin-text-light);
+  font-size: 0.84rem;
+}
+
+.product-form-toggle-button.is-on {
+  border-color: rgba(22, 163, 74, 0.28);
+  color: #166534;
+  background: #f0fdf4;
+}
+
+.product-form-toggle-button.is-off {
+  border-color: rgba(220, 38, 38, 0.22);
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
 .table-title-group {
   padding: 20px;
   border: 1px solid #d8e2ef;

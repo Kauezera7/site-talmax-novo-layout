@@ -22,6 +22,13 @@ import { apiAssetPath, assetPath } from '../../utils/assets';
 import { getVisibleCategoryLabel } from '../../utils/productCategories';
 import './ProductDetail.css';
 
+const shouldShowQuoteButton = (value) => !(
+  value === false ||
+  value === 'false' ||
+  value === 0 ||
+  value === '0'
+);
+
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -241,11 +248,13 @@ const ProductDetail = () => {
               </div>
             )}
 
-            <div className="product-actions">
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp-quote">
-                <MessageCircle size={20} /> Solicitar Orcamento
-              </a>
-            </div>
+            {shouldShowQuoteButton(product.showQuoteButton) && (
+              <div className="product-actions">
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp-quote">
+                  <MessageCircle size={20} /> Solicitar Orcamento
+                </a>
+              </div>
+            )}
           </motion.div>
         </div>
 

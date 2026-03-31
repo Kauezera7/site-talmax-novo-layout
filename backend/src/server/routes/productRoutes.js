@@ -300,4 +300,28 @@ router.put('/:id/active', requireAdminSession, async (req, res) => {
   }
 });
 
+router.put('/:id/quote-button', requireAdminSession, async (req, res) => {
+  const connection = await db.getConnection();
+  const productId = Number(req.params.id);
+
+  try {
+    const product = await findProductById(connection, productId, { includeInactive: true });
+
+    if (!product) {
+      return res.status(404).json({ error: 'Produto nao encontrado.' });
+    }
+
+    const extra = parseJsonObject(product.extra_data);
+    extra.showQuoteButton = parseBooleanFlag(req.body?.showQuoteButton);
+
+    await connection.query('UPDATE products SET extra_data = ? WHERE id = ?', [JSON.stringify(extra), productId]);
+
+    return res.json({ message: 'Botao de orcamento atualizado!' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  } finally {
+    releaseIfPossible(connection);
+  }
+});
+
 module.exports = router;

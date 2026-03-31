@@ -75,6 +75,36 @@ export const useProducts = () => {
     }
   };
 
+  const updateProductQuoteButtonStatus = async (id, showQuoteButton) => {
+    const previousProducts = products;
+    setProducts((currentProducts) => currentProducts.map((product) => {
+      if (product.id !== id) return product;
+
+      let extra = {};
+      try {
+        extra = typeof product.extra_data === 'string' ? JSON.parse(product.extra_data) : (product.extra_data || {});
+      } catch (error) {
+        extra = {};
+      }
+
+      return {
+        ...product,
+        extra_data: {
+          ...extra,
+          showQuoteButton
+        }
+      };
+    }));
+
+    try {
+      await productService.updateQuoteButtonStatus(id, showQuoteButton);
+      return { success: true };
+    } catch (err) {
+      setProducts(previousProducts);
+      return { success: false, error: err.message };
+    }
+  };
+
   const updateSpecialSection = async (section, selectedProducts) => {
     try {
       let res;
@@ -98,6 +128,7 @@ export const useProducts = () => {
     createProduct,
     updateProduct,
     updateProductActiveStatus,
+    updateProductQuoteButtonStatus,
     deleteProduct,
     updateSpecialSection
   };

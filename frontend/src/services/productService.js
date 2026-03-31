@@ -58,6 +58,17 @@ export const productService = {
     return res.json();
   },
 
+  updateQuoteButtonStatus: async (id, showQuoteButton) => {
+    const res = await fetch(`${API_URL}/products/${id}/quote-button`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ showQuoteButton })
+    });
+    await ensureAdminResponse(res, 'Erro ao atualizar botão de orçamento');
+    return res.json();
+  },
+
   updateUpcera: async (selectedProducts) => {
     const res = await fetch(`${API_URL}/upcera/products`, {
       method: 'PUT',

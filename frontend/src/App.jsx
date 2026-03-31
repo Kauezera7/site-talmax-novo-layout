@@ -303,9 +303,6 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
           <span className="theme-toggle-icon">
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </span>
-          <span className="theme-toggle-text">
-            {theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
-          </span>
         </button>
       )}
 

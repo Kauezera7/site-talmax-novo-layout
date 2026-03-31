@@ -2,7 +2,23 @@ import React, { useMemo, useState } from 'react';
 import { Edit, Trash2, Search, List, Plus, Eye, EyeOff } from 'lucide-react';
 import { apiAssetPath, assetPath } from '../../../utils/assets';
 
-const ProductTable = ({ products, onCreate, onEdit, onDelete, onToggleActive, selectedProductId }) => {
+const parseExtraData = (value) => {
+  if (!value) return {};
+  try {
+    return typeof value === 'string' ? JSON.parse(value) : value;
+  } catch (error) {
+    return {};
+  }
+};
+
+const shouldShowQuoteButton = (value) => !(
+  value === false ||
+  value === 'false' ||
+  value === 0 ||
+  value === '0'
+);
+
+const ProductTable = ({ products, onCreate, onEdit, onDelete, onToggleActive, onToggleQuoteButton, selectedProductId }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredProducts = useMemo(() => (
@@ -55,13 +71,17 @@ const ProductTable = ({ products, onCreate, onEdit, onDelete, onToggleActive, se
               <span className={`status-badge ${product.is_active ? 'status-active' : 'status-inactive'}`}>
                 {product.is_active ? 'Ativo' : 'Oculto'}
               </span>
-              {product.category_names ? (
-                product.category_names.split(', ').slice(0, 2).map((category, index) => (
-                  <span key={index} className="badge-soft-blue">{category}</span>
-                ))
-              ) : (
-                <span className="badge-soft-blue badge-secondary">Sem categoria</span>
-              )}
+              <button
+                type="button"
+                className={`status-badge product-quote-toggle ${shouldShowQuoteButton(parseExtraData(product.extra_data).showQuoteButton) ? 'status-active' : 'status-inactive'}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleQuoteButton(product);
+                }}
+                title="Alternar botão de orçamento"
+              >
+                {shouldShowQuoteButton(parseExtraData(product.extra_data).showQuoteButton) ? 'Orçamento on' : 'Orçamento off'}
+              </button>
             </div>
 
             <div className="product-sidebar-actions">

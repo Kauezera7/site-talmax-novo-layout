@@ -73,6 +73,43 @@ const AdminProducts = ({ productToEdit = null, onProductEditHandled }) => {
     }
   };
 
+  const handleToggleQuoteButton = async (product) => {
+    let extra = {};
+    try {
+      extra = typeof product.extra_data === 'string' ? JSON.parse(product.extra_data) : (product.extra_data || {});
+    } catch (error) {
+      extra = {};
+    }
+
+    const nextValue = !(extra.showQuoteButton === false || extra.showQuoteButton === 'false' || extra.showQuoteButton === 0 || extra.showQuoteButton === '0');
+    const result = await productsHook.updateProductQuoteButtonStatus(product.id, !nextValue);
+
+    if (result.success) {
+      addToast(`Botão de orçamento ${!nextValue ? 'ativado' : 'desativado'} com sucesso!`);
+      if (editingProduct?.id === product.id) {
+        setEditingProduct((current) => {
+          if (!current) return current;
+          let currentExtra = {};
+          try {
+            currentExtra = typeof current.extra_data === 'string' ? JSON.parse(current.extra_data) : (current.extra_data || {});
+          } catch (error) {
+            currentExtra = {};
+          }
+
+          return {
+            ...current,
+            extra_data: {
+              ...currentExtra,
+              showQuoteButton: !nextValue
+            }
+          };
+        });
+      }
+    } else {
+      addToast(result.error, 'error');
+    }
+  };
+
   const confirmDelete = async () => {
     if (!productToDelete) return;
 
@@ -150,10 +187,11 @@ const AdminProducts = ({ productToEdit = null, onProductEditHandled }) => {
                 products={activeProducts}
                 onCreate={handleCreate}
                 onEdit={handleEdit}
-                onDelete={handleDeleteClick}
-                onToggleActive={handleToggleActive}
-                selectedProductId={editingProduct?.id || null}
-              />
+              onDelete={handleDeleteClick}
+              onToggleActive={handleToggleActive}
+              onToggleQuoteButton={handleToggleQuoteButton}
+              selectedProductId={editingProduct?.id || null}
+            />
             </motion.aside>
           )}
         </AnimatePresence>

@@ -12,6 +12,9 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const bannerRoutes = require('./routes/bannerRoutes');
 const productRoutes = require('./routes/productRoutes');
 const specialSectionRoutes = require('./routes/specialSectionRoutes');
+const homeServiceRoutes = require('./routes/homeServiceRoutes');
+
+const MAX_FILE_SIZE_MB = Number(process.env.UPLOAD_MAX_FILE_SIZE_MB || 15);
 
 const createApp = () => {
   const app = express();
@@ -32,6 +35,7 @@ const createApp = () => {
   app.use('/api/categories', categoryRoutes);
   app.use('/api/banners', bannerRoutes);
   app.use('/api/products', productRoutes);
+  app.use('/api/home-services', homeServiceRoutes);
   app.use('/api', specialSectionRoutes);
 
   app.use((req, res, next) => {
@@ -49,7 +53,7 @@ const createApp = () => {
   app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({ error: 'O arquivo enviado excede o limite de 5 MB.' });
+        return res.status(400).json({ error: `O arquivo enviado excede o limite de ${MAX_FILE_SIZE_MB} MB.` });
       }
 
       return res.status(400).json({ error: err.message || 'Erro ao processar upload.' });

@@ -15,6 +15,7 @@ const createInitialFormState = () => ({
   showFeatures: false,
   hideModelData: false,
   showModelSection: true,
+  showQuoteButton: true,
   images: [],
   features: [''],
   modelTitle: '',
@@ -75,6 +76,7 @@ const ProductForm = ({
         showFeatures: extra.showFeatures !== false && Boolean(extra.features && extra.features.length > 0),
         hideModelData: extra.hideModelData || false,
         showModelSection: extra.showModelSection !== false,
+        showQuoteButton: extra.showQuoteButton !== false,
         images: [],
         features: (extra.features && extra.features.length > 0) ? extra.features : [''],
         modelTitle: extra.modelTitle || '',
@@ -101,7 +103,7 @@ const ProductForm = ({
     setNewImagePreviews([]);
     setPrimaryPreview('');
     setRemovedExistingImages([]);
-  }, [initialData, categories]);
+  }, [initialData]);
 
   const getFilteredSubCategories = () => {
     // Se nenhuma categoria principal selecionada, mostra todas as subcategorias
@@ -215,6 +217,7 @@ const ProductForm = ({
       showFeatures: formData.showFeatures,
       hideModelData: formData.hideModelData,
       showModelSection: formData.showModelSection,
+      showQuoteButton: formData.showQuoteButton,
       features: formData.showFeatures ? formData.features.filter((f) => f.trim() !== '') : [],
       modelTitle: formData.modelTitle,
       modelTable: formData.modelTable,
@@ -256,6 +259,34 @@ const ProductForm = ({
               <span>Quando desativado, ele some do catalogo e das paginas publicas, mas continua no painel administrativo.</span>
             </div>
           </label>
+
+          <label className="product-form-option">
+            <input
+              type="checkbox"
+              checked={formData.showQuoteButton}
+              onChange={(e) => setFormData((current) => ({ ...current, showQuoteButton: e.target.checked }))}
+            />
+            <div>
+              <strong>Exibir botão Solicitar Orçamento</strong>
+              <span>Ative ou desative o botão de WhatsApp na página deste produto.</span>
+            </div>
+          </label>
+        </div>
+
+        <div className="product-form-toggle-bar">
+          <div className="product-form-toggle-copy">
+            <strong>Botão de orçamento</strong>
+            <span>
+              Status atual: {formData.showQuoteButton ? 'ON' : 'OFF'}
+            </span>
+          </div>
+          <button
+            type="button"
+            className={`btn-secondary product-form-toggle-button ${formData.showQuoteButton ? 'is-on' : 'is-off'}`}
+            onClick={() => setFormData((current) => ({ ...current, showQuoteButton: !current.showQuoteButton }))}
+          >
+            {formData.showQuoteButton ? 'Desligar orçamento' : 'Ligar orçamento'}
+          </button>
         </div>
 
         <div className="form-group">
@@ -388,6 +419,7 @@ const ProductForm = ({
               <span>Ative apenas se quiser mostrar tópicos extras separados da descrição.</span>
             </div>
           </label>
+
         </div>
 
         <div className="form-group">
