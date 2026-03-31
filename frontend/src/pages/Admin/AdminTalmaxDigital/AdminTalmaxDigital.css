@@ -1,0 +1,110 @@
+.admin-talmax-digital__header {
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.admin-talmax-digital__header p {
+  margin: 8px 0 0;
+  color: var(--admin-text-light);
+  max-width: 720px;
+}
+
+.admin-talmax-digital__grid {
+  display: grid;
+  gap: 20px;
+}
+
+.admin-talmax-digital__card {
+  border: 1px solid var(--admin-border);
+  border-radius: 18px;
+  padding: 20px;
+  background: var(--admin-card-bg);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.admin-talmax-digital__card-copy {
+  margin-bottom: 16px;
+}
+
+.admin-talmax-digital__card-copy h3 {
+  margin: 0 0 6px;
+  color: var(--admin-text);
+}
+
+.admin-talmax-digital__card-copy p {
+  margin: 0;
+  color: var(--admin-text-light);
+}
+
+.admin-talmax-digital__uploads {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.admin-talmax-digital__actions {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.admin-talmax-digital__upload-block label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.admin-talmax-digital__upload-area {
+  min-height: 150px;
+}
+
+.admin-talmax-digital__upload-area p {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+}
+
+.admin-talmax-digital__preview {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.admin-talmax-digital__preview img {
+  width: 100%;
+  max-width: 220px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--admin-border);
+  background: #f8fafc;
+}
+
+.admin-talmax-digital__preview--back img {
+  object-fit: contain;
+  padding: 12px;
+  background: linear-gradient(135deg, #0f3f7a 0%, #004a99 100%);
+}
+
+.admin-talmax-digital__empty {
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.admin-talmax-digital__empty h3,
+.admin-talmax-digital__empty p {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .admin-talmax-digital__uploads {
+    grid-template-columns: 1fr;
+  }
+}

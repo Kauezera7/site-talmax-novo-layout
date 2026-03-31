@@ -459,6 +459,54 @@
   flex: 0 0 38px;
 }
 
+.dynamic-section-card {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border: 1px solid #d8e2ef;
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.dynamic-section-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dynamic-section-card__header strong {
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.dynamic-section-card__grid {
+  display: grid;
+  gap: 12px;
+}
+
+.dynamic-section-card__field {
+  display: grid;
+  gap: 8px;
+}
+
+.dynamic-section-card__field label {
+  color: #334155;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.dynamic-section-card__toggle {
+  margin: 0;
+}
+
+.dynamic-section-card textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
 .product-form-options {
   display: grid;
   gap: 12px;
@@ -1050,4 +1098,19 @@ body[data-theme='dark'] .table-remove-button {
 
 body[data-theme='dark'] .table-remove-button:hover {
   background: #2b0c10;
+}
+
+/* Tech Spec Row Styles */
+.tech-spec-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.tech-spec-row input {
+  flex: 1;
+}
+
+.tech-spec-row .btn-icon.delete {
+  flex-shrink: 0;
 }

@@ -140,6 +140,7 @@ const buildProductLookups = () => {
 
 const buildBackupProductRow = (product, lookups) => {
   const productId = Number(product.id);
+  const extraData = normalizeExtraData(product.extra_data);
   const mainCategoryIds = lookups.mainCategoryIdsByProductId.get(productId) || [];
   const subCategoryIds = lookups.subCategoryIdsByProductId.get(productId) || [];
   const categoryNames = [
@@ -153,7 +154,18 @@ const buildBackupProductRow = (product, lookups) => {
 
   return formatProductRow({
     ...product,
-    extra_data: normalizeExtraData(product.extra_data),
+    extra_data: extraData,
+    product_tabs: Array.isArray(extraData.dynamicSections)
+      ? extraData.dynamicSections.map((section, index) => ({
+        id: -(index + 1),
+        product_id: productId,
+        title: section?.title || '',
+        content: section?.content || '',
+        content_as_list: Boolean(section?.contentAsList),
+        display_order: index,
+        is_active: true
+      })).filter((section) => section.title && section.content)
+      : [],
     category_names: categoryNames.join(', '),
     main_category_ids: mainCategoryIds.join(','),
     sub_category_ids: subCategoryIds.join(',')

@@ -5,12 +5,10 @@
  */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronRight, ChevronLeft, ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-// Import Swiper React components
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
-// Import Swiper styles
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -18,6 +16,7 @@ import 'swiper/css/pagination';
 import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
 import { apiAssetPath, assetPath } from '../../utils/assets';
+import pageSettingsService, { DEFAULT_SPECIAL_PAGE_SETTINGS, normalizeSpecialPageSettings } from '../../services/pageSettingsService';
 import './Upcera.css';
 import '../ProductCatalog/ProductCatalog.css';
 
@@ -83,24 +82,31 @@ const Upcera = () => {
   const [products, setProducts] = useState([]);
   const [cadCamProducts, setCadCamProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pageSettings, setPageSettings] = useState(DEFAULT_SPECIAL_PAGE_SETTINGS.upcera);
   const navigate = useNavigate();
 
-  // Cor de destaque para Upcera (Vermelho Profissional)
   const accentColor = '#cf222e';
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${API_URL}/products`);
+        const [res, pageSettingsItems] = await Promise.all([
+          fetch(`${API_URL}/products`),
+          pageSettingsService.getAll().catch(() => [])
+        ]);
         const data = await res.json();
 
-        // 1. Filtra e Ordena os produtos Upcera pelo upcera_order
         const upceraItems = data
-          .filter(p => p.is_upcera)
+          .filter((p) => p.is_upcera)
           .sort((a, b) => (a.upcera_order || 0) - (b.upcera_order || 0))
-          .map(p => {
+          .map((p) => {
             let extra = {};
-            try { extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data; } catch(e) { extra = {}; }
+            try {
+              extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data;
+            } catch (e) {
+              extra = {};
+            }
+
             return {
               id: p.id,
               name: p.name,
@@ -110,7 +116,6 @@ const Upcera = () => {
             };
           });
 
-        // 2. Filtra produtos relacionados da categoria principal Linha Cad/Cam
         const relatedItems = data.filter((product) => {
           const normalizedCategoryNames = normalizeText(product.category_names);
           const isCadCamLine = (product.category_ids || []).includes(15)
@@ -123,45 +128,50 @@ const Upcera = () => {
 
         setProducts(upceraItems);
         setCadCamProducts(relatedItems);
+        setPageSettings(normalizeSpecialPageSettings(pageSettingsItems).upcera);
       } catch (err) {
-        console.error("Erro ao carregar produtos Upcera:", err);
+        console.error('Erro ao carregar produtos Upcera:', err);
+        setPageSettings(DEFAULT_SPECIAL_PAGE_SETTINGS.upcera);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchProducts();
   }, []);
 
   return (
-    <div className="special-page-container" style={{ 
-      backgroundColor: '#000000', 
+    <div className="special-page-container" style={{
+      backgroundColor: '#000000',
       minHeight: '100vh',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
       overflowX: 'hidden'
     }}>
-      
-      {/* Header */}
       <section className="special-page-header" style={{ background: '#ffffff', padding: '140px 0 80px', position: 'relative', overflow: 'hidden' }}>
         <div className="container-inner">
-           <motion.div 
+          <motion.div
             className="back-btn"
             style={{ position: 'absolute', top: '-80px', left: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '2px', color: '#000' }}
             onClick={() => navigate(-1)}
             whileHover={{ x: -5, color: accentColor }}
-           >
-             <ArrowLeft size={16} strokeWidth={3} /> VOLTAR
-           </motion.div>
-           
-           <div style={{ textAlign: 'center' }}>
-              <img src={assetPath('img/logo-upcera-.webp')} alt="Upcera Logo" style={{ height: '70px', marginBottom: '30px', maxWidth: '100%', objectFit: 'contain' }} />
-              <div style={{ width: '50px', height: '4px', background: accentColor, margin: '0 auto 40px' }}></div>
-              <h1 style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '6px', textTransform: 'uppercase', color: accentColor, marginBottom: '20px' }}>Innovation in Restorative Dentistry</h1>
-              <p style={{ fontSize: '1.5rem', fontWeight: '300', color: '#000', maxWidth: '850px', margin: '0 auto', lineHeight: '1.4' }}>Líder mundial em cerâmicas odontológicas de alta performance, unindo estética natural e resistência extrema.</p>
-           </div>
+          >
+            <ArrowLeft size={16} strokeWidth={3} /> VOLTAR
+          </motion.div>
+
+          <div style={{ textAlign: 'center' }}>
+            <img src={apiAssetPath(pageSettings.logo_url) || assetPath('img/logo-upcera-.webp')} alt={pageSettings.label || 'Upcera Logo'} style={{ height: '70px', marginBottom: '30px', maxWidth: '100%', objectFit: 'contain' }} />
+            <div style={{ width: '50px', height: '4px', background: accentColor, margin: '0 auto 40px' }}></div>
+            {pageSettings.overline && (
+              <div style={{ fontSize: '0.8rem', fontWeight: '800', letterSpacing: '4px', textTransform: 'uppercase', color: accentColor, marginBottom: '16px' }}>
+                {pageSettings.overline}
+              </div>
+            )}
+            <h1 style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '6px', textTransform: 'uppercase', color: accentColor, marginBottom: '20px' }}>{pageSettings.title}</h1>
+            <p style={{ fontSize: '1.5rem', fontWeight: '300', color: '#000', maxWidth: '850px', margin: '0 auto', lineHeight: '1.4' }}>{pageSettings.description}</p>
+          </div>
         </div>
       </section>
 
-      {/* Showcase de Produtos Principais (Alternado) */}
       <section style={{ padding: '60px 0', background: '#ffffff' }}>
         <div className="container-inner" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
           {isLoading ? (
@@ -169,24 +179,24 @@ const Upcera = () => {
           ) : (
             <div className="product-showcase-list" style={{ display: 'flex', flexDirection: 'column', gap: '100px' }}>
               {products.map((product, index) => (
-                <motion.div 
-                  key={product.id} 
-                  initial={{ opacity: 0, y: 50 }} 
-                  whileInView={{ opacity: 1, y: 0 }} 
-                  viewport={{ once: true, margin: "-100px" }} 
-                  transition={{ duration: 1 }} 
-                  className="product-showcase-item" 
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-100px' }}
+                  transition={{ duration: 1 }}
+                  className="product-showcase-item"
                   style={{ flexDirection: index % 2 === 0 ? 'row' : 'row-reverse' }}
                 >
                   <div className="image-stage" style={{ flex: '1', position: 'relative', display: 'flex', justifyContent: 'center' }}>
                     <div style={{ position: 'absolute', width: '100%', maxWidth: '400px', aspectRatio: '1/1', background: `radial-gradient(circle, ${accentColor}14 0%, transparent 70%)`, zIndex: 0, top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}></div>
-                    <motion.img 
-                      src={product.image} 
-                      alt={product.name} 
-                      style={{ width: '100%', maxWidth: '550px', height: 'auto', zIndex: 1, filter: 'drop-shadow(0 30px 60px rgba(0, 0, 0, 0.2))', cursor: 'pointer' }} 
-                      whileHover={{ scale: 1.05 }} 
-                      transition={{ duration: 0.5 }} 
-                      onClick={() => navigate(`/produto/${product.id}`)} 
+                    <motion.img
+                      src={product.image}
+                      alt={product.name}
+                      style={{ width: '100%', maxWidth: '550px', height: 'auto', zIndex: 1, filter: 'drop-shadow(0 30px 60px rgba(0, 0, 0, 0.2))', cursor: 'pointer' }}
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.5 }}
+                      onClick={() => navigate(`/produto/${product.id}`)}
                     />
                   </div>
                   <div className="product-details" style={{ flex: '1.2' }}>
@@ -196,10 +206,10 @@ const Upcera = () => {
                     </div>
                     <h2 style={{ fontSize: '3.5rem', fontWeight: '900', lineHeight: '1', letterSpacing: '-2px', marginBottom: '40px', color: '#020202', textTransform: 'uppercase', cursor: 'pointer' }} onClick={() => navigate(`/produto/${product.id}`)}>{product.name}</h2>
                     {renderSpecialSectionContent(product, accentColor, 'upcera')}
-                    <motion.button 
-                      whileHover={{ scale: 1.05 }} 
-                      whileTap={{ scale: 0.95 }} 
-                      onClick={() => navigate(`/produto/${product.id}`)} 
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => navigate(`/produto/${product.id}`)}
                       style={{ marginTop: '40px', padding: '12px 35px', background: accentColor, color: '#fff', border: 'none', borderRadius: '5px', fontWeight: '800', fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase', cursor: 'pointer' }}
                     >
                       VER DETALHES
@@ -212,10 +222,9 @@ const Upcera = () => {
         </div>
       </section>
 
-      {/* Seção de Banner CAD/CAM (Apenas esta parte preta) */}
       {!isLoading && cadCamProducts.length > 0 && (
         <div style={{ width: '100%', background: '#000000', overflow: 'hidden' }}>
-          <motion.img 
+          <motion.img
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -223,31 +232,31 @@ const Upcera = () => {
             src={assetPath('img/na-pagina-dauoceracad-cam.webp')}
             alt="Linha CAD/CAM e Insumos"
             style={{ width: '25%', height: 'auto', display: 'block', margin: '0 auto' }}
-            />        </div>
+          />
+        </div>
       )}
 
-      {/* Seção de Carrossel Produtos Relacionados (Fundo Branco) */}
       {!isLoading && cadCamProducts.length > 0 && (
         <section style={{ background: '#ffffff', padding: '80px 0 100px 0' }}>
           <div className="container-inner" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
             <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: accentColor, letterSpacing: '2px', textTransform: 'uppercase' }}>Portfólio Completo</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: accentColor, letterSpacing: '2px', textTransform: 'uppercase' }}>Portfolio Completo</span>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginTop: '5px', flexWrap: 'wrap' }}>
                 <h2 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#000000', margin: 0 }}>LINHA CAD/CAM</h2>
-                <motion.button 
-                  whileHover={{ scale: 1.05 }} 
-                  whileTap={{ scale: 0.95 }} 
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => navigate('/produtos?categoria=linha-cad-cam')}
-                  style={{ 
-                    padding: '10px 25px', 
-                    background: accentColor, 
-                    color: '#fff', 
-                    border: 'none', 
-                    borderRadius: '50px', 
-                    fontWeight: '800', 
-                    fontSize: '0.75rem', 
-                    letterSpacing: '1px', 
-                    textTransform: 'uppercase', 
+                  style={{
+                    padding: '10px 25px',
+                    background: accentColor,
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '50px',
+                    fontWeight: '800',
+                    fontSize: '0.75rem',
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -260,7 +269,6 @@ const Upcera = () => {
               </div>
             </div>
 
-            {/* Swiper Carrossel */}
             <div className="special-products-carousel">
               <Swiper
                 modules={[Autoplay, Navigation, Pagination]}
@@ -278,12 +286,12 @@ const Upcera = () => {
               >
                 {cadCamProducts.map((p, index) => (
                   <SwiperSlide key={p.id}>
-                    <ProductCard 
+                    <ProductCard
                       product={{
                         ...p,
                         image: p.main_image ? apiAssetPath(p.main_image) : assetPath('img/placeholder.png')
-                      }} 
-                      index={index} 
+                      }}
+                      index={index}
                     />
                   </SwiperSlide>
                 ))}
@@ -292,7 +300,6 @@ const Upcera = () => {
           </div>
         </section>
       )}
-
     </div>
   );
 };

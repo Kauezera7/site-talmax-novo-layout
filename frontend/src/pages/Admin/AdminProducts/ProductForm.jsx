@@ -11,16 +11,49 @@ const createInitialFormState = () => ({
   category_ids: [],
   sub_category_ids: [],
   description: '',
+  descriptionTabLabel: '',
   descriptionAsList: false,
+  technicalTabLabel: '',
+  productTabs: [],
   showFeatures: false,
   hideModelData: false,
   showModelSection: true,
   showQuoteButton: true,
   images: [],
   features: [''],
+  techSpecs: [{ label: '', value: '' }],
   modelTitle: '',
   modelTable: { headers: ['Tipo / Referencia', 'Codigo'], rows: [['', '']] }
 });
+
+const createDynamicSection = () => ({
+  title: '',
+  content: '',
+  contentAsList: false
+});
+
+const normalizeDynamicSections = (sections) => (
+  Array.isArray(sections)
+    ? sections.map((section) => ({
+      title: typeof section?.title === 'string' ? section.title : '',
+      content: typeof section?.content === 'string' ? section.content : '',
+      contentAsList: Boolean(section?.contentAsList)
+    }))
+    : []
+);
+
+const normalizeProductTabs = (tabs, legacySections = []) => {
+  if (Array.isArray(tabs) && tabs.length > 0) {
+    return tabs.map((tab) => ({
+      id: tab?.id,
+      title: typeof tab?.title === 'string' ? tab.title : '',
+      content: typeof tab?.content === 'string' ? tab.content : '',
+      contentAsList: Boolean(tab?.contentAsList || tab?.content_as_list)
+    }));
+  }
+
+  return normalizeDynamicSections(legacySections);
+};
 
 const buildInitialPreviewList = (mainImage, extraImages) => {
   const normalizedImages = Array.isArray(extraImages)
@@ -72,13 +105,17 @@ const ProductForm = ({
         category_ids: initialData.category_ids || [],
         sub_category_ids: initialData.sub_category_ids || [],
         description: initialData.description || '',
+        descriptionTabLabel: extra.descriptionTabLabel || '',
         descriptionAsList: extra.descriptionAsList || false,
+        technicalTabLabel: extra.technicalTabLabel || '',
+        productTabs: normalizeProductTabs(initialData.product_tabs, extra.dynamicSections),
         showFeatures: extra.showFeatures !== false && Boolean(extra.features && extra.features.length > 0),
         hideModelData: extra.hideModelData || false,
         showModelSection: extra.showModelSection !== false,
         showQuoteButton: extra.showQuoteButton !== false,
         images: [],
         features: (extra.features && extra.features.length > 0) ? extra.features : [''],
+        techSpecs: (extra.techSpecs && extra.techSpecs.length > 0) ? extra.techSpecs : [{ label: '', value: '' }],
         modelTitle: extra.modelTitle || '',
         modelTable: extra.modelTable || { headers: ['Tipo / Referência', 'Código'], rows: [['', '']] }
       });
@@ -185,6 +222,29 @@ const ProductForm = ({
     setFormData({ ...formData, modelTable: { ...formData.modelTable, rows: newRows } });
   };
 
+  const addDynamicSection = () => {
+    setFormData((current) => ({
+      ...current,
+      productTabs: [...current.productTabs, createDynamicSection()]
+    }));
+  };
+
+  const updateDynamicSection = (index, field, value) => {
+    setFormData((current) => ({
+      ...current,
+      productTabs: current.productTabs.map((section, sectionIndex) => (
+        sectionIndex === index ? { ...section, [field]: value } : section
+      ))
+    }));
+  };
+
+  const removeDynamicSection = (index) => {
+    setFormData((current) => ({
+      ...current,
+      productTabs: current.productTabs.filter((_, sectionIndex) => sectionIndex !== index)
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -213,12 +273,23 @@ const ProductForm = ({
     data.append('sub_category_ids', JSON.stringify(combinedSubCategoryIds));
 
     const extraData = {
+      descriptionTabLabel: formData.descriptionTabLabel.trim(),
       descriptionAsList: formData.descriptionAsList,
+      technicalTabLabel: formData.technicalTabLabel.trim(),
+      product_tabs: formData.productTabs
+        .map((section) => ({
+          id: section.id,
+          title: section.title.trim(),
+          content: section.content.trim(),
+          contentAsList: section.contentAsList
+        }))
+        .filter((section) => section.title || section.content),
       showFeatures: formData.showFeatures,
       hideModelData: formData.hideModelData,
       showModelSection: formData.showModelSection,
       showQuoteButton: formData.showQuoteButton,
       features: formData.showFeatures ? formData.features.filter((f) => f.trim() !== '') : [],
+      techSpecs: formData.techSpecs.filter((s) => s.label.trim() !== '' || s.value.trim() !== ''),
       modelTitle: formData.modelTitle,
       modelTable: formData.modelTable,
       images: existingImages,
@@ -504,7 +575,86 @@ const ProductForm = ({
       </div>
 
       <div className="admin-section-group">
-        <span className="section-label">4. Especificações (Tabela)</span>
+        <span className="section-label">4. Abas do Produto</span>
+        <div className="form-group">
+          <label>Nome da aba principal</label>
+          <input
+            type="text"
+            value={formData.descriptionTabLabel}
+            onChange={(e) => setFormData({ ...formData, descriptionTabLabel: e.target.value })}
+            placeholder="Ex.: Descricao Detalhada, Teste123, Visao Geral"
+          />
+        </div>
+        <div className="form-group">
+          <label>Abas do produto</label>
+          <p className="product-form-helper">
+            Adicione quantas abas extras quiser. Cada aba tem um nome e um conteudo proprio para aparecer na pagina do produto.
+          </p>
+          {formData.productTabs.length === 0 && (
+            <p className="product-form-helper">
+              Nenhuma aba extra cadastrada ainda. Use o botao abaixo para criar a primeira.
+            </p>
+          )}
+          {formData.productTabs.map((section, index) => (
+            <div key={`dynamic-section-${index}`} className="dynamic-section-card">
+              <div className="dynamic-section-card__header">
+                <strong>Aba extra {index + 1}</strong>
+                <button
+                  type="button"
+                  className="btn-icon delete"
+                  onClick={() => removeDynamicSection(index)}
+                  aria-label={`Remover aba extra ${index + 1}`}
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+
+              <div className="dynamic-section-card__grid">
+                <div className="dynamic-section-card__field">
+                  <label>Titulo da aba</label>
+                  <input
+                    type="text"
+                    value={section.title}
+                    onChange={(e) => updateDynamicSection(index, 'title', e.target.value)}
+                    placeholder="Ex.: Teste, Tecnico, Aplicacoes, Beneficios"
+                  />
+                </div>
+                <label className="product-form-option dynamic-section-card__toggle">
+                  <input
+                    type="checkbox"
+                    checked={section.contentAsList}
+                    onChange={(e) => updateDynamicSection(index, 'contentAsList', e.target.checked)}
+                  />
+                  <div>
+                    <strong>Exibir conteudo em topicos</strong>
+                    <span>Cada linha do texto vira um item listado dentro desta aba.</span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="dynamic-section-card__field">
+                <label>Conteudo da aba</label>
+                <textarea
+                  value={section.content}
+                  onChange={(e) => updateDynamicSection(index, 'content', e.target.value)}
+                  placeholder={
+                    section.contentAsList
+                      ? 'Escreva um item por linha para montar a lista desta aba'
+                      : 'Escreva o conteudo que sera mostrado ao clicar nesta aba'
+                  }
+                />
+              </div>
+            </div>
+          ))}
+
+          <button type="button" className="btn-add" onClick={addDynamicSection}>
+            <Plus size={16} /> Adicionar Aba Extra
+          </button>
+        </div>
+      </div>
+
+      <div className="admin-section-group">
+        <span className="section-label">5. Configuração da Tabela</span>
         <div className="product-form-options">
           <label className="product-form-option">
             <input
@@ -540,6 +690,15 @@ const ProductForm = ({
               <span>Exibe só os títulos das colunas da tabela e oculta todas as linhas de dados.</span>
             </div>
           </label>
+        </div>
+
+        <div className="form-group table-title-group">
+          <label>Nome da aba tecnica</label>
+          <input
+            value={formData.technicalTabLabel}
+            placeholder="Ex.: Informacao Tecnica, Tecnico, Especificacoes"
+            onChange={(e) => setFormData({ ...formData, technicalTabLabel: e.target.value })}
+          />
         </div>
 
         <div className="form-group table-title-group">

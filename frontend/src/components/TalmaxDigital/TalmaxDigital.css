@@ -78,6 +78,14 @@
   line-height: 1.5;
 }
 
+.digital-hero-title {
+  margin: 0 0 18px;
+  font-size: clamp(1.6rem, 3vw, 2.8rem);
+  font-weight: 800;
+  color: var(--digital-dark);
+  letter-spacing: -0.04em;
+}
+
 /* CATEGORIES GRID */
 .digital-categories-section {
   max-width: 96%;
@@ -173,6 +181,12 @@
   color: white;
   transform: rotateY(180deg);
   border-color: var(--digital-blue);
+}
+
+.digital-cat-card-back--image {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .card-icon {

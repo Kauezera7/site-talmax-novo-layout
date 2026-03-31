@@ -82,7 +82,7 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
     data.append('is_external', 'false');
     data.append('display_order', String(formData.display_order));
     data.append('active', String(formData.active));
-    data.append('actions', '[]');
+    data.append('actions', JSON.stringify(initialData?.actions || []));
 
     if (imageFile) {
       data.append('image', imageFile);
@@ -109,13 +109,13 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
         </div>
 
         <div className="form-group">
-          <label>Descrição</label>
+          <label>Descricao</label>
           <textarea
             name="description"
             value={formData.description}
             onChange={handleInputChange}
             rows="2"
-            placeholder="Breve descrição do segmento..."
+            placeholder="Breve descricao do segmento..."
             style={{ minHeight: '80px' }}
           />
         </div>
@@ -193,7 +193,7 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
         </button>
         <button type="submit" className="btn-primary" disabled={isSubmitting}>
           {isSubmitting ? <ButtonSavingIndicator /> : <Save size={18} />}
-          {isSubmitting ? 'Salvando' : (initialData ? 'Salvar alterações' : 'Criar segmento')}
+          {isSubmitting ? 'Salvando' : (initialData ? 'Salvar alteracoes' : 'Criar segmento')}
         </button>
       </div>
     </form>

@@ -90,6 +90,23 @@ CREATE TABLE IF NOT EXISTS product_sub_categorias (
         FOREIGN KEY (sub_category_id) REFERENCES sub_categorias(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS product_tabs (
+    id INT NOT NULL AUTO_INCREMENT,
+    product_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content LONGTEXT DEFAULT NULL,
+    content_as_list BOOLEAN DEFAULT FALSE,
+    display_order INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_product_tabs_product_id (product_id),
+    KEY idx_product_tabs_display_order (display_order),
+    CONSTRAINT fk_product_tabs_product
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS banners (
     id INT NOT NULL AUTO_INCREMENT,
     title VARCHAR(255) DEFAULT NULL,

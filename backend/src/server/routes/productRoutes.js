@@ -16,7 +16,9 @@ const {
 const {
   listProducts,
   findProductById,
-  attachProductCategories
+  attachProductCategories,
+  replaceProductTabs,
+  ensureProductTabsTable
 } = require('../services/productService');
 const { persistUploadedFilesByType } = require('../services/fileStorageService');
 const {
@@ -113,6 +115,7 @@ router.get('/', async (req, res) => {
   const includeInactive = parseBooleanFlag(req.query.include_inactive);
 
   try {
+    await ensureProductTabsTable(db);
     const products = await listProducts(db, { includeInactive });
     res.json(products);
   } catch (err) {
@@ -128,6 +131,7 @@ router.get('/:id', async (req, res) => {
   const includeInactive = parseBooleanFlag(req.query.include_inactive);
 
   try {
+    await ensureProductTabsTable(db);
     const product = await findProductById(db, req.params.id, { includeInactive });
 
     if (!product) {
@@ -164,6 +168,7 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
     const primaryImageIndex = parseInteger(req.body.primary_image_index, 0);
     const uploadedImagePaths = await persistUploadedFilesByType(req.files || [], { resourceType: 'produtos' });
     const extra = parseJsonObject(extra_data);
+    const productTabs = Array.isArray(extra.product_tabs) ? extra.product_tabs : [];
     const retainedImagePaths = normalizeImageList(extra.images);
     const mergedImagePaths = reorderImagePaths([...retainedImagePaths, ...uploadedImagePaths], primaryImageIndex);
 
@@ -194,6 +199,7 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
 
     const productId = result.insertId;
     await attachProductCategories(connection, productId, parsedCategoryIds, parsedSubCategoryIds);
+    await replaceProductTabs(connection, productId, productTabs);
 
     await connection.commit();
     return res.status(201).json({ message: 'Produto criado!' });
@@ -224,6 +230,7 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     const isActive = parseBooleanFlag(req.body.is_active) ? 1 : 0;
     const newImagePaths = await persistUploadedFilesByType(req.files || [], { resourceType: 'produtos' });
     const extra = parseJsonObject(extra_data);
+    const productTabs = Array.isArray(extra.product_tabs) ? extra.product_tabs : [];
     const duplicateProduct = await findDuplicateProductByName(connection, name, productId);
     const retainedImagePaths = normalizeImageList(extra.images);
     const removedImagePaths = normalizeImageList(extra.removedImages);
@@ -269,6 +276,7 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
 
     await connection.query(query, params.map(safe));
     await attachProductCategories(connection, productId, parsedCategoryIds, parsedSubCategoryIds);
+    await replaceProductTabs(connection, productId, productTabs);
 
     await connection.commit();
     return res.json({ message: 'Produto atualizado!' });

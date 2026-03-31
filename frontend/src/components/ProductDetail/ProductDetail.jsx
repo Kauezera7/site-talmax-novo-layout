@@ -5,6 +5,8 @@
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Navigation } from 'swiper/modules';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -20,6 +22,8 @@ import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
 import { apiAssetPath, assetPath } from '../../utils/assets';
 import { getVisibleCategoryLabel } from '../../utils/productCategories';
+import 'swiper/css';
+import 'swiper/css/navigation';
 import './ProductDetail.css';
 
 const shouldShowQuoteButton = (value) => !(
@@ -29,6 +33,68 @@ const shouldShowQuoteButton = (value) => !(
   value === '0'
 );
 
+const normalizeDynamicSections = (sections, legacySections = []) => {
+  const source = Array.isArray(sections) && sections.length > 0 ? sections : legacySections;
+
+  return Array.isArray(source)
+    ? source
+      .map((section, index) => ({
+        id: section?.id ? `dynamic-${section.id}` : `dynamic-${index}`,
+        title: typeof section?.title === 'string' ? section.title.trim() : '',
+        content: typeof section?.content === 'string' ? section.content : '',
+        contentAsList: Boolean(section?.contentAsList || section?.content_as_list)
+      }))
+      .filter((section) => section.title && section.content.trim())
+    : [];
+};
+
+const renderSectionContent = (content, asList = false) => {
+  if (asList) {
+    return (
+      <ul className="description-list">
+        {content.split('\n').filter((line) => line.trim() !== '').map((line, idx) => (
+          <li key={idx}><CheckCircle2 size={16} className="text-primary" /> {line}</li>
+        ))}
+      </ul>
+    );
+  }
+
+  return <p>{content}</p>;
+};
+
+const isLegacyDefaultDescriptionTabLabel = (label) => {
+  const normalizedLabel = String(label || '')
+    .trim()
+    .toLocaleLowerCase('pt-BR');
+
+  return normalizedLabel === 'descricao detalhada';
+};
+
+const isLegacyDefaultTechnicalTabLabel = (label) => {
+  const normalizedLabel = String(label || '')
+    .trim()
+    .toLocaleLowerCase('pt-BR');
+
+  return normalizedLabel === 'informacao tecnica';
+};
+
+const normalizeCategoryIds = (value) => (
+  Array.isArray(value)
+    ? value.map(Number).filter((id) => Number.isFinite(id))
+    : []
+);
+
+const shuffleProducts = (products) => {
+  const shuffled = [...products];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+
+  return shuffled;
+};
+
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -36,6 +102,7 @@ const ProductDetail = () => {
   const [allProducts, setAllProducts] = useState([]);
   const [activeImage, setActiveImage] = useState('');
   const [isFeaturesCollapsed, setIsFeaturesCollapsed] = useState(true);
+  const [activeTab, setActiveTab] = useState('description');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -83,8 +150,10 @@ const ProductDetail = () => {
           id: data.id,
           name: data.name,
           category: getVisibleCategoryLabel(data.category_names || data.category_name || '', fixedSegmentNames),
+          categoryIds: normalizeCategoryIds(data.category_ids),
           description: data.description,
           image: data.main_image ? apiAssetPath(data.main_image) : assetPath('img/placeholder.png'),
+          product_tabs: Array.isArray(data.product_tabs) ? data.product_tabs : [],
           ...extra,
           images: Array.isArray(extra.images) ? extra.images.map((image) => apiAssetPath(image)) : extra.images,
           modelTable: finalTable
@@ -93,6 +162,7 @@ const ProductDetail = () => {
         setProduct(formattedProduct);
         setActiveImage(formattedProduct.image);
         setIsFeaturesCollapsed(true);
+        setActiveTab('description');
         setAllProducts(others.map((currentProduct) => ({
           id: currentProduct.id,
           name: currentProduct.name,
@@ -100,9 +170,11 @@ const ProductDetail = () => {
             currentProduct.category_names || currentProduct.category_name || '',
             fixedSegmentNames
           ),
+          categoryIds: normalizeCategoryIds(currentProduct.category_ids),
           image: currentProduct.main_image
             ? apiAssetPath(currentProduct.main_image)
-            : assetPath('img/placeholder.png')
+            : assetPath('img/placeholder.png'),
+          images: []
         })));
       } catch (err) {
         console.error('Erro ao carregar detalhes:', err);
@@ -131,9 +203,25 @@ const ProductDetail = () => {
 
   const relatedProducts = useMemo(() => {
     if (!product) return [];
-    return allProducts
-      .filter((currentProduct) => currentProduct.category === product.category && currentProduct.id !== product.id)
-      .slice(0, 4);
+
+    const currentCategoryIds = normalizeCategoryIds(product.categoryIds);
+
+    const matchingProducts = allProducts
+      .filter((currentProduct) => {
+        if (currentProduct.id === product.id) {
+          return false;
+        }
+
+        const relatedCategoryIds = normalizeCategoryIds(currentProduct.categoryIds);
+
+        if (currentCategoryIds.length > 0 && relatedCategoryIds.length > 0) {
+          return relatedCategoryIds.some((categoryId) => currentCategoryIds.includes(categoryId));
+        }
+
+        return currentProduct.category === product.category;
+      });
+    
+    return shuffleProducts(matchingProducts).slice(0, 6);
   }, [product, allProducts]);
 
   const modelRowsToRender = useMemo(() => {
@@ -147,6 +235,81 @@ const ProductDetail = () => {
 
     return product.modelTable.rows;
   }, [product]);
+
+  const dynamicSections = useMemo(
+    () => normalizeDynamicSections(product?.product_tabs, product?.dynamicSections),
+    [product]
+  );
+
+  const descriptionTabLabel = useMemo(
+    () => {
+      const rawLabel = product?.descriptionTabLabel?.trim() || '';
+
+      if (!rawLabel) {
+        return '';
+      }
+
+      if (dynamicSections.length === 0 && isLegacyDefaultDescriptionTabLabel(rawLabel)) {
+        return '';
+      }
+
+      return rawLabel;
+    },
+    [dynamicSections.length, product?.descriptionTabLabel]
+  );
+
+  const technicalTabLabel = useMemo(() => {
+    const rawLabel = product?.technicalTabLabel?.trim() || '';
+
+    if (!rawLabel) {
+      return '';
+    }
+
+    if (isLegacyDefaultTechnicalTabLabel(rawLabel)) {
+      return '';
+    }
+
+    return rawLabel;
+  }, [product?.technicalTabLabel]);
+
+  const shouldUseCustomTabs = dynamicSections.length > 0;
+
+  const hasTechnicalContent = useMemo(() => (
+    Boolean(
+      (Array.isArray(product?.techSpecs) && product.techSpecs.length > 0)
+      || (product?.modelTable && product.showModelSection !== false)
+    )
+  ), [product]);
+
+  const availableTabs = useMemo(() => {
+    const tabs = [];
+
+    if (!shouldUseCustomTabs && descriptionTabLabel && product?.description?.trim()) {
+      tabs.push({
+        id: 'description',
+        label: descriptionTabLabel
+      });
+    }
+
+    dynamicSections.forEach((section) => {
+      tabs.push({ id: section.id, label: section.title });
+    });
+
+    if (hasTechnicalContent && technicalTabLabel) {
+      tabs.push({
+        id: 'specs',
+        label: technicalTabLabel
+      });
+    }
+
+    return tabs;
+  }, [descriptionTabLabel, dynamicSections, hasTechnicalContent, product?.description, shouldUseCustomTabs, technicalTabLabel]);
+
+  useEffect(() => {
+    if (!availableTabs.some((tab) => tab.id === activeTab)) {
+      setActiveTab(availableTabs[0]?.id || 'description');
+    }
+  }, [activeTab, availableTabs]);
 
   if (loading) return <div className="detail-loader">Carregando...</div>;
   if (!product) return null;
@@ -258,37 +421,85 @@ const ProductDetail = () => {
           </motion.div>
         </div>
 
-        {product.modelTable && product.showModelSection !== false && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="full-width-models-section"
-          >
-            <div className="section-title-group">
-              <Package size={24} className="text-primary" />
-              <h2>{product.modelTitle || 'Modelos / Codigos'}</h2>
+        {availableTabs.length > 0 && (
+          <div className="product-tabs-section">
+            <div className="tabs-header">
+              {availableTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <div className="table-container">
-              <table className={`models-table ${product.hideModelData ? 'strip-mode' : ''}`}>
-                <thead>
-                  <tr>
-                    {product.modelTable.headers.map((header, index) => <th key={index}>{header}</th>)}
-                  </tr>
-                </thead>
-                {!product.hideModelData && (
-                  <tbody>
-                    {modelRowsToRender.map((row, rowIndex) => (
-                      <tr key={rowIndex}>
-                        {row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}
-                      </tr>
-                    ))}
-                  </tbody>
-                )}
-              </table>
-            </div>
-          </motion.div>
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="tab-content"
+            >
+              {!shouldUseCustomTabs && activeTab === 'description' && (
+                <div className="detailed-description-content">
+                  {renderSectionContent(product.description, product.descriptionAsList)}
+                </div>
+              )}
+
+              {dynamicSections.map((section) => (
+                activeTab === section.id && (
+                  <div key={section.id} className="detailed-description-content">
+                    {renderSectionContent(section.content, section.contentAsList)}
+                  </div>
+                )
+              ))}
+
+              {activeTab === 'specs' && (
+                <div className="specs-content">
+                  {product.techSpecs && product.techSpecs.length > 0 && (
+                    <div className="tech-specs-grid">
+                      {product.techSpecs.map((spec, idx) => (
+                        <div key={idx} className="spec-item">
+                          <span className="spec-label">{spec.label}</span>
+                          <span className="spec-value">{spec.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {(product.modelTable && product.showModelSection !== false) && (
+                    <div className="models-table-wrapper">
+                      <div className="section-title-group">
+                        <Package size={24} className="text-primary" />
+                        <h2>{product.modelTitle || 'Modelos / Codigos'}</h2>
+                      </div>
+
+                      <div className="table-container">
+                        <table className={`models-table ${product.hideModelData ? 'strip-mode' : ''}`}>
+                          <thead>
+                            <tr>
+                              {product.modelTable.headers.map((header, index) => <th key={index}>{header}</th>)}
+                            </tr>
+                          </thead>
+                          {!product.hideModelData && (
+                            <tbody>
+                              {modelRowsToRender.map((row, rowIndex) => (
+                                <tr key={rowIndex}>
+                                  {row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}
+                                </tr>
+                              ))}
+                            </tbody>
+                          )}
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </div>
         )}
 
         {relatedProducts.length > 0 && (
@@ -297,10 +508,41 @@ const ProductDetail = () => {
               <h2><Sparkles size={24} className="text-primary" /> Produtos Relacionados</h2>
               <p>Confira outras solucoes da categoria <strong>{product.category}</strong></p>
             </div>
-            <div className="related-grid">
-              {relatedProducts.map((related, index) => (
-                <ProductCard key={related.id} product={related} index={index} />
-              ))}
+
+            <div className="related-products-carousel">
+              <button
+                type="button"
+                className="related-products__nav related-products__nav-prev"
+                aria-label="Produto relacionado anterior"
+              />
+              <button
+                type="button"
+                className="related-products__nav related-products__nav-next"
+                aria-label="Próximo produto relacionado"
+              />
+
+              <Swiper
+                modules={[Autoplay, Navigation]}
+                spaceBetween={24}
+                slidesPerView={1}
+                loop={relatedProducts.length > 1}
+                navigation={{
+                  prevEl: '.related-products__nav-prev',
+                  nextEl: '.related-products__nav-next'
+                }}
+                autoplay={{ delay: 3500, disableOnInteraction: false }}
+                breakpoints={{
+                  640: { slidesPerView: 2 },
+                  1024: { slidesPerView: 3 },
+                  1400: { slidesPerView: 4 }
+                }}
+              >
+                {relatedProducts.map((related, index) => (
+                  <SwiperSlide key={related.id}>
+                    <ProductCard product={related} index={index} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
             </div>
           </div>
         )}

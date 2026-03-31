@@ -14,6 +14,99 @@ const PRODUCT_SELECT_QUERY = `
   FROM products p
 `;
 
+const PRODUCT_TABS_TABLE_QUERY = `
+  CREATE TABLE IF NOT EXISTS product_tabs (
+    id INT NOT NULL AUTO_INCREMENT,
+    product_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content LONGTEXT DEFAULT NULL,
+    content_as_list BOOLEAN DEFAULT FALSE,
+    display_order INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_product_tabs_product_id (product_id),
+    KEY idx_product_tabs_display_order (display_order),
+    CONSTRAINT fk_product_tabs_product
+      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+  )
+`;
+
+let productTabsTableReady = false;
+
+const normalizeProductTabRow = (row) => ({
+  id: Number(row.id),
+  product_id: Number(row.product_id),
+  title: row.title || '',
+  content: row.content || '',
+  content_as_list: Number(row.content_as_list ?? 0) === 1 || row.content_as_list === true,
+  display_order: Number(row.display_order || 0),
+  is_active: Number(row.is_active ?? 1) === 1
+});
+
+const ensureProductTabsTable = async (db) => {
+  if (productTabsTableReady) {
+    return;
+  }
+
+  await db.query(PRODUCT_TABS_TABLE_QUERY);
+  productTabsTableReady = true;
+};
+
+const normalizeIncomingTabs = (tabs = []) => (
+  Array.isArray(tabs)
+    ? tabs
+      .map((tab, index) => ({
+        title: String(tab?.title || '').trim(),
+        content: String(tab?.content || '').trim(),
+        content_as_list: Boolean(tab?.contentAsList || tab?.content_as_list),
+        display_order: Number.isFinite(Number(tab?.display_order))
+          ? Number(tab.display_order)
+          : index
+      }))
+      .filter((tab) => tab.title && tab.content)
+    : []
+);
+
+const listProductTabsByProductIds = async (db, productIds = []) => {
+  await ensureProductTabsTable(db);
+
+  if (!Array.isArray(productIds) || productIds.length === 0) {
+    return new Map();
+  }
+
+  const [rows] = await db.query(
+    `
+      SELECT id, product_id, title, content, content_as_list, display_order, is_active
+      FROM product_tabs
+      WHERE product_id IN (?) AND is_active = 1
+      ORDER BY product_id ASC, display_order ASC, id ASC
+    `,
+    [productIds]
+  );
+
+  return rows.reduce((map, row) => {
+    const normalizedTab = normalizeProductTabRow(row);
+    const currentTabs = map.get(normalizedTab.product_id) || [];
+    currentTabs.push(normalizedTab);
+    map.set(normalizedTab.product_id, currentTabs);
+    return map;
+  }, new Map());
+};
+
+const attachTabsToProducts = async (db, products = []) => {
+  await ensureProductTabsTable(db);
+
+  const productIds = products.map((product) => Number(product.id)).filter(Boolean);
+  const tabsByProductId = await listProductTabsByProductIds(db, productIds);
+
+  return products.map((product) => ({
+    ...product,
+    product_tabs: tabsByProductId.get(Number(product.id)) || []
+  }));
+};
+
 const formatProductRow = (row) => ({
   ...row,
   category_ids: row.main_category_ids
@@ -33,7 +126,7 @@ const listProducts = async (db, options = {}) => {
   const { includeInactive = false } = options;
   const whereClause = includeInactive ? '' : ' WHERE p.is_active = 1';
   const [rows] = await db.query(`${PRODUCT_SELECT_QUERY}${whereClause} ORDER BY p.id DESC`);
-  return rows.map(formatProductRow);
+  return attachTabsToProducts(db, rows.map(formatProductRow));
 };
 
 const findProductById = async (db, productId, options = {}) => {
@@ -42,7 +135,12 @@ const findProductById = async (db, productId, options = {}) => {
     `${PRODUCT_SELECT_QUERY} WHERE p.id = ?${includeInactive ? '' : ' AND p.is_active = 1'}`,
     [productId]
   );
-  return rows[0] ? formatProductRow(rows[0]) : null;
+  if (!rows[0]) {
+    return null;
+  }
+
+  const [product] = await attachTabsToProducts(db, [formatProductRow(rows[0])]);
+  return product || null;
 };
 
 const attachProductCategories = async (connection, productId, mainCategoryIds, subCategoryIds) => {
@@ -69,9 +167,39 @@ const attachProductCategories = async (connection, productId, mainCategoryIds, s
   }
 };
 
+const replaceProductTabs = async (connection, productId, tabs = []) => {
+  await ensureProductTabsTable(connection);
+  await connection.query('DELETE FROM product_tabs WHERE product_id = ?', [productId]);
+
+  const normalizedTabs = normalizeIncomingTabs(tabs);
+
+  if (normalizedTabs.length === 0) {
+    return;
+  }
+
+  const values = normalizedTabs.map((tab, index) => [
+    productId,
+    tab.title,
+    tab.content,
+    tab.content_as_list ? 1 : 0,
+    Number.isFinite(Number(tab.display_order)) ? Number(tab.display_order) : index,
+    1
+  ]);
+
+  await connection.query(
+    `
+      INSERT INTO product_tabs (product_id, title, content, content_as_list, display_order, is_active)
+      VALUES ?
+    `,
+    [values]
+  );
+};
+
 module.exports = {
   formatProductRow,
   listProducts,
   findProductById,
-  attachProductCategories
+  attachProductCategories,
+  replaceProductTabs,
+  ensureProductTabsTable
 };

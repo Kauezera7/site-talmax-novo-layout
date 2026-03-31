@@ -16,6 +16,7 @@ import {
   CheckCircle,
   AlertCircle,
   Search,
+  FileText,
   ChevronLeft,
   ChevronRight,
   Menu
@@ -34,6 +35,8 @@ import AdminUpcera from './AdminUpcera/AdminUpcera';
 import AdminScanners from './AdminScanners/AdminScanners';
 import AdminPrinters from './AdminPrinters/AdminPrinters';
 import AdminSegments from './AdminSegments/AdminSegments';
+import AdminTalmaxDigital from './AdminTalmaxDigital/AdminTalmaxDigital';
+import AdminPageSettings from './AdminPageSettings/AdminPageSettings';
 
 const AdminLoadingScreen = ({ label = 'Carregando painel...' }) => (
   <div className="app-loader-overlay app-loader-overlay-admin" role="status" aria-live="polite" aria-label={label}>
@@ -120,6 +123,8 @@ const AdminDashboardContent = () => {
   const pageItems = [
     { id: 'featured', label: 'Home Destaques', icon: <Package size={18} /> },
     { id: 'segments', label: 'Segmentos (Home)', icon: <Layers size={18} /> },
+    { id: 'page-settings', label: 'Paginas Especiais', icon: <FileText size={18} /> },
+    { id: 'talmax-digital', label: 'Talmax Digital', icon: <ImageIcon size={18} /> },
     { id: 'upcera', label: 'Upcera', icon: <CheckCircle size={18} /> },
     { id: 'scanners', label: 'Scanners', icon: <Search size={18} /> },
     { id: 'printers', label: 'Impressoras 3D', icon: <ImageIcon size={18} /> }
@@ -155,6 +160,8 @@ const AdminDashboardContent = () => {
       case 'banners': return <AdminBanners />;
       case 'featured': return <AdminFeatured />;
       case 'segments': return <AdminSegments />;
+      case 'page-settings': return <AdminPageSettings />;
+      case 'talmax-digital': return <AdminTalmaxDigital />;
       case 'upcera': return <AdminUpcera />;
       case 'scanners': return <AdminScanners />;
       case 'printers': return <AdminPrinters />;
