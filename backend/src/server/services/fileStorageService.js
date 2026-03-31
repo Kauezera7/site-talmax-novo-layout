@@ -68,6 +68,30 @@ const uploadFileToCloudinary = async (file, options = {}) => {
   return finalUrl;
 };
 
+const persistExistingLocalFile = async (filePath, options = {}) => {
+  if (!filePath) return null;
+
+  const useCloudinary = hasCloudinaryConfig();
+  const useSftp = hasSftpConfig();
+  const normalizedPath = path.resolve(filePath);
+  const fileName = path.basename(normalizedPath);
+  const file = {
+    path: normalizedPath,
+    filename: fileName,
+    originalname: fileName
+  };
+
+  if (useCloudinary) {
+    return uploadFileToCloudinary(file, options);
+  }
+
+  if (useSftp) {
+    return uploadFileToSftp(file);
+  }
+
+  return buildLocalImageUrl(file);
+};
+
 const uploadFileToSftp = async (file) => {
   const sftp = new SftpClient();
   const remoteDir = process.env.SFTP_REMOTE_DIR.replace(/\\/g, '/').replace(/\/+$/, '');
@@ -150,6 +174,7 @@ module.exports = {
   hasSftpConfig,
   buildCloudinaryFolder,
   persistUploadedFile,
+  persistExistingLocalFile,
   persistUploadedFiles,
   persistUploadedFilesByType
 };

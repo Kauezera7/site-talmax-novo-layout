@@ -131,6 +131,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS page_settings (
     id INT NOT NULL AUTO_INCREMENT,
     page_name VARCHAR(50) NOT NULL,
+    logo_url VARCHAR(500) DEFAULT NULL,
     content JSON DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -240,10 +241,11 @@ ON DUPLICATE KEY UPDATE
     display_order = VALUES(display_order),
     is_visible = VALUES(is_visible);
 
-INSERT INTO page_settings (id, page_name, content) VALUES
+INSERT INTO page_settings (id, page_name, logo_url, content) VALUES
 (
     1,
     'scanners',
+    '/img/titulo-pag-scanners.png',
     JSON_OBJECT(
         'title', 'Digital Precision Engineering',
         'description', 'O apice da captura digital para diagnosticos e planejamentos proteticos de precisao absoluta.'
@@ -252,6 +254,7 @@ INSERT INTO page_settings (id, page_name, content) VALUES
 (
     2,
     'upcera',
+    '/img/logo-upcera-.webp',
     JSON_OBJECT(
         'title', 'Upcera - Solucoes em Zirconia',
         'description', 'Lider mundial em tecnologia de ceramicas odontologicas.'
@@ -260,6 +263,7 @@ INSERT INTO page_settings (id, page_name, content) VALUES
 (
     3,
     'equipamentos',
+    NULL,
     JSON_OBJECT(
         'title', 'Equipamentos Odontologicos de Alta Performance',
         'description', 'Tecnologia avancada para laboratorios e consultorios que buscam excelencia e produtividade.'
@@ -267,6 +271,7 @@ INSERT INTO page_settings (id, page_name, content) VALUES
 )
 ON DUPLICATE KEY UPDATE
     page_name = VALUES(page_name),
+    logo_url = VALUES(logo_url),
     content = VALUES(content);
 
 INSERT INTO users (id, username, password, full_name) VALUES
