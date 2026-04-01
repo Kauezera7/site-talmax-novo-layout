@@ -16,7 +16,6 @@ import {
   CheckCircle,
   AlertCircle,
   Search,
-  FileText,
   ChevronLeft,
   ChevronRight,
   Menu
@@ -36,7 +35,6 @@ import AdminScanners from './AdminScanners/AdminScanners';
 import AdminPrinters from './AdminPrinters/AdminPrinters';
 import AdminSegments from './AdminSegments/AdminSegments';
 import AdminTalmaxDigital from './AdminTalmaxDigital/AdminTalmaxDigital';
-import AdminPageSettings from './AdminPageSettings/AdminPageSettings';
 
 const AdminLoadingScreen = ({ label = 'Carregando painel...' }) => (
   <div className="app-loader-overlay app-loader-overlay-admin" role="status" aria-live="polite" aria-label={label}>
@@ -102,6 +100,8 @@ const AdminDashboardContent = () => {
     setIsMobileMenuOpen,
     isCatalogOpen,
     setIsCatalogOpen,
+    isHomeOpen,
+    setIsHomeOpen,
     isPagesOpen,
     setIsPagesOpen,
     toasts
@@ -113,24 +113,25 @@ const AdminDashboardContent = () => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-    { id: 'categories', label: 'Categorias', icon: <Layers size={20} /> },
-    { id: 'banners', label: 'Banners', icon: <ImageIcon size={20} /> }
+    { id: 'categories', label: 'Categorias', icon: <Layers size={20} /> }
   ];
   const catalogItems = [
     { id: 'products', label: 'Cadastro de Produtos', icon: <Package size={18} /> },
     { id: 'products-list', label: 'Lista de Produtos', icon: <Search size={18} /> }
   ];
+  const homeItems = [
+    { id: 'banners', label: 'Banners', icon: <ImageIcon size={18} /> },
+    { id: 'segments', label: 'Home Segmentos', icon: <Layers size={18} /> },
+    { id: 'featured', label: 'Home Destaques', icon: <CheckCircle size={18} /> }
+  ];
   const pageItems = [
-    { id: 'featured', label: 'Home Destaques', icon: <Package size={18} /> },
-    { id: 'segments', label: 'Segmentos (Home)', icon: <Layers size={18} /> },
-    { id: 'page-settings', label: 'Paginas Especiais', icon: <FileText size={18} /> },
     { id: 'talmax-digital', label: 'Talmax Digital', icon: <ImageIcon size={18} /> },
     { id: 'upcera', label: 'Upcera', icon: <CheckCircle size={18} /> },
     { id: 'scanners', label: 'Scanners', icon: <Search size={18} /> },
     { id: 'printers', label: 'Impressoras 3D', icon: <ImageIcon size={18} /> }
   ];
-  const activeItem = [...menuItems, ...catalogItems, ...pageItems].find((item) => item.id === activeTab);
-  const isCatalogSectionActive = catalogItems.some((item) => item.id === activeTab);
+  const activeItem = [...menuItems, ...catalogItems, ...homeItems, ...pageItems].find((item) => item.id === activeTab);
+  const isHomeSectionActive = homeItems.some((item) => item.id === activeTab);
   const isPagesSectionActive = pageItems.some((item) => item.id === activeTab);
 
   const renderActiveTab = () => {
@@ -160,12 +161,11 @@ const AdminDashboardContent = () => {
       case 'banners': return <AdminBanners />;
       case 'featured': return <AdminFeatured />;
       case 'segments': return <AdminSegments />;
-      case 'page-settings': return <AdminPageSettings />;
       case 'talmax-digital': return <AdminTalmaxDigital />;
       case 'upcera': return <AdminUpcera />;
       case 'scanners': return <AdminScanners />;
       case 'printers': return <AdminPrinters />;
-      default: return <DashboardHome />;
+      default: return <DashboardHome onOpenTab={setActiveTab} />;
     }
   };
 
@@ -201,9 +201,47 @@ const AdminDashboardContent = () => {
             </div>
           ))}
 
+          <div className={`nav-dropdown ${isHomeOpen ? 'open' : ''}`}>
+            <div
+              className={`nav-link ${isHomeSectionActive ? 'active' : ''}`}
+              onClick={() => {
+                if (isSidebarCollapsed) {
+                  setIsSidebarCollapsed(false);
+                  setIsHomeOpen(true);
+                } else {
+                  setIsHomeOpen(!isHomeOpen);
+                }
+              }}
+            >
+              <ImageIcon size={20} />
+              {!isSidebarCollapsed && <span>Pagina Home</span>}
+              {!isSidebarCollapsed && <ChevronRight size={16} className="dropdown-arrow" />}
+            </div>
+
+            {!isSidebarCollapsed && (
+              <div className="dropdown-content">
+                {homeItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`nav-link sub-link ${activeTab === item.id ? 'active' : ''}`}
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setIsHomeOpen(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <div className="dot" />
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className={`nav-dropdown ${isCatalogOpen ? 'open' : ''}`}>
             <div
-              className={`nav-link ${isCatalogSectionActive ? 'active' : ''}`}
+              className={`nav-link ${catalogItems.some((item) => item.id === activeTab) ? 'active' : ''}`}
               onClick={() => {
                 if (isSidebarCollapsed) {
                   setIsSidebarCollapsed(false);
@@ -252,7 +290,7 @@ const AdminDashboardContent = () => {
               }}
             >
               <Layers size={20} />
-              {!isSidebarCollapsed && <span>Páginas</span>}
+              {!isSidebarCollapsed && <span>Paginas Especiais</span>}
               {!isSidebarCollapsed && <ChevronRight size={16} className="dropdown-arrow" />}
             </div>
 
@@ -338,6 +376,7 @@ const useAdminState = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCatalogOpen, setIsCatalogOpen] = useState(true);
+  const [isHomeOpen, setIsHomeOpen] = useState(true);
   const [isPagesOpen, setIsPagesOpen] = useState(true);
   const { loading, toasts } = useAdmin();
 
@@ -353,6 +392,8 @@ const useAdminState = () => {
     setIsMobileMenuOpen,
     isCatalogOpen,
     setIsCatalogOpen,
+    isHomeOpen,
+    setIsHomeOpen,
     isPagesOpen,
     setIsPagesOpen,
     toasts

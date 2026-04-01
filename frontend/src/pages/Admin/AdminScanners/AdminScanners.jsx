@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAdmin } from '../../../context/AdminContext';
 import SpecialSectionManager from '../AdminUpcera/SpecialSectionManager';
+import SpecialPageSettingsForm from '../SpecialPageSettingsForm/SpecialPageSettingsForm';
 import './AdminScanners.css';
 
 const AdminScanners = () => {
@@ -16,15 +17,23 @@ const AdminScanners = () => {
   };
 
   return (
-    <SpecialSectionManager 
-      sectionTitle="Scanners"
-      sectionKey="scanners"
-      products={products}
-      mainCategories={mainCategories}
-      subCategories={subCategories}
-      categoryMatcher={(category) => category.slug === 'scanner'}
-      onSave={handleSave}
-    />
+    <>
+      <SpecialPageSettingsForm
+        pageKey="scanners"
+        title="Scanners"
+        description="Edite logo, texto superior, titulo e descricao da pagina Scanners."
+      />
+
+      <SpecialSectionManager
+        sectionTitle="Scanners"
+        sectionKey="scanners"
+        products={products}
+        mainCategories={mainCategories}
+        subCategories={subCategories}
+        categoryMatcher={(category) => category.slug === 'scanner'}
+        onSave={handleSave}
+      />
+    </>
   );
 };
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAdmin } from '../../../context/AdminContext';
 import SpecialSectionManager from '../AdminUpcera/SpecialSectionManager';
+import SpecialPageSettingsForm from '../SpecialPageSettingsForm/SpecialPageSettingsForm';
 import './AdminPrinters.css';
 
 const AdminPrinters = () => {
@@ -16,15 +17,23 @@ const AdminPrinters = () => {
   };
 
   return (
-    <SpecialSectionManager 
-      sectionTitle="Impressoras 3D"
-      sectionKey="printers"
-      products={products}
-      mainCategories={mainCategories}
-      subCategories={subCategories}
-      categoryMatcher={(category) => category.slug === 'impressora'}
-      onSave={handleSave}
-    />
+    <>
+      <SpecialPageSettingsForm
+        pageKey="printers"
+        title="Impressoras 3D"
+        description="Edite logo, texto superior, titulo e descricao da pagina Impressoras 3D."
+      />
+
+      <SpecialSectionManager
+        sectionTitle="Impressoras 3D"
+        sectionKey="printers"
+        products={products}
+        mainCategories={mainCategories}
+        subCategories={subCategories}
+        categoryMatcher={(category) => category.slug === 'impressora'}
+        onSave={handleSave}
+      />
+    </>
   );
 };
 

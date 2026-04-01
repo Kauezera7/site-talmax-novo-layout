@@ -3,6 +3,7 @@ import { Save, UploadCloud, Image as ImageIcon, RefreshCcw } from 'lucide-react'
 import { useAdmin } from '../../../context/AdminContext';
 import homeService from '../../../services/homeService';
 import { apiAssetPath } from '../../../utils/assets';
+import SpecialPageSettingsForm from '../SpecialPageSettingsForm/SpecialPageSettingsForm';
 import './AdminTalmaxDigital.css';
 
 const DIGITAL_CARD_TEMPLATES = [
@@ -231,6 +232,12 @@ const AdminTalmaxDigital = () => {
 
   return (
     <div className="admin-talmax-digital">
+      <SpecialPageSettingsForm
+        pageKey="talmax-digital"
+        title="Talmax Digital"
+        description="Edite logo, texto superior, titulo e descricao da pagina Talmax Digital."
+      />
+
       <div className="admin-card">
         <div className="card-header admin-talmax-digital__header">
           <div>
