@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Copy, Eye, LayoutTemplate, Pencil, PlusCircle, Save, Trash2, UploadCloud, X } from 'lucide-react';
+import { AlertCircle, Copy, Eye, LayoutTemplate, Pencil, PlusCircle, Save, Trash2, UploadCloud, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useAdmin } from '../../../context/AdminContext';
 import customPageService from '../../../services/customPageService';
 import { apiAssetPath, assetPath } from '../../../utils/assets';
@@ -84,6 +85,7 @@ const AdminCustomPages = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [pageToDelete, setPageToDelete] = useState(null);
   const [productFilter, setProductFilter] = useState('');
   const [savedPagesFilter, setSavedPagesFilter] = useState('');
 
@@ -279,16 +281,36 @@ const AdminCustomPages = () => {
   const handleDelete = async () => {
     if (!form.id || isDeleting) return;
 
-    const confirmed = window.confirm('Deseja realmente excluir esta pagina personalizada?');
-    if (!confirmed) return;
+    setPageToDelete({
+      id: form.id,
+      title: form.title || 'sem nome'
+    });
+  };
+
+  const handleDeleteItem = (item) => {
+    if (!item?.id || isDeleting) return;
+
+    setPageToDelete({
+      id: item.id,
+      title: item.title || 'sem nome'
+    });
+  };
+
+  const confirmDelete = async () => {
+    if (!pageToDelete?.id || isDeleting) return;
 
     setIsDeleting(true);
 
     try {
-      await customPageService.remove(form.id);
+      await customPageService.remove(pageToDelete.id);
       addToast('Pagina personalizada excluida com sucesso!');
       await loadItems();
-      resetForm();
+
+      if (form.id === pageToDelete.id) {
+        resetForm();
+      }
+
+      setPageToDelete(null);
     } catch (error) {
       addToast(error.message || 'Erro ao excluir pagina personalizada', 'error');
     } finally {
@@ -545,6 +567,17 @@ const AdminCustomPages = () => {
                 </div>
               ) : filteredItems.map((item) => (
                 <article key={item.id} className="admin-custom-pages__list-item">
+                  <button
+                    type="button"
+                    className="admin-custom-pages__list-remove"
+                    onClick={() => handleDeleteItem(item)}
+                    disabled={isDeleting}
+                    aria-label={`Excluir pagina ${item.title}`}
+                    title="Excluir pagina"
+                  >
+                    <X size={16} />
+                  </button>
+
                   <div>
                     <strong>{item.title}</strong>
                     <span>/pagina/{item.slug}</span>
@@ -577,6 +610,38 @@ const AdminCustomPages = () => {
           )}
         </div>
       </section>
+
+      <AnimatePresence>
+        {pageToDelete && (
+          <div className="modal-overlay" onClick={() => !isDeleting && setPageToDelete(null)}>
+            <motion.div
+              className="modal-content"
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="modal-body">
+                <div className="modal-icon">
+                  <AlertCircle size={32} />
+                </div>
+                <h3>Excluir pagina?</h3>
+                <p>
+                  Deseja remover a pagina personalizada "{pageToDelete.title}"? Esta acao nao pode ser desfeita.
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button className="btn-secondary" onClick={() => setPageToDelete(null)} disabled={isDeleting}>
+                  Cancelar
+                </button>
+                <button className="btn-primary admin-danger-button" onClick={confirmDelete} disabled={isDeleting}>
+                  {isDeleting ? 'Excluindo...' : 'Sim, Excluir'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -356,6 +356,7 @@
 }
 
 .admin-custom-pages__list-item {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -364,6 +365,34 @@
   border: 1px solid var(--admin-border);
   border-radius: 18px;
   background: var(--admin-surface);
+}
+
+.admin-custom-pages__list-remove {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid color-mix(in srgb, #d43c3c 22%, var(--admin-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, #d43c3c 10%, white);
+  color: #b42318;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.admin-custom-pages__list-remove:hover:not(:disabled) {
+  transform: scale(1.05);
+  background: color-mix(in srgb, #d43c3c 16%, white);
+  border-color: color-mix(in srgb, #d43c3c 32%, var(--admin-border));
+}
+
+.admin-custom-pages__list-remove:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .admin-custom-pages__list-item strong,
@@ -407,5 +436,10 @@
   .admin-custom-pages__list-item {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .admin-custom-pages__list-remove {
+    top: 10px;
+    right: 10px;
   }
 }
