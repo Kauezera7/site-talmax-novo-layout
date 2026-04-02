@@ -104,6 +104,8 @@ const AdminDashboardContent = () => {
     setIsCatalogOpen,
     isHomeOpen,
     setIsHomeOpen,
+    isEditPagesOpen,
+    setIsEditPagesOpen,
     isPagesOpen,
     setIsPagesOpen,
     toasts
@@ -123,19 +125,22 @@ const AdminDashboardContent = () => {
   ];
   const homeItems = [
     { id: 'banners', label: 'Banners', icon: <ImageIcon size={18} /> },
-    { id: 'segments', label: 'Home Segmentos', icon: <Layers size={18} /> },
     { id: 'featured', label: 'Home Destaques', icon: <CheckCircle size={18} /> }
   ];
-  const pageItems = [
+  const editPageItems = [
     { id: 'custom-pages', label: 'Paginas Personalizadas', icon: <LayoutDashboard size={18} /> },
+    { id: 'digital-groups', label: 'Grupo de Segmentos', icon: <Layers size={18} /> },
+    { id: 'segments', label: 'Home Segmentos', icon: <Layers size={18} /> }
+  ];
+  const pageItems = [
     { id: 'talmax-digital', label: 'Talmax Digital', icon: <ImageIcon size={18} /> },
-    { id: 'digital-groups', label: 'Grupo de Seguimentos', icon: <Layers size={18} /> },
     { id: 'upcera', label: 'Upcera', icon: <CheckCircle size={18} /> },
     { id: 'scanners', label: 'Scanners', icon: <Search size={18} /> },
     { id: 'printers', label: 'Impressoras 3D', icon: <ImageIcon size={18} /> }
   ];
-  const activeItem = [...menuItems, ...catalogItems, ...homeItems, ...pageItems].find((item) => item.id === activeTab);
+  const activeItem = [...menuItems, ...catalogItems, ...homeItems, ...editPageItems, ...pageItems].find((item) => item.id === activeTab);
   const isHomeSectionActive = homeItems.some((item) => item.id === activeTab);
+  const isEditPagesSectionActive = editPageItems.some((item) => item.id === activeTab);
   const isPagesSectionActive = pageItems.some((item) => item.id === activeTab);
 
   const renderActiveTab = () => {
@@ -283,6 +288,44 @@ const AdminDashboardContent = () => {
             )}
           </div>
 
+          <div className={`nav-dropdown ${isEditPagesOpen ? 'open' : ''}`}>
+            <div
+              className={`nav-link ${isEditPagesSectionActive ? 'active' : ''}`}
+              onClick={() => {
+                if (isSidebarCollapsed) {
+                  setIsSidebarCollapsed(false);
+                  setIsEditPagesOpen(true);
+                } else {
+                  setIsEditPagesOpen(!isEditPagesOpen);
+                }
+              }}
+            >
+              <LayoutDashboard size={20} />
+              {!isSidebarCollapsed && <span>Edit de Paginas</span>}
+              {!isSidebarCollapsed && <ChevronRight size={16} className="dropdown-arrow" />}
+            </div>
+
+            {!isSidebarCollapsed && (
+              <div className="dropdown-content">
+                {editPageItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`nav-link sub-link ${activeTab === item.id ? 'active' : ''}`}
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setIsEditPagesOpen(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <div className="dot" />
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className={`nav-dropdown ${isPagesOpen ? 'open' : ''}`}>
             <div
               className={`nav-link ${isPagesSectionActive ? 'active' : ''}`}
@@ -383,6 +426,7 @@ const useAdminState = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCatalogOpen, setIsCatalogOpen] = useState(true);
   const [isHomeOpen, setIsHomeOpen] = useState(true);
+  const [isEditPagesOpen, setIsEditPagesOpen] = useState(true);
   const [isPagesOpen, setIsPagesOpen] = useState(true);
   const { loading, toasts } = useAdmin();
 
@@ -400,6 +444,8 @@ const useAdminState = () => {
     setIsCatalogOpen,
     isHomeOpen,
     setIsHomeOpen,
+    isEditPagesOpen,
+    setIsEditPagesOpen,
     isPagesOpen,
     setIsPagesOpen,
     toasts

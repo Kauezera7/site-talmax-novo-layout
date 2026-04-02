@@ -2,6 +2,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
 }
 
 .special-section-body {
@@ -63,44 +64,62 @@
 
 .special-section-card {
   margin-top: 0;
+  border: 1px solid color-mix(in srgb, var(--admin-border) 86%, var(--admin-primary) 14%);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 32%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  padding: 20px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
 }
 
 .special-section-hint {
-  font-size: 0.85rem;
+  font-size: 0.92rem;
   color: var(--admin-text-light);
-  margin-bottom: 15px;
+  margin: 0 0 18px;
+  line-height: 1.55;
 }
 
 .special-products-list {
   max-height: 500px;
   overflow-y: auto;
-  background: white;
-  border-radius: 12px;
-  border: 1px solid var(--admin-border);
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--admin-border) 90%, white);
 }
 
 .product-select-item {
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--admin-border);
+  gap: 16px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  border: 1px solid transparent;
+  border-radius: 16px;
   cursor: pointer;
-  background: transparent;
+  background: #ffffff;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.product-select-item:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--admin-primary) 18%, var(--admin-border));
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
 }
 
 .product-select-item.selected {
-  background: #eff6ff;
-}
-
-.product-select-item:last-child {
-  border-bottom: none;
+  background:
+    linear-gradient(180deg, rgba(239, 246, 255, 0.92) 0%, rgba(248, 250, 252, 0.96) 100%);
+  border-color: rgba(59, 130, 246, 0.28);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.08);
 }
 
 .product-select-checkbox {
+  flex-shrink: 0;
   width: 22px;
   height: 22px;
-  border-radius: 6px;
+  border-radius: 7px;
   border: 2px solid var(--admin-primary);
   display: flex;
   align-items: center;
@@ -112,46 +131,86 @@
   background: var(--admin-primary);
 }
 
+.product-select-image-shell {
+  flex-shrink: 0;
+  width: 78px;
+  height: 78px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #eef2f7 100%);
+  border: 1px solid color-mix(in srgb, var(--admin-border) 88%, white);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
 .product-select-image {
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  object-fit: cover;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  object-fit: contain;
+  object-position: center;
+  background: #fff;
 }
 
 .product-select-info {
   flex: 1;
+  min-width: 0;
 }
 
 .product-select-name {
   margin: 0;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 1rem;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+.product-select-meta {
+  display: inline-flex;
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .product-order-group {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
+  min-width: 210px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid color-mix(in srgb, var(--admin-border) 88%, white);
 }
 
 .product-order-label {
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
 }
 
 .product-order-input {
-  width: 60px;
-  padding: 5px;
-  border-radius: 6px;
+  width: 74px;
+  padding: 8px 10px;
+  border-radius: 10px;
   border: 1px solid var(--admin-border);
   text-align: center;
+  font-weight: 700;
+  background: #fff;
 }
 
 .product-display-mode-select {
   min-width: 130px;
-  padding: 5px 10px;
-  border-radius: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
   border: 1px solid var(--admin-border);
   background: #ffffff;
   color: var(--admin-text);
@@ -160,11 +219,11 @@
 }
 
 .special-selection-summary {
-  margin-top: 15px;
-  padding: 12px 20px;
-  background: #f8fafc;
-  border-radius: 10px;
-  border-left: 4px solid var(--admin-primary);
+  margin-top: 18px;
+  padding: 14px 18px;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef4ff 100%);
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--admin-border) 78%, var(--admin-primary) 22%);
   font-size: 0.9rem;
   font-weight: 600;
   display: flex;
@@ -185,6 +244,17 @@
     gap: 1rem;
   }
 
+  .product-select-item {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .product-order-group {
+    width: 100%;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
   .special-selection-summary {
     flex-direction: column;
     align-items: flex-start;
@@ -193,7 +263,8 @@
 }
 
 body[data-theme='dark'] .special-filters-panel,
-body[data-theme='dark'] .special-selection-summary {
+body[data-theme='dark'] .special-selection-summary,
+body[data-theme='dark'] .special-section-card {
   background: linear-gradient(180deg, #0f172a 0%, #111c2e 100%);
   border-color: rgba(148, 163, 184, 0.18);
 }
@@ -224,7 +295,13 @@ body[data-theme='dark'] .special-products-list {
 }
 
 body[data-theme='dark'] .product-select-item {
-  border-bottom-color: rgba(148, 163, 184, 0.12);
+  background: rgba(15, 23, 42, 0.82);
+  border-color: rgba(148, 163, 184, 0.14);
+}
+
+body[data-theme='dark'] .product-select-item:hover {
+  border-color: rgba(96, 165, 250, 0.34);
+  box-shadow: 0 14px 28px rgba(2, 6, 23, 0.34);
 }
 
 body[data-theme='dark'] .product-select-item.selected {
@@ -234,6 +311,16 @@ body[data-theme='dark'] .product-select-item.selected {
 body[data-theme='dark'] .product-select-name,
 body[data-theme='dark'] .product-order-label {
   color: #f8fafc;
+}
+
+body[data-theme='dark'] .product-select-meta {
+  color: #94a3b8;
+}
+
+body[data-theme='dark'] .product-select-image-shell,
+body[data-theme='dark'] .product-order-group {
+  background: rgba(8, 17, 31, 0.88);
+  border-color: rgba(148, 163, 184, 0.16);
 }
 
 body[data-theme='dark'] .product-select-image {

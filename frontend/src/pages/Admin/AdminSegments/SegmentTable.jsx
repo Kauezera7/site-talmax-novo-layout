@@ -14,56 +14,55 @@ const SegmentTable = ({ segments, onEdit, onDelete, onToggleStatus, togglingId }
 
   return (
     <div className="admin-table-container">
-      <table className="admin-table">
+      <table className="admin-table admin-segments-table">
+        <colgroup>
+          <col style={{ width: '160px' }} />
+          <col />
+          <col style={{ width: '100px' }} />
+          <col style={{ width: '70px' }} />
+          <col style={{ width: '250px' }} />
+        </colgroup>
         <thead>
           <tr>
-            <th style={{ width: '100px' }}>Imagem</th>
+            <th>Imagem</th>
             <th>Nome</th>
-            <th>Descricao</th>
-            <th style={{ width: '80px', textAlign: 'center' }}>Ordem</th>
-            <th style={{ width: '120px', textAlign: 'center' }}>Status</th>
-            <th style={{ width: '120px', textAlign: 'center' }}>Acoes</th>
+            <th>Ordem</th>
+            <th>Status</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
           {segments.map((segment) => (
             <tr key={segment.id}>
               <td>
-                <div className="table-img-wrapper" style={{ width: '80px', height: '45px', borderRadius: '6px', overflow: 'hidden' }}>
+                <div className="admin-segments-table__image">
                   <img
                     src={segment.image_url ? apiAssetPath(segment.image_url) : assetPath('img/placeholder.png')}
                     alt={segment.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    className="admin-segments-table__image-content"
                     onError={(e) => {
                       e.target.src = assetPath('img/placeholder.png');
                     }}
                   />
                 </div>
               </td>
-              <td>
-                <span style={{ fontWeight: 700, color: 'var(--admin-text)' }}>{segment.name}</span>
+              <td className="admin-segments-table__name-cell">
+                <div className="admin-segments-table__name-group">
+                  <span className="admin-segments-table__name">{segment.name}</span>
+                  <span
+                    className="admin-segments-table__link"
+                    title={segment.link_url || '-'}
+                  >
+                    {segment.link_url || '-'}
+                  </span>
+                </div>
               </td>
-              <td>
-                <p
-                  style={{
-                    fontSize: '0.85rem',
-                    color: 'var(--admin-text-light)',
-                    maxWidth: '300px',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    margin: 0
-                  }}
-                >
-                  {segment.description || '-'}
-                </p>
-              </td>
-              <td style={{ textAlign: 'center' }}>
-                <span style={{ background: '#f1f5f9', padding: '2px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600 }}>
+              <td className="admin-segments-table__order-cell">
+                <span className="admin-segments-table__order-badge">
                   {segment.display_order}
                 </span>
               </td>
-              <td style={{ textAlign: 'center' }}>
+              <td className="admin-segments-table__status-cell">
                 <button
                   type="button"
                   className={`status-badge ${segment.active ? 'status-active' : 'status-inactive'}${togglingId === segment.id ? ' is-toggling' : ''}`}
@@ -75,7 +74,7 @@ const SegmentTable = ({ segments, onEdit, onDelete, onToggleStatus, togglingId }
                   {segment.active ? 'Ativo' : 'Oculto'}
                 </button>
               </td>
-              <td className="actions-cell">
+              <td className="actions-cell admin-segments-table__actions-cell">
                 <button
                   className="btn-icon edit"
                   onClick={() => onEdit(segment)}

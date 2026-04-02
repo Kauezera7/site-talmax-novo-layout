@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Copy, Eye, FolderPlus, Image as ImageIcon, Pencil, PlusCircle, Save, Trash2, UploadCloud, X } from 'lucide-react';
+import { ChevronDown, Copy, Eye, FolderPlus, Image as ImageIcon, Pencil, PlusCircle, Save, Trash2, UploadCloud, X } from 'lucide-react';
 import { useAdmin } from '../../../context/AdminContext';
+import customPageService from '../../../services/customPageService';
 import digitalGroupService from '../../../services/digitalGroupService';
 import homeService from '../../../services/homeService';
 import { resolveStoredAssetPath } from '../../../utils/assets';
@@ -15,6 +16,7 @@ const getTemplateCard = (cardId) => DIGITAL_CARD_TEMPLATES.find((item) => item.i
 const buildCard = (card = {}) => ({
   id: card.id || createId('card'),
   temp_id: card.temp_id || String(card.id || createId('card-temp')),
+  custom_page_id: card.custom_page_id || null,
   title: card.title || '',
   description: card.description || '',
   link_url: card.link_url || '',
@@ -50,38 +52,47 @@ const buildGroup = (group = {}) => ({
   cards: Array.isArray(group.cards) ? group.cards.map(buildCard) : []
 });
 
-const emptyGroup = (heroDefaults = {}) => buildGroup({
+const emptyGroup = () => buildGroup({
   id: null,
   title: '',
   description: '',
-  overline: heroDefaults.overline || '',
-  hero_title: heroDefaults.title || '',
-  hero_description: heroDefaults.description || '',
-  logo_url: heroDefaults.logo_url || '',
+  overline: '',
+  hero_title: '',
+  hero_description: '',
+  logo_url: '',
   display_order: 0,
   is_active: true,
   cards: []
 });
-
-const buildGroupTemplateCards = (referenceCards = []) => (
-  referenceCards.map((card) => buildCard({
-    title: card.title || '',
-    description: card.description || '',
-    link_url: card.link_url || '',
-    is_external: Boolean(card.is_external),
-    front_image_url: card.front_image_url || '',
-    back_image_url: card.back_image_url || ''
-  }))
-);
 
 const buildPublicGroupUrl = (id) => {
   const baseUrl = import.meta.env.BASE_URL || '/';
   return new URL(`grupo-digital/${id}`, `${window.location.origin}${baseUrl}`).toString();
 };
 
+const buildPublicCustomPageUrl = (slug) => {
+  const baseUrl = import.meta.env.BASE_URL || '/';
+  return new URL(`pagina/${slug}`, `${window.location.origin}${baseUrl}`).toString();
+};
+
 const ButtonSavingIndicator = () => (
   <span className="loader loader_bubble admin-button-loader" aria-hidden="true" />
 );
+
+const normalizeSegmentValue = (value) => String(value || '').trim().toLowerCase();
+
+const isTalmaxDigitalSegment = (service) => {
+  const normalizedName = normalizeSegmentValue(service?.name);
+  const normalizedLink = normalizeSegmentValue(service?.link_url);
+  const digitalCards = parseDigitalActionsPayload(service?.actions).digital_cards;
+
+  return (
+    normalizedName === 'talmax digital' ||
+    normalizedName.includes('talmax digital') ||
+    normalizedLink.includes('/categoria/talmax-digital') ||
+    (Array.isArray(digitalCards) && digitalCards.length > 0)
+  );
+};
 
 const applyHeroDefaultsToGroup = (group, heroDefaults = {}) => ({
   ...group,
@@ -92,27 +103,31 @@ const applyHeroDefaultsToGroup = (group, heroDefaults = {}) => ({
 });
 
 const AdminDigitalGroups = ({
-  panelTitle = 'Grupo de Seguimentos',
+  panelTitle = 'Grupo de Segmentos',
   panelDescription = 'Crie grupos independentes e adicione quantos cards quiser com link livre e imagens próprias.'
 }) => {
   const { addToast } = useAdmin();
   const [groups, setGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [savingKey, setSavingKey] = useState(null);
-  const [referenceCards, setReferenceCards] = useState(() => buildTalmaxDigitalReferenceCards());
+  const [collapsedCards, setCollapsedCards] = useState({});
+  const [activeUrlPickerKey, setActiveUrlPickerKey] = useState(null);
   const [heroDefaults, setHeroDefaults] = useState(DEFAULT_SPECIAL_PAGE_SETTINGS['talmax-digital']);
+  const [activeEditorGroupId, setActiveEditorGroupId] = useState(null);
+  const [customPageOptions, setCustomPageOptions] = useState([]);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [items, services, pageSettingsItems] = await Promise.all([
+      const [items, services, pageSettingsItems, customPages] = await Promise.all([
         digitalGroupService.getAll({ admin: true }),
         homeService.getAll().catch(() => []),
-        pageSettingsService.getAll().catch(() => [])
+        pageSettingsService.getAll().catch(() => []),
+        customPageService.getAll().catch(() => [])
       ]);
 
       const talmaxDigitalService = Array.isArray(services)
-        ? services.find((service) => String(service?.name || '').trim().toLowerCase() === 'talmax digital')
+        ? services.find(isTalmaxDigitalSegment)
         : null;
 
       const nextReferenceCards = talmaxDigitalService
@@ -120,9 +135,20 @@ const AdminDigitalGroups = ({
         : buildTalmaxDigitalReferenceCards();
       const normalizedPageSettings = normalizeSpecialPageSettings(pageSettingsItems);
 
-      setReferenceCards(nextReferenceCards);
       const nextHeroDefaults = normalizedPageSettings['talmax-digital'] || DEFAULT_SPECIAL_PAGE_SETTINGS['talmax-digital'];
       setHeroDefaults(nextHeroDefaults);
+      setCustomPageOptions(
+        Array.isArray(customPages)
+          ? customPages
+              .filter((item) => item?.slug)
+              .map((item) => ({
+                id: item.id,
+                title: item.title || `Pagina ${item.id}`,
+                path: `/pagina/${item.slug}`,
+                url: buildPublicCustomPageUrl(item.slug)
+              }))
+          : []
+      );
       setGroups(items.map((item) => buildGroup(applyHeroDefaultsToGroup(item, nextHeroDefaults))));
     } catch (error) {
       addToast(error.message || 'Erro ao carregar grupos digitais', 'error');
@@ -146,20 +172,46 @@ const AdminDigitalGroups = ({
     }));
   };
 
-  const handleAddGroup = () => {
-    setGroups((current) => [
+  const buildCardCollapseKey = (groupId, cardId) => `${groupId}:${cardId}`;
+  const buildCardUrlPickerKey = (groupId, cardId) => `url-picker:${groupId}:${cardId}`;
+
+  const toggleCardCollapse = (groupId, cardId) => {
+    const nextKey = buildCardCollapseKey(groupId, cardId);
+    setCollapsedCards((current) => ({
       ...current,
+      [nextKey]: !current[nextKey]
+    }));
+  };
+
+  const handleAddGroup = () => {
+    const nextGroupId = createId('new-group');
+
+    setGroups((current) => ([
+      ...current.filter((group) => !String(group.id).startsWith('new-group')),
       {
-        ...emptyGroup(heroDefaults),
-        id: createId('new-group'),
-        cards: buildGroupTemplateCards(referenceCards)
+        ...emptyGroup(),
+        id: nextGroupId
       }
-    ]);
+    ]));
+    setActiveEditorGroupId(nextGroupId);
+  };
+
+  const handleAddCard = (groupId) => {
+    updateGroup(groupId, (group) => ({
+      ...group,
+      cards: [
+        ...group.cards,
+        buildCard()
+      ]
+    }));
   };
 
   const handleRemoveGroup = async (group) => {
     if (String(group.id).startsWith('new-group')) {
       setGroups((current) => current.filter((item) => item.id !== group.id));
+      if (activeEditorGroupId === group.id) {
+        setActiveEditorGroupId(null);
+      }
       return;
     }
 
@@ -168,6 +220,9 @@ const AdminDigitalGroups = ({
     try {
       await digitalGroupService.remove(group.id);
       addToast('Grupo removido com sucesso!');
+      if (activeEditorGroupId === group.id) {
+        setActiveEditorGroupId(null);
+      }
       await loadData();
     } catch (error) {
       addToast(error.message || 'Erro ao remover grupo digital', 'error');
@@ -195,6 +250,7 @@ const AdminDigitalGroups = ({
       formData.append('cards', JSON.stringify(group.cards.map((card) => ({
         id: String(card.id).startsWith('card-') ? '' : card.id,
         temp_id: card.temp_id,
+        custom_page_id: card.custom_page_id || null,
         title: card.title,
         description: card.description,
         link_url: card.link_url,
@@ -222,19 +278,20 @@ const AdminDigitalGroups = ({
       }
 
       await loadData();
+      return true;
     } catch (error) {
       addToast(error.message || (options.onlyCardId ? 'Erro ao salvar card do grupo' : 'Erro ao salvar grupo digital'), 'error');
+      return false;
     } finally {
       setSavingKey(null);
     }
   };
 
   const handleSaveGroup = async (group) => {
-    await persistGroup(group);
-  };
-
-  const handleSaveCard = async (group, cardId) => {
-    await persistGroup(group, { onlyCardId: cardId });
+    const saved = await persistGroup(group);
+    if (saved) {
+      setActiveEditorGroupId(null);
+    }
   };
 
   const handleImageChange = (groupId, cardId, side, file) => {
@@ -282,7 +339,9 @@ const AdminDigitalGroups = ({
   };
 
   const handleEditGroup = (groupId) => {
-    const section = document.getElementById(`digital-group-editor-${groupId}`);
+    setActiveEditorGroupId(groupId);
+
+    const section = document.getElementById('digital-group-editor');
     if (section) {
       section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -297,8 +356,32 @@ const AdminDigitalGroups = ({
     }
   };
 
+  const resolveCustomPageByValue = (value) => (
+    customPageOptions.find((page) => page.path === value || page.url === value) || null
+  );
+
+  const getFilteredCustomPageOptions = (query) => {
+    const normalizedFilter = String(query || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+
+    if (!normalizedFilter) {
+      return customPageOptions;
+    }
+
+    return customPageOptions.filter((page) => (
+      `${page.title} ${page.path}`
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .includes(normalizedFilter)
+    ));
+  };
+
   if (isLoading) {
-    return <div className="loading-container">Carregando grupos de seguimentos...</div>;
+    return <div className="loading-container">Carregando grupos de segmentos...</div>;
   }
 
   return (
@@ -320,23 +403,15 @@ const AdminDigitalGroups = ({
         </div>
 
         <div className="card-body">
-          <div className="admin-talmax-digital__grid">
-            {groups.map((group) => (
-              <section key={group.id} id={`digital-group-editor-${group.id}`} className="admin-talmax-digital__group">
-                <div className="admin-talmax-digital__group-topbar">
-                  <button type="button" className="btn-secondary" onClick={() => updateGroup(group.id, (current) => ({
-                    ...current,
-                    cards: [...current.cards, buildCard()]
-                  }))}>
-                    <PlusCircle size={16} />
-                    Novo card
-                  </button>
-                  <button type="button" className="btn-secondary" onClick={() => handleRemoveGroup(group)}>
-                    <Trash2 size={16} />
-                    Remover grupo
-                  </button>
-                </div>
-
+          {!activeEditorGroupId ? (
+            <div className="empty-state">
+              Clique em <strong>Novo grupo</strong> para criar um grupo ou em <strong>Editar</strong> em um grupo cadastrado.
+            </div>
+          ) : (
+            groups
+              .filter((group) => group.id === activeEditorGroupId)
+              .map((group) => (
+              <section key={group.id} id="digital-group-editor" className="admin-talmax-digital__group">
                 <div className="admin-talmax-digital__group-header">
                   <div className="admin-talmax-digital__group-settings-card">
                     <div className="admin-talmax-digital__section-intro">
@@ -375,166 +450,249 @@ const AdminDigitalGroups = ({
                         />
                       </div>
 
-                      <div className="form-group">
-                        <label>Texto / Descricao</label>
-                        <textarea
-                          rows="4"
-                          value={group.hero_description}
-                          onChange={(event) => updateGroup(group.id, (current) => ({ ...current, hero_description: event.target.value }))}
-                          placeholder="Descricao da pagina"
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>Logo</label>
-                        <div className="file-upload-area admin-talmax-digital__upload-area">
-                          <input type="file" accept="image/*" onChange={(event) => handleLogoChange(group.id, event.target.files?.[0])} />
-                          <UploadCloud size={28} color="var(--admin-primary)" />
-                          <p>Enviar logo da pagina</p>
+                      <div className="admin-talmax-digital__hero-row admin-talmax-digital__field--full">
+                        <div className="form-group">
+                          <label>Texto / Descricao</label>
+                          <textarea
+                            rows="4"
+                            value={group.hero_description}
+                            onChange={(event) => updateGroup(group.id, (current) => ({ ...current, hero_description: event.target.value }))}
+                            placeholder="Descricao da pagina"
+                          />
                         </div>
 
-                        {group.logoPreview && (
-                          <div className="admin-talmax-digital__logo-preview">
-                            <img src={group.logoPreview} alt={group.hero_title || group.title || 'Logo do grupo'} />
-                            <button type="button" className="btn-secondary" onClick={() => handleRemoveLogo(group.id)}>
-                              Remover logo
-                            </button>
+                        <div className="form-group">
+                          <label>Logo</label>
+                          <div className="admin-talmax-digital__logo-field">
+                            <div className="file-upload-area admin-talmax-digital__upload-area admin-talmax-digital__logo-upload">
+                              <input type="file" accept="image/*" onChange={(event) => handleLogoChange(group.id, event.target.files?.[0])} />
+                              <UploadCloud size={28} color="var(--admin-primary)" />
+                              <p>Enviar logo da pagina</p>
+                            </div>
+
+                            <div className="admin-talmax-digital__logo-preview-box">
+                              {group.logoPreview ? (
+                                <div className="admin-talmax-digital__logo-preview">
+                                  <button
+                                    type="button"
+                                    className="admin-talmax-digital__remove-image"
+                                    onClick={() => handleRemoveLogo(group.id)}
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                  <img src={group.logoPreview} alt={group.hero_title || group.title || 'Logo do grupo'} />
+                                </div>
+                              ) : (
+                                <span>Logo do grupo</span>
+                              )}
+                            </div>
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="admin-talmax-digital__actions">
-                      <button type="button" className="btn-primary" onClick={() => handleSaveGroup(group)} disabled={Boolean(savingKey)}>
-                        {savingKey === `group:${group.id}` ? <ButtonSavingIndicator /> : <Save size={18} />}
-                        {savingKey === `group:${group.id}` ? 'Salvando' : `Salvar ${group.title || 'grupo'}`}
-                      </button>
-                    </div>
                   </div>
 
                 </div>
 
-                <div className="admin-talmax-digital__cards-section">
+                <div className="admin-talmax-digital__cards-panel">
                   <div className="admin-talmax-digital__cards-intro">
-                    <div>
-                      <h2><ImageIcon size={20} /> {group.title || 'Novo grupo'}</h2>
-                      <p>Edite separadamente as imagens de frente e verso dos cards desta pagina. Cada bloco tem seu proprio salvar.</p>
-                    </div>
+                    <h2><ImageIcon size={20} /> Cards</h2>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => handleAddCard(group.id)}
+                    >
+                      <PlusCircle size={16} />
+                      Novo card
+                    </button>
                   </div>
 
                   <div className="admin-talmax-digital__cards-grid">
-                    {group.cards.map((card) => (
-                      <article key={card.id} className="admin-talmax-digital__card">
-                        <div className="admin-talmax-digital__card-panel">
-                          <div className="admin-talmax-digital__card-header">
-                            <div className="admin-talmax-digital__card-copy">
-                              <div className="form-group">
-                                <label>Titulo</label>
-                                <input
-                                  type="text"
-                                  value={card.title}
-                                  onChange={(event) => updateCard(group.id, card.id, (current) => ({ ...current, title: event.target.value }))}
-                                />
-                              </div>
-                              <div className="form-group">
-                                <label>Descricao</label>
-                                <textarea
-                                  rows="3"
-                                  value={card.description}
-                                  onChange={(event) => updateCard(group.id, card.id, (current) => ({ ...current, description: event.target.value }))}
-                                />
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              className="btn-secondary"
-                              onClick={() => updateGroup(group.id, (current) => ({
-                                ...current,
-                                cards: current.cards.filter((item) => item.id !== card.id)
-                              }))}
-                            >
-                              <Trash2 size={16} />
-                              Remover
-                            </button>
-                          </div>
+                    {group.cards.length === 0 ? (
+                      <div className="empty-state">Nenhum card adicionado.</div>
+                    ) : group.cards.map((card) => (
+                    <article
+                      key={card.id}
+                      className={`admin-talmax-digital__card ${collapsedCards[buildCardCollapseKey(group.id, card.id)] ? 'is-collapsed' : ''}`}
+                    >
+                      <button
+                        type="button"
+                        className={`admin-talmax-digital__card-toggle ${collapsedCards[buildCardCollapseKey(group.id, card.id)] ? 'is-collapsed' : ''}`}
+                        onClick={() => toggleCardCollapse(group.id, card.id)}
+                        aria-expanded={!collapsedCards[buildCardCollapseKey(group.id, card.id)]}
+                      >
+                        <span>{card.title || 'Novo card'}</span>
+                        <ChevronDown size={18} />
+                      </button>
 
-                          <div className="admin-talmax-digital__card-fields">
-                            <div className="form-group">
-                              <label>URL</label>
-                              <input
-                                type="text"
-                                value={card.link_url}
-                                onChange={(event) => updateCard(group.id, card.id, (current) => ({ ...current, link_url: event.target.value }))}
-                              />
-                            </div>
-                            <label className="admin-talmax-digital__toggle">
-                              <input
-                                type="checkbox"
-                                checked={card.is_external}
-                                onChange={(event) => updateCard(group.id, card.id, (current) => ({ ...current, is_external: event.target.checked }))}
-                              />
-                              <span>Abrir externo</span>
-                            </label>
-                          </div>
-                        </div>
+                          {!collapsedCards[buildCardCollapseKey(group.id, card.id)] && (
+                            <>
+                              <div className="admin-talmax-digital__card-section">
+                                <div className="admin-talmax-digital__card-header">
+                                  <div className="admin-talmax-digital__card-copy">
+                                    <div className="form-group">
+                                      <label>Titulo</label>
+                                      <input
+                                        type="text"
+                                        value={card.title}
+                                        onChange={(event) => updateCard(group.id, card.id, (current) => ({ ...current, title: event.target.value }))}
+                                      />
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="admin-talmax-digital__remove-card"
+                                    onClick={() => updateGroup(group.id, (current) => ({
+                                      ...current,
+                                      cards: current.cards.filter((item) => item.id !== card.id)
+                                    }))}
+                                    aria-label={`Remover ${card.title || 'card'}`}
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </div>
 
-                        <div className="admin-talmax-digital__uploads">
-                          <div className="admin-talmax-digital__upload-block admin-talmax-digital__card-panel">
-                            <label>Frente</label>
-                            <div className="file-upload-area admin-talmax-digital__upload-area">
-                              <input type="file" accept="image/*" onChange={(event) => handleImageChange(group.id, card.id, 'front', event.target.files?.[0])} />
-                              <UploadCloud size={28} color="var(--admin-primary)" />
-                              <p>Imagem da frente</p>
-                            </div>
-                            {card.frontPreview && (
-                              <div className="admin-talmax-digital__preview">
-                                <button type="button" className="admin-talmax-digital__remove-image" onClick={() => handleRemoveImage(group.id, card.id, 'front')}>
-                                  <X size={14} />
-                                </button>
-                                <img src={card.frontPreview} alt={card.title || 'Frente'} />
+                              <div className="admin-talmax-digital__card-fields">
+                                <div className="form-group">
+                                  <label>URL</label>
+                                  <div className="admin-talmax-digital__url-picker">
+                                    <input
+                                      type="text"
+                                      value={card.link_url}
+                                      onFocus={() => setActiveUrlPickerKey(buildCardUrlPickerKey(group.id, card.id))}
+                                      onBlur={() => {
+                                        window.setTimeout(() => {
+                                          setActiveUrlPickerKey((current) => (
+                                            current === buildCardUrlPickerKey(group.id, card.id) ? null : current
+                                          ));
+                                        }, 120);
+                                      }}
+                                      onChange={(event) => {
+                                        const nextValue = event.target.value;
+                                        const matchedCustomPage = resolveCustomPageByValue(nextValue);
+
+                                        updateCard(group.id, card.id, (current) => ({
+                                          ...current,
+                                          link_url: nextValue,
+                                          custom_page_id: matchedCustomPage?.id || null
+                                        }));
+                                        setActiveUrlPickerKey(buildCardUrlPickerKey(group.id, card.id));
+                                      }}
+                                      placeholder="Clique para buscar ou preencha manualmente"
+                                    />
+                                    {activeUrlPickerKey === buildCardUrlPickerKey(group.id, card.id) && (
+                                      <div className="admin-talmax-digital__url-picker-panel">
+                                        <div className="admin-talmax-digital__url-picker-note">
+                                          Digite para filtrar as paginas personalizadas ou mantenha uma URL manual.
+                                        </div>
+
+                                        {getFilteredCustomPageOptions(card.link_url).length === 0 ? (
+                                          <div className="admin-talmax-digital__url-picker-empty">
+                                            Nenhuma pagina encontrada.
+                                          </div>
+                                        ) : (
+                                          getFilteredCustomPageOptions(card.link_url).map((page) => (
+                                            <button
+                                              key={page.id}
+                                              type="button"
+                                              className={`admin-talmax-digital__url-picker-option ${card.custom_page_id === page.id ? 'is-active' : ''}`}
+                                              onMouseDown={() => {
+                                                updateCard(group.id, card.id, (current) => ({
+                                                  ...current,
+                                                  link_url: page.path,
+                                                  custom_page_id: page.id
+                                                }));
+                                                setActiveUrlPickerKey(null);
+                                              }}
+                                            >
+                                              <strong>{page.title}</strong>
+                                              <span>{page.path}</span>
+                                            </button>
+                                          ))
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
-                            )}
-                          </div>
-
-                          <div className="admin-talmax-digital__upload-block admin-talmax-digital__card-panel">
-                            <label>Verso</label>
-                            <div className="file-upload-area admin-talmax-digital__upload-area">
-                              <input type="file" accept="image/*" onChange={(event) => handleImageChange(group.id, card.id, 'back', event.target.files?.[0])} />
-                              <UploadCloud size={28} color="var(--admin-primary)" />
-                              <p>Imagem do verso</p>
-                            </div>
-                            {card.backPreview && (
-                              <div className="admin-talmax-digital__preview admin-talmax-digital__preview--back">
-                                <button type="button" className="admin-talmax-digital__remove-image" onClick={() => handleRemoveImage(group.id, card.id, 'back')}>
-                                  <X size={14} />
-                                </button>
-                                <img src={card.backPreview} alt={card.title || 'Verso'} />
                               </div>
-                            )}
-                          </div>
-                        </div>
 
-                        <div className="admin-talmax-digital__actions">
-                          <button
-                            type="button"
-                            className="btn-primary"
-                            onClick={() => handleSaveCard(group, card.id)}
-                            disabled={Boolean(savingKey)}
-                          >
-                            {savingKey === `card:${group.id}:${card.id}` ? <ButtonSavingIndicator /> : <Save size={18} />}
-                            {savingKey === `card:${group.id}:${card.id}` ? 'Salvando' : `Salvar ${card.title || 'card'}`}
-                          </button>
-                        </div>
-                      </article>
+                              <div className="admin-talmax-digital__uploads">
+                                <div className="admin-talmax-digital__upload-block admin-talmax-digital__card-section">
+                                  <label>Frente</label>
+                                  <div className="admin-talmax-digital__upload-row">
+                                    <div className="file-upload-area admin-talmax-digital__upload-area">
+                                      <input type="file" accept="image/*" onChange={(event) => handleImageChange(group.id, card.id, 'front', event.target.files?.[0])} />
+                                      <UploadCloud size={28} color="var(--admin-primary)" />
+                                      <p>Imagem da frente</p>
+                                    </div>
+                                    {card.frontPreview && (
+                                      <div className="admin-talmax-digital__preview">
+                                        <button type="button" className="admin-talmax-digital__remove-image" onClick={() => handleRemoveImage(group.id, card.id, 'front')}>
+                                          <X size={14} />
+                                        </button>
+                                        <img src={card.frontPreview} alt={card.title || 'Frente'} />
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="admin-talmax-digital__upload-block admin-talmax-digital__card-section">
+                                  <label>Verso</label>
+                                  <div className="admin-talmax-digital__upload-row">
+                                    <div className="file-upload-area admin-talmax-digital__upload-area">
+                                      <input type="file" accept="image/*" onChange={(event) => handleImageChange(group.id, card.id, 'back', event.target.files?.[0])} />
+                                      <UploadCloud size={28} color="var(--admin-primary)" />
+                                      <p>Imagem do verso</p>
+                                    </div>
+                                    {card.backPreview && (
+                                      <div className="admin-talmax-digital__preview admin-talmax-digital__preview--back">
+                                        <button type="button" className="admin-talmax-digital__remove-image" onClick={() => handleRemoveImage(group.id, card.id, 'back')}>
+                                          <X size={14} />
+                                        </button>
+                                        <img src={card.backPreview} alt={card.title || 'Verso'} />
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                    </article>
                     ))}
                   </div>
                 </div>
+
+                <div className="admin-talmax-digital__actions admin-talmax-digital__actions--footer">
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => {
+                      if (String(group.id).startsWith('new-group')) {
+                        setGroups((current) => current.filter((item) => item.id !== group.id));
+                      }
+                      setActiveEditorGroupId(null);
+                    }}
+                    disabled={Boolean(savingKey)}
+                  >
+                    Fechar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() => handleSaveGroup(group)}
+                    disabled={Boolean(savingKey)}
+                  >
+                    {savingKey === `group:${group.id}` ? <ButtonSavingIndicator /> : <Save size={18} />}
+                    {savingKey === `group:${group.id}` ? 'Salvando' : `Salvar tudo de ${group.title || 'grupo'}`}
+                  </button>
+                </div>
               </section>
-            ))}
-          </div>
+            ))
+          )}
         </div>
       </div>
-
       <div className="admin-card">
         <div className="card-header admin-talmax-digital__saved-header">
           <div>

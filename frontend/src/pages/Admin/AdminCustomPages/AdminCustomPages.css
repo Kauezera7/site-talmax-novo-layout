@@ -11,6 +11,13 @@
   gap: 16px;
 }
 
+.admin-custom-pages__saved-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
 .admin-custom-pages__form {
   display: flex;
   flex-direction: column;
@@ -127,27 +134,29 @@
 
 .admin-custom-pages__products-shell {
   border: 1px solid var(--admin-border);
-  border-radius: 24px;
+  border-radius: 26px;
   background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--admin-primary) 12%, transparent), transparent 36%),
-    linear-gradient(180deg, var(--admin-surface) 0%, color-mix(in srgb, var(--admin-surface-alt) 72%, white) 100%);
-  box-shadow: 0 18px 40px rgba(15, 23, 36, 0.08);
+    radial-gradient(circle at top right, color-mix(in srgb, var(--admin-primary) 10%, transparent), transparent 34%),
+    linear-gradient(180deg, color-mix(in srgb, var(--admin-surface) 90%, white) 0%, color-mix(in srgb, var(--admin-surface-alt) 78%, white) 100%);
+  box-shadow: 0 20px 44px rgba(15, 23, 36, 0.07);
   overflow: hidden;
 }
 
 .admin-custom-pages__products-toolbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding: 18px 22px;
+  align-items: flex-end;
+  gap: 18px;
+  padding: 20px 22px 18px;
   border-bottom: 1px solid var(--admin-border);
-  background: color-mix(in srgb, var(--admin-primary) 6%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--admin-primary) 7%, white), color-mix(in srgb, var(--admin-primary) 3%, transparent));
 }
 
 .admin-custom-pages__products-toolbar strong {
   color: var(--admin-text);
-  font-size: 0.98rem;
+  font-size: 1rem;
+  line-height: 1.2;
 }
 
 .admin-custom-pages__products-toolbar span {
@@ -158,28 +167,35 @@
 .admin-custom-pages__products-toolbar-copy {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .admin-custom-pages__products-toolbar-meta {
-  color: var(--admin-text-soft);
-  font-size: 0.88rem;
-  font-weight: 600;
+  color: var(--admin-primary-dark);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--admin-primary) 10%, white);
+  border: 1px solid color-mix(in srgb, var(--admin-primary) 16%, transparent);
 }
 
 .admin-custom-pages__products-filter {
-  padding: 16px 18px 0;
+  padding: 18px 18px 0;
 }
 
 .admin-custom-pages__products-filter input {
   width: 100%;
-  min-height: 46px;
-  border-radius: 14px;
+  min-height: 48px;
+  border-radius: 16px;
   border: 1px solid var(--admin-border);
-  background: color-mix(in srgb, var(--admin-surface) 90%, white);
-  padding: 0 16px;
+  background: color-mix(in srgb, var(--admin-surface) 94%, white);
+  padding: 0 18px;
   color: var(--admin-text);
   outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .admin-custom-pages__products-filter input:focus {
@@ -189,83 +205,113 @@
 
 .admin-custom-pages__products {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  max-height: 420px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  max-height: 350px;
   overflow: auto;
-  padding: 18px;
+  padding: 12px;
 }
 
 .admin-custom-pages__product-item {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 14px;
-  border: 1px solid var(--admin-border);
-  border-radius: 18px;
-  padding: 14px;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--admin-border) 90%, transparent);
+  border-radius: 16px;
+  padding: 8px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--admin-surface) 88%, white), var(--admin-surface));
-  box-shadow: 0 10px 24px rgba(15, 23, 36, 0.06);
+    linear-gradient(180deg, color-mix(in srgb, var(--admin-surface) 92%, white), color-mix(in srgb, var(--admin-surface-alt) 55%, white));
+  box-shadow: 0 12px 28px rgba(15, 23, 36, 0.05);
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
 .admin-custom-pages__product-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 28px rgba(15, 23, 36, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 20px 34px rgba(15, 23, 36, 0.1);
+  border-color: color-mix(in srgb, var(--admin-primary) 20%, var(--admin-border));
 }
 
 .admin-custom-pages__product-item.is-selected {
   border-color: var(--admin-primary);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--admin-primary) 13%, white), color-mix(in srgb, var(--admin-primary) 8%, var(--admin-surface)));
-  box-shadow: 0 18px 34px color-mix(in srgb, var(--admin-primary) 16%, transparent);
+    linear-gradient(180deg, color-mix(in srgb, var(--admin-primary) 12%, white), color-mix(in srgb, var(--admin-primary) 7%, var(--admin-surface)));
+  box-shadow: 0 20px 38px color-mix(in srgb, var(--admin-primary) 14%, transparent);
 }
 
 .admin-custom-pages__product-item input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 14px;
+  height: 14px;
   accent-color: var(--admin-primary);
-  flex-shrink: 0;
+  margin: 0;
 }
 
-.admin-custom-pages__product-item span {
-  font-size: 0.92rem;
-  line-height: 1.4;
+.admin-custom-pages__product-meta span {
+  font-size: 0.75rem;
+  line-height: 1.25;
   font-weight: 700;
 }
 
+.admin-custom-pages__product-thumb-frame {
+  width: 54px;
+  min-width: 54px;
+  padding: 2px;
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(241, 245, 249, 0.92));
+  border: 1px solid color-mix(in srgb, var(--admin-border) 86%, white);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 10px 24px rgba(15, 23, 36, 0.05);
+  overflow: hidden;
+}
+
 .admin-custom-pages__product-thumb {
-  width: 68px;
-  height: 68px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
   object-fit: cover;
-  border-radius: 14px;
+  border-radius: 8px;
   background: var(--admin-surface-alt);
   border: 1px solid var(--admin-border);
   flex-shrink: 0;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  display: block;
+  transition: transform 0.28s ease, filter 0.28s ease;
+  object-position: center;
 }
 
 .admin-custom-pages__product-meta {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 3px;
   min-width: 0;
+  width: 100%;
+  padding-right: 14px;
 }
 
 .admin-custom-pages__product-meta small {
   color: var(--admin-text-soft);
-  font-size: 0.8rem;
+  font-size: 0.66rem;
+}
+
+.admin-custom-pages__product-item:hover .admin-custom-pages__product-thumb {
+  transform: scale(1.02);
+  filter: saturate(1.02) contrast(1.01);
 }
 
 .admin-custom-pages__products-empty {
   grid-column: 1 / -1;
-  padding: 28px 18px;
+  padding: 34px 18px;
   text-align: center;
   color: var(--admin-text-soft);
   border: 1px dashed var(--admin-border);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--admin-surface-alt) 74%, white);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--admin-surface-alt) 78%, white);
 }
 
 .admin-custom-pages__status-toggle {
@@ -285,6 +331,28 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.admin-custom-pages__saved-filter {
+  width: min(360px, 100%);
+  flex-shrink: 0;
+}
+
+.admin-custom-pages__saved-filter input {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 14px;
+  border: 1px solid var(--admin-border);
+  background: color-mix(in srgb, var(--admin-surface) 94%, white);
+  padding: 0 16px;
+  color: var(--admin-text);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-custom-pages__saved-filter input:focus {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--admin-primary) 15%, transparent);
 }
 
 .admin-custom-pages__list-item {
@@ -335,6 +403,7 @@
 
 @media (max-width: 768px) {
   .admin-custom-pages__header,
+  .admin-custom-pages__saved-header,
   .admin-custom-pages__list-item {
     flex-direction: column;
     align-items: stretch;

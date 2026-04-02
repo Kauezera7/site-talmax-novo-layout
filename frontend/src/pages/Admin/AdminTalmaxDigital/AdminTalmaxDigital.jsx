@@ -29,6 +29,21 @@ const ButtonSavingIndicator = () => (
   <span className="loader loader_bubble admin-button-loader" aria-hidden="true" />
 );
 
+const normalizeSegmentValue = (value) => String(value || '').trim().toLowerCase();
+
+const isTalmaxDigitalSegment = (item) => {
+  const normalizedName = normalizeSegmentValue(item?.name);
+  const normalizedLink = normalizeSegmentValue(item?.link_url);
+  const digitalCards = parseDigitalActionsPayload(item?.actions).digital_cards;
+
+  return (
+    normalizedName === 'talmax digital' ||
+    normalizedName.includes('talmax digital') ||
+    normalizedLink.includes('/categoria/talmax-digital') ||
+    (Array.isArray(digitalCards) && digitalCards.length > 0)
+  );
+};
+
 const AdminTalmaxDigital = () => {
   const { addToast } = useAdmin();
   const [segment, setSegment] = useState(null);
@@ -46,9 +61,9 @@ const AdminTalmaxDigital = () => {
 
     try {
       const services = await homeService.getAll();
-      const talmaxDigitalSegment = services.find(
-        (item) => String(item?.name || '').trim().toLowerCase() === 'talmax digital'
-      );
+      const talmaxDigitalSegment = Array.isArray(services)
+        ? services.find(isTalmaxDigitalSegment)
+        : null;
 
       if (!talmaxDigitalSegment) {
         throw new Error('O segmento Talmax Digital nao foi encontrado em Segmentos (Home).');

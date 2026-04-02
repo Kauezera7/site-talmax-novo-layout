@@ -8,12 +8,12 @@ import './AdminCustomPages.css';
 const LAYOUT_OPTIONS = [
   {
     value: 'hero-left',
-    title: 'Layout 1',
+    title: 'Layout de Lista',
     description: 'Banner grande com bloco de texto alinhado a esquerda.'
   },
   {
     value: 'hero-centered',
-    title: 'Layout 2',
+    title: 'Layout produtos em destaque',
     description: 'Hero centralizado com logo em destaque e texto compacto.'
   },
   {
@@ -85,6 +85,7 @@ const AdminCustomPages = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [productFilter, setProductFilter] = useState('');
+  const [savedPagesFilter, setSavedPagesFilter] = useState('');
 
   const allProducts = useMemo(
     () => [...products].sort((first, second) => String(first.name || '').localeCompare(String(second.name || ''))),
@@ -118,6 +119,29 @@ const AdminCustomPages = () => {
       return searchableText.includes(normalizedFilter);
     });
   }, [allProducts, productFilter]);
+
+  const filteredItems = useMemo(() => {
+    const normalizedFilter = savedPagesFilter
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+
+    if (!normalizedFilter) {
+      return items;
+    }
+
+    return items.filter((item) => {
+      const searchableText = [item.title, item.slug]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+      return searchableText.includes(normalizedFilter);
+    });
+  }, [items, savedPagesFilter]);
 
   const loadItems = async () => {
     setIsLoading(true);
@@ -440,11 +464,13 @@ const AdminCustomPages = () => {
                       checked={form.product_ids.includes(product.id)}
                       onChange={() => handleProductToggle(product.id)}
                     />
-                    <img
-                      className="admin-custom-pages__product-thumb"
-                      src={product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.webp')}
-                      alt={product.name}
-                    />
+                    <div className="admin-custom-pages__product-thumb-frame">
+                      <img
+                        className="admin-custom-pages__product-thumb"
+                        src={product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.webp')}
+                        alt={product.name}
+                      />
+                    </div>
                     <div className="admin-custom-pages__product-meta">
                       <span>{product.name}</span>
                       {product.is_active === false && <small>Produto inativo</small>}
@@ -487,11 +513,22 @@ const AdminCustomPages = () => {
       </section>
 
       <section className="admin-card">
-        <div className="card-header">
+        <div className="card-header admin-custom-pages__saved-header">
           <div>
             <h2><Eye size={20} /> Paginas cadastradas</h2>
             <p>Edite uma pagina existente ou copie a URL publica para compartilhar.</p>
           </div>
+
+          {!isLoading && items.length > 0 && (
+            <div className="admin-custom-pages__saved-filter">
+              <input
+                type="text"
+                value={savedPagesFilter}
+                onChange={(event) => setSavedPagesFilter(event.target.value)}
+                placeholder="Buscar pagina por nome ou slug"
+              />
+            </div>
+          )}
         </div>
 
         <div className="card-body">
@@ -500,8 +537,13 @@ const AdminCustomPages = () => {
           ) : items.length === 0 ? (
             <div className="empty-state">Nenhuma pagina personalizada cadastrada ainda.</div>
           ) : (
-            <div className="admin-custom-pages__list">
-              {items.map((item) => (
+            <>
+              <div className="admin-custom-pages__list">
+              {filteredItems.length === 0 ? (
+                <div className="admin-custom-pages__products-empty">
+                  Nenhuma pagina encontrada com esse filtro.
+                </div>
+              ) : filteredItems.map((item) => (
                 <article key={item.id} className="admin-custom-pages__list-item">
                   <div>
                     <strong>{item.title}</strong>
@@ -530,7 +572,8 @@ const AdminCustomPages = () => {
                   </div>
                 </article>
               ))}
-            </div>
+              </div>
+            </>
           )}
         </div>
       </section>

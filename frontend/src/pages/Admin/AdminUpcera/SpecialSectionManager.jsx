@@ -269,18 +269,23 @@ const SpecialSectionManager = ({
                     <div className={`product-select-checkbox ${isSelected ? 'selected' : ''}`}>
                       {isSelected && <CheckCircle size={14} color="white" />}
                     </div>
-                    <img src={product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.png')} alt={product.name} className="product-select-image" />
+                    <div className="product-select-image-shell">
+                      <img src={product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.png')} alt={product.name} className="product-select-image" />
+                    </div>
                     <div className="product-select-info">
                       <p className="product-select-name">{product.name}</p>
+                      <span className="product-select-meta">
+                        {isSelected ? 'Selecionado para exibicao' : 'Clique para incluir nesta secao'}
+                      </span>
                     </div>
                     {isSelected && (
                       <div onClick={(e) => e.stopPropagation()} className="product-order-group">
-                        <label className="product-order-label">ORDEM:</label>
+                        <label className="product-order-label">Ordem de exibicao</label>
                         <input
                           type="number"
                           value={selected.order}
                           onChange={(e) => updateOrder(product.id, e.target.value)}
-                          placeholder="--"
+                          placeholder="0"
                           className="product-order-input"
                         />
                         {supportsDisplayMode && (

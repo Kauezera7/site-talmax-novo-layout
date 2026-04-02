@@ -25,6 +25,7 @@ const DIGITAL_GROUP_CARDS_TABLE_QUERY = `
   CREATE TABLE IF NOT EXISTS digital_group_cards (
     id INT NOT NULL AUTO_INCREMENT,
     group_id INT NOT NULL,
+    custom_page_id INT DEFAULT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT DEFAULT NULL,
     link_url VARCHAR(500) DEFAULT NULL,
@@ -69,6 +70,7 @@ const ensureTables = async () => {
   await ensureColumn('digital_groups', 'hero_title', 'VARCHAR(255) DEFAULT NULL AFTER overline');
   await ensureColumn('digital_groups', 'hero_description', 'TEXT DEFAULT NULL AFTER hero_title');
   await ensureColumn('digital_groups', 'logo_url', 'VARCHAR(500) DEFAULT NULL AFTER hero_description');
+  await ensureColumn('digital_group_cards', 'custom_page_id', 'INT DEFAULT NULL AFTER group_id');
   tablesReady = true;
 };
 
@@ -90,24 +92,30 @@ const getUploadedFileByField = (files = [], fieldName) => (
   Array.isArray(files) ? files.find((file) => file.fieldname === fieldName) || null : null
 );
 
+const buildCustomPagePath = (slug = '') => (slug ? `/pagina/${slug}` : '');
+
 const listGroups = async ({ onlyActive = false } = {}) => {
   await ensureTables();
 
   const [groups] = await db.query(
     `
-      SELECT *
-      FROM digital_groups
-      ${onlyActive ? 'WHERE is_active = 1' : ''}
-      ORDER BY display_order ASC, id ASC
+      SELECT groups.*
+      FROM digital_groups groups
+      ${onlyActive ? 'WHERE groups.is_active = 1' : ''}
+      ORDER BY groups.display_order ASC, groups.id ASC
     `
   );
 
   const [cards] = await db.query(
     `
-      SELECT *
-      FROM digital_group_cards
-      ${onlyActive ? 'WHERE is_active = 1' : ''}
-      ORDER BY display_order ASC, id ASC
+      SELECT
+        cards.*,
+        custom_pages.title AS custom_page_title,
+        custom_pages.slug AS custom_page_slug
+      FROM digital_group_cards cards
+      LEFT JOIN custom_pages ON custom_pages.id = cards.custom_page_id
+      ${onlyActive ? 'WHERE cards.is_active = 1' : ''}
+      ORDER BY cards.display_order ASC, cards.id ASC
     `
   );
 
@@ -116,9 +124,11 @@ const listGroups = async ({ onlyActive = false } = {}) => {
     const current = map.get(key) || [];
     current.push({
       id: Number(card.id),
+      custom_page_id: card.custom_page_id ? Number(card.custom_page_id) : null,
+      custom_page_title: card.custom_page_title || '',
       title: card.title || '',
       description: card.description || '',
-      link_url: card.link_url || '',
+      link_url: card.custom_page_slug ? buildCustomPagePath(card.custom_page_slug) : (card.link_url || ''),
       is_external: Number(card.is_external) === 1,
       front_image_url: card.front_image_url || '',
       back_image_url: card.back_image_url || '',
@@ -148,6 +158,7 @@ const replaceGroupCards = async (connection, groupId, files, cards = []) => {
 
   for (let index = 0; index < cards.length; index += 1) {
     const card = cards[index];
+    const customPageId = Number(card?.custom_page_id);
     const tempId = String(card?.temp_id || card?.id || `card-${index}`).trim();
     const frontImageFile = getUploadedFileByField(files, `card_front_${tempId}`);
     const backImageFile = getUploadedFileByField(files, `card_back_${tempId}`);
@@ -158,19 +169,34 @@ const replaceGroupCards = async (connection, groupId, files, cards = []) => {
     const backImageUrl = backImageFile
       ? await persistUploadedFile(backImageFile, { resourceType: 'digital-groups' })
       : safe(card.back_image_url || '');
+    let resolvedLinkUrl = safe(card.link_url || '');
+    let resolvedCustomPageId = null;
+
+    if (Number.isInteger(customPageId) && customPageId > 0) {
+      const [customPageRows] = await connection.query(
+        'SELECT id, slug FROM custom_pages WHERE id = ? LIMIT 1',
+        [customPageId]
+      );
+
+      if (customPageRows[0]) {
+        resolvedCustomPageId = Number(customPageRows[0].id);
+        resolvedLinkUrl = buildCustomPagePath(customPageRows[0].slug);
+      }
+    }
 
     await connection.query(
       `
         INSERT INTO digital_group_cards (
-          group_id, title, description, link_url, is_external, front_image_url, back_image_url, display_order, is_active
+          group_id, custom_page_id, title, description, link_url, is_external, front_image_url, back_image_url, display_order, is_active
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         groupId,
+        resolvedCustomPageId,
         safe(card.title || ''),
         safe(card.description || ''),
-        safe(card.link_url || ''),
+        resolvedLinkUrl,
         parseBooleanFlag(card.is_external) ? 1 : 0,
         frontImageUrl,
         backImageUrl,

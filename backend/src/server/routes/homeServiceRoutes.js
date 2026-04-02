@@ -10,6 +10,35 @@ const { parseBooleanFlag, parseInteger } = require('../utils/requestParsers');
 const { persistUploadedFile } = require('../services/fileStorageService');
 
 const router = express.Router();
+let homeServicesColumnsReady = false;
+
+const ensureColumn = async (tableName, columnName, definition) => {
+  const [rows] = await db.query(
+    `
+      SELECT COUNT(*) AS total
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = ?
+        AND COLUMN_NAME = ?
+    `,
+    [tableName, columnName]
+  );
+
+  if (Number(rows?.[0]?.total || 0) === 0) {
+    await db.query(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+  }
+};
+
+const ensureHomeServicesColumns = async () => {
+  if (homeServicesColumnsReady) return;
+  await ensureColumn('home_services', 'link_target_type', "VARCHAR(40) DEFAULT NULL AFTER link_url");
+  await ensureColumn('home_services', 'custom_page_id', 'INT DEFAULT NULL AFTER link_target_type');
+  await ensureColumn('home_services', 'digital_group_id', 'INT DEFAULT NULL AFTER custom_page_id');
+  homeServicesColumnsReady = true;
+};
+
+const buildCustomPagePath = (slug = '') => (slug ? `/pagina/${slug}` : '');
+const buildDigitalGroupPath = (id) => (id ? `/grupo-digital/${id}` : '');
 
 const parseActionsPayload = (value) => {
   if (value === undefined || value === null || value === '') {
@@ -150,10 +179,32 @@ const persistDigitalCardsConfig = async (files, incomingActions, previousActions
 
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM home_services ORDER BY display_order ASC, name ASC');
+    await ensureHomeServicesColumns();
+    const [rows] = await db.query(`
+      SELECT
+        home_services.*,
+        custom_pages.title AS custom_page_title,
+        custom_pages.slug AS custom_page_slug,
+        digital_groups.title AS digital_group_title
+      FROM home_services
+      LEFT JOIN custom_pages ON custom_pages.id = home_services.custom_page_id
+      LEFT JOIN digital_groups ON digital_groups.id = home_services.digital_group_id
+      ORDER BY home_services.display_order ASC, home_services.name ASC
+    `);
 
     const services = rows.map((row) => ({
       ...row,
+      link_target_type: row.link_target_type || null,
+      custom_page_id: row.custom_page_id ? Number(row.custom_page_id) : null,
+      custom_page_title: row.custom_page_title || '',
+      digital_group_id: row.digital_group_id ? Number(row.digital_group_id) : null,
+      digital_group_title: row.digital_group_title || '',
+      link_url:
+        row.link_target_type === 'custom-page' && row.custom_page_slug
+          ? buildCustomPagePath(row.custom_page_slug)
+          : row.link_target_type === 'digital-group' && row.digital_group_id
+            ? buildDigitalGroupPath(row.digital_group_id)
+            : row.link_url,
       actions: parseActionsPayload(row.actions),
       is_external: !!row.is_external,
       active: !!row.active
@@ -168,23 +219,49 @@ router.get('/', async (req, res) => {
 
 router.post('/', requireAdminSession, upload.any(), async (req, res) => {
   try {
+    await ensureHomeServicesColumns();
     const { name, description, link_url, is_external, display_order, active, actions } = req.body;
+    const linkTargetType = safe(req.body.link_target_type || null);
+    const customPageId = parseInteger(req.body.custom_page_id, 0);
+    const digitalGroupId = parseInteger(req.body.digital_group_id, 0);
     const incomingActions = parseActionsPayload(actions);
     const normalizedActions = await persistDigitalCardsConfig(req.files, incomingActions);
     const imageFile = getUploadedFileByField(req.files, 'image');
     const image_url = imageFile
       ? await persistUploadedFile(imageFile, { resourceType: 'segmentos' })
       : null;
+    let resolvedLinkUrl = safe(link_url);
+    let resolvedCustomPageId = null;
+    let resolvedDigitalGroupId = null;
+
+    if (linkTargetType === 'custom-page' && customPageId > 0) {
+      const [customPageRows] = await db.query('SELECT id, slug FROM custom_pages WHERE id = ? LIMIT 1', [customPageId]);
+      if (customPageRows[0]) {
+        resolvedCustomPageId = Number(customPageRows[0].id);
+        resolvedLinkUrl = buildCustomPagePath(customPageRows[0].slug);
+      }
+    }
+
+    if (linkTargetType === 'digital-group' && digitalGroupId > 0) {
+      const [digitalGroupRows] = await db.query('SELECT id FROM digital_groups WHERE id = ? LIMIT 1', [digitalGroupId]);
+      if (digitalGroupRows[0]) {
+        resolvedDigitalGroupId = Number(digitalGroupRows[0].id);
+        resolvedLinkUrl = buildDigitalGroupPath(digitalGroupRows[0].id);
+      }
+    }
 
     const [result] = await db.query(
       `INSERT INTO home_services
-      (name, description, image_url, link_url, is_external, display_order, active, actions)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      (name, description, image_url, link_url, link_target_type, custom_page_id, digital_group_id, is_external, display_order, active, actions)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         safe(name),
         safe(description),
         safe(image_url),
-        safe(link_url),
+        resolvedLinkUrl,
+        linkTargetType,
+        resolvedCustomPageId,
+        resolvedDigitalGroupId,
         parseBooleanFlag(is_external) ? 1 : 0,
         parseInteger(display_order, 0),
         active === 'false' || active === false ? 0 : 1,
@@ -203,7 +280,11 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
   const { id } = req.params;
 
   try {
+    await ensureHomeServicesColumns();
     const { name, description, link_url, is_external, display_order, active, actions } = req.body;
+    const linkTargetType = safe(req.body.link_target_type || null);
+    const customPageId = parseInteger(req.body.custom_page_id, 0);
+    const digitalGroupId = parseInteger(req.body.digital_group_id, 0);
     const [currentRows] = await db.query('SELECT image_url, actions FROM home_services WHERE id = ? LIMIT 1', [id]);
 
     if (currentRows.length === 0) {
@@ -223,6 +304,25 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
     if (image_url === undefined) {
       image_url = currentRows[0].image_url || null;
     }
+    let resolvedLinkUrl = safe(link_url);
+    let resolvedCustomPageId = null;
+    let resolvedDigitalGroupId = null;
+
+    if (linkTargetType === 'custom-page' && customPageId > 0) {
+      const [customPageRows] = await db.query('SELECT id, slug FROM custom_pages WHERE id = ? LIMIT 1', [customPageId]);
+      if (customPageRows[0]) {
+        resolvedCustomPageId = Number(customPageRows[0].id);
+        resolvedLinkUrl = buildCustomPagePath(customPageRows[0].slug);
+      }
+    }
+
+    if (linkTargetType === 'digital-group' && digitalGroupId > 0) {
+      const [digitalGroupRows] = await db.query('SELECT id FROM digital_groups WHERE id = ? LIMIT 1', [digitalGroupId]);
+      if (digitalGroupRows[0]) {
+        resolvedDigitalGroupId = Number(digitalGroupRows[0].id);
+        resolvedLinkUrl = buildDigitalGroupPath(digitalGroupRows[0].id);
+      }
+    }
 
     await db.query(
       `UPDATE home_services SET
@@ -230,6 +330,9 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
         description = ?,
         image_url = ?,
         link_url = ?,
+        link_target_type = ?,
+        custom_page_id = ?,
+        digital_group_id = ?,
         is_external = ?,
         display_order = ?,
         active = ?,
@@ -239,7 +342,10 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
         safe(name),
         safe(description),
         safe(image_url),
-        safe(link_url),
+        resolvedLinkUrl,
+        linkTargetType,
+        resolvedCustomPageId,
+        resolvedDigitalGroupId,
         parseBooleanFlag(is_external) ? 1 : 0,
         parseInteger(display_order, 0),
         active === 'false' || active === false ? 0 : 1,
