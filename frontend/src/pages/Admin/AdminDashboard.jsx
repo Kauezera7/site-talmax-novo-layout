@@ -424,10 +424,10 @@ const useAdminState = () => {
   const [productToEdit, setProductToEdit] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isCatalogOpen, setIsCatalogOpen] = useState(true);
-  const [isHomeOpen, setIsHomeOpen] = useState(true);
-  const [isEditPagesOpen, setIsEditPagesOpen] = useState(true);
-  const [isPagesOpen, setIsPagesOpen] = useState(true);
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const [isHomeOpen, setIsHomeOpen] = useState(false);
+  const [isEditPagesOpen, setIsEditPagesOpen] = useState(false);
+  const [isPagesOpen, setIsPagesOpen] = useState(false);
   const { loading, toasts } = useAdmin();
 
   return {
