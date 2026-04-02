@@ -3,47 +3,9 @@ import { Save, UploadCloud, Image as ImageIcon, RefreshCcw } from 'lucide-react'
 import { useAdmin } from '../../../context/AdminContext';
 import homeService from '../../../services/homeService';
 import { apiAssetPath } from '../../../utils/assets';
+import { DIGITAL_CARD_TEMPLATES, parseDigitalActionsPayload } from '../../../components/TalmaxDigital/digitalCardTemplates';
 import SpecialPageSettingsForm from '../SpecialPageSettingsForm/SpecialPageSettingsForm';
 import './AdminTalmaxDigital.css';
-
-const DIGITAL_CARD_TEMPLATES = [
-  { id: 'upcera', title: 'UPCERA', description: 'Ceramicas e Discos de alta performance' },
-  { id: 'scanners', title: 'SCANNERS', description: 'Intraoral e Bancada com Precisao Digital' },
-  { id: 'impressoras', title: 'IMPRESSORAS 3D', description: 'Anycubic e Resinas Especializadas' },
-  { id: 'componentes', title: 'COMPONENTES', description: 'Pecas e Estruturas Proteticas' },
-  { id: 'insumos', title: 'INSUMOS', description: 'Blocos e Ceras de Alta Qualidade' }
-];
-
-const parseActionsPayload = (value) => {
-  if (!value) {
-    return { buttons: [], digital_cards: [] };
-  }
-
-  if (typeof value === 'string') {
-    try {
-      return parseActionsPayload(JSON.parse(value));
-    } catch (error) {
-      return { buttons: [], digital_cards: [] };
-    }
-  }
-
-  if (Array.isArray(value)) {
-    return { buttons: value, digital_cards: [] };
-  }
-
-  if (typeof value === 'object') {
-    return {
-      buttons: Array.isArray(value.buttons)
-        ? value.buttons
-        : Array.isArray(value.actions)
-          ? value.actions
-          : [],
-      digital_cards: Array.isArray(value.digital_cards) ? value.digital_cards : []
-    };
-  }
-
-  return { buttons: [], digital_cards: [] };
-};
 
 const buildCardsState = (storedCards = []) => (
   DIGITAL_CARD_TEMPLATES.map((template) => {
@@ -75,7 +37,7 @@ const AdminTalmaxDigital = () => {
   const [savingCardId, setSavingCardId] = useState(null);
 
   const segmentActions = useMemo(
-    () => parseActionsPayload(segment?.actions),
+    () => parseDigitalActionsPayload(segment?.actions),
     [segment?.actions]
   );
 
@@ -93,7 +55,7 @@ const AdminTalmaxDigital = () => {
       }
 
       setSegment(talmaxDigitalSegment);
-      setCards(buildCardsState(parseActionsPayload(talmaxDigitalSegment.actions).digital_cards));
+      setCards(buildCardsState(parseDigitalActionsPayload(talmaxDigitalSegment.actions).digital_cards));
     } catch (error) {
       console.error('Erro ao carregar configuracoes da Talmax Digital:', error);
       addToast(error.message || 'Erro ao carregar configuracoes da Talmax Digital', 'error');

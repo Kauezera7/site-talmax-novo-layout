@@ -31,6 +31,35 @@ const getUploadedFileByField = (files = [], fieldName) => (
   Array.isArray(files) ? files.find((file) => file.fieldname === fieldName) || null : null
 );
 
+const persistCardAssets = async (files, card, { frontFieldPrefix, backFieldPrefix }) => {
+  const cardId = String(card?.id || '').trim();
+
+  if (!cardId) {
+    return null;
+  }
+
+  const frontImageFile = getUploadedFileByField(files, `${frontFieldPrefix}${cardId}`);
+  const backImageFile = getUploadedFileByField(files, `${backFieldPrefix}${cardId}`);
+
+  const front_image_url = frontImageFile
+    ? await persistUploadedFile(frontImageFile, { resourceType: 'talmax-digital' })
+    : safe(card.front_image_url || null);
+
+  const back_image_url = backImageFile
+    ? await persistUploadedFile(backImageFile, { resourceType: 'talmax-digital' })
+    : safe(card.back_image_url || null);
+
+  return {
+    id: cardId,
+    title: safe(card.title || ''),
+    description: safe(card.description || ''),
+    link_url: safe(card.link_url || ''),
+    is_external: parseBooleanFlag(card.is_external) ? 1 : 0,
+    front_image_url,
+    back_image_url
+  };
+};
+
 const persistDigitalCardsConfig = async (files, incomingActions, previousActions = {}) => {
   const currentActions = incomingActions && typeof incomingActions === 'object'
     ? incomingActions
@@ -39,6 +68,50 @@ const persistDigitalCardsConfig = async (files, incomingActions, previousActions
   const normalizedPreviousActions = previousActions && typeof previousActions === 'object'
     ? previousActions
     : {};
+
+  const baseGroups = Array.isArray(currentActions.digital_groups)
+    ? currentActions.digital_groups
+    : Array.isArray(normalizedPreviousActions.digital_groups)
+      ? normalizedPreviousActions.digital_groups
+      : [];
+
+  if (baseGroups.length > 0) {
+    const digitalGroups = [];
+
+    for (const group of baseGroups) {
+      const groupId = String(group?.id || '').trim();
+
+      if (!groupId) {
+        continue;
+      }
+
+      const cards = [];
+      const baseCards = Array.isArray(group?.cards) ? group.cards : [];
+
+      for (const card of baseCards) {
+        const normalizedCard = await persistCardAssets(files, card, {
+          frontFieldPrefix: 'digital_group_card_front_',
+          backFieldPrefix: 'digital_group_card_back_'
+        });
+
+        if (normalizedCard) {
+          cards.push(normalizedCard);
+        }
+      }
+
+      digitalGroups.push({
+        id: groupId,
+        title: safe(group.title || ''),
+        description: safe(group.description || ''),
+        cards
+      });
+    }
+
+    return {
+      ...currentActions,
+      digital_groups: digitalGroups
+    };
+  }
 
   const baseCards = Array.isArray(currentActions.digital_cards)
     ? currentActions.digital_cards
@@ -59,24 +132,14 @@ const persistDigitalCardsConfig = async (files, incomingActions, previousActions
       continue;
     }
 
-    const frontImageFile = getUploadedFileByField(files, `digital_card_front_${cardId}`);
-    const backImageFile = getUploadedFileByField(files, `digital_card_back_${cardId}`);
-
-    const front_image_url = frontImageFile
-      ? await persistUploadedFile(frontImageFile, { resourceType: 'talmax-digital' })
-      : safe(card.front_image_url || null);
-
-    const back_image_url = backImageFile
-      ? await persistUploadedFile(backImageFile, { resourceType: 'talmax-digital' })
-      : safe(card.back_image_url || null);
-
-    digitalCards.push({
-      id: cardId,
-      title: safe(card.title || ''),
-      description: safe(card.description || ''),
-      front_image_url,
-      back_image_url
+    const normalizedCard = await persistCardAssets(files, card, {
+      frontFieldPrefix: 'digital_card_front_',
+      backFieldPrefix: 'digital_card_back_'
     });
+
+    if (normalizedCard) {
+      digitalCards.push(normalizedCard);
+    }
   }
 
   return {

@@ -93,6 +93,41 @@
   padding: 0 2%;
 }
 
+.digital-groups-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 44px;
+}
+
+.digital-group-block {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.digital-group-header span {
+  display: inline-block;
+  margin-bottom: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--digital-blue);
+  text-transform: uppercase;
+  letter-spacing: 1.8px;
+}
+
+.digital-group-header h2 {
+  margin: 0 0 8px;
+  font-size: clamp(1.6rem, 2vw, 2.4rem);
+  color: var(--digital-dark);
+}
+
+.digital-group-header p {
+  margin: 0;
+  max-width: 780px;
+  color: var(--digital-gray-text);
+  line-height: 1.6;
+}
+
 .digital-grid-categories {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -181,6 +216,8 @@
   color: white;
   transform: rotateY(180deg);
   border-color: var(--digital-blue);
+  justify-content: flex-end;
+  padding: 24px;
 }
 
 .digital-cat-card-back--image {
@@ -219,6 +256,20 @@
   font-weight: 800;
   margin-bottom: 20px;
   color: white;
+}
+
+.digital-card-link-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  justify-content: center;
+  min-height: 48px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-weight: 700;
+  backdrop-filter: blur(8px);
 }
 
 .card-back-icon {

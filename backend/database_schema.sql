@@ -138,6 +138,23 @@ CREATE TABLE IF NOT EXISTS page_settings (
     UNIQUE KEY uk_page_settings_page_name (page_name)
 );
 
+CREATE TABLE IF NOT EXISTS custom_pages (
+    id INT NOT NULL AUTO_INCREMENT,
+    title VARCHAR(160) NOT NULL,
+    slug VARCHAR(180) NOT NULL,
+    layout_type VARCHAR(40) NOT NULL DEFAULT 'hero-left',
+    banner_url VARCHAR(500) DEFAULT NULL,
+    logo_url VARCHAR(500) DEFAULT NULL,
+    description TEXT DEFAULT NULL,
+    sub_description TEXT DEFAULT NULL,
+    product_ids JSON DEFAULT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_custom_pages_slug (slug)
+);
+
 -- ======================================================
 -- DADOS INICIAIS
 -- Observacao:

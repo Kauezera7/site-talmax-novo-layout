@@ -24,9 +24,11 @@ import ProductDetail from './components/ProductDetail/ProductDetail';
 import Support from './components/Support/Support';
 import HistoriaDiretoria from './components/HistoriaDiretoria/HistoriaDiretoria';
 import TalmaxDigital from './components/TalmaxDigital/TalmaxDigital';
+import DigitalGroupPage from './components/TalmaxDigital/DigitalGroupPage';
 import Upcera from './components/Upcera/Upcera';
 import Scanners from './components/Scanners/Scanners';
 import Impressoras3D from './components/Impressoras3D/Impressoras3D';
+import CustomPage from './components/CustomPage/CustomPage';
 import Admin from './pages/Admin/AdminDashboard';
 import AdminLogin from './components/AdminLogin/AdminLogin';
 import { validateAdminSession } from './services/adminAuth';
@@ -515,9 +517,11 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
 
           <Route path="/produtos" element={<ProductCatalog />} />
           <Route path="/categoria/talmax-digital" element={<TalmaxDigital />} />
+          <Route path="/grupo-digital/:id" element={<DigitalGroupPage />} />
           <Route path="/upcera" element={<Upcera />} />
           <Route path="/scanners" element={<Scanners />} />
           <Route path="/impressoras-3d" element={<Impressoras3D />} />
+          <Route path="/pagina/:slug" element={<CustomPage />} />
           <Route path="/categoria/:slug" element={<ProductCatalog />} />
           <Route path="/produto/:id" element={<ProductDetail />} />
 

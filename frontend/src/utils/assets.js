@@ -48,3 +48,16 @@ export const apiAssetPath = (path = '') => {
 
   return `${apiOrigin}${apiBasePath}${normalizedPath}`;
 };
+
+export const resolveStoredAssetPath = (path = '') => {
+  if (!path) return path;
+  if (/^(?:[a-z]+:)?\/\//i.test(path)) return path;
+
+  const normalizedPath = path.replace(/^\/+/, '');
+
+  if (normalizedPath.startsWith('img/')) {
+    return assetPath(normalizedPath);
+  }
+
+  return apiAssetPath(path);
+};

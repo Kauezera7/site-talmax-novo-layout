@@ -1,75 +1,62 @@
-/**
- * Pagina: TalmaxDigital
- * Rota: /categoria/talmax-digital
- * Responsabilidade: apresentar a area Talmax Digital e seus acessos principais
- */
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import API_URL from '../../services/api';
-import { apiAssetPath, assetPath } from '../../utils/assets';
-import pageSettingsService, { DEFAULT_SPECIAL_PAGE_SETTINGS, normalizeSpecialPageSettings } from '../../services/pageSettingsService';
-import { buildTalmaxDigitalCategories, parseDigitalActionsPayload } from './digitalCardTemplates';
+import { useNavigate, useParams } from 'react-router-dom';
+import digitalGroupService from '../../services/digitalGroupService';
+import { assetPath, resolveStoredAssetPath } from '../../utils/assets';
 import './TalmaxDigital.css';
 
-const DEFAULT_DIGITAL_CATEGORIES = buildTalmaxDigitalCategories();
+const DEFAULT_HERO = {
+  overline: 'TECNOLOGIA ODONTOLOGICA',
+  hero_title: 'Talmax Digital',
+  hero_description: 'O futuro da protese dentaria com tecnologia de ponta e precisao absoluta.',
+  logo_url: '/img/logo-talmax-digital-pos.png'
+};
 
-const TalmaxDigital = () => {
-  const [categories, setCategories] = useState(DEFAULT_DIGITAL_CATEGORIES);
-  const [pageSettings, setPageSettings] = useState(DEFAULT_SPECIAL_PAGE_SETTINGS['talmax-digital']);
+const buildGroupCategories = (cards = []) => (
+  (Array.isArray(cards) ? cards : []).map((card, index) => ({
+    id: card.id || `group-card-${index}`,
+    title: card.title || '',
+    image: resolveStoredAssetPath(card.front_image_url),
+    backIcon: resolveStoredAssetPath(card.back_image_url),
+    backImage: resolveStoredAssetPath(card.back_image_url),
+    link_url: card.link_url || ''
+  }))
+);
+
+const DigitalGroupPage = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
+  const [group, setGroup] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPageData = async () => {
+    const loadGroup = async () => {
+      setIsLoading(true);
+
       try {
-        const [homeServicesResponse, pageSettingsItems] = await Promise.all([
-          fetch(`${API_URL}/home-services`),
-          pageSettingsService.getAll().catch(() => [])
-        ]);
-
-        const services = homeServicesResponse.ok ? await homeServicesResponse.json() : [];
-
-        const talmaxDigitalService = Array.isArray(services)
-          ? services.find((service) => String(service?.name || '').trim().toLowerCase() === 'talmax digital')
-          : null;
-
-        if (talmaxDigitalService) {
-          const actions = parseDigitalActionsPayload(talmaxDigitalService.actions);
-          setCategories(buildTalmaxDigitalCategories(actions.digital_cards));
-        } else {
-          setCategories(DEFAULT_DIGITAL_CATEGORIES);
-        }
-
-        const normalizedPageSettings = normalizeSpecialPageSettings(pageSettingsItems);
-        setPageSettings(normalizedPageSettings['talmax-digital']);
-      } catch (err) {
-        console.error('Erro ao carregar produtos Talmax Digital:', err);
-        setCategories(DEFAULT_DIGITAL_CATEGORIES);
-        setPageSettings(DEFAULT_SPECIAL_PAGE_SETTINGS['talmax-digital']);
+        const item = await digitalGroupService.getPublicById(id);
+        setGroup(item);
+      } catch (error) {
+        setGroup(null);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchPageData();
-  }, []);
+    loadGroup();
+  }, [id]);
+
+  const categories = buildGroupCategories(group?.cards || []);
 
   const handleCategoryClick = (cat) => {
-    if (cat.link_url) {
-      if (/^https?:\/\//i.test(cat.link_url)) {
-        window.open(cat.link_url, '_blank', 'noopener,noreferrer');
-        return;
-      }
+    if (!cat.link_url) return;
 
-      navigate(cat.link_url);
+    if (/^https?:\/\//i.test(cat.link_url)) {
+      window.open(cat.link_url, '_blank', 'noopener,noreferrer');
       return;
     }
 
-    if (cat.id === 'upcera') {
-      navigate('/upcera');
-    } else if (cat.id === 'scanners') {
-      navigate('/scanners');
-    } else if (cat.id === 'impressoras') {
-      navigate('/impressoras-3d');
-    }
+    navigate(cat.link_url);
   };
 
   const containerVariants = {
@@ -94,6 +81,14 @@ const TalmaxDigital = () => {
     }
   };
 
+  if (isLoading) {
+    return <div className="loading-container">Carregando grupo digital...</div>;
+  }
+
+  if (!group) {
+    return <div className="loading-container">Grupo digital nao encontrado.</div>;
+  }
+
   return (
     <div className="digital-page">
       <section className="digital-hero-mini">
@@ -103,7 +98,7 @@ const TalmaxDigital = () => {
             animate={{ opacity: 1, y: 0 }}
             className="digital-breadcrumb"
           >
-            {pageSettings.overline || 'TECNOLOGIA ODONTOLOGICA'}
+            {group.overline || DEFAULT_HERO.overline}
           </motion.div>
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -112,7 +107,11 @@ const TalmaxDigital = () => {
             className="digital-title-wrapper"
           >
             <div className="line-detail"></div>
-            <img src={apiAssetPath(pageSettings.logo_url) || assetPath('img/logo-talmax-digital-pos.png')} alt={pageSettings.title || 'Talmax Digital'} className="digital-logo-header" />
+            <img
+              src={resolveStoredAssetPath(group.logo_url) || assetPath(DEFAULT_HERO.logo_url)}
+              alt={group.hero_title || group.title || 'Grupo digital'}
+              className="digital-logo-header"
+            />
             <div className="line-detail"></div>
           </motion.div>
           <motion.h1
@@ -121,14 +120,14 @@ const TalmaxDigital = () => {
             transition={{ delay: 0.3 }}
             className="digital-hero-title"
           >
-            {pageSettings.title}
+            {group.hero_title || group.title || DEFAULT_HERO.hero_title}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            {pageSettings.description}
+            {group.hero_description || group.description || DEFAULT_HERO.hero_description}
           </motion.p>
         </div>
       </section>
@@ -174,4 +173,4 @@ const TalmaxDigital = () => {
   );
 };
 
-export default TalmaxDigital;
+export default DigitalGroupPage;

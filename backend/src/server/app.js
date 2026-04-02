@@ -14,6 +14,8 @@ const productRoutes = require('./routes/productRoutes');
 const specialSectionRoutes = require('./routes/specialSectionRoutes');
 const homeServiceRoutes = require('./routes/homeServiceRoutes');
 const pageSettingsRoutes = require('./routes/pageSettingsRoutes');
+const customPageRoutes = require('./routes/customPageRoutes');
+const digitalGroupRoutes = require('./routes/digitalGroupRoutes');
 
 const MAX_FILE_SIZE_MB = Number(process.env.UPLOAD_MAX_FILE_SIZE_MB || 15);
 
@@ -38,6 +40,8 @@ const createApp = () => {
   app.use('/api/products', productRoutes);
   app.use('/api/home-services', homeServiceRoutes);
   app.use('/api/page-settings', pageSettingsRoutes);
+  app.use('/api/custom-pages', customPageRoutes);
+  app.use('/api/digital-groups', digitalGroupRoutes);
   app.use('/api', specialSectionRoutes);
 
   app.use((req, res, next) => {
