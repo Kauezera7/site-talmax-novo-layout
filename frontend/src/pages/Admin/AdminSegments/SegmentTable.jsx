@@ -1,8 +1,21 @@
 import React from 'react';
-import { Edit2, Trash2, Eye, EyeOff, Image as ImageIcon } from 'lucide-react';
+import { Check, Edit2, Trash2, Eye, EyeOff, Image as ImageIcon, X } from 'lucide-react';
 import { apiAssetPath, assetPath } from '../../../utils/assets';
 
-const SegmentTable = ({ segments, onEdit, onDelete, onToggleStatus, togglingId }) => {
+const SegmentTable = ({
+  segments,
+  onEdit,
+  onDelete,
+  onToggleStatus,
+  togglingId,
+  editingOrderId,
+  orderDrafts,
+  savingOrderId,
+  onOrderEditStart,
+  onOrderDraftChange,
+  onOrderSave,
+  onOrderEditCancel
+}) => {
   if (segments.length === 0) {
     return (
       <div className="empty-state">
@@ -13,68 +26,100 @@ const SegmentTable = ({ segments, onEdit, onDelete, onToggleStatus, togglingId }
   }
 
   return (
-    <div className="admin-table-container">
-      <table className="admin-table admin-segments-table">
-        <colgroup>
-          <col style={{ width: '160px' }} />
-          <col />
-          <col style={{ width: '100px' }} />
-          <col style={{ width: '70px' }} />
-          <col style={{ width: '250px' }} />
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Imagem</th>
-            <th>Nome</th>
-            <th>Ordem</th>
-            <th>Status</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {segments.map((segment) => (
-            <tr key={segment.id}>
-              <td>
-                <div className="admin-segments-table__image">
-                  <img
-                    src={segment.image_url ? apiAssetPath(segment.image_url) : assetPath('img/placeholder.png')}
-                    alt={segment.name}
-                    className="admin-segments-table__image-content"
-                    onError={(e) => {
-                      e.target.src = assetPath('img/placeholder.png');
-                    }}
-                  />
-                </div>
-              </td>
-              <td className="admin-segments-table__name-cell">
-                <div className="admin-segments-table__name-group">
-                  <span className="admin-segments-table__name">{segment.name}</span>
-                  <span
-                    className="admin-segments-table__link"
-                    title={segment.link_url || '-'}
-                  >
-                    {segment.link_url || '-'}
-                  </span>
-                </div>
-              </td>
-              <td className="admin-segments-table__order-cell">
-                <span className="admin-segments-table__order-badge">
-                  {segment.display_order}
-                </span>
-              </td>
-              <td className="admin-segments-table__status-cell">
+    <div className="admin-segments-grid">
+      {segments.map((segment) => (
+        <article key={segment.id} className="admin-segments-card">
+          <div className="admin-segments-card__media">
+            <img
+              src={segment.image_url ? apiAssetPath(segment.image_url) : assetPath('img/placeholder.png')}
+              alt={segment.name}
+              className="admin-segments-card__image"
+              onError={(event) => {
+                event.target.src = assetPath('img/placeholder.png');
+              }}
+            />
+            {editingOrderId === segment.id ? (
+              <div className="admin-segments-card__order-editor">
+                <input
+                  type="number"
+                  min="0"
+                  value={orderDrafts[segment.id] ?? ''}
+                  className="admin-segments-card__order-input"
+                  onChange={(event) => onOrderDraftChange(segment.id, event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      onOrderSave(segment);
+                    }
+
+                    if (event.key === 'Escape') {
+                      event.preventDefault();
+                      onOrderEditCancel(segment.id);
+                    }
+                  }}
+                  onBlur={() => onOrderSave(segment)}
+                  autoFocus
+                  disabled={savingOrderId === segment.id}
+                />
                 <button
                   type="button"
-                  className={`status-badge ${segment.active ? 'status-active' : 'status-inactive'}${togglingId === segment.id ? ' is-toggling' : ''}`}
-                  onClick={() => onToggleStatus(segment)}
-                  disabled={togglingId === segment.id}
-                  title={segment.active ? 'Clique para ocultar o segmento' : 'Clique para ativar o segmento'}
+                  className="admin-segments-card__order-action"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => onOrderSave(segment)}
+                  disabled={savingOrderId === segment.id}
+                  title="Salvar ordem"
                 >
-                  {segment.active ? <Eye size={12} /> : <EyeOff size={12} />}
-                  {segment.active ? 'Ativo' : 'Oculto'}
+                  <Check size={14} />
                 </button>
-              </td>
-              <td className="actions-cell admin-segments-table__actions-cell">
+                <button
+                  type="button"
+                  className="admin-segments-card__order-action is-cancel"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => onOrderEditCancel(segment.id)}
+                  disabled={savingOrderId === segment.id}
+                  title="Cancelar edicao"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="admin-segments-card__order-badge"
+                onClick={() => onOrderEditStart(segment)}
+                title="Clique para editar a ordem"
+              >
+                Ordem {segment.display_order}
+              </button>
+            )}
+          </div>
+
+          <div className="admin-segments-card__body">
+            <div className="admin-segments-card__copy">
+              <h3 className="admin-segments-card__name">{segment.name}</h3>
+              {segment.description ? (
+                <p className="admin-segments-card__description">{segment.description}</p>
+              ) : (
+                <p className="admin-segments-card__description is-empty">Sem descricao cadastrada.</p>
+              )}
+              <span className="admin-segments-card__link" title={segment.link_url || '-'}>
+                {segment.link_url || '-'}
+              </span>
+            </div>
+
+            <div className="admin-segments-card__footer">
+              <button
+                type="button"
+                className={`status-badge ${segment.active ? 'status-active' : 'status-inactive'}${togglingId === segment.id ? ' is-toggling' : ''}`}
+                onClick={() => onToggleStatus(segment)}
+                disabled={togglingId === segment.id}
+                title={segment.active ? 'Clique para ocultar o segmento' : 'Clique para ativar o segmento'}
+              >
+                {segment.active ? <Eye size={12} /> : <EyeOff size={12} />}
+                {segment.active ? 'Ativo' : 'Oculto'}
+              </button>
+
+              <div className="admin-segments-card__actions">
                 <button
                   className="btn-icon edit"
                   onClick={() => onEdit(segment)}
@@ -89,11 +134,11 @@ const SegmentTable = ({ segments, onEdit, onDelete, onToggleStatus, togglingId }
                 >
                   <Trash2 size={18} />
                 </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </div>
+            </div>
+          </div>
+        </article>
+      ))}
     </div>
   );
 };

@@ -18,6 +18,9 @@ const AdminSegments = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
+  const [editingOrderId, setEditingOrderId] = useState(null);
+  const [orderDrafts, setOrderDrafts] = useState({});
+  const [savingOrderId, setSavingOrderId] = useState(null);
 
   const fetchSegments = async () => {
     setIsLoading(true);
@@ -44,6 +47,31 @@ const AdminSegments = () => {
   const handleEdit = (segment) => {
     setEditingSegment(segment);
     setShowModal(true);
+  };
+
+  const buildSegmentFormData = (segment, overrides = {}) => {
+    const nextSegment = {
+      ...segment,
+      ...overrides
+    };
+
+    const data = new FormData();
+    data.append('name', nextSegment.name || '');
+    data.append('description', nextSegment.description || '');
+    data.append('link_url', nextSegment.link_url || '');
+    data.append('link_target_type', nextSegment.link_target_type || 'custom-page');
+    data.append('custom_page_id', String(nextSegment.custom_page_id || ''));
+    data.append('digital_group_id', String(nextSegment.digital_group_id || ''));
+    data.append('is_external', String(Boolean(nextSegment.is_external)));
+    data.append('display_order', String(Number(nextSegment.display_order) || 0));
+    data.append('active', String(Boolean(nextSegment.active)));
+    data.append('actions', JSON.stringify(nextSegment.actions || []));
+
+    if (nextSegment.image_url) {
+      data.append('image_url', nextSegment.image_url);
+    }
+
+    return data;
   };
 
   const handleSubmit = async (formData) => {
@@ -87,6 +115,58 @@ const AdminSegments = () => {
       addToast(error.message || 'Erro ao atualizar status do segmento', 'error');
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleOrderDraftChange = (segmentId, value) => {
+    setOrderDrafts((current) => ({
+      ...current,
+      [segmentId]: value
+    }));
+  };
+
+  const handleOrderEditStart = (segment) => {
+    setEditingOrderId(segment.id);
+    setOrderDrafts((current) => ({
+      ...current,
+      [segment.id]: String(segment.display_order ?? 0)
+    }));
+  };
+
+  const handleOrderEditCancel = (segmentId) => {
+    setEditingOrderId((current) => (current === segmentId ? null : current));
+    setOrderDrafts((current) => {
+      const next = { ...current };
+      delete next[segmentId];
+      return next;
+    });
+  };
+
+  const handleOrderSave = async (segment) => {
+    const rawValue = orderDrafts[segment.id];
+    const parsedValue = Number.parseInt(String(rawValue ?? segment.display_order ?? 0), 10);
+
+    if (Number.isNaN(parsedValue) || parsedValue < 0) {
+      addToast('Informe uma ordem valida maior ou igual a zero.', 'error');
+      return;
+    }
+
+    if (parsedValue === Number(segment.display_order ?? 0)) {
+      handleOrderEditCancel(segment.id);
+      return;
+    }
+
+    try {
+      setSavingOrderId(segment.id);
+      await homeService.update(segment.id, buildSegmentFormData(segment, { display_order: parsedValue }));
+      addToast('Ordem atualizada com sucesso!');
+      handleOrderEditCancel(segment.id);
+      fetchSegments();
+    } catch (error) {
+      console.error('Erro ao atualizar ordem do segmento:', error);
+      addToast(error.message || 'Erro ao atualizar ordem do segmento', 'error');
+    } finally {
+      setSavingOrderId(null);
     }
   };
 
@@ -148,6 +228,13 @@ const AdminSegments = () => {
               onDelete={handleDeleteClick}
               onToggleStatus={handleToggleStatus}
               togglingId={togglingId}
+              editingOrderId={editingOrderId}
+              orderDrafts={orderDrafts}
+              savingOrderId={savingOrderId}
+              onOrderEditStart={handleOrderEditStart}
+              onOrderDraftChange={handleOrderDraftChange}
+              onOrderSave={handleOrderSave}
+              onOrderEditCancel={handleOrderEditCancel}
             />
           )}
         </div>
