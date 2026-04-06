@@ -22,7 +22,7 @@ const CustomPage = () => {
         setPage(data);
         setError('');
       } catch (loadError) {
-        setError(loadError.message || 'Pagina nao encontrada');
+        setError(loadError.message || 'Pagina não encontrada');
       } finally {
         setIsLoading(false);
       }
@@ -36,7 +36,7 @@ const CustomPage = () => {
   }
 
   if (error || !page) {
-    return <div className="custom-page__state">{error || 'Pagina nao encontrada.'}</div>;
+    return <div className="custom-page__state">{error || 'Pagina não encontrada.'}</div>;
   }
 
   if (page.layout_type === 'hero-left') {
