@@ -33,6 +33,33 @@ const shouldShowQuoteButton = (value) => !(
   value === '0'
 );
 
+const normalizeModelTable = (modelTable) => {
+  const fallback = {
+    headers: ['Tipo / Referencia', 'Codigo'],
+    rows: [['', '']]
+  };
+
+  if (!modelTable || !Array.isArray(modelTable.headers) || !Array.isArray(modelTable.rows)) {
+    return fallback;
+  }
+
+  const headers = modelTable.headers.length > 0
+    ? modelTable.headers.map((header) => (typeof header === 'string' ? header : ''))
+    : fallback.headers;
+
+  const rows = modelTable.rows.length > 0
+    ? modelTable.rows.map((row) => {
+      const normalizedRow = Array.isArray(row) ? row.map((cell) => (typeof cell === 'string' ? cell : '')) : [];
+      while (normalizedRow.length < headers.length) {
+        normalizedRow.push('');
+      }
+      return normalizedRow.slice(0, headers.length);
+    })
+    : fallback.rows;
+
+  return { headers, rows };
+};
+
 const normalizeDynamicSections = (sections, legacySections = []) => {
   const source = Array.isArray(sections) && sections.length > 0 ? sections : legacySections;
 
@@ -42,9 +69,20 @@ const normalizeDynamicSections = (sections, legacySections = []) => {
         id: section?.id ? `dynamic-${section.id}` : `dynamic-${index}`,
         title: typeof section?.title === 'string' ? section.title.trim() : '',
         content: typeof section?.content === 'string' ? section.content : '',
-        contentAsList: Boolean(section?.contentAsList || section?.content_as_list)
+        contentAsList: Boolean(section?.contentAsList || section?.content_as_list),
+        type: section?.type === 'table' ? 'table' : 'content',
+        showModelSection: section?.showModelSection !== false,
+        hideModelData: Boolean(section?.hideModelData),
+        singleCellFirstRow: Boolean(section?.singleCellFirstRow),
+        modelTitle: typeof section?.modelTitle === 'string' ? section.modelTitle : '',
+        modelTable: section?.type === 'table' ? normalizeModelTable(section?.modelTable) : null
       }))
-      .filter((section) => section.title && section.content.trim())
+      .filter((section) => (
+        section.title && (
+          (section.type === 'table' && section.modelTable)
+          || (section.type !== 'table' && section.content.trim())
+        )
+      ))
     : [];
 };
 
@@ -292,13 +330,17 @@ const ProductDetail = () => {
     }
 
     dynamicSections.forEach((section) => {
+      if (section.type === 'table' && section.showModelSection === false) {
+        return;
+      }
+
       tabs.push({ id: section.id, label: section.title });
     });
 
-    if (hasTechnicalContent && technicalTabLabel) {
+    if (hasTechnicalContent) {
       tabs.push({
         id: 'specs',
-        label: technicalTabLabel
+        label: technicalTabLabel || 'Informacoes Tecnicas'
       });
     }
 
@@ -451,7 +493,43 @@ const ProductDetail = () => {
               {dynamicSections.map((section) => (
                 activeTab === section.id && (
                   <div key={section.id} className="detailed-description-content">
-                    {renderSectionContent(section.content, section.contentAsList)}
+                    {section.type === 'table' ? (
+                      section.showModelSection !== false && section.modelTable && (
+                        <div className="models-table-wrapper">
+                          <div className="section-title-group">
+                            <Package size={24} className="text-primary" />
+                            <h2>{section.modelTitle || section.title}</h2>
+                          </div>
+
+                          <div className="table-container">
+                            <table className={`models-table ${section.hideModelData ? 'strip-mode' : ''}`}>
+                              <thead>
+                                <tr>
+                                  {section.singleCellFirstRow ? (
+                                    <th colSpan={section.modelTable.headers.length} className="models-table__single-cell-row">
+                                      {section.modelTable.headers[0]}
+                                    </th>
+                                  ) : (
+                                    section.modelTable.headers.map((header, index) => <th key={index}>{header}</th>)
+                                  )}
+                                </tr>
+                              </thead>
+                              {!section.hideModelData && (
+                                <tbody>
+                                  {section.modelTable.rows.map((row, rowIndex) => (
+                                    <tr key={rowIndex}>
+                                      {row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              )}
+                            </table>
+                          </div>
+                        </div>
+                      )
+                    ) : (
+                      renderSectionContent(section.content, section.contentAsList)
+                    )}
                   </div>
                 )
               ))}
@@ -480,7 +558,13 @@ const ProductDetail = () => {
                         <table className={`models-table ${product.hideModelData ? 'strip-mode' : ''}`}>
                           <thead>
                             <tr>
-                              {product.modelTable.headers.map((header, index) => <th key={index}>{header}</th>)}
+                              {product.singleCellFirstRow ? (
+                                <th colSpan={product.modelTable.headers.length} className="models-table__single-cell-row">
+                                  {product.modelTable.headers[0]}
+                                </th>
+                              ) : (
+                                product.modelTable.headers.map((header, index) => <th key={index}>{header}</th>)
+                              )}
                             </tr>
                           </thead>
                           {!product.hideModelData && (

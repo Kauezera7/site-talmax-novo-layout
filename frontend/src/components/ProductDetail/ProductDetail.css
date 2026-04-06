@@ -524,6 +524,12 @@
   background: rgba(255,255,255,0.96);
 }
 
+.models-table__single-cell-row {
+  text-align: center !important;
+  white-space: pre-line;
+  font-weight: 700;
+}
+
 .models-table tbody tr:nth-child(even) td {
   background: #f8fbff;
 }
