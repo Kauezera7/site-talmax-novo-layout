@@ -380,7 +380,7 @@ const AdminDashboardContent = () => {
           </button>
           <h1>{activeItem?.label}</h1>
           <div className="user-profile">
-            <span className="user-name">Administrador</span>
+            <span className="user-name"></span>
           </div>
         </header>
 
