@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronDown, Copy, Eye, FolderPlus, Image as ImageIcon, Pencil, PlusCircle, Save, Trash2, UploadCloud, X } from 'lucide-react';
+import { AlertCircle, ChevronDown, Copy, Eye, FolderPlus, Image as ImageIcon, Pencil, PlusCircle, Save, Trash2, UploadCloud, X } from 'lucide-react';
 import { useAdmin } from '../../../context/AdminContext';
 import customPageService from '../../../services/customPageService';
 import digitalGroupService from '../../../services/digitalGroupService';
@@ -7,9 +7,19 @@ import homeService from '../../../services/homeService';
 import { resolveStoredAssetPath } from '../../../utils/assets';
 import { buildTalmaxDigitalReferenceCards, DIGITAL_CARD_TEMPLATES, parseDigitalActionsPayload } from '../../../components/TalmaxDigital/digitalCardTemplates';
 import pageSettingsService, { DEFAULT_SPECIAL_PAGE_SETTINGS, normalizeSpecialPageSettings } from '../../../services/pageSettingsService';
+import { motion, AnimatePresence } from 'framer-motion';
 import './AdminTalmaxDigital.css';
 
 const createId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+const normalizePublicPath = (value = '') => (
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 180)
+);
 
 const getTemplateCard = (cardId) => DIGITAL_CARD_TEMPLATES.find((item) => item.id === String(cardId || '').trim()) || null;
 
@@ -40,6 +50,7 @@ const buildCard = (card = {}) => ({
 const buildGroup = (group = {}) => ({
   id: group.id || null,
   title: group.title || '',
+  slug: group.slug || '',
   description: group.description || '',
   overline: group.overline || '',
   hero_title: group.hero_title || '',
@@ -55,6 +66,7 @@ const buildGroup = (group = {}) => ({
 const emptyGroup = () => buildGroup({
   id: null,
   title: '',
+  slug: '',
   description: '',
   overline: '',
   hero_title: '',
@@ -65,9 +77,9 @@ const emptyGroup = () => buildGroup({
   cards: []
 });
 
-const buildPublicGroupUrl = (id) => {
+const buildPublicGroupUrl = (slugOrId) => {
   const baseUrl = import.meta.env.BASE_URL || '/';
-  return new URL(`grupo-digital/${id}`, `${window.location.origin}${baseUrl}`).toString();
+  return new URL(`grupo-digital/${String(slugOrId || '').replace(/^\/+/, '')}`, `${window.location.origin}${baseUrl}`).toString();
 };
 
 const buildPublicCustomPageUrl = (slug) => {
@@ -115,6 +127,8 @@ const AdminDigitalGroups = ({
   const [heroDefaults, setHeroDefaults] = useState(DEFAULT_SPECIAL_PAGE_SETTINGS['talmax-digital']);
   const [activeEditorGroupId, setActiveEditorGroupId] = useState(null);
   const [customPageOptions, setCustomPageOptions] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [groupToDelete, setGroupToDelete] = useState(null);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -206,7 +220,7 @@ const AdminDigitalGroups = ({
     }));
   };
 
-  const handleRemoveGroup = async (group) => {
+  const handleRemoveGroup = (group) => {
     if (String(group.id).startsWith('new-group')) {
       setGroups((current) => current.filter((item) => item.id !== group.id));
       if (activeEditorGroupId === group.id) {
@@ -215,14 +229,21 @@ const AdminDigitalGroups = ({
       return;
     }
 
-    if (!window.confirm(`Deseja remover o grupo "${group.title || 'sem nome'}"?`)) return;
+    setGroupToDelete(group);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!groupToDelete) return;
 
     try {
-      await digitalGroupService.remove(group.id);
+      await digitalGroupService.remove(groupToDelete.id);
       addToast('Grupo removido com sucesso!');
-      if (activeEditorGroupId === group.id) {
+      if (activeEditorGroupId === groupToDelete.id) {
         setActiveEditorGroupId(null);
       }
+      setShowDeleteModal(false);
+      setGroupToDelete(null);
       await loadData();
     } catch (error) {
       addToast(error.message || 'Erro ao remover grupo digital', 'error');
@@ -240,6 +261,7 @@ const AdminDigitalGroups = ({
     try {
       const formData = new FormData();
       formData.append('title', group.title);
+      formData.append('slug', group.slug || '');
       formData.append('description', group.description);
       formData.append('overline', group.overline || '');
       formData.append('hero_title', group.hero_title || '');
@@ -347,9 +369,9 @@ const AdminDigitalGroups = ({
     }
   };
 
-  const handleCopyLink = async (groupId) => {
+  const handleCopyLink = async (group) => {
     try {
-      await navigator.clipboard.writeText(buildPublicGroupUrl(groupId));
+      await navigator.clipboard.writeText(buildPublicGroupUrl(group.slug || group.id));
       addToast('Link do grupo copiado com sucesso!');
     } catch (error) {
       addToast('Nao foi possivel copiar o link do grupo.', 'error');
@@ -425,9 +447,34 @@ const AdminDigitalGroups = ({
                         <input
                           type="text"
                           value={group.title}
-                          onChange={(event) => updateGroup(group.id, (current) => ({ ...current, title: event.target.value }))}
+                          onChange={(event) => updateGroup(group.id, (current) => {
+                            const nextTitle = event.target.value;
+                            const nextSlug = normalizePublicPath(nextTitle);
+
+                            return {
+                              ...current,
+                              title: nextTitle,
+                              slug: !current.slug || current.slug === normalizePublicPath(current.title) ? nextSlug : current.slug
+                            };
+                          })}
                           placeholder="Ex: Escaneamento"
                         />
+                      </div>
+
+                      <div className="form-group admin-talmax-digital__field--full">
+                        <label>URL publica</label>
+                        <input
+                          type="text"
+                          value={group.slug}
+                          onChange={(event) => updateGroup(group.id, (current) => ({
+                            ...current,
+                            slug: normalizePublicPath(event.target.value)
+                          }))}
+                          placeholder="Ex: escaneamento-intraoral"
+                        />
+                        <small className="admin-talmax-digital__field-help">
+                          Endereco final: /grupo-digital/{group.slug || 'sua-url'}
+                        </small>
                       </div>
 
                       <div className="form-group">
@@ -710,30 +757,62 @@ const AdminDigitalGroups = ({
                 .filter((group) => !String(group.id).startsWith('new-group'))
                 .map((group) => (
                   <article key={group.id} className="admin-custom-pages__list-item admin-talmax-digital__saved-item">
-                    <div className="admin-talmax-digital__saved-copy">
-                      <strong>{group.hero_title || group.title || `Grupo ${group.id}`}</strong>
-                      <span>/grupo-digital/{group.id}</span>
-                      <small>{group.cards.length} card(s)</small>
+                    <div className="admin-talmax-digital__saved-main">
+                      <div className="admin-talmax-digital__saved-copy">
+                        <div className="admin-talmax-digital__saved-copy-head">
+                          <strong>{group.hero_title || group.title || `Grupo ${group.id}`}</strong>
+                          <div className="admin-talmax-digital__saved-inline-meta" aria-label="Resumo do grupo">
+                            <span className={`admin-talmax-digital__saved-status ${group.is_active ? 'is-active' : 'is-inactive'}`}>
+                              {group.is_active ? 'Ativo' : 'Inativo'}
+                            </span>
+                            <span className="admin-talmax-digital__saved-status admin-talmax-digital__saved-status--neutral">
+                              {group.cards.length} cards
+                            </span>
+                          </div>
+                        </div>
+
+                        <span className="admin-talmax-digital__saved-path">/grupo-digital/{group.slug || group.id}</span>
+                      </div>
                     </div>
 
-                    <div className="admin-custom-pages__list-actions">
-                      <button type="button" className="btn-secondary" onClick={() => handleEditGroup(group.id)}>
-                        <Pencil size={16} />
-                        Editar
+                    <div className="admin-custom-pages__list-actions admin-talmax-digital__saved-actions">
+                      <button
+                        type="button"
+                        className="btn-secondary admin-talmax-digital__saved-action admin-talmax-digital__saved-icon-button"
+                        onClick={() => handleEditGroup(group.id)}
+                        aria-label={`Editar grupo ${group.hero_title || group.title || group.id}`}
+                        title="Editar"
+                      >
+                        <Pencil size={14} />
                       </button>
-                      <button type="button" className="btn-secondary" onClick={() => handleCopyLink(group.id)}>
-                        <Copy size={16} />
-                        Copiar link
+                      <button
+                        type="button"
+                        className="btn-secondary admin-talmax-digital__saved-action admin-talmax-digital__saved-icon-button"
+                        onClick={() => handleCopyLink(group)}
+                        aria-label={`Copiar link do grupo ${group.hero_title || group.title || group.id}`}
+                        title="Copiar link"
+                      >
+                        <Copy size={14} />
                       </button>
                       <a
-                        className="btn-primary admin-custom-pages__preview-link"
-                        href={buildPublicGroupUrl(group.id)}
+                        className="btn-primary admin-custom-pages__preview-link admin-talmax-digital__saved-action admin-talmax-digital__saved-action--primary admin-talmax-digital__saved-icon-button"
+                        href={buildPublicGroupUrl(group.slug || group.id)}
                         target="_blank"
                         rel="noreferrer"
+                        aria-label={`Ver pagina do grupo ${group.hero_title || group.title || group.id}`}
+                        title="Ver pagina"
                       >
-                        <Eye size={16} />
-                        Ver pagina
+                        <Eye size={14} />
                       </a>
+                      <button
+                        type="button"
+                        className="btn-secondary btn-danger-outline admin-talmax-digital__saved-delete"
+                        onClick={() => handleRemoveGroup(group)}
+                        aria-label={`Excluir grupo ${group.hero_title || group.title || group.id}`}
+                        title="Excluir"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </article>
                 ))}
@@ -741,6 +820,34 @@ const AdminDigitalGroups = ({
           )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {showDeleteModal && (
+          <div className="modal-overlay">
+            <motion.div
+              className="modal-content"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <div className="modal-body">
+                <div className="modal-icon">
+                  <AlertCircle size={32} />
+                </div>
+                <h3>Excluir Grupo?</h3>
+                <p>Tem certeza que deseja excluir o grupo <strong>{groupToDelete?.title}</strong>?</p>
+                <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '10px' }}>
+                  Esta acao nao podera ser desfeita e removera todos os cards deste grupo.
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button className="btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancelar</button>
+                <button className="btn-primary" style={{ backgroundColor: 'var(--admin-danger)' }} onClick={confirmDelete}>Sim, Excluir</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

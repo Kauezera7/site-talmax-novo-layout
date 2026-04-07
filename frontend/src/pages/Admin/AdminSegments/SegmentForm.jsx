@@ -54,7 +54,7 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
             ? digitalGroups.map((item) => ({
                 id: item.id,
                 title: item.title || item.hero_title || `Grupo ${item.id}`,
-                path: `/grupo-digital/${item.id}`
+                path: `/grupo-digital/${item.slug || item.id}`
               }))
             : []
         );

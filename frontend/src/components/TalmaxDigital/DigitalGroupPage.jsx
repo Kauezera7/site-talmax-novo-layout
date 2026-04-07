@@ -24,7 +24,7 @@ const buildGroupCategories = (cards = []) => (
 );
 
 const DigitalGroupPage = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const [group, setGroup] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,7 +34,7 @@ const DigitalGroupPage = () => {
       setIsLoading(true);
 
       try {
-        const item = await digitalGroupService.getPublicById(id);
+        const item = await digitalGroupService.getPublicBySlug(slug);
         setGroup(item);
       } catch (error) {
         setGroup(null);
@@ -44,7 +44,7 @@ const DigitalGroupPage = () => {
     };
 
     loadGroup();
-  }, [id]);
+  }, [slug]);
 
   const categories = buildGroupCategories(group?.cards || []);
 

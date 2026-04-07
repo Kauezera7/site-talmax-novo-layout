@@ -23,8 +23,10 @@ const createInitialFormState = () => ({
   images: [],
   features: [''],
   techSpecs: [{ label: '', value: '' }],
-  modelTitle: '',
-  modelTable: { headers: ['Tipo / Referencia', 'Codigo'], rows: [['', '']] }
+  modelTables: [{
+    title: '',
+    modelTable: { headers: ['Tipo / Referencia', 'Codigo'], rows: [['', '']] }
+  }]
 });
 
 const createEmptyModelTable = () => ({
@@ -32,16 +34,15 @@ const createEmptyModelTable = () => ({
   rows: [['', '']]
 });
 
+const createTechnicalTable = () => ({
+  title: '',
+  modelTable: createEmptyModelTable()
+});
+
 const createDynamicSection = () => ({
   title: '',
   content: '',
-  contentAsList: false,
-  type: 'content',
-  showModelSection: true,
-  hideModelData: false,
-  singleCellFirstRow: false,
-  modelTitle: '',
-  modelTable: createEmptyModelTable()
+  contentAsList: false
 });
 
 const normalizeModelTable = (modelTable) => {
@@ -68,18 +69,26 @@ const normalizeModelTable = (modelTable) => {
   return { headers, rows };
 };
 
+const normalizeTechnicalTables = (tables, legacyTitle = '', legacyTable = null) => {
+  if (Array.isArray(tables) && tables.length > 0) {
+    return tables.map((table) => ({
+      title: typeof table?.title === 'string' ? table.title : '',
+      modelTable: normalizeModelTable(table?.modelTable || table?.table || table)
+    }));
+  }
+
+  return [{
+    title: typeof legacyTitle === 'string' ? legacyTitle : '',
+    modelTable: normalizeModelTable(legacyTable)
+  }];
+};
+
 const normalizeDynamicSections = (sections) => (
   Array.isArray(sections)
     ? sections.map((section) => ({
       title: typeof section?.title === 'string' ? section.title : '',
       content: typeof section?.content === 'string' ? section.content : '',
-      contentAsList: Boolean(section?.contentAsList),
-      type: section?.type === 'table' ? 'table' : 'content',
-      showModelSection: section?.showModelSection !== false,
-      hideModelData: Boolean(section?.hideModelData),
-      singleCellFirstRow: Boolean(section?.singleCellFirstRow),
-      modelTitle: typeof section?.modelTitle === 'string' ? section.modelTitle : '',
-      modelTable: normalizeModelTable(section?.modelTable)
+      contentAsList: Boolean(section?.contentAsList)
     }))
     : []
 );
@@ -90,13 +99,7 @@ const normalizeProductTabs = (tabs, legacySections = []) => {
       id: tab?.id,
       title: typeof tab?.title === 'string' ? tab.title : '',
       content: typeof tab?.content === 'string' ? tab.content : '',
-      contentAsList: Boolean(tab?.contentAsList || tab?.content_as_list),
-      type: tab?.type === 'table' ? 'table' : 'content',
-      showModelSection: tab?.showModelSection !== false,
-      hideModelData: Boolean(tab?.hideModelData),
-      singleCellFirstRow: Boolean(tab?.singleCellFirstRow),
-      modelTitle: typeof tab?.modelTitle === 'string' ? tab.modelTitle : '',
-      modelTable: normalizeModelTable(tab?.modelTable)
+      contentAsList: Boolean(tab?.contentAsList || tab?.content_as_list)
     }));
   }
 
@@ -176,6 +179,11 @@ const ProductForm = ({
         modelTable: extra.modelTable || { headers: ['Tipo / Referência', 'Código'], rows: [['', '']] }
       });
 
+      setFormData((current) => ({
+        ...current,
+        modelTables: normalizeTechnicalTables(extra.modelTables, extra.modelTitle, extra.modelTable)
+      }));
+
       const initialPreviews = buildInitialPreviewList(initialData.main_image, extra.images);
 
       if (initialPreviews.length > 0) {
@@ -242,48 +250,122 @@ const ProductForm = ({
     }
   };
 
-  const addTableHeader = () => {
-    const newHeaders = [...formData.modelTable.headers, 'Nova Coluna'];
-    const newRows = formData.modelTable.rows.map((row) => [...row, '']);
-    setFormData({ ...formData, modelTable: { headers: newHeaders, rows: newRows } });
+  const updateTechnicalTable = (tableIndex, updater) => {
+    setFormData((current) => ({
+      ...current,
+      modelTables: current.modelTables.map((table, currentIndex) => (
+        currentIndex === tableIndex
+          ? updater({
+            ...table,
+            modelTable: normalizeModelTable(table.modelTable)
+          })
+          : table
+      ))
+    }));
   };
 
-  const removeTableHeader = (index) => {
-    if (formData.modelTable.headers.length <= 1) return;
-    const newHeaders = formData.modelTable.headers.filter((_, i) => i !== index);
-    const newRows = formData.modelTable.rows.map((row) => row.filter((_, i) => i !== index));
-    setFormData({ ...formData, modelTable: { headers: newHeaders, rows: newRows } });
+  const addTechnicalTable = () => {
+    setFormData((current) => ({
+      ...current,
+      modelTables: [...current.modelTables, createTechnicalTable()]
+    }));
   };
 
-  const removeLastTableHeader = () => {
-    if (formData.modelTable.headers.length <= 1) return;
-    removeTableHeader(formData.modelTable.headers.length - 1);
+  const removeTechnicalTable = (tableIndex) => {
+    if (formData.modelTables.length <= 1) return;
+
+    setFormData((current) => ({
+      ...current,
+      modelTables: current.modelTables.filter((_, currentIndex) => currentIndex !== tableIndex)
+    }));
   };
 
-  const updateTableHeader = (index, value) => {
-    setFormData((current) => {
-      const newHeaders = [...current.modelTable.headers];
-      newHeaders[index] = value;
-      return { ...current, modelTable: { ...current.modelTable, headers: newHeaders } };
+  const updateTechnicalTableTitle = (tableIndex, value) => {
+    updateTechnicalTable(tableIndex, (table) => ({
+      ...table,
+      title: value
+    }));
+  };
+
+  const addTableHeader = (tableIndex) => {
+    updateTechnicalTable(tableIndex, (table) => {
+      const newHeaders = [...table.modelTable.headers, 'Nova Coluna'];
+      const newRows = table.modelTable.rows.map((row) => [...row, '']);
+
+      return {
+        ...table,
+        modelTable: { headers: newHeaders, rows: newRows }
+      };
     });
   };
 
-  const addTableRow = () => {
-    const newRow = new Array(formData.modelTable.headers.length).fill('');
-    setFormData({ ...formData, modelTable: { ...formData.modelTable, rows: [...formData.modelTable.rows, newRow] } });
+  const removeTableHeader = (tableIndex, headerIndex) => {
+    const currentTable = formData.modelTables[tableIndex];
+    if (!currentTable || currentTable.modelTable.headers.length <= 1) return;
+
+    updateTechnicalTable(tableIndex, (table) => ({
+      ...table,
+      modelTable: {
+        headers: table.modelTable.headers.filter((_, index) => index !== headerIndex),
+        rows: table.modelTable.rows.map((row) => row.filter((_, index) => index !== headerIndex))
+      }
+    }));
   };
 
-  const removeTableRow = (index) => {
-    if (formData.modelTable.rows.length <= 1) return;
-    const newRows = formData.modelTable.rows.filter((_, i) => i !== index);
-    setFormData({ ...formData, modelTable: { ...formData.modelTable, rows: newRows } });
+  const removeLastTableHeader = (tableIndex) => {
+    const currentTable = formData.modelTables[tableIndex];
+    if (!currentTable || currentTable.modelTable.headers.length <= 1) return;
+    removeTableHeader(tableIndex, currentTable.modelTable.headers.length - 1);
   };
 
-  const updateTableCell = (rowIndex, colIndex, value) => {
-    setFormData((current) => {
-      const newRows = current.modelTable.rows.map((row) => [...row]);
+  const updateTableHeader = (tableIndex, headerIndex, value) => {
+    updateTechnicalTable(tableIndex, (table) => {
+      const newHeaders = [...table.modelTable.headers];
+      newHeaders[headerIndex] = value;
+
+      return {
+        ...table,
+        modelTable: { ...table.modelTable, headers: newHeaders }
+      };
+    });
+  };
+
+  const addTableRow = (tableIndex) => {
+    const currentTable = formData.modelTables[tableIndex];
+    if (!currentTable) return;
+
+    const newRow = new Array(currentTable.modelTable.headers.length).fill('');
+    updateTechnicalTable(tableIndex, (table) => ({
+      ...table,
+      modelTable: {
+        ...table.modelTable,
+        rows: [...table.modelTable.rows, newRow]
+      }
+    }));
+  };
+
+  const removeTableRow = (tableIndex, rowIndex) => {
+    const currentTable = formData.modelTables[tableIndex];
+    if (!currentTable || currentTable.modelTable.rows.length <= 1) return;
+
+    updateTechnicalTable(tableIndex, (table) => ({
+      ...table,
+      modelTable: {
+        ...table.modelTable,
+        rows: table.modelTable.rows.filter((_, index) => index !== rowIndex)
+      }
+    }));
+  };
+
+  const updateTableCell = (tableIndex, rowIndex, colIndex, value) => {
+    updateTechnicalTable(tableIndex, (table) => {
+      const newRows = table.modelTable.rows.map((row) => [...row]);
       newRows[rowIndex][colIndex] = value;
-      return { ...current, modelTable: { ...current.modelTable, rows: newRows } };
+
+      return {
+        ...table,
+        modelTable: { ...table.modelTable, rows: newRows }
+      };
     });
   };
 
@@ -320,9 +402,10 @@ const ProductForm = ({
     return parsedRows;
   };
 
-  const handleTableCellPaste = (event, rowIndex, colIndex) => {
+  const handleTableCellPaste = (event, tableIndex, rowIndex, colIndex) => {
     const pastedText = event.clipboardData?.getData('text');
-    const parsedRows = parseBulkTablePaste(pastedText, formData.modelTable.headers.length);
+    const currentTable = formData.modelTables[tableIndex];
+    const parsedRows = parseBulkTablePaste(pastedText, currentTable?.modelTable?.headers.length || 1);
 
     if (parsedRows.length === 0) {
       return;
@@ -330,19 +413,19 @@ const ProductForm = ({
 
     event.preventDefault();
 
-    setFormData((current) => {
-      const existingColumnCount = current.modelTable.headers.length;
+    updateTechnicalTable(tableIndex, (table) => {
+      const existingColumnCount = table.modelTable.headers.length;
       const requiredColumnCount = Math.max(
         existingColumnCount,
         colIndex + Math.max(...parsedRows.map((row) => row.length))
       );
 
-      const headers = [...current.modelTable.headers];
+      const headers = [...table.modelTable.headers];
       while (headers.length < requiredColumnCount) {
         headers.push(`Nova Coluna ${headers.length + 1}`);
       }
 
-      const rows = current.modelTable.rows.map((row) => {
+      const rows = table.modelTable.rows.map((row) => {
         const normalizedRow = [...row];
         while (normalizedRow.length < requiredColumnCount) {
           normalizedRow.push('');
@@ -362,11 +445,8 @@ const ProductForm = ({
       });
 
       return {
-        ...current,
-        modelTable: {
-          headers,
-          rows
-        }
+        ...table,
+        modelTable: { headers, rows }
       };
     });
   };
@@ -392,132 +472,6 @@ const ProductForm = ({
       ...current,
       productTabs: current.productTabs.filter((_, sectionIndex) => sectionIndex !== index)
     }));
-  };
-
-  const updateDynamicSectionTable = (sectionIndex, updater) => {
-    setFormData((current) => ({
-      ...current,
-      productTabs: current.productTabs.map((section, currentIndex) => {
-        if (currentIndex !== sectionIndex) {
-          return section;
-        }
-
-        return {
-          ...section,
-          modelTable: updater(normalizeModelTable(section.modelTable))
-        };
-      })
-    }));
-  };
-
-  const addDynamicSectionTableHeader = (sectionIndex) => {
-    updateDynamicSectionTable(sectionIndex, (modelTable) => ({
-      headers: [...modelTable.headers, 'Nova Coluna'],
-      rows: modelTable.rows.map((row) => [...row, ''])
-    }));
-  };
-
-  const removeDynamicSectionTableHeader = (sectionIndex, headerIndex) => {
-    updateDynamicSectionTable(sectionIndex, (modelTable) => {
-      if (modelTable.headers.length <= 1) {
-        return modelTable;
-      }
-
-      return {
-        headers: modelTable.headers.filter((_, currentIndex) => currentIndex !== headerIndex),
-        rows: modelTable.rows.map((row) => row.filter((_, currentIndex) => currentIndex !== headerIndex))
-      };
-    });
-  };
-
-  const removeLastDynamicSectionTableHeader = (sectionIndex) => {
-    const section = formData.productTabs[sectionIndex];
-    if (!section?.modelTable?.headers?.length) {
-      return;
-    }
-
-    removeDynamicSectionTableHeader(sectionIndex, section.modelTable.headers.length - 1);
-  };
-
-  const updateDynamicSectionTableHeader = (sectionIndex, headerIndex, value) => {
-    updateDynamicSectionTable(sectionIndex, (modelTable) => {
-      const headers = [...modelTable.headers];
-      headers[headerIndex] = value;
-      return { ...modelTable, headers };
-    });
-  };
-
-  const addDynamicSectionTableRow = (sectionIndex) => {
-    updateDynamicSectionTable(sectionIndex, (modelTable) => ({
-      ...modelTable,
-      rows: [...modelTable.rows, new Array(modelTable.headers.length).fill('')]
-    }));
-  };
-
-  const removeDynamicSectionTableRow = (sectionIndex, rowIndex) => {
-    updateDynamicSectionTable(sectionIndex, (modelTable) => {
-      if (modelTable.rows.length <= 1) {
-        return modelTable;
-      }
-
-      return {
-        ...modelTable,
-        rows: modelTable.rows.filter((_, currentIndex) => currentIndex !== rowIndex)
-      };
-    });
-  };
-
-  const updateDynamicSectionTableCell = (sectionIndex, rowIndex, colIndex, value) => {
-    updateDynamicSectionTable(sectionIndex, (modelTable) => {
-      const rows = modelTable.rows.map((row) => [...row]);
-      rows[rowIndex][colIndex] = value;
-      return { ...modelTable, rows };
-    });
-  };
-
-  const handleDynamicSectionTablePaste = (event, sectionIndex, rowIndex, colIndex) => {
-    const pastedText = event.clipboardData?.getData('text');
-    const section = formData.productTabs[sectionIndex];
-    const parsedRows = parseBulkTablePaste(pastedText, section?.modelTable?.headers?.length || 1);
-
-    if (parsedRows.length === 0) {
-      return;
-    }
-
-    event.preventDefault();
-
-    updateDynamicSectionTable(sectionIndex, (modelTable) => {
-      const requiredColumnCount = Math.max(
-        modelTable.headers.length,
-        colIndex + Math.max(...parsedRows.map((row) => row.length))
-      );
-
-      const headers = [...modelTable.headers];
-      while (headers.length < requiredColumnCount) {
-        headers.push(`Nova Coluna ${headers.length + 1}`);
-      }
-
-      const rows = modelTable.rows.map((row) => {
-        const normalizedRow = [...row];
-        while (normalizedRow.length < requiredColumnCount) {
-          normalizedRow.push('');
-        }
-        return normalizedRow;
-      });
-
-      const requiredRowCount = rowIndex + parsedRows.length;
-      while (rows.length < requiredRowCount) {
-        rows.push(new Array(requiredColumnCount).fill(''));
-      }
-
-      parsedRows.forEach((parsedRow, parsedRowIndex) => {
-        parsedRow.forEach((value, parsedColIndex) => {
-          rows[rowIndex + parsedRowIndex][colIndex + parsedColIndex] = value;
-        });
-      });
-
-      return { headers, rows };
-    });
   };
 
   const handleSubmit = (e) => {
@@ -555,19 +509,12 @@ const ProductForm = ({
         .map((section) => ({
           id: section.id,
           title: section.title.trim(),
-          type: section.type === 'table' ? 'table' : 'content',
           content: section.content.trim(),
-          contentAsList: section.contentAsList,
-          showModelSection: section.showModelSection !== false,
-          hideModelData: Boolean(section.hideModelData),
-          singleCellFirstRow: Boolean(section.singleCellFirstRow),
-          modelTitle: section.modelTitle?.trim() || '',
-          modelTable: normalizeModelTable(section.modelTable)
+          contentAsList: section.contentAsList
         }))
         .filter((section) => (
           section.title
           || section.content
-          || section.type === 'table'
         )),
       showFeatures: formData.showFeatures,
       hideModelData: formData.hideModelData,
@@ -576,8 +523,12 @@ const ProductForm = ({
       showQuoteButton: formData.showQuoteButton,
       features: formData.showFeatures ? formData.features.filter((f) => f.trim() !== '') : [],
       techSpecs: formData.techSpecs.filter((s) => s.label.trim() !== '' || s.value.trim() !== ''),
-      modelTitle: formData.modelTitle,
-      modelTable: formData.modelTable,
+      modelTables: formData.modelTables.map((table) => ({
+        title: table.title?.trim() || '',
+        modelTable: normalizeModelTable(table.modelTable)
+      })),
+      modelTitle: formData.modelTables[0]?.title || '',
+      modelTable: normalizeModelTable(formData.modelTables[0]?.modelTable),
       images: existingImages,
       removedImages: removedExistingImages
     };
@@ -894,226 +845,32 @@ const ProductForm = ({
                     placeholder="Ex.: Teste, Tecnico, Aplicacoes, Beneficios"
                   />
                 </div>
-                <label className="product-form-option dynamic-section-card__toggle">
-                  <input
-                    type="checkbox"
-                    checked={section.type === 'table'}
-                    onChange={(e) => updateDynamicSection(index, 'type', e.target.checked ? 'table' : 'content')}
-                  />
-                  <div>
-                    <strong>Esta aba exibe tabela</strong>
-                    <span>Ative para transformar esta aba em uma tabela completa, igual a configuração da tabela principal.</span>
-                  </div>
-                </label>
               </div>
 
-              {section.type === 'table' ? (
-                <div className="dynamic-section-card__table-builder">
-                  <div className="product-form-options">
-                    <label className="product-form-option">
-                      <input
-                        type="checkbox"
-                        checked={section.showModelSection !== false}
-                        onChange={(e) => updateDynamicSection(index, 'showModelSection', e.target.checked)}
-                      />
-                      <div>
-                        <strong>Exibir tabela no site</strong>
-                        <span>Desmarque se quiser salvar a tabela no painel, mas esconder a seção na página do produto.</span>
-                      </div>
-                    </label>
-
-                    <label className="product-form-option">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(section.hideModelData)}
-                        disabled={section.showModelSection === false}
-                        onChange={(e) => updateDynamicSection(index, 'hideModelData', e.target.checked)}
-                      />
-                      <div>
-                        <strong>Mostrar apenas o cabeçalho</strong>
-                        <span>Exibe só os títulos das colunas da tabela e oculta todas as linhas de dados.</span>
-                      </div>
-                    </label>
-
-                    <label className="product-form-option">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(section.singleCellFirstRow)}
-                        disabled={section.showModelSection === false || Boolean(section.hideModelData)}
-                        onChange={(e) => updateDynamicSection(index, 'singleCellFirstRow', e.target.checked)}
-                      />
-                      <div>
-                        <strong>Primeira linha em célula única</strong>
-                        <span>Faz o cabeçalho da tabela ocupar todas as colunas com um único campo.</span>
-                      </div>
-                    </label>
-                  </div>
-
-                  <div className={`table-builder-container ${section.showModelSection === false ? 'product-form-group-disabled' : ''}`}>
-                    <div className="form-group table-title-group">
-                      <label>Título da Tabela</label>
-                      <p className="product-form-helper">
-                        Defina o nome que será exibido acima desta tabela dentro da aba.
-                      </p>
-                      <input
-                        value={section.modelTitle}
-                        placeholder="Ex.: Tabela Tecnica / Modelos Disponiveis"
-                        onChange={(e) => updateDynamicSection(index, 'modelTitle', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="table-builder-toolbar">
-                      <div className="table-builder-toolbar-copy">
-                        <span className="table-builder-kicker">Configuração da tabela</span>
-                        <h4>Organize colunas e linhas com mais clareza</h4>
-                        <p>Cadastre os títulos principais e preencha as informações técnicas que serão exibidas nesta aba.</p>
-                      </div>
-                      <div className="table-builder-toolbar-actions">
-                        <button
-                          disabled={section.showModelSection === false || section.modelTable.headers.length <= 1}
-                          type="button"
-                          className="btn-secondary table-builder-toolbar-button table-builder-toolbar-button--remove"
-                          onClick={() => removeLastDynamicSectionTableHeader(index)}
-                        >
-                          <Minus size={16} /> Remover Coluna
-                        </button>
-                        <button
-                          disabled={section.showModelSection === false}
-                          type="button"
-                          className="btn-add table-builder-toolbar-button table-builder-toolbar-button--add"
-                          onClick={() => addDynamicSectionTableHeader(index)}
-                        >
-                          <Plus size={16} /> Adicionar Coluna
-                        </button>
-                      </div>
-                    </div>
-
-                    <table className="builder-table" style={{ '--table-column-count': normalizeModelTable(section.modelTable).headers.length }}>
-                      <thead>
-                        <tr>
-                          {section.singleCellFirstRow ? (
-                            <th colSpan={normalizeModelTable(section.modelTable).headers.length} className="builder-table__single-cell-row">
-                              <div>
-                                <input
-                                  disabled={section.showModelSection === false}
-                                  value={normalizeModelTable(section.modelTable).headers[0] || ''}
-                                  onChange={(e) => updateDynamicSectionTableHeader(index, 0, e.target.value)}
-                                />
-                                <button
-                                  disabled={section.showModelSection === false}
-                                  type="button"
-                                  className="table-remove-button"
-                                  onClick={() => updateDynamicSectionTableHeader(index, 0, '')}
-                                  aria-label={`Limpar cabeçalho da aba ${index + 1}`}
-                                >
-                                  <X size={14} />
-                                </button>
-                              </div>
-                            </th>
-                          ) : (
-                            normalizeModelTable(section.modelTable).headers.map((header, hIdx) => (
-                              <th key={hIdx}>
-                                <div>
-                                  <input
-                                    disabled={section.showModelSection === false}
-                                    value={header}
-                                    onChange={(e) => updateDynamicSectionTableHeader(index, hIdx, e.target.value)}
-                                  />
-                                  <button
-                                    disabled={section.showModelSection === false}
-                                    type="button"
-                                    className="table-remove-button"
-                                    onClick={() => removeDynamicSectionTableHeader(index, hIdx)}
-                                  >
-                                    <X size={14} />
-                                  </button>
-                                </div>
-                              </th>
-                            ))
-                          )}
-                          <th className="table-action-spacer" aria-hidden="true" />
-                        </tr>
-                      </thead>
-                      {!section.hideModelData && (
-                        <tbody>
-                          {normalizeModelTable(section.modelTable).rows.map((row, rIdx) => (
-                            <tr key={rIdx}>
-                              {row.map((cell, cIdx) => (
-                                <td key={cIdx}>
-                                  <textarea
-                                    disabled={section.showModelSection === false}
-                                    value={cell}
-                                    onChange={(e) => {
-                                      updateDynamicSectionTableCell(index, rIdx, cIdx, e.target.value);
-                                      autoResizeTableTextarea(e.target);
-                                    }}
-                                    onPaste={(e) => handleDynamicSectionTablePaste(e, index, rIdx, cIdx)}
-                                    rows={3}
-                                    style={{ height: '48px' }}
-                                    ref={(element) => autoResizeTableTextarea(element)}
-                                  />
-                                </td>
-                              ))}
-                              <td className="table-action-cell">
-                                <button
-                                  disabled={section.showModelSection === false}
-                                  type="button"
-                                  className="btn-icon delete"
-                                  onClick={() => removeDynamicSectionTableRow(index, rIdx)}
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      )}
-                    </table>
-
-                    {section.hideModelData ? (
-                      <p className="product-form-helper">
-                        As linhas ficaram ocultas no painel porque esta tabela está configurada para mostrar apenas o cabeçalho no site.
-                      </p>
-                    ) : (
-                      <button
-                        disabled={section.showModelSection === false}
-                        type="button"
-                        className="btn-add"
-                        onClick={() => addDynamicSectionTableRow(index)}
-                      >
-                        <Plus size={16} /> Adicionar Linha
-                      </button>
-                    )}
-                  </div>
+              <label className="product-form-option dynamic-section-card__toggle">
+                <input
+                  type="checkbox"
+                  checked={section.contentAsList}
+                  onChange={(e) => updateDynamicSection(index, 'contentAsList', e.target.checked)}
+                />
+                <div>
+                  <strong>Exibir conteúdo em tópicos</strong>
+                  <span>Cada linha do texto vira um item listado dentro desta aba.</span>
                 </div>
-              ) : (
-                <>
-                  <label className="product-form-option dynamic-section-card__toggle">
-                    <input
-                      type="checkbox"
-                      checked={section.contentAsList}
-                      onChange={(e) => updateDynamicSection(index, 'contentAsList', e.target.checked)}
-                    />
-                    <div>
-                      <strong>Exibir conteúdo em tópicos</strong>
-                      <span>Cada linha do texto vira um item listado dentro desta aba.</span>
-                    </div>
-                  </label>
+              </label>
 
-                  <div className="dynamic-section-card__field">
-                    <label>Conteúdo da aba</label>
-                    <textarea
-                      value={section.content}
-                      onChange={(e) => updateDynamicSection(index, 'content', e.target.value)}
-                      placeholder={
-                        section.contentAsList
-                          ? 'Escreva um item por linha para montar a lista desta aba'
-                          : 'Escreva o conteúdo que será mostrado ao clicar nesta aba'
-                      }
-                    />
-                  </div>
-                </>
-              )}
+              <div className="dynamic-section-card__field">
+                <label>Conteúdo da aba</label>
+                <textarea
+                  value={section.content}
+                  onChange={(e) => updateDynamicSection(index, 'content', e.target.value)}
+                  placeholder={
+                    section.contentAsList
+                      ? 'Escreva um item por linha para montar a lista desta aba'
+                      : 'Escreva o conteúdo que será mostrado ao clicar nesta aba'
+                  }
+                />
+              </div>
             </div>
           ))}
 
@@ -1195,9 +952,9 @@ const ProductForm = ({
             Defina o nome que sera exibido acima da tabela tecnica do produto.
           </p>
           <input
-            value={formData.modelTitle}
+            value={formData.modelTables[0]?.title || ''}
             placeholder="Ex.: Tabela Tecnica / Modelos Disponiveis"
-            onChange={(e) => setFormData({ ...formData, modelTitle: e.target.value })}
+            onChange={(e) => updateTechnicalTableTitle(0, e.target.value)}
           />
         </div>
 
@@ -1210,10 +967,10 @@ const ProductForm = ({
             </div>
             <div className="table-builder-toolbar-actions">
               <button
-                disabled={!formData.showModelSection || formData.modelTable.headers.length <= 1}
+                disabled={!formData.showModelSection || formData.modelTables[0].modelTable.headers.length <= 1}
                 type="button"
                 className="btn-secondary table-builder-toolbar-button"
-                onClick={removeLastTableHeader}
+                onClick={() => removeLastTableHeader(0)}
               >
                 <Minus size={16} /> Remover Coluna
               </button>
@@ -1221,22 +978,22 @@ const ProductForm = ({
                 disabled={!formData.showModelSection}
                 type="button"
                 className="btn-add table-builder-toolbar-button"
-                onClick={addTableHeader}
+                onClick={() => addTableHeader(0)}
               >
                 <Plus size={16} /> Adicionar Coluna
               </button>
             </div>
           </div>
-          <table className="builder-table" style={{ '--table-column-count': formData.modelTable.headers.length }}>
+          <table className="builder-table" style={{ '--table-column-count': formData.modelTables[0].modelTable.headers.length }}>
             <thead>
               <tr>
                 {formData.singleCellFirstRow ? (
-                  <th colSpan={formData.modelTable.headers.length} className="builder-table__single-cell-row">
+                  <th colSpan={formData.modelTables[0].modelTable.headers.length} className="builder-table__single-cell-row">
                     <div>
                       <input
                         disabled={!formData.showModelSection}
-                        value={formData.modelTable.headers[0] || ''}
-                        onChange={(e) => updateTableHeader(0, e.target.value)}
+                        value={formData.modelTables[0].modelTable.headers[0] || ''}
+                        onChange={(e) => updateTableHeader(0, 0, e.target.value)}
                       />
                       <button
                         disabled={!formData.showModelSection}
@@ -1246,7 +1003,7 @@ const ProductForm = ({
                           e.preventDefault();
                           e.stopPropagation();
                         }}
-                        onClick={() => updateTableHeader(0, '')}
+                        onClick={() => updateTableHeader(0, 0, '')}
                         aria-label="Limpar cabeçalho da tabela"
                       >
                         <X size={14} />
@@ -1254,11 +1011,11 @@ const ProductForm = ({
                     </div>
                   </th>
                 ) : (
-                  formData.modelTable.headers.map((header, hIdx) => (
+                  formData.modelTables[0].modelTable.headers.map((header, hIdx) => (
                     <th key={hIdx}>
                       <div>
-                        <input disabled={!formData.showModelSection} value={header} onChange={(e) => updateTableHeader(hIdx, e.target.value)} />
-                        <button disabled={!formData.showModelSection} type="button" className="table-remove-button" onClick={() => removeTableHeader(hIdx)}><X size={14} /></button>
+                        <input disabled={!formData.showModelSection} value={header} onChange={(e) => updateTableHeader(0, hIdx, e.target.value)} />
+                        <button disabled={!formData.showModelSection} type="button" className="table-remove-button" onClick={() => removeTableHeader(0, hIdx)}><X size={14} /></button>
                       </div>
                     </th>
                   ))
@@ -1268,7 +1025,7 @@ const ProductForm = ({
             </thead>
             {!formData.hideModelData && (
               <tbody>
-                {formData.modelTable.rows.map((row, rIdx) => (
+                {formData.modelTables[0].modelTable.rows.map((row, rIdx) => (
                   <tr key={rIdx}>
                     {row.map((cell, cIdx) => (
                       <td key={cIdx}>
@@ -1276,17 +1033,17 @@ const ProductForm = ({
                           disabled={!formData.showModelSection}
                           value={cell}
                           onChange={(e) => {
-                            updateTableCell(rIdx, cIdx, e.target.value);
+                            updateTableCell(0, rIdx, cIdx, e.target.value);
                             autoResizeTableTextarea(e.target);
                           }}
-                          onPaste={(e) => handleTableCellPaste(e, rIdx, cIdx)}
+                          onPaste={(e) => handleTableCellPaste(e, 0, rIdx, cIdx)}
                           rows={3}
                           style={{ height: '48px' }}
                           ref={(element) => autoResizeTableTextarea(element)}
                         />
                       </td>
                     ))}
-                    <td className="table-action-cell"><button disabled={!formData.showModelSection} type="button" className="btn-icon delete" onClick={() => removeTableRow(rIdx)}><Trash2 size={16} /></button></td>
+                    <td className="table-action-cell"><button disabled={!formData.showModelSection} type="button" className="btn-icon delete" onClick={() => removeTableRow(0, rIdx)}><Trash2 size={16} /></button></td>
                   </tr>
                 ))}
               </tbody>
@@ -1297,9 +1054,144 @@ const ProductForm = ({
               As linhas ficaram ocultas no painel porque esta tabela está configurada para mostrar apenas o cabeçalho no site.
             </p>
           ) : (
-            <button disabled={!formData.showModelSection} type="button" className="btn-add" onClick={addTableRow}><Plus size={16} /> Adicionar Linha</button>
+            <button disabled={!formData.showModelSection} type="button" className="btn-add" onClick={() => addTableRow(0)}><Plus size={16} /> Adicionar Linha</button>
           )}
         </div>
+
+        {formData.modelTables.slice(1).map((tableConfig, extraIndex) => {
+          const tableIndex = extraIndex + 1;
+
+          return (
+            <div key={`technical-table-${tableIndex}`} className={`table-builder-container ${formData.showModelSection ? '' : 'product-form-group-disabled'}`}>
+              <div className="dynamic-section-card__header">
+                <strong>Tabela {tableIndex + 1}</strong>
+                <button
+                  type="button"
+                  className="btn-icon delete"
+                  onClick={() => removeTechnicalTable(tableIndex)}
+                  aria-label={`Remover tabela ${tableIndex + 1}`}
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+
+              <div className="form-group table-title-group">
+                <label>Titulo da Tabela</label>
+                <p className="product-form-helper">
+                  Defina o nome que sera exibido acima desta tabela tecnica do produto.
+                </p>
+                <input
+                  value={tableConfig.title}
+                  placeholder="Ex.: Tabela Tecnica / Modelos Disponiveis"
+                  onChange={(e) => updateTechnicalTableTitle(tableIndex, e.target.value)}
+                />
+              </div>
+
+              <div className="table-builder-toolbar">
+                <div className="table-builder-toolbar-copy">
+                  <span className="table-builder-kicker">Configuracao da tabela</span>
+                  <h4>Organize colunas e linhas com mais clareza</h4>
+                  <p>Cadastre os titulos principais e preencha as informacoes tecnicas que serao exibidas no site.</p>
+                </div>
+                <div className="table-builder-toolbar-actions">
+                  <button
+                    disabled={!formData.showModelSection || tableConfig.modelTable.headers.length <= 1}
+                    type="button"
+                    className="btn-secondary table-builder-toolbar-button"
+                    onClick={() => removeLastTableHeader(tableIndex)}
+                  >
+                    <Minus size={16} /> Remover Coluna
+                  </button>
+                  <button
+                    disabled={!formData.showModelSection}
+                    type="button"
+                    className="btn-add table-builder-toolbar-button"
+                    onClick={() => addTableHeader(tableIndex)}
+                  >
+                    <Plus size={16} /> Adicionar Coluna
+                  </button>
+                </div>
+              </div>
+
+              <table className="builder-table" style={{ '--table-column-count': tableConfig.modelTable.headers.length }}>
+                <thead>
+                  <tr>
+                    {formData.singleCellFirstRow ? (
+                      <th colSpan={tableConfig.modelTable.headers.length} className="builder-table__single-cell-row">
+                        <div>
+                          <input
+                            disabled={!formData.showModelSection}
+                            value={tableConfig.modelTable.headers[0] || ''}
+                            onChange={(e) => updateTableHeader(tableIndex, 0, e.target.value)}
+                          />
+                          <button
+                            disabled={!formData.showModelSection}
+                            type="button"
+                            className="table-remove-button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            onClick={() => updateTableHeader(tableIndex, 0, '')}
+                            aria-label={`Limpar cabecalho da tabela ${tableIndex + 1}`}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      </th>
+                    ) : (
+                      tableConfig.modelTable.headers.map((header, hIdx) => (
+                        <th key={hIdx}>
+                          <div>
+                            <input disabled={!formData.showModelSection} value={header} onChange={(e) => updateTableHeader(tableIndex, hIdx, e.target.value)} />
+                            <button disabled={!formData.showModelSection} type="button" className="table-remove-button" onClick={() => removeTableHeader(tableIndex, hIdx)}><X size={14} /></button>
+                          </div>
+                        </th>
+                      ))
+                    )}
+                    <th className="table-action-spacer" aria-hidden="true" />
+                  </tr>
+                </thead>
+                {!formData.hideModelData && (
+                  <tbody>
+                    {tableConfig.modelTable.rows.map((row, rIdx) => (
+                      <tr key={rIdx}>
+                        {row.map((cell, cIdx) => (
+                          <td key={cIdx}>
+                            <textarea
+                              disabled={!formData.showModelSection}
+                              value={cell}
+                              onChange={(e) => {
+                                updateTableCell(tableIndex, rIdx, cIdx, e.target.value);
+                                autoResizeTableTextarea(e.target);
+                              }}
+                              onPaste={(e) => handleTableCellPaste(e, tableIndex, rIdx, cIdx)}
+                              rows={3}
+                              style={{ height: '48px' }}
+                              ref={(element) => autoResizeTableTextarea(element)}
+                            />
+                          </td>
+                        ))}
+                        <td className="table-action-cell"><button disabled={!formData.showModelSection} type="button" className="btn-icon delete" onClick={() => removeTableRow(tableIndex, rIdx)}><Trash2 size={16} /></button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                )}
+              </table>
+              {formData.hideModelData ? (
+                <p className="product-form-helper">
+                  As linhas ficaram ocultas no painel porque esta tabela esta configurada para mostrar apenas o cabecalho no site.
+                </p>
+              ) : (
+                <button disabled={!formData.showModelSection} type="button" className="btn-add" onClick={() => addTableRow(tableIndex)}><Plus size={16} /> Adicionar Linha</button>
+              )}
+            </div>
+          );
+        })}
+
+        <button disabled={!formData.showModelSection} type="button" className="btn-add" onClick={addTechnicalTable}>
+          <Plus size={16} /> Adicionar Nova Tabela
+        </button>
       </div>
 
       <div className="product-form-actions">

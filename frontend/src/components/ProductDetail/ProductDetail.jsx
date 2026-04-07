@@ -60,6 +60,24 @@ const normalizeModelTable = (modelTable) => {
   return { headers, rows };
 };
 
+const normalizeTechnicalTables = (tables, legacyTitle = '', legacyTable = null) => {
+  if (Array.isArray(tables) && tables.length > 0) {
+    return tables.map((table) => ({
+      title: typeof table?.title === 'string' ? table.title : '',
+      modelTable: normalizeModelTable(table?.modelTable || table?.table || table)
+    }));
+  }
+
+  if (!legacyTable) {
+    return [];
+  }
+
+  return [{
+    title: typeof legacyTitle === 'string' ? legacyTitle : '',
+    modelTable: normalizeModelTable(legacyTable)
+  }];
+};
+
 const normalizeDynamicSections = (sections, legacySections = []) => {
   const source = Array.isArray(sections) && sections.length > 0 ? sections : legacySections;
 
@@ -69,20 +87,9 @@ const normalizeDynamicSections = (sections, legacySections = []) => {
         id: section?.id ? `dynamic-${section.id}` : `dynamic-${index}`,
         title: typeof section?.title === 'string' ? section.title.trim() : '',
         content: typeof section?.content === 'string' ? section.content : '',
-        contentAsList: Boolean(section?.contentAsList || section?.content_as_list),
-        type: section?.type === 'table' ? 'table' : 'content',
-        showModelSection: section?.showModelSection !== false,
-        hideModelData: Boolean(section?.hideModelData),
-        singleCellFirstRow: Boolean(section?.singleCellFirstRow),
-        modelTitle: typeof section?.modelTitle === 'string' ? section.modelTitle : '',
-        modelTable: section?.type === 'table' ? normalizeModelTable(section?.modelTable) : null
+        contentAsList: Boolean(section?.contentAsList || section?.content_as_list)
       }))
-      .filter((section) => (
-        section.title && (
-          (section.type === 'table' && section.modelTable)
-          || (section.type !== 'table' && section.content.trim())
-        )
-      ))
+      .filter((section) => section.title && section.content.trim())
     : [];
 };
 
@@ -194,7 +201,8 @@ const ProductDetail = () => {
           product_tabs: Array.isArray(data.product_tabs) ? data.product_tabs : [],
           ...extra,
           images: Array.isArray(extra.images) ? extra.images.map((image) => apiAssetPath(image)) : extra.images,
-          modelTable: finalTable
+          modelTable: finalTable,
+          modelTables: normalizeTechnicalTables(extra.modelTables, extra.modelTitle, finalTable)
         };
 
         setProduct(formattedProduct);
@@ -262,16 +270,12 @@ const ProductDetail = () => {
     return shuffleProducts(matchingProducts).slice(0, 6);
   }, [product, allProducts]);
 
-  const modelRowsToRender = useMemo(() => {
-    if (!product?.modelTable?.rows) {
+  const technicalTables = useMemo(() => {
+    if (!product) {
       return [];
     }
 
-    if (product.hideModelData) {
-      return [];
-    }
-
-    return product.modelTable.rows;
+    return normalizeTechnicalTables(product.modelTables, product.modelTitle, product.modelTable);
   }, [product]);
 
   const dynamicSections = useMemo(
@@ -315,9 +319,9 @@ const ProductDetail = () => {
   const hasTechnicalContent = useMemo(() => (
     Boolean(
       (Array.isArray(product?.techSpecs) && product.techSpecs.length > 0)
-      || (product?.modelTable && product.showModelSection !== false)
+      || (technicalTables.length > 0 && product?.showModelSection !== false)
     )
-  ), [product]);
+  ), [product, technicalTables]);
 
   const availableTabs = useMemo(() => {
     const tabs = [];
@@ -330,10 +334,6 @@ const ProductDetail = () => {
     }
 
     dynamicSections.forEach((section) => {
-      if (section.type === 'table' && section.showModelSection === false) {
-        return;
-      }
-
       tabs.push({ id: section.id, label: section.title });
     });
 
@@ -493,43 +493,7 @@ const ProductDetail = () => {
               {dynamicSections.map((section) => (
                 activeTab === section.id && (
                   <div key={section.id} className="detailed-description-content">
-                    {section.type === 'table' ? (
-                      section.showModelSection !== false && section.modelTable && (
-                        <div className="models-table-wrapper">
-                          <div className="section-title-group">
-                            <Package size={24} className="text-primary" />
-                            <h2>{section.modelTitle || section.title}</h2>
-                          </div>
-
-                          <div className="table-container">
-                            <table className={`models-table ${section.hideModelData ? 'strip-mode' : ''}`}>
-                              <thead>
-                                <tr>
-                                  {section.singleCellFirstRow ? (
-                                    <th colSpan={section.modelTable.headers.length} className="models-table__single-cell-row">
-                                      {section.modelTable.headers[0]}
-                                    </th>
-                                  ) : (
-                                    section.modelTable.headers.map((header, index) => <th key={index}>{header}</th>)
-                                  )}
-                                </tr>
-                              </thead>
-                              {!section.hideModelData && (
-                                <tbody>
-                                  {section.modelTable.rows.map((row, rowIndex) => (
-                                    <tr key={rowIndex}>
-                                      {row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              )}
-                            </table>
-                          </div>
-                        </div>
-                      )
-                    ) : (
-                      renderSectionContent(section.content, section.contentAsList)
-                    )}
+                    {renderSectionContent(section.content, section.contentAsList)}
                   </div>
                 )
               ))}
@@ -547,11 +511,11 @@ const ProductDetail = () => {
                     </div>
                   )}
 
-                  {(product.modelTable && product.showModelSection !== false) && (
-                    <div className="models-table-wrapper">
+                  {product.showModelSection !== false && technicalTables.map((tableConfig, tableIndex) => (
+                    <div key={`technical-table-${tableIndex}`} className="models-table-wrapper">
                       <div className="section-title-group">
                         <Package size={24} className="text-primary" />
-                        <h2>{product.modelTitle || 'Modelos / Codigos'}</h2>
+                        <h2>{tableConfig.title || `Modelos / Codigos ${technicalTables.length > 1 ? tableIndex + 1 : ''}`.trim()}</h2>
                       </div>
 
                       <div className="table-container">
@@ -559,17 +523,17 @@ const ProductDetail = () => {
                           <thead>
                             <tr>
                               {product.singleCellFirstRow ? (
-                                <th colSpan={product.modelTable.headers.length} className="models-table__single-cell-row">
-                                  {product.modelTable.headers[0]}
+                                <th colSpan={tableConfig.modelTable.headers.length} className="models-table__single-cell-row">
+                                  {tableConfig.modelTable.headers[0]}
                                 </th>
                               ) : (
-                                product.modelTable.headers.map((header, index) => <th key={index}>{header}</th>)
+                                tableConfig.modelTable.headers.map((header, index) => <th key={index}>{header}</th>)
                               )}
                             </tr>
                           </thead>
                           {!product.hideModelData && (
                             <tbody>
-                              {modelRowsToRender.map((row, rowIndex) => (
+                              {tableConfig.modelTable.rows.map((row, rowIndex) => (
                                 <tr key={rowIndex}>
                                   {row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}
                                 </tr>
@@ -579,7 +543,7 @@ const ProductDetail = () => {
                         </table>
                       </div>
                     </div>
-                  )}
+                  ))}
                 </div>
               )}
             </motion.div>

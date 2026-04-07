@@ -12,6 +12,7 @@ const DIGITAL_GROUPS_TABLE_QUERY = `
   CREATE TABLE IF NOT EXISTS digital_groups (
     id INT NOT NULL AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
+    slug VARCHAR(180) DEFAULT NULL,
     description TEXT DEFAULT NULL,
     display_order INT DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
@@ -45,6 +46,16 @@ const DIGITAL_GROUP_CARDS_TABLE_QUERY = `
 
 let tablesReady = false;
 
+const normalizePublicPath = (value = '') => (
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 180)
+);
+
 const ensureColumn = async (tableName, columnName, definition) => {
   const [rows] = await db.query(
     `
@@ -62,15 +73,74 @@ const ensureColumn = async (tableName, columnName, definition) => {
   }
 };
 
+const ensureUniqueIndex = async (tableName, indexName, columnName) => {
+  const [rows] = await db.query(
+    `
+      SELECT COUNT(*) AS total
+      FROM information_schema.STATISTICS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = ?
+        AND INDEX_NAME = ?
+    `,
+    [tableName, indexName]
+  );
+
+  if (Number(rows?.[0]?.total || 0) === 0) {
+    await db.query(`ALTER TABLE ${tableName} ADD UNIQUE KEY ${indexName} (${columnName})`);
+  }
+};
+
+const buildFallbackSlug = (title, id) => normalizePublicPath(title) || `grupo-${id}`;
+
+const resolveUniqueSlug = async (connection, value, { excludeId = null } = {}) => {
+  const baseSlug = normalizePublicPath(value);
+
+  if (!baseSlug) {
+    return '';
+  }
+
+  let nextSlug = baseSlug;
+  let suffix = 2;
+
+  while (true) {
+    const query = excludeId
+      ? 'SELECT id FROM digital_groups WHERE slug = ? AND id <> ? LIMIT 1'
+      : 'SELECT id FROM digital_groups WHERE slug = ? LIMIT 1';
+    const params = excludeId ? [nextSlug, excludeId] : [nextSlug];
+    const [rows] = await connection.query(query, params);
+
+    if (!rows[0]) {
+      return nextSlug;
+    }
+
+    nextSlug = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+};
+
+const ensureExistingGroupSlugs = async () => {
+  const [rows] = await db.query(
+    'SELECT id, title, slug FROM digital_groups WHERE slug IS NULL OR TRIM(slug) = "" ORDER BY id ASC'
+  );
+
+  for (const row of rows) {
+    const nextSlug = await resolveUniqueSlug(db, buildFallbackSlug(row.title, row.id), { excludeId: Number(row.id) });
+    await db.query('UPDATE digital_groups SET slug = ? WHERE id = ?', [nextSlug, row.id]);
+  }
+};
+
 const ensureTables = async () => {
   if (tablesReady) return;
   await db.query(DIGITAL_GROUPS_TABLE_QUERY);
   await db.query(DIGITAL_GROUP_CARDS_TABLE_QUERY);
+  await ensureColumn('digital_groups', 'slug', 'VARCHAR(180) DEFAULT NULL AFTER title');
   await ensureColumn('digital_groups', 'overline', 'VARCHAR(255) DEFAULT NULL AFTER description');
   await ensureColumn('digital_groups', 'hero_title', 'VARCHAR(255) DEFAULT NULL AFTER overline');
   await ensureColumn('digital_groups', 'hero_description', 'TEXT DEFAULT NULL AFTER hero_title');
   await ensureColumn('digital_groups', 'logo_url', 'VARCHAR(500) DEFAULT NULL AFTER hero_description');
   await ensureColumn('digital_group_cards', 'custom_page_id', 'INT DEFAULT NULL AFTER group_id');
+  await ensureExistingGroupSlugs();
+  await ensureUniqueIndex('digital_groups', 'uk_digital_groups_slug', 'slug');
   tablesReady = true;
 };
 
@@ -142,6 +212,7 @@ const listGroups = async ({ onlyActive = false } = {}) => {
   return groups.map((group) => ({
     id: Number(group.id),
     title: group.title || '',
+    slug: group.slug || buildFallbackSlug(group.title, group.id),
     description: group.description || '',
     overline: group.overline || '',
     hero_title: group.hero_title || '',
@@ -218,10 +289,14 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/public/:id', async (req, res) => {
+router.get('/public/:slug', async (req, res) => {
   try {
     const items = await listGroups({ onlyActive: true });
-    const item = items.find((group) => Number(group.id) === Number(req.params.id));
+    const target = String(req.params.slug || '').trim().toLowerCase();
+    const item = items.find((group) => (
+      String(group.slug || '').trim().toLowerCase() === target ||
+      String(group.id) === target
+    ));
 
     if (!item) {
       return res.status(404).json({ error: 'Grupo digital nao encontrado.' });
@@ -244,15 +319,17 @@ router.post('/', requireAdminSession, upload.any(), async (req, res) => {
     const logoUrl = logoFile
       ? await persistUploadedFile(logoFile, { resourceType: 'digital-groups' })
       : safe(req.body.logo_url || '');
+    const requestedSlug = safe(req.body.slug || '');
 
     await connection.beginTransaction();
     const [result] = await connection.query(
       `
-        INSERT INTO digital_groups (title, description, overline, hero_title, hero_description, logo_url, display_order, is_active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO digital_groups (title, slug, description, overline, hero_title, hero_description, logo_url, display_order, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         safe(req.body.title || ''),
+        null,
         safe(req.body.description || ''),
         safe(req.body.overline || ''),
         safe(req.body.hero_title || ''),
@@ -262,6 +339,14 @@ router.post('/', requireAdminSession, upload.any(), async (req, res) => {
         req.body.is_active === 'false' ? 0 : 1
       ]
     );
+
+    const nextSlug = await resolveUniqueSlug(
+      connection,
+      requestedSlug || buildFallbackSlug(req.body.title, result.insertId),
+      { excludeId: Number(result.insertId) }
+    );
+
+    await connection.query('UPDATE digital_groups SET slug = ? WHERE id = ?', [nextSlug, result.insertId]);
 
     await replaceGroupCards(connection, result.insertId, req.files, cards);
     await connection.commit();
@@ -287,16 +372,23 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
     const logoUrl = logoFile
       ? await persistUploadedFile(logoFile, { resourceType: 'digital-groups' })
       : safe(req.body.logo_url || '');
+    const requestedSlug = safe(req.body.slug || '');
+    const nextSlug = await resolveUniqueSlug(
+      connection,
+      requestedSlug || buildFallbackSlug(req.body.title, groupId),
+      { excludeId: groupId }
+    );
 
     await connection.beginTransaction();
     await connection.query(
       `
         UPDATE digital_groups
-        SET title = ?, description = ?, overline = ?, hero_title = ?, hero_description = ?, logo_url = ?, display_order = ?, is_active = ?
+        SET title = ?, slug = ?, description = ?, overline = ?, hero_title = ?, hero_description = ?, logo_url = ?, display_order = ?, is_active = ?
         WHERE id = ?
       `,
       [
         safe(req.body.title || ''),
+        nextSlug,
         safe(req.body.description || ''),
         safe(req.body.overline || ''),
         safe(req.body.hero_title || ''),

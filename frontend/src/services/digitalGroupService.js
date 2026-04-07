@@ -16,8 +16,8 @@ const digitalGroupService = {
     return response.json();
   },
 
-  async getPublicById(id) {
-    const response = await fetch(`${API_URL}/digital-groups/public/${id}`);
+  async getPublicBySlug(slug) {
+    const response = await fetch(`${API_URL}/digital-groups/public/${encodeURIComponent(slug)}`);
 
     if (!response.ok) {
       throw new Error('Grupo digital nao encontrado');

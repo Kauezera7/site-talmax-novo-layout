@@ -38,7 +38,7 @@ const ensureHomeServicesColumns = async () => {
 };
 
 const buildCustomPagePath = (slug = '') => (slug ? `/pagina/${slug}` : '');
-const buildDigitalGroupPath = (id) => (id ? `/grupo-digital/${id}` : '');
+const buildDigitalGroupPath = (slugOrId = '') => (slugOrId ? `/grupo-digital/${String(slugOrId).replace(/^\/+/, '')}` : '');
 
 const parseActionsPayload = (value) => {
   if (value === undefined || value === null || value === '') {
@@ -185,7 +185,8 @@ router.get('/', async (req, res) => {
         home_services.*,
         custom_pages.title AS custom_page_title,
         custom_pages.slug AS custom_page_slug,
-        digital_groups.title AS digital_group_title
+        digital_groups.title AS digital_group_title,
+        digital_groups.slug AS digital_group_slug
       FROM home_services
       LEFT JOIN custom_pages ON custom_pages.id = home_services.custom_page_id
       LEFT JOIN digital_groups ON digital_groups.id = home_services.digital_group_id
@@ -202,8 +203,8 @@ router.get('/', async (req, res) => {
       link_url:
         row.link_target_type === 'custom-page' && row.custom_page_slug
           ? buildCustomPagePath(row.custom_page_slug)
-          : row.link_target_type === 'digital-group' && row.digital_group_id
-            ? buildDigitalGroupPath(row.digital_group_id)
+          : row.link_target_type === 'digital-group' && (row.digital_group_slug || row.digital_group_id)
+            ? buildDigitalGroupPath(row.digital_group_slug || row.digital_group_id)
             : row.link_url,
       actions: parseActionsPayload(row.actions),
       is_external: !!row.is_external,
@@ -243,10 +244,10 @@ router.post('/', requireAdminSession, upload.any(), async (req, res) => {
     }
 
     if (linkTargetType === 'digital-group' && digitalGroupId > 0) {
-      const [digitalGroupRows] = await db.query('SELECT id FROM digital_groups WHERE id = ? LIMIT 1', [digitalGroupId]);
+      const [digitalGroupRows] = await db.query('SELECT id, slug FROM digital_groups WHERE id = ? LIMIT 1', [digitalGroupId]);
       if (digitalGroupRows[0]) {
         resolvedDigitalGroupId = Number(digitalGroupRows[0].id);
-        resolvedLinkUrl = buildDigitalGroupPath(digitalGroupRows[0].id);
+        resolvedLinkUrl = buildDigitalGroupPath(digitalGroupRows[0].slug || digitalGroupRows[0].id);
       }
     }
 
@@ -317,10 +318,10 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
     }
 
     if (linkTargetType === 'digital-group' && digitalGroupId > 0) {
-      const [digitalGroupRows] = await db.query('SELECT id FROM digital_groups WHERE id = ? LIMIT 1', [digitalGroupId]);
+      const [digitalGroupRows] = await db.query('SELECT id, slug FROM digital_groups WHERE id = ? LIMIT 1', [digitalGroupId]);
       if (digitalGroupRows[0]) {
         resolvedDigitalGroupId = Number(digitalGroupRows[0].id);
-        resolvedLinkUrl = buildDigitalGroupPath(digitalGroupRows[0].id);
+        resolvedLinkUrl = buildDigitalGroupPath(digitalGroupRows[0].slug || digitalGroupRows[0].id);
       }
     }
 

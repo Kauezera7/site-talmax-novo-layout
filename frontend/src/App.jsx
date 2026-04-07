@@ -517,7 +517,7 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
 
           <Route path="/produtos" element={<ProductCatalog />} />
           <Route path="/categoria/talmax-digital" element={<TalmaxDigital />} />
-          <Route path="/grupo-digital/:id" element={<DigitalGroupPage />} />
+          <Route path="/grupo-digital/:slug" element={<DigitalGroupPage />} />
           <Route path="/upcera" element={<Upcera />} />
           <Route path="/scanners" element={<Scanners />} />
           <Route path="/impressoras-3d" element={<Impressoras3D />} />
