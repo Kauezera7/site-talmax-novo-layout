@@ -564,7 +564,7 @@ const ProductForm = ({
             />
             <div>
               <strong>Produto ativo no catalogo</strong>
-              <span>Quando desativado, ele some do catalogo e das paginas publicas, mas continua no painel administrativo.</span>
+              <span>Quando desativado, ele some do catálogo e das páginas publicas, mas continua no painel administrativo.</span>
             </div>
           </label>
 
@@ -808,7 +808,7 @@ const ProductForm = ({
             type="text"
             value={formData.descriptionTabLabel}
             onChange={(e) => setFormData({ ...formData, descriptionTabLabel: e.target.value })}
-            placeholder="Ex.: Descricao Detalhada, Teste123, Visao Geral"
+            placeholder="Ex.: Descrição Detalhada, Teste123, Visão Geral"
           />
         </div>
         <div className="form-group">
@@ -842,7 +842,7 @@ const ProductForm = ({
                     type="text"
                     value={section.title}
                     onChange={(e) => updateDynamicSection(index, 'title', e.target.value)}
-                    placeholder="Ex.: Teste, Tecnico, Aplicacoes, Beneficios"
+                    placeholder="Ex.: Teste, Técnico, Aplicações, Benefícios"
                   />
                 </div>
               </div>
@@ -938,10 +938,10 @@ const ProductForm = ({
         </div>
 
         <div className="form-group table-title-group">
-          <label>Nome da aba tecnica</label>
+          <label>Nome da aba técnica</label>
           <input
             value={formData.technicalTabLabel}
-            placeholder="Ex.: Informacao Tecnica, Tecnico, Especificacoes"
+            placeholder="Ex.: Informação Técnica, Técnico, Especificações"
             onChange={(e) => setFormData({ ...formData, technicalTabLabel: e.target.value })}
           />
         </div>
@@ -949,11 +949,11 @@ const ProductForm = ({
         <div className="form-group table-title-group">
           <label>Título da Tabela</label>
           <p className="product-form-helper">
-            Defina o nome que sera exibido acima da tabela tecnica do produto.
+            Defina o nome que sera exibido acima da tabela técnica do produto.
           </p>
           <input
             value={formData.modelTables[0]?.title || ''}
-            placeholder="Ex.: Tabela Tecnica / Modelos Disponiveis"
+            placeholder="Ex.: Tabela Técnica / Modelos Disponíveis"
             onChange={(e) => updateTechnicalTableTitle(0, e.target.value)}
           />
         </div>
@@ -1078,20 +1078,20 @@ const ProductForm = ({
               <div className="form-group table-title-group">
                 <label>Titulo da Tabela</label>
                 <p className="product-form-helper">
-                  Defina o nome que sera exibido acima desta tabela tecnica do produto.
+                  Defina o nome que será exibido acima desta tabela técnica do produto.
                 </p>
                 <input
                   value={tableConfig.title}
-                  placeholder="Ex.: Tabela Tecnica / Modelos Disponiveis"
+                  placeholder="Ex.: Tabela Técnica / Modelos Disponíveis"
                   onChange={(e) => updateTechnicalTableTitle(tableIndex, e.target.value)}
                 />
               </div>
 
               <div className="table-builder-toolbar">
                 <div className="table-builder-toolbar-copy">
-                  <span className="table-builder-kicker">Configuracao da tabela</span>
+                  <span className="table-builder-kicker">Configuração da tabela</span>
                   <h4>Organize colunas e linhas com mais clareza</h4>
-                  <p>Cadastre os titulos principais e preencha as informacoes tecnicas que serao exibidas no site.</p>
+                  <p>Cadastre os títulos principais e preencha as informações técnicas que serão exibidas no site.</p>
                 </div>
                 <div className="table-builder-toolbar-actions">
                   <button
@@ -1133,7 +1133,7 @@ const ProductForm = ({
                               e.stopPropagation();
                             }}
                             onClick={() => updateTableHeader(tableIndex, 0, '')}
-                            aria-label={`Limpar cabecalho da tabela ${tableIndex + 1}`}
+                            aria-label={`Limpar cabeçalho da tabela ${tableIndex + 1}`}
                           >
                             <X size={14} />
                           </button>
@@ -1180,7 +1180,7 @@ const ProductForm = ({
               </table>
               {formData.hideModelData ? (
                 <p className="product-form-helper">
-                  As linhas ficaram ocultas no painel porque esta tabela esta configurada para mostrar apenas o cabecalho no site.
+                  As linhas ficaram ocultas no painel porque esta tabela esta configurada para mostrar apenas o cabeçalho no site.
                 </p>
               ) : (
                 <button disabled={!formData.showModelSection} type="button" className="btn-add" onClick={() => addTableRow(tableIndex)}><Plus size={16} /> Adicionar Linha</button>

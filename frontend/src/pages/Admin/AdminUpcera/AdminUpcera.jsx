@@ -21,7 +21,7 @@ const AdminUpcera = () => {
       <SpecialPageSettingsForm
         pageKey="upcera"
         title="Upcera"
-        description="Edite logo, texto superior, titulo e descricao da pagina Upcera."
+        description="Edite logo, texto superior, titulo e descrição da página Upcera."
       />
 
       <SpecialSectionManager

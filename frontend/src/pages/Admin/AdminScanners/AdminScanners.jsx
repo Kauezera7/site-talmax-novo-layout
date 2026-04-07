@@ -21,7 +21,7 @@ const AdminScanners = () => {
       <SpecialPageSettingsForm
         pageKey="scanners"
         title="Scanners"
-        description="Edite logo, texto superior, titulo e descricao da pagina Scanners."
+        description="Edite logo, texto superior, titulo e descrição da pagina Scanners."
       />
 
       <SpecialSectionManager

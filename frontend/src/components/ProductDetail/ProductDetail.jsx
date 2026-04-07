@@ -456,7 +456,7 @@ const ProductDetail = () => {
             {shouldShowQuoteButton(product.showQuoteButton) && (
               <div className="product-actions">
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp-quote">
-                  <MessageCircle size={20} /> Solicitar Orcamento
+                  <MessageCircle size={20} /> Solicitar Orçamento
                 </a>
               </div>
             )}
@@ -554,7 +554,7 @@ const ProductDetail = () => {
           <div className="related-products-section">
             <div className="section-header">
               <h2><Sparkles size={24} className="text-primary" /> Produtos Relacionados</h2>
-              <p>Confira outras solucoes da categoria <strong>{product.category}</strong></p>
+              <p>Confira outras soluções da categoria <strong>{product.category}</strong></p>
             </div>
 
             <div className="related-products-carousel">

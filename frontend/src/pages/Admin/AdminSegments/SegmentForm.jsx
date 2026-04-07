@@ -192,7 +192,7 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
   };
 
   const getLinkTargetTypeLabel = () => (
-    linkTargetType === 'digital-group' ? 'Grupo de Segmentos' : 'Pagina Personalizada'
+    linkTargetType === 'digital-group' ? 'Grupo de Segmentos' : 'Página Personalizada'
   );
 
   return (
@@ -211,14 +211,14 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
         </div>
 
         <div className="form-group">
-          <label>Descricao</label>
+          <label>Descrição</label>
           <textarea
             className="admin-segments__description-field"
             name="description"
             value={formData.description}
             onChange={handleInputChange}
             rows="3"
-            placeholder="Breve descricao do segmento..."
+            placeholder="Breve descrição do segmento..."
           />
         </div>
 
@@ -249,8 +249,8 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
                       setIsUrlPickerOpen(false);
                     }}
                   >
-                    <strong>Pagina Personalizada</strong>
-                    <span>Mostra apenas as paginas personalizadas no dropdown de URL.</span>
+                    <strong>Página Personalizada</strong>
+                    <span>Mostra apenas as páginas personalizadas no dropdown de URL.</span>
                   </button>
 
                   <button
@@ -290,7 +290,7 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
               {isUrlPickerOpen && (
                 <div className="admin-segments__url-picker-panel">
                   <div className="admin-segments__url-picker-note">
-                    Digite para filtrar {linkTargetType === 'digital-group' ? 'os grupos de segmentos' : 'as paginas personalizadas'} ou mantenha uma URL manual.
+                    Digite para filtrar {linkTargetType === 'digital-group' ? 'os grupos de segmentos' : 'as páginas personalizadas'} ou mantenha uma URL manual.
                   </div>
 
                   {getFilteredLinkOptions().length === 0 ? (
@@ -373,7 +373,7 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
         </button>
         <button type="submit" className="btn-primary" disabled={isSubmitting}>
           {isSubmitting ? <ButtonSavingIndicator /> : <Save size={18} />}
-          {isSubmitting ? 'Salvando' : (initialData ? 'Salvar alteracoes' : 'Criar segmento')}
+          {isSubmitting ? 'Salvando' : (initialData ? 'Salvar alterações' : 'Criar segmento')}
         </button>
       </div>
     </form>

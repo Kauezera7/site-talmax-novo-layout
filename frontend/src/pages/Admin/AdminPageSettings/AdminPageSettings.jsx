@@ -39,8 +39,8 @@ const AdminPageSettings = () => {
       const normalizedMap = normalizeSpecialPageSettings(items);
       setForms(buildFormsState(normalizedMap));
     } catch (error) {
-      console.error('Erro ao carregar configuracoes das paginas especiais:', error);
-      addToast(error.message || 'Erro ao carregar configuracoes das paginas especiais', 'error');
+      console.error('Erro ao carregar configurações das paginas especiais:', error);
+      addToast(error.message || 'Erro ao carregar configurações das paginas especiais', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -111,15 +111,15 @@ const AdminPageSettings = () => {
       addToast(`Cabecalho de ${currentForm.label} atualizado com sucesso!`);
       await loadSettings();
     } catch (error) {
-      console.error('Erro ao salvar configuracao da pagina especial:', error);
-      addToast(error.message || 'Erro ao salvar configuracao da pagina especial', 'error');
+      console.error('Erro ao salvar configuração da pagina especial:', error);
+      addToast(error.message || 'Erro ao salvar configuração da pagina especial', 'error');
     } finally {
       setSavingPageKey(null);
     }
   };
 
   if (isLoading) {
-    return <div className="loading-container">Carregando configuracoes das paginas especiais...</div>;
+    return <div className="loading-container">Carregando configurações das paginas especiais...</div>;
   }
 
   return (
@@ -145,7 +145,7 @@ const AdminPageSettings = () => {
                 <article key={pageKey} className="admin-page-settings__card">
                   <div className="admin-page-settings__card-copy">
                     <h3>{form.label}</h3>
-                    <p>Edicao do cabecalho principal da pagina.</p>
+                    <p>Edição do cabeçalho principal da página.</p>
                   </div>
 
                   <div className="admin-page-settings__fields">
@@ -170,12 +170,12 @@ const AdminPageSettings = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>Texto / Descricao</label>
+                      <label>Texto / Descrição</label>
                       <textarea
                         rows="4"
                         value={form.description || ''}
                         onChange={(event) => handleInputChange(pageKey, 'description', event.target.value)}
-                        placeholder="Descricao da pagina"
+                        placeholder="Descrição da página"
                       />
                     </div>
 
@@ -188,7 +188,7 @@ const AdminPageSettings = () => {
                           onChange={(event) => handleLogoChange(pageKey, event.target.files?.[0])}
                         />
                         <UploadCloud size={28} color="var(--admin-primary)" />
-                        <p>Enviar logo da pagina</p>
+                        <p>Enviar logo da página</p>
                       </div>
 
                       {form.logoPreview && (

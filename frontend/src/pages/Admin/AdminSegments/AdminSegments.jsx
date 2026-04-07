@@ -281,7 +281,7 @@ const AdminSegments = () => {
                 <h3>Excluir Segmento?</h3>
                 <p>Tem certeza que deseja excluir o segmento <strong>{segmentToDelete?.name}</strong>?</p>
                 <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '10px' }}>
-                  Esta acao nao podera ser desfeita.
+                  Esta ação não poderá ser desfeita.
                 </p>
               </div>
               <div className="modal-footer">

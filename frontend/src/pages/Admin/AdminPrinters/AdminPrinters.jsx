@@ -21,7 +21,7 @@ const AdminPrinters = () => {
       <SpecialPageSettingsForm
         pageKey="printers"
         title="Impressoras 3D"
-        description="Edite logo, texto superior, titulo e descricao da pagina Impressoras 3D."
+        description="Edite logo, texto superior, titulo e descrição da página Impressoras 3D."
       />
 
       <SpecialSectionManager

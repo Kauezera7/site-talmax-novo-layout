@@ -115,7 +115,7 @@ const AdminProducts = ({ productToEdit = null, onProductEditHandled }) => {
 
     const result = await productsHook.deleteProduct(productToDelete.id);
     if (result.success) {
-      addToast('Produto excluido com sucesso!');
+      addToast('Produto excluído com sucesso!');
       setShowDeleteModal(false);
       setProductToDelete(null);
 
@@ -137,7 +137,7 @@ const AdminProducts = ({ productToEdit = null, onProductEditHandled }) => {
     ));
 
     if (duplicateProduct) {
-      addToast('Ja existe um produto com esse nome.', 'error');
+      addToast('Já existe um produto com esse nome.', 'error');
       return;
     }
 
@@ -208,8 +208,8 @@ const AdminProducts = ({ productToEdit = null, onProductEditHandled }) => {
                 <h2>{editingProduct ? 'Editar Produto' : 'Novo Produto'}</h2>
                 <p>
                   {editingProduct
-                    ? 'Atualize os dados do produto selecionado e use o botao ao lado para recolher ou reabrir a lista.'
-                    : 'Cadastre um novo produto e controle a lista de produtos pelo botao ao lado.'}
+                    ? 'Atualize os dados do produto selecionado e use o botão ao lado para recolher ou reabrir a lista.'
+                    : 'Cadastre um novo produto e controle a lista de produtos pelo botão ao lado.'}
                 </p>
               </div>
               <div className="product-form-header-actions">
@@ -256,7 +256,7 @@ const AdminProducts = ({ productToEdit = null, onProductEditHandled }) => {
                 </div>
                 <h3>Excluir Produto?</h3>
                 <p>Tem certeza que deseja excluir o produto <strong>{productToDelete?.name}</strong>?</p>
-                <p className="product-delete-warning">Esta acao e irreversivel.</p>
+                <p className="product-delete-warning">Esta ação é irreversível.</p>
               </div>
               <div className="modal-footer">
                 <button className="btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancelar</button>

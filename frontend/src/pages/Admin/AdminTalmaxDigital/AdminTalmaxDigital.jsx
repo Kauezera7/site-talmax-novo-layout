@@ -66,14 +66,14 @@ const AdminTalmaxDigital = () => {
         : null;
 
       if (!talmaxDigitalSegment) {
-        throw new Error('O segmento Talmax Digital nao foi encontrado em Segmentos (Home).');
+        throw new Error('O segmento Talmax Digital não foi encontrado em Segmentos (Home).');
       }
 
       setSegment(talmaxDigitalSegment);
       setCards(buildCardsState(parseDigitalActionsPayload(talmaxDigitalSegment.actions).digital_cards));
     } catch (error) {
-      console.error('Erro ao carregar configuracoes da Talmax Digital:', error);
-      addToast(error.message || 'Erro ao carregar configuracoes da Talmax Digital', 'error');
+      console.error('Erro ao carregar configurações da Talmax Digital:', error);
+      addToast(error.message || 'Erro ao carregar configurações da Talmax Digital', 'error');
       setSegment(null);
     } finally {
       setIsLoading(false);
@@ -188,7 +188,7 @@ const AdminTalmaxDigital = () => {
   };
 
   if (isLoading) {
-    return <div className="loading-container">Carregando configuracoes da Talmax Digital...</div>;
+    return <div className="loading-container">Carregando configurações da Talmax Digital...</div>;
   }
 
   if (!segment) {
@@ -196,7 +196,7 @@ const AdminTalmaxDigital = () => {
       <div className="admin-card">
         <div className="card-body admin-talmax-digital__empty">
           <ImageIcon size={40} />
-          <h3>Segmento Talmax Digital nao encontrado</h3>
+          <h3>Segmento Talmax Digital não encontrado</h3>
           <p>Crie ou ajuste o segmento em Segmentos (Home) e depois volte aqui.</p>
           <button type="button" className="btn-secondary" onClick={loadSegment}>
             <RefreshCcw size={16} />
@@ -212,14 +212,14 @@ const AdminTalmaxDigital = () => {
       <SpecialPageSettingsForm
         pageKey="talmax-digital"
         title="Talmax Digital"
-        description="Edite logo, texto superior, titulo e descricao da pagina Talmax Digital."
+        description="Edite logo, texto superior, titulo e descrição da página Talmax Digital."
       />
 
       <div className="admin-card">
         <div className="card-header admin-talmax-digital__header">
           <div>
             <h2><ImageIcon size={20} /> Talmax Digital</h2>
-            <p>Edite separadamente as imagens de frente e verso dos cards da pagina Talmax Digital. Cada bloco tem seu proprio salvar.</p>
+            <p>Edite separadamente as imagens de frente e verso dos cards da página Talmax Digital. Cada bloco tem seu proprio salvar.</p>
           </div>
         </div>
 

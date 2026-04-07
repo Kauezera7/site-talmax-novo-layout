@@ -19,7 +19,7 @@ const homeService = {
       credentials: 'include',
       body: formData,
     });
-    await ensureAdminResponse(response, 'Erro ao criar servico');
+    await ensureAdminResponse(response, 'Erro ao criar serviço');
     return response.json();
   },
 
@@ -29,7 +29,7 @@ const homeService = {
       credentials: 'include',
       body: formData,
     });
-    await ensureAdminResponse(response, 'Erro ao atualizar servico');
+    await ensureAdminResponse(response, 'Erro ao atualizar serviço');
     return response.json();
   },
 
@@ -42,7 +42,7 @@ const homeService = {
       },
       body: JSON.stringify({ active }),
     });
-    await ensureAdminResponse(response, 'Erro ao atualizar status do servico');
+    await ensureAdminResponse(response, 'Erro ao atualizar status do serviço');
     return response.json();
   },
 
@@ -51,7 +51,7 @@ const homeService = {
       method: 'DELETE',
       credentials: 'include',
     });
-    await ensureAdminResponse(response, 'Erro ao excluir servico');
+    await ensureAdminResponse(response, 'Erro ao excluir serviço');
     return response.json();
   }
 };

@@ -53,7 +53,7 @@ const BannerForm = ({ initialData, onSubmit, onCancel, isSubmitting = false }) =
     <form onSubmit={handleSubmit}>
       <div className="modal-body banner-form-body">
         <div className="form-group">
-          <label>Imagem do Banner (Recomendado: 1920x600px)</label>
+          <label>Imagem do Banner (Recomendado: 1920x600px / 1920x400px)</label>
           <div className="file-upload-area banner-upload-area">
             <input
               type="file"
