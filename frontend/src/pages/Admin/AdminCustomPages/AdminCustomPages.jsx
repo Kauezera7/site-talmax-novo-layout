@@ -10,7 +10,7 @@ const LAYOUT_OPTIONS = [
   {
     value: 'hero-left',
     title: 'Layout de Lista',
-    description: 'Banner grande com bloco de texto alinhado a esquerda.'
+    description: 'Banner grande com bloco de texto alinhado à esquerda.'
   },
   {
     value: 'hero-centered',
@@ -20,7 +20,7 @@ const LAYOUT_OPTIONS = [
   {
     value: 'hero-split',
     title: 'Layout 3',
-    description: 'Banner lateral com conteudo e produtos em composicao dividida.'
+    description: 'Banner lateral com conteúdo e produtos em composição dividida.'
   }
 ];
 
@@ -152,7 +152,7 @@ const AdminCustomPages = () => {
       const data = await customPageService.getAll();
       setItems(data);
     } catch (error) {
-      addToast(error.message || 'Erro ao carregar paginas personalizadas', 'error');
+      addToast(error.message || 'Erro ao carregar páginas personalizadas', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -228,9 +228,9 @@ const AdminCustomPages = () => {
 
     try {
       await navigator.clipboard.writeText(pageUrl);
-      addToast('Link da pagina copiado com sucesso!');
+      addToast('Link da página copiado com sucesso!');
     } catch (error) {
-      addToast('Nao foi possivel copiar o link da pagina.', 'error');
+      addToast('Não foi possível copiar o link da página.', 'error');
     }
   };
 
@@ -263,16 +263,16 @@ const AdminCustomPages = () => {
 
       if (form.id) {
         await customPageService.update(form.id, formData);
-        addToast('Pagina personalizada atualizada com sucesso!');
+        addToast('Página personalizada atualizada com sucesso!');
       } else {
         await customPageService.create(formData);
-        addToast('Pagina personalizada criada com sucesso!');
+        addToast('Página personalizada criada com sucesso!');
       }
 
       await loadItems();
       resetForm();
     } catch (error) {
-      addToast(error.message || 'Erro ao salvar pagina personalizada', 'error');
+      addToast(error.message || 'Erro ao salvar página personalizada', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -303,7 +303,7 @@ const AdminCustomPages = () => {
 
     try {
       await customPageService.remove(pageToDelete.id);
-      addToast('Pagina personalizada excluida com sucesso!');
+      addToast('Página personalizada excluída com sucesso!');
       await loadItems();
 
       if (form.id === pageToDelete.id) {
@@ -312,7 +312,7 @@ const AdminCustomPages = () => {
 
       setPageToDelete(null);
     } catch (error) {
-      addToast(error.message || 'Erro ao excluir pagina personalizada', 'error');
+      addToast(error.message || 'Erro ao excluir página personalizada', 'error');
     } finally {
       setIsDeleting(false);
     }
@@ -323,12 +323,12 @@ const AdminCustomPages = () => {
       <section className="admin-card">
         <div className="card-header admin-custom-pages__header">
           <div>
-            <h2><LayoutTemplate size={20} /> Paginas Personalizadas</h2>
-            <p>Crie landing pages pelo painel com banner, logo, textos, 3 layouts pre-definidos e produtos escolhidos por voce.</p>
+            <h2><LayoutTemplate size={20} /> Páginas Personalizadas</h2>
+            <p>Crie landing pages pelo painel com banner, logo, textos, 3 layouts predefinidos e produtos escolhidos por você.</p>
           </div>
           <button type="button" className="btn-secondary" onClick={resetForm}>
             <PlusCircle size={16} />
-            Nova pagina
+            Nova página
           </button>
         </div>
 
@@ -336,7 +336,7 @@ const AdminCustomPages = () => {
           <form className="admin-custom-pages__form" onSubmit={handleSubmit}>
             <div className="admin-custom-pages__grid">
               <div className="form-group">
-                <label>Titulo da pagina</label>
+                <label>Título da página</label>
                 <input
                   type="text"
                   value={form.title}
@@ -376,29 +376,29 @@ const AdminCustomPages = () => {
             </div>
 
             <div className="form-group">
-              <label>Descricao principal</label>
+              <label>Descrição principal</label>
               <textarea
                 rows="4"
                 value={form.description}
                 onChange={(event) => handleInputChange('description', event.target.value)}
-                placeholder="Texto principal da pagina"
+                placeholder="Texto principal da página"
               />
             </div>
 
             <div className="form-group">
-              <label>Sub descricao</label>
+              <label>Subdescrição</label>
               <textarea
                 rows="3"
                 value={form.sub_description}
                 onChange={(event) => handleInputChange('sub_description', event.target.value)}
-                placeholder="Texto complementar abaixo da descricao principal"
+                placeholder="Texto complementar abaixo da descrição principal"
               />
             </div>
 
             <section className="admin-custom-pages__section-block">
               <div className="admin-custom-pages__section-heading">
-                <h3>Midia da pagina</h3>
-                <p>Configure banner e logo em uma area separada antes de montar os produtos.</p>
+                <h3>Mídia da página</h3>
+                <p>Configure banner e logo em uma área separada antes de montar os produtos.</p>
               </div>
 
               <div className="admin-custom-pages__grid">
@@ -411,7 +411,7 @@ const AdminCustomPages = () => {
                       onChange={(event) => handleFileChange('banner', event.target.files?.[0])}
                     />
                     <UploadCloud size={28} color="var(--admin-primary)" />
-                    <p>Enviar banner da pagina</p>
+                    <p>Enviar banner da página</p>
                   </div>
                   {form.bannerPreview && (
                     <div className="admin-custom-pages__media-preview">
@@ -423,7 +423,7 @@ const AdminCustomPages = () => {
                       >
                         <X size={16} />
                       </button>
-                      <img src={form.bannerPreview} alt="Banner da pagina" />
+                      <img src={form.bannerPreview} alt="Banner da página" />
                     </div>
                   )}
                 </div>
@@ -437,7 +437,7 @@ const AdminCustomPages = () => {
                       onChange={(event) => handleFileChange('logo', event.target.files?.[0])}
                     />
                     <UploadCloud size={28} color="var(--admin-primary)" />
-                    <p>Enviar logo da pagina</p>
+                    <p>Enviar logo da página</p>
                   </div>
                   {form.logoPreview && (
                     <div className="admin-custom-pages__media-preview admin-custom-pages__media-preview--logo">
@@ -449,7 +449,7 @@ const AdminCustomPages = () => {
                       >
                         <X size={16} />
                       </button>
-                      <img src={form.logoPreview} alt="Logo da pagina" />
+                      <img src={form.logoPreview} alt="Logo da página" />
                     </div>
                   )}
                 </div>
@@ -457,12 +457,12 @@ const AdminCustomPages = () => {
             </section>
 
             <div className="form-group">
-              <label>Produtos da pagina</label>
+              <label>Produtos da página</label>
               <div className="admin-custom-pages__products-shell">
                 <div className="admin-custom-pages__products-toolbar">
                   <div className="admin-custom-pages__products-toolbar-copy">
                     <strong>{form.product_ids.length} produto(s) selecionado(s)</strong>
-                    <span>Escolha livremente qualquer item do catalogo para montar a pagina.</span>
+                    <span>Escolha livremente qualquer item do catálogo para montar a página.</span>
                   </div>
                   <div className="admin-custom-pages__products-toolbar-meta">
                     <span>{filteredProducts.length} resultado(s)</span>
@@ -514,19 +514,19 @@ const AdminCustomPages = () => {
                 checked={form.is_active}
                 onChange={(event) => handleInputChange('is_active', event.target.checked)}
               />
-              <span>Pagina ativa e publicada</span>
+              <span>Página ativa e publicada</span>
             </label>
 
             <div className="admin-custom-pages__actions">
               <button type="submit" className="btn-primary" disabled={isSaving}>
                 <Save size={16} />
-                {isSaving ? 'Salvando...' : form.id ? 'Atualizar pagina' : 'Criar pagina'}
+                {isSaving ? 'Salvando...' : form.id ? 'Atualizar página' : 'Criar página'}
               </button>
 
               {form.id && (
                 <button type="button" className="btn-secondary" onClick={handleDelete} disabled={isDeleting}>
                   <Trash2 size={16} />
-                  {isDeleting ? 'Excluindo...' : 'Excluir pagina'}
+                  {isDeleting ? 'Excluindo...' : 'Excluir página'}
                 </button>
               )}
             </div>
@@ -537,8 +537,8 @@ const AdminCustomPages = () => {
       <section className="admin-card">
         <div className="card-header admin-custom-pages__saved-header">
           <div>
-            <h2><Eye size={20} /> Paginas cadastradas</h2>
-            <p>Edite uma pagina existente ou copie a URL publica para compartilhar.</p>
+            <h2><Eye size={20} /> Páginas cadastradas</h2>
+            <p>Edite uma página existente ou copie a URL pública para compartilhar.</p>
           </div>
 
           {!isLoading && items.length > 0 && (
@@ -547,7 +547,7 @@ const AdminCustomPages = () => {
                 type="text"
                 value={savedPagesFilter}
                 onChange={(event) => setSavedPagesFilter(event.target.value)}
-                placeholder="Buscar pagina por nome ou slug"
+                placeholder="Buscar página por nome ou slug"
               />
             </div>
           )}
@@ -555,15 +555,15 @@ const AdminCustomPages = () => {
 
         <div className="card-body">
           {isLoading ? (
-            <div className="loading-container">Carregando paginas personalizadas...</div>
+            <div className="loading-container">Carregando páginas personalizadas...</div>
           ) : items.length === 0 ? (
-            <div className="empty-state">Nenhuma pagina personalizada cadastrada ainda.</div>
+            <div className="empty-state">Nenhuma página personalizada cadastrada ainda.</div>
           ) : (
             <>
               <div className="admin-custom-pages__list">
               {filteredItems.length === 0 ? (
                 <div className="admin-custom-pages__products-empty">
-                  Nenhuma pagina encontrada com esse filtro.
+                  Nenhuma página encontrada com esse filtro.
                 </div>
               ) : filteredItems.map((item) => (
                 <article key={item.id} className="admin-custom-pages__list-item">
@@ -572,8 +572,8 @@ const AdminCustomPages = () => {
                     className="admin-custom-pages__list-remove"
                     onClick={() => handleDeleteItem(item)}
                     disabled={isDeleting}
-                    aria-label={`Excluir pagina ${item.title}`}
-                    title="Excluir pagina"
+                    aria-label={`Excluir página ${item.title}`}
+                    title="Excluir página"
                   >
                     <X size={16} />
                   </button>
@@ -600,7 +600,7 @@ const AdminCustomPages = () => {
                       rel="noreferrer"
                     >
                       <Eye size={16} />
-                      Ver pagina
+                      Ver página
                     </a>
                   </div>
                 </article>
@@ -625,9 +625,9 @@ const AdminCustomPages = () => {
                 <div className="modal-icon">
                   <AlertCircle size={32} />
                 </div>
-                <h3>Excluir pagina?</h3>
+                <h3>Excluir página?</h3>
                 <p>
-                  Deseja remover a pagina personalizada "{pageToDelete.title}"? Esta acao nao pode ser desfeita.
+                  Deseja remover a página personalizada "{pageToDelete.title}"? Esta ação não pode ser desfeita.
                 </p>
               </div>
               <div className="modal-footer">

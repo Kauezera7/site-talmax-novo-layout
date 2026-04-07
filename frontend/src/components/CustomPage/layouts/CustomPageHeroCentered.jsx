@@ -31,7 +31,7 @@ const CustomPageHeroCentered = ({ page, navigate }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
           >
-            <span className="custom-page__launch-kicker">Produto de lancamento</span>
+            <span className="custom-page__launch-kicker">Produto de lançamento</span>
             {page.logo_url && (
               <img
                 className="custom-page__launch-logo"
@@ -44,7 +44,7 @@ const CustomPageHeroCentered = ({ page, navigate }) => {
             {page.sub_description && <p className="custom-page__launch-subdescription">{page.sub_description}</p>}
             <div className="custom-page__launch-actions">
               <a href="#produto-destaque" className="custom-page__launch-cta">Ver destaque</a>
-              <Link to="/produtos" className="custom-page__launch-link">Catalogo completo</Link>
+              <Link to="/produtos" className="custom-page__launch-link">Catálogo completo</Link>
             </div>
           </motion.div>
 
@@ -71,9 +71,9 @@ const CustomPageHeroCentered = ({ page, navigate }) => {
                   />
                 </div>
                 <div className="custom-page__launch-product-panel">
-                  <span style={{ color: accentColor }}>LANCAMENTO</span>
+                  <span style={{ color: accentColor }}>LANÇAMENTO</span>
                   <h2 onClick={() => navigate(`/produto/${featuredProduct.id}`)}>{featuredProduct.name}</h2>
-                  <p>{featuredProduct.description || 'Produto principal selecionado para esta pagina.'}</p>
+                  <p>{featuredProduct.description || 'Produto principal selecionado para esta página.'}</p>
                   <button
                     type="button"
                     className="custom-page__launch-product-button"
@@ -85,7 +85,7 @@ const CustomPageHeroCentered = ({ page, navigate }) => {
                 </div>
               </>
             ) : (
-              <div className="custom-page__empty-products">Nenhum produto foi vinculado a esta pagina ainda.</div>
+              <div className="custom-page__empty-products">Nenhum produto foi vinculado a esta página ainda.</div>
             )}
           </motion.div>
         </div>

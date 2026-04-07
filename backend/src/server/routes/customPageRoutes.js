@@ -30,12 +30,31 @@ const VALID_LAYOUTS = new Set(['hero-left', 'hero-centered', 'hero-split']);
 
 let customPagesTableReady = false;
 
+const tableExists = async (tableName) => {
+  const [rows] = await db.query(
+    `
+      SELECT COUNT(*) AS total
+      FROM information_schema.TABLES
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = ?
+    `,
+    [tableName]
+  );
+
+  return Number(rows?.[0]?.total || 0) > 0;
+};
+
 const ensureCustomPagesTable = async () => {
   if (customPagesTableReady) {
     return;
   }
 
-  await db.query(CUSTOM_PAGES_TABLE_QUERY);
+  const alreadyExists = await tableExists('custom_pages');
+
+  if (!alreadyExists) {
+    await db.query(CUSTOM_PAGES_TABLE_QUERY);
+  }
+
   customPagesTableReady = true;
 };
 
@@ -149,6 +168,16 @@ const getWriteErrorMessage = (error, fallbackMessage) => {
   return error?.message || fallbackMessage;
 };
 
+const isMissingCustomPagesTableError = (error) => (
+  error?.code === 'ER_NO_SUCH_TABLE' || error?.code === 'ER_BAD_TABLE_ERROR'
+);
+
+const isSchemaPermissionError = (error) => (
+  error?.code === 'ER_TABLEACCESS_DENIED_ERROR' ||
+  error?.code === 'ER_DBACCESS_DENIED_ERROR' ||
+  error?.code === 'ER_ACCESS_DENIED_ERROR'
+);
+
 router.get('/', requireAdminSession, async (req, res) => {
   try {
     await ensureCustomPagesTable();
@@ -157,6 +186,11 @@ router.get('/', requireAdminSession, async (req, res) => {
     res.json(items);
   } catch (error) {
     console.error('Erro ao listar paginas personalizadas:', error);
+
+    if (isMissingCustomPagesTableError(error) || isSchemaPermissionError(error)) {
+      return res.json([]);
+    }
+
     res.status(500).json({ error: 'Erro ao listar paginas personalizadas.' });
   }
 });
@@ -178,6 +212,11 @@ router.get('/public/:slug', async (req, res) => {
     return res.json(item);
   } catch (error) {
     console.error('Erro ao buscar pagina personalizada publica:', error);
+
+    if (isMissingCustomPagesTableError(error) || isSchemaPermissionError(error)) {
+      return res.status(404).json({ error: 'Pagina nao encontrada.' });
+    }
+
     return res.status(500).json({ error: 'Erro ao buscar pagina personalizada.' });
   }
 });
@@ -230,6 +269,13 @@ router.post('/', requireAdminSession, upload.any(), async (req, res) => {
     return res.status(201).json({ message: 'Pagina criada com sucesso.', item });
   } catch (error) {
     console.error('Erro ao criar pagina personalizada:', error);
+
+    if (isMissingCustomPagesTableError(error) || isSchemaPermissionError(error)) {
+      return res.status(503).json({
+        error: 'A tabela de paginas personalizadas nao esta disponivel no banco de producao.'
+      });
+    }
+
     return res.status(error?.code === 'ER_DUP_ENTRY' ? 400 : 500).json({
       error: getWriteErrorMessage(error, 'Erro ao criar pagina personalizada.')
     });
@@ -305,6 +351,13 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
     return res.json({ message: 'Pagina atualizada com sucesso.', item });
   } catch (error) {
     console.error('Erro ao atualizar pagina personalizada:', error);
+
+    if (isMissingCustomPagesTableError(error) || isSchemaPermissionError(error)) {
+      return res.status(503).json({
+        error: 'A tabela de paginas personalizadas nao esta disponivel no banco de producao.'
+      });
+    }
+
     return res.status(error?.code === 'ER_DUP_ENTRY' ? 400 : 500).json({
       error: getWriteErrorMessage(error, 'Erro ao atualizar pagina personalizada.')
     });
@@ -328,6 +381,13 @@ router.delete('/:id', requireAdminSession, async (req, res) => {
     return res.json({ message: 'Pagina excluida com sucesso.' });
   } catch (error) {
     console.error('Erro ao excluir pagina personalizada:', error);
+
+    if (isMissingCustomPagesTableError(error) || isSchemaPermissionError(error)) {
+      return res.status(503).json({
+        error: 'A tabela de paginas personalizadas nao esta disponivel no banco de producao.'
+      });
+    }
+
     return res.status(500).json({ error: 'Erro ao excluir pagina personalizada.' });
   }
 });

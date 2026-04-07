@@ -46,6 +46,20 @@ const DIGITAL_GROUP_CARDS_TABLE_QUERY = `
 
 let tablesReady = false;
 
+const tableExists = async (tableName) => {
+  const [rows] = await db.query(
+    `
+      SELECT COUNT(*) AS total
+      FROM information_schema.TABLES
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = ?
+    `,
+    [tableName]
+  );
+
+  return Number(rows?.[0]?.total || 0) > 0;
+};
+
 const normalizePublicPath = (value = '') => (
   String(value || '')
     .normalize('NFD')
@@ -131,8 +145,15 @@ const ensureExistingGroupSlugs = async () => {
 
 const ensureTables = async () => {
   if (tablesReady) return;
-  await db.query(DIGITAL_GROUPS_TABLE_QUERY);
-  await db.query(DIGITAL_GROUP_CARDS_TABLE_QUERY);
+
+  if (!(await tableExists('digital_groups'))) {
+    await db.query(DIGITAL_GROUPS_TABLE_QUERY);
+  }
+
+  if (!(await tableExists('digital_group_cards'))) {
+    await db.query(DIGITAL_GROUP_CARDS_TABLE_QUERY);
+  }
+
   await ensureColumn('digital_groups', 'slug', 'VARCHAR(180) DEFAULT NULL AFTER title');
   await ensureColumn('digital_groups', 'overline', 'VARCHAR(255) DEFAULT NULL AFTER description');
   await ensureColumn('digital_groups', 'hero_title', 'VARCHAR(255) DEFAULT NULL AFTER overline');
@@ -143,6 +164,16 @@ const ensureTables = async () => {
   await ensureUniqueIndex('digital_groups', 'uk_digital_groups_slug', 'slug');
   tablesReady = true;
 };
+
+const isMissingTableError = (error) => (
+  error?.code === 'ER_NO_SUCH_TABLE' || error?.code === 'ER_BAD_TABLE_ERROR'
+);
+
+const isSchemaPermissionError = (error) => (
+  error?.code === 'ER_TABLEACCESS_DENIED_ERROR' ||
+  error?.code === 'ER_DBACCESS_DENIED_ERROR' ||
+  error?.code === 'ER_ACCESS_DENIED_ERROR'
+);
 
 const parseCards = (value) => {
   if (!value) return [];
@@ -166,6 +197,7 @@ const buildCustomPagePath = (slug = '') => (slug ? `/pagina/${slug}` : '');
 
 const listGroups = async ({ onlyActive = false } = {}) => {
   await ensureTables();
+  const hasCustomPagesTable = await tableExists('custom_pages');
 
   const [groups] = await db.query(
     `
@@ -177,16 +209,26 @@ const listGroups = async ({ onlyActive = false } = {}) => {
   );
 
   const [cards] = await db.query(
-    `
-      SELECT
-        cards.*,
-        custom_pages.title AS custom_page_title,
-        custom_pages.slug AS custom_page_slug
-      FROM digital_group_cards cards
-      LEFT JOIN custom_pages ON custom_pages.id = cards.custom_page_id
-      ${onlyActive ? 'WHERE cards.is_active = 1' : ''}
-      ORDER BY cards.display_order ASC, cards.id ASC
-    `
+    hasCustomPagesTable
+      ? `
+          SELECT
+            cards.*,
+            custom_pages.title AS custom_page_title,
+            custom_pages.slug AS custom_page_slug
+          FROM digital_group_cards cards
+          LEFT JOIN custom_pages ON custom_pages.id = cards.custom_page_id
+          ${onlyActive ? 'WHERE cards.is_active = 1' : ''}
+          ORDER BY cards.display_order ASC, cards.id ASC
+        `
+      : `
+          SELECT
+            cards.*,
+            '' AS custom_page_title,
+            '' AS custom_page_slug
+          FROM digital_group_cards cards
+          ${onlyActive ? 'WHERE cards.is_active = 1' : ''}
+          ORDER BY cards.display_order ASC, cards.id ASC
+        `
   );
 
   const cardsByGroupId = cards.reduce((map, card) => {
@@ -225,6 +267,7 @@ const listGroups = async ({ onlyActive = false } = {}) => {
 };
 
 const replaceGroupCards = async (connection, groupId, files, cards = []) => {
+  const hasCustomPagesTable = await tableExists('custom_pages');
   await connection.query('DELETE FROM digital_group_cards WHERE group_id = ?', [groupId]);
 
   for (let index = 0; index < cards.length; index += 1) {
@@ -243,7 +286,7 @@ const replaceGroupCards = async (connection, groupId, files, cards = []) => {
     let resolvedLinkUrl = safe(card.link_url || '');
     let resolvedCustomPageId = null;
 
-    if (Number.isInteger(customPageId) && customPageId > 0) {
+    if (hasCustomPagesTable && Number.isInteger(customPageId) && customPageId > 0) {
       const [customPageRows] = await connection.query(
         'SELECT id, slug FROM custom_pages WHERE id = ? LIMIT 1',
         [customPageId]
@@ -285,6 +328,11 @@ router.get('/', async (req, res) => {
     res.json(items);
   } catch (error) {
     console.error('Erro ao listar grupos digitais:', error);
+
+     if (isMissingTableError(error) || isSchemaPermissionError(error)) {
+      return res.json([]);
+    }
+
     res.status(500).json({ error: 'Erro ao listar grupos digitais.' });
   }
 });
@@ -305,6 +353,11 @@ router.get('/public/:slug', async (req, res) => {
     res.json(item);
   } catch (error) {
     console.error('Erro ao buscar grupo digital publico:', error);
+
+    if (isMissingTableError(error) || isSchemaPermissionError(error)) {
+      return res.status(404).json({ error: 'Grupo digital nao encontrado.' });
+    }
+
     res.status(500).json({ error: 'Erro ao buscar grupo digital publico.' });
   }
 });
@@ -355,6 +408,13 @@ router.post('/', requireAdminSession, upload.any(), async (req, res) => {
   } catch (error) {
     await connection.rollback().catch(() => {});
     console.error('Erro ao criar grupo digital:', error);
+
+    if (isMissingTableError(error) || isSchemaPermissionError(error)) {
+      return res.status(503).json({
+        error: 'As tabelas de grupos digitais nao estao disponiveis no banco de producao.'
+      });
+    }
+
     res.status(500).json({ error: error.message || 'Erro ao criar grupo digital.' });
   } finally {
     connection.release();
@@ -407,6 +467,13 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
   } catch (error) {
     await connection.rollback().catch(() => {});
     console.error('Erro ao atualizar grupo digital:', error);
+
+    if (isMissingTableError(error) || isSchemaPermissionError(error)) {
+      return res.status(503).json({
+        error: 'As tabelas de grupos digitais nao estao disponiveis no banco de producao.'
+      });
+    }
+
     res.status(500).json({ error: error.message || 'Erro ao atualizar grupo digital.' });
   } finally {
     connection.release();
@@ -420,6 +487,13 @@ router.delete('/:id', requireAdminSession, async (req, res) => {
     res.json({ message: 'Grupo digital removido com sucesso.' });
   } catch (error) {
     console.error('Erro ao remover grupo digital:', error);
+
+    if (isMissingTableError(error) || isSchemaPermissionError(error)) {
+      return res.status(503).json({
+        error: 'As tabelas de grupos digitais nao estao disponiveis no banco de producao.'
+      });
+    }
+
     res.status(500).json({ error: 'Erro ao remover grupo digital.' });
   }
 });

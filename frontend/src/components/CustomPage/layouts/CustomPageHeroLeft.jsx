@@ -54,7 +54,7 @@ const renderFeatureContent = (product, accentColor) => {
 
   return (
     <p className="custom-page__showcase-description">
-      {product.description || 'Produto selecionado para esta pagina personalizada.'}
+      {product.description || 'Produto selecionado para esta página personalizada.'}
     </p>
   );
 };
@@ -154,7 +154,7 @@ const CustomPageHeroLeft = ({ page, navigate }) => {
               ))}
             </div>
           ) : (
-            <div className="custom-page__empty-products">Nenhum produto foi vinculado a esta pagina ainda.</div>
+            <div className="custom-page__empty-products">Nenhum produto foi vinculado a esta página ainda.</div>
           )}
         </div>
       </section>

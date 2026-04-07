@@ -5,9 +5,9 @@ export const DEFAULT_SPECIAL_PAGE_SETTINGS = {
   'talmax-digital': {
     page_name: 'talmax-digital',
     label: 'Talmax Digital',
-    overline: 'TECNOLOGIA ODONTOLOGICA',
+    overline: 'TECNOLOGIA ODONTOLÓGICA',
     title: 'Talmax Digital',
-    description: 'O futuro da protese dentaria com tecnologia de ponta e precisao absoluta.',
+    description: 'O futuro da prótese dentária com tecnologia de ponta e precisão absoluta.',
     logo_url: '/img/logo-talmax-digital-pos.png'
   },
   upcera: {
@@ -15,7 +15,7 @@ export const DEFAULT_SPECIAL_PAGE_SETTINGS = {
     label: 'Upcera',
     overline: '',
     title: 'Innovation in Restorative Dentistry',
-    description: 'Lider mundial em ceramicas odontologicas de alta performance, unindo estetica natural e resistencia extrema.',
+    description: 'Líder mundial em cerâmicas odontológicas de alta performance, unindo estética natural e resistência extrema.',
     logo_url: '/img/logo-upcera-.webp'
   },
   scanners: {
@@ -23,7 +23,7 @@ export const DEFAULT_SPECIAL_PAGE_SETTINGS = {
     label: 'Scanners',
     overline: '',
     title: 'Digital Reality Capture',
-    description: 'A mais alta tecnologia em digitalizacao 3D, transformando o fluxo fisico em digital com precisao absoluta.',
+    description: 'A mais alta tecnologia em digitalização 3D, transformando o fluxo físico em digital com precisão absoluta.',
     logo_url: '/img/titulo-pag-scanners.png'
   },
   printers: {
@@ -31,7 +31,7 @@ export const DEFAULT_SPECIAL_PAGE_SETTINGS = {
     label: 'Impressoras 3D',
     overline: '',
     title: 'High Precision Printing',
-    description: 'A revolucao da manufatura aditiva com precisao industrial para o fluxo digital odontologico.',
+    description: 'A revolução da manufatura aditiva com precisão industrial para o fluxo digital odontológico.',
     logo_url: '/img/impressoras3d.png'
   }
 };
@@ -59,7 +59,7 @@ const pageSettingsService = {
   async getAll() {
     const response = await fetch(`${API_URL}/page-settings`);
     if (!response.ok) {
-      throw new Error('Erro ao buscar configuracoes das paginas especiais');
+      throw new Error('Erro ao buscar configurações das páginas especiais');
     }
 
     return response.json();
@@ -72,7 +72,7 @@ const pageSettingsService = {
       body: formData
     });
 
-    await ensureAdminResponse(response, 'Erro ao atualizar configuracao da pagina especial');
+    await ensureAdminResponse(response, 'Erro ao atualizar configuração da página especial');
     return response.json();
   }
 };

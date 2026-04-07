@@ -157,7 +157,7 @@ const AdminDigitalGroups = ({
               .filter((item) => item?.slug)
               .map((item) => ({
                 id: item.id,
-                title: item.title || `Pagina ${item.id}`,
+                title: item.title || `Página ${item.id}`,
                 path: `/pagina/${item.slug}`,
                 url: buildPublicCustomPageUrl(item.slug)
               }))
@@ -374,7 +374,7 @@ const AdminDigitalGroups = ({
       await navigator.clipboard.writeText(buildPublicGroupUrl(group.slug || group.id));
       addToast('Link do grupo copiado com sucesso!');
     } catch (error) {
-      addToast('Nao foi possivel copiar o link do grupo.', 'error');
+      addToast('Não foi possível copiar o link do grupo.', 'error');
     }
   };
 
@@ -414,7 +414,7 @@ const AdminDigitalGroups = ({
             <h2><FolderPlus size={20} /> {panelTitle}</h2>
             <p>{panelDescription}</p>
             <small className="admin-talmax-digital__hero-note">
-              Novo grupo inicia com o layout-base da Talmax Digital como referencia, sem alterar a pagina original.
+              Novo grupo inicia com o layout-base da Talmax Digital como referência, sem alterar a página original.
             </small>
           </div>
 
@@ -438,7 +438,7 @@ const AdminDigitalGroups = ({
                   <div className="admin-talmax-digital__group-settings-card">
                     <div className="admin-talmax-digital__section-intro">
                       <h2>{group.title || 'Novo grupo'}</h2>
-                      <p>Edite logo, texto superior, titulo e descricao da pagina {group.title || 'deste grupo'}.</p>
+                      <p>Edite logo, texto superior, título e descrição da página {group.title || 'deste grupo'}.</p>
                     </div>
 
                     <div className="admin-talmax-digital__group-settings-fields">
@@ -462,7 +462,7 @@ const AdminDigitalGroups = ({
                       </div>
 
                       <div className="form-group admin-talmax-digital__field--full">
-                        <label>URL publica</label>
+                        <label>URL pública</label>
                         <input
                           type="text"
                           value={group.slug}
@@ -473,7 +473,7 @@ const AdminDigitalGroups = ({
                           placeholder="Ex: escaneamento-intraoral"
                         />
                         <small className="admin-talmax-digital__field-help">
-                          Endereco final: /grupo-digital/{group.slug || 'sua-url'}
+                          Endereço final: /grupo-digital/{group.slug || 'sua-url'}
                         </small>
                       </div>
 
@@ -483,28 +483,28 @@ const AdminDigitalGroups = ({
                           type="text"
                           value={group.overline}
                           onChange={(event) => updateGroup(group.id, (current) => ({ ...current, overline: event.target.value }))}
-                          placeholder="Ex: TECNOLOGIA ODONTOLOGICA"
+                          placeholder="Ex: TECNOLOGIA ODONTOLÓGICA"
                         />
                       </div>
 
                       <div className="form-group">
-                        <label>Titulo</label>
+                        <label>Título</label>
                         <input
                           type="text"
                           value={group.hero_title}
                           onChange={(event) => updateGroup(group.id, (current) => ({ ...current, hero_title: event.target.value }))}
-                          placeholder="Titulo da pagina"
+                          placeholder="Título da página"
                         />
                       </div>
 
                       <div className="admin-talmax-digital__hero-row admin-talmax-digital__field--full">
                         <div className="form-group">
-                          <label>Texto / Descricao</label>
+                          <label>Texto / Descrição</label>
                           <textarea
                             rows="4"
                             value={group.hero_description}
                             onChange={(event) => updateGroup(group.id, (current) => ({ ...current, hero_description: event.target.value }))}
-                            placeholder="Descricao da pagina"
+                            placeholder="Descrição da página"
                           />
                         </div>
 
@@ -514,7 +514,7 @@ const AdminDigitalGroups = ({
                             <div className="file-upload-area admin-talmax-digital__upload-area admin-talmax-digital__logo-upload">
                               <input type="file" accept="image/*" onChange={(event) => handleLogoChange(group.id, event.target.files?.[0])} />
                               <UploadCloud size={28} color="var(--admin-primary)" />
-                              <p>Enviar logo da pagina</p>
+                              <p>Enviar logo da página</p>
                             </div>
 
                             <div className="admin-talmax-digital__logo-preview-box">
@@ -579,7 +579,7 @@ const AdminDigitalGroups = ({
                                 <div className="admin-talmax-digital__card-header">
                                   <div className="admin-talmax-digital__card-copy">
                                     <div className="form-group">
-                                      <label>Titulo</label>
+                                      <label>Título</label>
                                       <input
                                         type="text"
                                         value={card.title}
@@ -631,12 +631,12 @@ const AdminDigitalGroups = ({
                                     {activeUrlPickerKey === buildCardUrlPickerKey(group.id, card.id) && (
                                       <div className="admin-talmax-digital__url-picker-panel">
                                         <div className="admin-talmax-digital__url-picker-note">
-                                          Digite para filtrar as paginas personalizadas ou mantenha uma URL manual.
+                                          Digite para filtrar as páginas personalizadas ou mantenha uma URL manual.
                                         </div>
 
                                         {getFilteredCustomPageOptions(card.link_url).length === 0 ? (
                                           <div className="admin-talmax-digital__url-picker-empty">
-                                            Nenhuma pagina encontrada.
+                                            Nenhuma página encontrada.
                                           </div>
                                         ) : (
                                           getFilteredCustomPageOptions(card.link_url).map((page) => (
@@ -743,8 +743,8 @@ const AdminDigitalGroups = ({
       <div className="admin-card">
         <div className="card-header admin-talmax-digital__saved-header">
           <div>
-            <h2><Eye size={20} /> Paginas cadastradas</h2>
-            <p>Edite um grupo existente ou copie a URL publica para compartilhar.</p>
+            <h2><Eye size={20} /> Páginas cadastradas</h2>
+            <p>Edite um grupo existente ou copie a URL pública para compartilhar.</p>
           </div>
         </div>
 
@@ -799,8 +799,8 @@ const AdminDigitalGroups = ({
                         href={buildPublicGroupUrl(group.slug || group.id)}
                         target="_blank"
                         rel="noreferrer"
-                        aria-label={`Ver pagina do grupo ${group.hero_title || group.title || group.id}`}
-                        title="Ver pagina"
+                        aria-label={`Ver página do grupo ${group.hero_title || group.title || group.id}`}
+                        title="Ver página"
                       >
                         <Eye size={14} />
                       </a>
@@ -837,7 +837,7 @@ const AdminDigitalGroups = ({
                 <h3>Excluir Grupo?</h3>
                 <p>Tem certeza que deseja excluir o grupo <strong>{groupToDelete?.title}</strong>?</p>
                 <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '10px' }}>
-                  Esta acao nao podera ser desfeita e removera todos os cards deste grupo.
+                  Esta ação não poderá ser desfeita e removerá todos os cards deste grupo.
                 </p>
               </div>
               <div className="modal-footer">

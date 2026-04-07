@@ -6,9 +6,7 @@ import { assetPath, resolveStoredAssetPath } from '../../utils/assets';
 import './TalmaxDigital.css';
 
 const DEFAULT_HERO = {
-  overline: 'TECNOLOGIA ODONTOLOGICA',
-  hero_title: 'Talmax Digital',
-  hero_description: 'O futuro da protese dentaria com tecnologia de ponta e precisao absoluta.',
+  overline: 'TECNOLOGIA ODONTOLÓGICA',
   logo_url: '/img/logo-talmax-digital-pos.png'
 };
 
@@ -47,6 +45,9 @@ const DigitalGroupPage = () => {
   }, [slug]);
 
   const categories = buildGroupCategories(group?.cards || []);
+  const resolvedOverline = String(group?.overline || '').trim() || DEFAULT_HERO.overline;
+  const resolvedHeroTitle = String(group?.hero_title || '').trim();
+  const resolvedHeroDescription = String(group?.hero_description || '').trim();
 
   const handleCategoryClick = (cat) => {
     if (!cat.link_url) return;
@@ -86,7 +87,7 @@ const DigitalGroupPage = () => {
   }
 
   if (!group) {
-    return <div className="loading-container">Grupo digital nao encontrado.</div>;
+    return <div className="loading-container">Grupo digital não encontrado.</div>;
   }
 
   return (
@@ -98,7 +99,7 @@ const DigitalGroupPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="digital-breadcrumb"
           >
-            {group.overline || DEFAULT_HERO.overline}
+            {resolvedOverline}
           </motion.div>
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -109,26 +110,30 @@ const DigitalGroupPage = () => {
             <div className="line-detail"></div>
             <img
               src={resolveStoredAssetPath(group.logo_url) || assetPath(DEFAULT_HERO.logo_url)}
-              alt={group.hero_title || group.title || 'Grupo digital'}
+              alt={resolvedHeroTitle || 'Grupo digital'}
               className="digital-logo-header"
             />
             <div className="line-detail"></div>
           </motion.div>
-          <motion.h1
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="digital-hero-title"
-          >
-            {group.hero_title || group.title || DEFAULT_HERO.hero_title}
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
-            {group.hero_description || group.description || DEFAULT_HERO.hero_description}
-          </motion.p>
+          {resolvedHeroTitle && (
+            <motion.h1
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="digital-hero-title"
+            >
+              {resolvedHeroTitle}
+            </motion.h1>
+          )}
+          {resolvedHeroDescription && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              {resolvedHeroDescription}
+            </motion.p>
+          )}
         </div>
       </section>
 

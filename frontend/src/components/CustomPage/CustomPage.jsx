@@ -22,7 +22,7 @@ const CustomPage = () => {
         setPage(data);
         setError('');
       } catch (loadError) {
-        setError(loadError.message || 'Pagina não encontrada');
+        setError(loadError.message || 'Página não encontrada');
       } finally {
         setIsLoading(false);
       }
@@ -32,11 +32,11 @@ const CustomPage = () => {
   }, [slug]);
 
   if (isLoading) {
-    return <div className="custom-page__state">Carregando pagina...</div>;
+    return <div className="custom-page__state">Carregando página...</div>;
   }
 
   if (error || !page) {
-    return <div className="custom-page__state">{error || 'Pagina não encontrada.'}</div>;
+    return <div className="custom-page__state">{error || 'Página não encontrada.'}</div>;
   }
 
   if (page.layout_type === 'hero-left') {

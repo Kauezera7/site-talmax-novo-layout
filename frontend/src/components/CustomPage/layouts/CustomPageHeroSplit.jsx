@@ -51,7 +51,7 @@ const CustomPageHeroSplit = ({ page, navigate }) => {
             {page.sub_description && <p className="custom-page__sub-description">{page.sub_description}</p>}
             <div className="custom-page__actions">
               <a href="#produtos" className="custom-page__cta">Ver produtos</a>
-              <Link to="/produtos" className="custom-page__link">Ir para catalogo</Link>
+              <Link to="/produtos" className="custom-page__link">Ir para catálogo</Link>
             </div>
           </motion.div>
         </div>
@@ -77,7 +77,7 @@ const CustomPageHeroSplit = ({ page, navigate }) => {
             ))}
           </div>
         ) : (
-          <div className="custom-page__empty-products">Nenhum produto foi vinculado a esta pagina ainda.</div>
+          <div className="custom-page__empty-products">Nenhum produto foi vinculado a esta página ainda.</div>
         )}
       </section>
     </div>
