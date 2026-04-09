@@ -20,6 +20,7 @@ const getPrimaryImageDir = () => {
 // Mantemos a pasta legada do frontend apenas para continuar servindo
 // imagens antigas que ja foram publicadas/salvas antes da mudanca.
 const getLegacyFrontendImageDir = () => path.resolve(__dirname, '../../../../frontend/public/img');
+const getBuiltFrontendImageDir = () => path.resolve(__dirname, '../../../../frontend/dist/img');
 
 const ensureDirectory = (directoryPath) => {
   fs.mkdirSync(directoryPath, { recursive: true });
@@ -33,6 +34,7 @@ const getServedImageDirs = () => {
   // do backend e depois na pasta legada do frontend.
   const imageDirectories = [
     ensurePrimaryImageDir(),
+    getBuiltFrontendImageDir(),
     getLegacyFrontendImageDir()
   ];
 

@@ -12,17 +12,77 @@ const { persistUploadedFile } = require('../services/fileStorageService');
 const { listBackupBanners } = require('../services/backupContentService');
 
 const router = express.Router();
+let cachedBannerSchemaState = null;
+
+const shouldUseBackupFallback = process.env.NODE_ENV !== 'production';
+
+const getTableColumnSet = async (tableName) => {
+  const [rows] = await db.query(
+    `
+      SELECT COLUMN_NAME
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = ?
+    `,
+    [tableName]
+  );
+
+  return new Set(rows.map((row) => row.COLUMN_NAME));
+};
+
+const getBannerSchemaState = async () => {
+  if (cachedBannerSchemaState) {
+    return cachedBannerSchemaState;
+  }
+
+  const columns = await getTableColumnSet('banners');
+
+  cachedBannerSchemaState = {
+    hasTitle: columns.has('title'),
+    hasSubtitle: columns.has('subtitle'),
+    hasLinkUrl: columns.has('link_url'),
+    hasDisplayOrder: columns.has('display_order'),
+    hasActive: columns.has('active')
+  };
+
+  return cachedBannerSchemaState;
+};
+
+const buildBannerListQuery = (schemaState) => {
+  const titleSelect = schemaState.hasTitle ? 'title' : 'NULL AS title';
+  const subtitleSelect = schemaState.hasSubtitle ? 'subtitle' : 'NULL AS subtitle';
+  const linkUrlSelect = schemaState.hasLinkUrl ? 'link_url' : 'NULL AS link_url';
+  const displayOrderSelect = schemaState.hasDisplayOrder ? 'display_order' : '0 AS display_order';
+  const activeSelect = schemaState.hasActive ? 'active' : '1 AS active';
+  const orderByClause = schemaState.hasDisplayOrder ? 'ORDER BY display_order ASC, id ASC' : 'ORDER BY id ASC';
+
+  return `
+    SELECT
+      id,
+      ${titleSelect},
+      ${subtitleSelect},
+      image_url,
+      ${linkUrlSelect},
+      ${displayOrderSelect},
+      ${activeSelect}
+    FROM banners
+    ${orderByClause}
+  `;
+};
 
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM banners ORDER BY display_order ASC');
+    const schemaState = await getBannerSchemaState();
+    const [rows] = await db.query(buildBannerListQuery(schemaState));
     res.json(rows);
   } catch (err) {
-    try {
+    if (shouldUseBackupFallback) {
       res.json(listBackupBanners());
-    } catch (backupError) {
-      res.status(500).json({ error: err.message });
+      return;
     }
+
+    console.error('Erro ao buscar banners:', err);
+    res.json([]);
   }
 });
 

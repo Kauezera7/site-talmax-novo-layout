@@ -12,25 +12,79 @@ const { persistUploadedFile } = require('../services/fileStorageService');
 const { listBackupCategories } = require('../services/backupContentService');
 
 const router = express.Router();
+let cachedCategorySchemaState = null;
+
+const shouldUseBackupFallback = process.env.NODE_ENV !== 'production';
+
+const getTableColumnSet = async (tableName) => {
+  const [rows] = await db.query(
+    `
+      SELECT COLUMN_NAME
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = ?
+    `,
+    [tableName]
+  );
+
+  return new Set(rows.map((row) => row.COLUMN_NAME));
+};
+
+const getCategorySchemaState = async () => {
+  if (cachedCategorySchemaState) {
+    return cachedCategorySchemaState;
+  }
+
+  const [categoryColumns, subCategoryColumns] = await Promise.all([
+    getTableColumnSet('categorias'),
+    getTableColumnSet('sub_categorias')
+  ]);
+
+  cachedCategorySchemaState = {
+    categoryHasIconUrl: categoryColumns.has('icon_url'),
+    categoryHasDisplayOrder: categoryColumns.has('display_order'),
+    categoryHasIsVisible: categoryColumns.has('is_visible'),
+    subCategoryHasDisplayOrder: subCategoryColumns.has('display_order'),
+    subCategoryHasIsVisible: subCategoryColumns.has('is_visible')
+  };
+
+  return cachedCategorySchemaState;
+};
+
+const buildCategoryListQuery = (schemaState) => {
+  const categoryIconSelect = schemaState.categoryHasIconUrl ? 'icon_url' : 'NULL AS icon_url';
+  const categoryDisplayOrderSelect = schemaState.categoryHasDisplayOrder ? 'display_order' : '0 AS display_order';
+  const categoryVisibleSelect = schemaState.categoryHasIsVisible ? 'is_visible' : '1 AS is_visible';
+  const subCategoryDisplayOrderSelect = schemaState.subCategoryHasDisplayOrder ? 'display_order' : '0 AS display_order';
+  const subCategoryVisibleSelect = schemaState.subCategoryHasIsVisible ? 'IFNULL(is_visible, 1)' : '1';
+
+  return `
+    SELECT id, name, slug, ${categoryIconSelect}, ${categoryDisplayOrderSelect}, ${categoryVisibleSelect}, NULL as parent_id
+    FROM categorias
+    UNION ALL
+    SELECT id, name, slug, NULL as icon_url, ${subCategoryDisplayOrderSelect}, ${subCategoryVisibleSelect} as is_visible, category_id as parent_id
+    FROM sub_categorias
+    ORDER BY display_order, id
+  `;
+};
 
 router.get('/', async (req, res) => {
   try {
-    const query = `
-      SELECT id, name, slug, icon_url, display_order, is_visible, NULL as parent_id
-      FROM categorias
-      UNION ALL
-      SELECT id, name, slug, NULL as icon_url, display_order, IFNULL(is_visible, 1) as is_visible, category_id as parent_id
-      FROM sub_categorias
-      ORDER BY display_order
-    `;
+    const schemaState = await getCategorySchemaState();
+    const query = buildCategoryListQuery(schemaState);
     const [rows] = await db.query(query);
     res.json(rows);
   } catch (err) {
-    try {
-      res.json(listBackupCategories());
-    } catch (backupError) {
-      res.status(500).json({ error: err.message });
+    if (shouldUseBackupFallback) {
+      res.json(listBackupCategories().map((category) => ({
+        ...category,
+        icon_url: null
+      })));
+      return;
     }
+
+    console.error('Erro ao buscar categorias:', err);
+    res.json([]);
   }
 });
 
