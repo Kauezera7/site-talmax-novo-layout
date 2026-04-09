@@ -5,7 +5,7 @@
  * e alternar entre as secoes internas como dashboard, produtos, categorias e banners
  * container principal do painel administrativo.
  */
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Package,
@@ -25,18 +25,18 @@ import { useAdmin, AdminProvider } from '../../context/AdminContext';
 import { logoutAdmin } from '../../services/adminAuth';
 import './AdminBase.css';
 
-import AdminProducts from './AdminProducts/AdminProducts';
-import AdminProductsList from './AdminProducts/AdminProductsList';
-import AdminCategories from './AdminCategories/AdminCategories';
-import AdminBanners from './AdminBanners/AdminBanners';
-import AdminFeatured from './AdminFeatured/AdminFeatured';
-import AdminUpcera from './AdminUpcera/AdminUpcera';
-import AdminScanners from './AdminScanners/AdminScanners';
-import AdminPrinters from './AdminPrinters/AdminPrinters';
-import AdminSegments from './AdminSegments/AdminSegments';
-import AdminTalmaxDigital from './AdminTalmaxDigital/AdminTalmaxDigital';
-import AdminDigitalGroups from './AdminTalmaxDigital/AdminDigitalGroups';
-import AdminCustomPages from './AdminCustomPages/AdminCustomPages';
+const AdminProducts = lazy(() => import('./AdminProducts/AdminProducts'));
+const AdminProductsList = lazy(() => import('./AdminProducts/AdminProductsList'));
+const AdminCategories = lazy(() => import('./AdminCategories/AdminCategories'));
+const AdminBanners = lazy(() => import('./AdminBanners/AdminBanners'));
+const AdminFeatured = lazy(() => import('./AdminFeatured/AdminFeatured'));
+const AdminUpcera = lazy(() => import('./AdminUpcera/AdminUpcera'));
+const AdminScanners = lazy(() => import('./AdminScanners/AdminScanners'));
+const AdminPrinters = lazy(() => import('./AdminPrinters/AdminPrinters'));
+const AdminSegments = lazy(() => import('./AdminSegments/AdminSegments'));
+const AdminTalmaxDigital = lazy(() => import('./AdminTalmaxDigital/AdminTalmaxDigital'));
+const AdminDigitalGroups = lazy(() => import('./AdminTalmaxDigital/AdminDigitalGroups'));
+const AdminCustomPages = lazy(() => import('./AdminCustomPages/AdminCustomPages'));
 
 const AdminLoadingScreen = ({ label = 'Carregando painel...' }) => (
   <div className="app-loader-overlay app-loader-overlay-admin" role="status" aria-live="polite" aria-label={label}>
@@ -45,6 +45,18 @@ const AdminLoadingScreen = ({ label = 'Carregando painel...' }) => (
       <span className="app-loader-text">{label}</span>
     </div>
   </div>
+);
+
+const AdminSectionLoader = ({ children, label = 'Carregando secao...' }) => (
+  <Suspense fallback={<AdminLoadingScreen label={label} />}>
+    {children}
+  </Suspense>
+);
+
+const withAdminSectionLoader = (element, label) => (
+  <AdminSectionLoader label={label}>
+    {element}
+  </AdminSectionLoader>
 );
 
 const DashboardHome = ({ onOpenTab }) => {
@@ -147,14 +159,15 @@ const AdminDashboardContent = () => {
     switch (activeTab) {
       case 'dashboard': return <DashboardHome onOpenTab={setActiveTab} />;
       case 'products':
-        return (
+        return withAdminSectionLoader(
           <AdminProducts
             productToEdit={productToEdit}
             onProductEditHandled={() => setProductToEdit(null)}
-          />
+          />,
+          'Carregando cadastro de produtos...'
         );
       case 'products-list':
-        return (
+        return withAdminSectionLoader(
           <AdminProductsList
             onOpenRegister={() => {
               setProductToEdit(null);
@@ -164,18 +177,19 @@ const AdminDashboardContent = () => {
               setProductToEdit(product);
               setActiveTab('products');
             }}
-          />
+          />,
+          'Carregando lista de produtos...'
         );
-      case 'categories': return <AdminCategories />;
-      case 'banners': return <AdminBanners />;
-      case 'featured': return <AdminFeatured />;
-      case 'segments': return <AdminSegments />;
-      case 'custom-pages': return <AdminCustomPages />;
-      case 'talmax-digital': return <AdminTalmaxDigital />;
-      case 'digital-groups': return <AdminDigitalGroups />;
-      case 'upcera': return <AdminUpcera />;
-      case 'scanners': return <AdminScanners />;
-      case 'printers': return <AdminPrinters />;
+      case 'categories': return withAdminSectionLoader(<AdminCategories />, 'Carregando categorias...');
+      case 'banners': return withAdminSectionLoader(<AdminBanners />, 'Carregando banners...');
+      case 'featured': return withAdminSectionLoader(<AdminFeatured />, 'Carregando destaques da home...');
+      case 'segments': return withAdminSectionLoader(<AdminSegments />, 'Carregando segmentos...');
+      case 'custom-pages': return withAdminSectionLoader(<AdminCustomPages />, 'Carregando paginas personalizadas...');
+      case 'talmax-digital': return withAdminSectionLoader(<AdminTalmaxDigital />, 'Carregando pagina Talmax Digital...');
+      case 'digital-groups': return withAdminSectionLoader(<AdminDigitalGroups />, 'Carregando grupos de segmentos...');
+      case 'upcera': return withAdminSectionLoader(<AdminUpcera />, 'Carregando pagina Upcera...');
+      case 'scanners': return withAdminSectionLoader(<AdminScanners />, 'Carregando pagina Scanners...');
+      case 'printers': return withAdminSectionLoader(<AdminPrinters />, 'Carregando pagina Impressoras 3D...');
       default: return <DashboardHome onOpenTab={setActiveTab} />;
     }
   };

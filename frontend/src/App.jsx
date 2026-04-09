@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import {
   Facebook,
@@ -15,26 +15,27 @@ import {
 } from 'lucide-react';
 
 import Home from './components/Home/Home';
-import QuemSomos from './components/QuemSomos/QuemSomos';
-import PrivacyPolicy from './components/PrivacyPolicy/PrivacyPolicy';
 import CookieBanner from './components/CookieBanner/CookieBanner';
 import PagePlaceholder from './components/PagePlaceholder/PagePlaceholder';
-import ProductCatalog from './components/ProductCatalog/ProductCatalog';
-import ProductDetail from './components/ProductDetail/ProductDetail';
-import Support from './components/Support/Support';
-import HistoriaDiretoria from './components/HistoriaDiretoria/HistoriaDiretoria';
-import TalmaxDigital from './components/TalmaxDigital/TalmaxDigital';
-import DigitalGroupPage from './components/TalmaxDigital/DigitalGroupPage';
-import Upcera from './components/Upcera/Upcera';
-import Scanners from './components/Scanners/Scanners';
-import Impressoras3D from './components/Impressoras3D/Impressoras3D';
-import CustomPage from './components/CustomPage/CustomPage';
-import Admin from './pages/Admin/AdminDashboard';
-import AdminLogin from './components/AdminLogin/AdminLogin';
 import { validateAdminSession } from './services/adminAuth';
 import { subscribeToAdminSessionExpired } from './services/adminSessionEvents';
 import { assetPath } from './utils/assets';
 import './App.css';
+
+const QuemSomos = lazy(() => import('./components/QuemSomos/QuemSomos'));
+const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy/PrivacyPolicy'));
+const ProductCatalog = lazy(() => import('./components/ProductCatalog/ProductCatalog'));
+const ProductDetail = lazy(() => import('./components/ProductDetail/ProductDetail'));
+const Support = lazy(() => import('./components/Support/Support'));
+const HistoriaDiretoria = lazy(() => import('./components/HistoriaDiretoria/HistoriaDiretoria'));
+const TalmaxDigital = lazy(() => import('./components/TalmaxDigital/TalmaxDigital'));
+const DigitalGroupPage = lazy(() => import('./components/TalmaxDigital/DigitalGroupPage'));
+const Upcera = lazy(() => import('./components/Upcera/Upcera'));
+const Scanners = lazy(() => import('./components/Scanners/Scanners'));
+const Impressoras3D = lazy(() => import('./components/Impressoras3D/Impressoras3D'));
+const CustomPage = lazy(() => import('./components/CustomPage/CustomPage'));
+const Admin = lazy(() => import('./pages/Admin/AdminDashboard'));
+const AdminLogin = lazy(() => import('./components/AdminLogin/AdminLogin'));
 
 const THEME_STORAGE_KEY = 'talmax-theme';
 
@@ -45,6 +46,18 @@ const FullScreenLoader = ({ label = 'Carregando...' }) => (
       <span className="app-loader-text">{label}</span>
     </div>
   </div>
+);
+
+const RouteLoader = ({ children, label = 'Carregando pagina...' }) => (
+  <Suspense fallback={<FullScreenLoader label={label} />}>
+    {children}
+  </Suspense>
+);
+
+const withRouteLoader = (element, label) => (
+  <RouteLoader label={label}>
+    {element}
+  </RouteLoader>
 );
 
 const ScrollToTop = () => {
@@ -500,34 +513,34 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/login" element={withRouteLoader(<AdminLogin />, 'Carregando login...')} />
           <Route
             path="/admin/painel"
             element={
               <ProtectedAdminRoute>
-                <Admin />
+                {withRouteLoader(<Admin />, 'Carregando painel...')}
               </ProtectedAdminRoute>
             }
           />
-          <Route path="/privacidade" element={<PrivacyPolicy />} />
+          <Route path="/privacidade" element={withRouteLoader(<PrivacyPolicy />, 'Carregando politica de privacidade...')} />
 
-          <Route path="/quem-somos" element={<QuemSomos />} />
-          <Route path="/historia-diretoria" element={<HistoriaDiretoria />} />
+          <Route path="/quem-somos" element={withRouteLoader(<QuemSomos />, 'Carregando pagina institucional...')} />
+          <Route path="/historia-diretoria" element={withRouteLoader(<HistoriaDiretoria />, 'Carregando historia e diretoria...')} />
           <Route path="/depoimentos" element={<PagePlaceholder title="Depoimentos" />} />
 
-          <Route path="/produtos" element={<ProductCatalog />} />
-          <Route path="/categoria/talmax-digital" element={<TalmaxDigital />} />
-          <Route path="/grupo-digital/:slug" element={<DigitalGroupPage />} />
-          <Route path="/upcera" element={<Upcera />} />
-          <Route path="/scanners" element={<Scanners />} />
-          <Route path="/impressoras-3d" element={<Impressoras3D />} />
-          <Route path="/pagina/:slug" element={<CustomPage />} />
-          <Route path="/categoria/:slug" element={<ProductCatalog />} />
-          <Route path="/produto/:id" element={<ProductDetail />} />
+          <Route path="/produtos" element={withRouteLoader(<ProductCatalog />, 'Carregando catalogo...')} />
+          <Route path="/categoria/talmax-digital" element={withRouteLoader(<TalmaxDigital />, 'Carregando Talmax Digital...')} />
+          <Route path="/grupo-digital/:slug" element={withRouteLoader(<DigitalGroupPage />, 'Carregando grupo digital...')} />
+          <Route path="/upcera" element={withRouteLoader(<Upcera />, 'Carregando Upcera...')} />
+          <Route path="/scanners" element={withRouteLoader(<Scanners />, 'Carregando scanners...')} />
+          <Route path="/impressoras-3d" element={withRouteLoader(<Impressoras3D />, 'Carregando impressoras 3D...')} />
+          <Route path="/pagina/:slug" element={withRouteLoader(<CustomPage />, 'Carregando pagina...')} />
+          <Route path="/categoria/:slug" element={withRouteLoader(<ProductCatalog />, 'Carregando catalogo...')} />
+          <Route path="/produto/:id" element={withRouteLoader(<ProductDetail />, 'Carregando produto...')} />
 
           <Route path="/blog" element={<PagePlaceholder title="Blog" />} />
 
-          <Route path="/suporte" element={<Support />} />
+          <Route path="/suporte" element={withRouteLoader(<Support />, 'Carregando suporte...')} />
           <Route path="/assistencia-tecnica" element={<PagePlaceholder title="Assistência Técnica" />} />
 
           <Route path="/contato" element={<PagePlaceholder title="Formulário de Contato" />} />

@@ -143,7 +143,7 @@ const HeroSlider = () => {
         className="hero-swiper"
         style={sliderHeight ? { height: `${sliderHeight}px` } : undefined}
       >
-        {banners.map((slide) => (
+        {banners.map((slide, index) => (
           <SwiperSlide key={slide.id}>
             <div
               className="slide-content"
@@ -154,6 +154,9 @@ const HeroSlider = () => {
                 src={slide.image_url ? apiAssetPath(slide.image_url) : slide.image}
                 alt={slide.title}
                 className="banner-img"
+                loading={index === 0 ? 'eager' : 'lazy'}
+                fetchPriority={index === 0 ? 'high' : 'low'}
+                decoding="async"
                 onLoad={measureActiveBanner}
               />
             </div>

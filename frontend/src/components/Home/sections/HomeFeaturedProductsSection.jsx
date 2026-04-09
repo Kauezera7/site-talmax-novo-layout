@@ -1,0 +1,61 @@
+import React from 'react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Navigation } from 'swiper/modules';
+import ProductCard from '../../ProductCard/ProductCard';
+import 'swiper/css';
+import 'swiper/css/navigation';
+
+const HomeFeaturedProductsSection = ({ featuredProducts }) => {
+  if (!featuredProducts.length) {
+    return null;
+  }
+
+  return (
+    <section className="home-featured-products">
+      <div className="home-featured-products__inner">
+        <div className="home-featured-products__header">
+          <span className="home-featured-products__eyebrow">Seleção Talmax</span>
+          <h2>Produtos em Destaque</h2>
+          <p>Escolhidos no painel administrativo para ganhar mais visibilidade na Home.</p>
+        </div>
+
+        <div className="home-featured-products__carousel">
+          <button
+            type="button"
+            className="home-featured-products__nav home-featured-products__nav-prev"
+            aria-label="Produto anterior"
+          />
+          <button
+            type="button"
+            className="home-featured-products__nav home-featured-products__nav-next"
+            aria-label="Próximo produto"
+          />
+          <Swiper
+            modules={[Autoplay, Navigation]}
+            spaceBetween={24}
+            slidesPerView={1}
+            loop={featuredProducts.length > 1}
+            navigation={{
+              prevEl: '.home-featured-products__nav-prev',
+              nextEl: '.home-featured-products__nav-next'
+            }}
+            autoplay={{ delay: 3500, disableOnInteraction: false }}
+            breakpoints={{
+              640: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 },
+              1400: { slidesPerView: 5 }
+            }}
+          >
+            {featuredProducts.map((product, index) => (
+              <SwiperSlide key={product.id}>
+                <ProductCard product={product} index={index} imageLoading="lazy" imageFetchPriority="low" />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default HomeFeaturedProductsSection;

@@ -10,7 +10,7 @@ import { ArrowRight } from 'lucide-react';
 import { assetPath } from '../../utils/assets';
 import './ProductCard.css';
 
-const ProductCard = ({ product, index }) => {
+const ProductCard = ({ product, index, imageLoading = 'lazy', imageFetchPriority = 'auto' }) => {
   const [activeImage, setActiveImage] = React.useState(product.image);
   const navigate = useNavigate();
 
@@ -39,6 +39,9 @@ const ProductCard = ({ product, index }) => {
         <img 
           src={activeImage} 
           alt={product.name} 
+          loading={imageLoading}
+          fetchPriority={imageFetchPriority}
+          decoding="async"
           onError={(e) => {
             e.target.src = assetPath('img/placeholder.webp');
           }} 
@@ -52,6 +55,9 @@ const ProductCard = ({ product, index }) => {
                 src={img} 
                 alt="thumb" 
                 className={activeImage === img ? 'active' : ''}
+                loading="lazy"
+                fetchPriority="low"
+                decoding="async"
                 onClick={(e) => {
                   e.stopPropagation();
                   setActiveImage(img);

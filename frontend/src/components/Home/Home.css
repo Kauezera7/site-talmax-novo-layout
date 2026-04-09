@@ -1,3 +1,42 @@
+.home-section-placeholder {
+  position: relative;
+  width: min(1600px, calc(100% - 4rem));
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(226, 232, 240, 0.55) 0%, rgba(241, 245, 249, 0.92) 100%);
+}
+
+.home-section-placeholder--services {
+  min-height: 340px;
+  margin-top: 9rem;
+}
+
+.home-section-placeholder--featured {
+  min-height: 420px;
+  margin-top: 4.5rem;
+}
+
+.home-section-placeholder--categories {
+  min-height: 320px;
+  margin-top: 3.5rem;
+  margin-bottom: 4rem;
+}
+
+.home-section-placeholder__shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.65) 50%, transparent 100%);
+  transform: translateX(-100%);
+  animation: home-section-placeholder-shimmer 1.7s ease-in-out infinite;
+}
+
+@keyframes home-section-placeholder-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .home-featured-products {
   padding: 4.5rem 2rem 0;
   background: linear-gradient(180deg, #f8fbff 0%, rgba(248, 251, 255, 0) 100%);
@@ -316,6 +355,15 @@
   isolation: isolate;
 }
 
+.service-banner-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
 .service-banner::before {
   content: '';
   position: absolute;
@@ -479,6 +527,10 @@
 }
 
 @media (max-width: 1024px) {
+  .home-section-placeholder {
+    width: calc(100% - 3rem);
+  }
+
   .home-featured-products {
     padding: 3.5rem 1.5rem 0;
   }
@@ -515,6 +567,26 @@
 }
 
 @media (max-width: 768px) {
+  .home-section-placeholder {
+    width: calc(100% - 1.8rem);
+    border-radius: 20px;
+  }
+
+  .home-section-placeholder--services {
+    min-height: 220px;
+    margin-top: 3rem;
+  }
+
+  .home-section-placeholder--featured {
+    min-height: 320px;
+    margin-top: 3rem;
+  }
+
+  .home-section-placeholder--categories {
+    min-height: 240px;
+    margin-top: 2.5rem;
+  }
+
   .home-featured-products {
     padding: 3rem 1rem 0;
   }
@@ -645,6 +717,15 @@
 }
 
 @media (max-width: 480px) {
+  .home-section-placeholder {
+    width: calc(100% - 1.5rem);
+  }
+
+  .home-section-placeholder--services {
+    min-height: 190px;
+    margin-top: 2.75rem;
+  }
+
   .home-featured-products__header {
     margin-bottom: 1.5rem;
   }
