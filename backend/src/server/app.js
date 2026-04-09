@@ -4,6 +4,7 @@
  */
 const express = require('express');
 const multer = require('multer');
+const fs = require('fs');
 const path = require('path');
 const corsMiddleware = require('./config/cors');
 const { getServedImageDirs } = require('./config/imageStorage');
@@ -32,7 +33,13 @@ const createApp = () => {
     app.use('/img', express.static(directoryPath));
   });
   app.use('/img', (req, res) => {
-    res.status(404).end();
+    const fallbackImagePath = path.resolve(__dirname, '../../../frontend/public/img/placeholder.png');
+
+    if (fs.existsSync(fallbackImagePath)) {
+      return res.sendFile(fallbackImagePath);
+    }
+
+    return res.status(404).end();
   });
   app.use(express.static(frontendDistPath));
 

@@ -103,6 +103,78 @@ const listBackupCategories = () => {
   );
 };
 
+const listBackupHomeServices = () => (
+  [
+    {
+      id: 'backup-mobywork',
+      name: 'Moby Work',
+      description: 'Conheca a linha de moveis e projetos planejados para clinicas e laboratorios.',
+      image_url: '/img/mobywork.png',
+      link_url: 'https://mobywork.com.br',
+      link_target_type: null,
+      custom_page_id: null,
+      custom_page_title: '',
+      digital_group_id: null,
+      digital_group_title: '',
+      is_external: true,
+      display_order: 1,
+      active: true,
+      actions: [{ label: 'Acessar Site', href: 'https://mobywork.com.br', external: true }]
+    },
+    {
+      id: 'backup-talmax-digital',
+      name: 'Talmax Digital',
+      description: 'Explore nossas solucoes digitais e tecnologias para fluxo CAD/CAM odontologico.',
+      image_url: '/img/talmaxdigita1.png',
+      link_url: '/categoria/talmax-digital',
+      link_target_type: null,
+      custom_page_id: null,
+      custom_page_title: '',
+      digital_group_id: null,
+      digital_group_title: '',
+      is_external: false,
+      display_order: 2,
+      active: true,
+      actions: [{ label: 'Ver Solucoes', href: '/categoria/talmax-digital', external: false }]
+    },
+    {
+      id: 'backup-cursos',
+      name: 'Cursos',
+      description: 'Acesse treinamentos, atualizacoes e conteudos para evoluir com a Talmax.',
+      image_url: '/img/cursostalmax.png',
+      link_url: '/cursos',
+      link_target_type: null,
+      custom_page_id: null,
+      custom_page_title: '',
+      digital_group_id: null,
+      digital_group_title: '',
+      is_external: false,
+      display_order: 3,
+      active: true,
+      actions: [{ label: 'Ver Cursos', href: '/cursos', external: false }]
+    },
+    {
+      id: 'backup-servicos',
+      name: 'Servicos',
+      description: 'Escolha o canal ideal para atendimento especializado e suporte da Talmax.',
+      image_url: '/img/testeservicos.png',
+      link_url: '/suporte',
+      link_target_type: null,
+      custom_page_id: null,
+      custom_page_title: '',
+      digital_group_id: null,
+      digital_group_title: '',
+      is_external: false,
+      display_order: 4,
+      active: true,
+      actions: [
+        { label: 'Assistencia Tecnica', href: '/assistencia-tecnica', external: false },
+        { label: 'Suporte', href: '/suporte', external: false }
+      ]
+    }
+  ]
+);
+
 const buildProductLookups = () => {
   const categories = getBackupTable('categorias');
   const subCategories = getBackupTable('sub_categorias');
@@ -201,6 +273,7 @@ const findBackupProductById = (productId, options = {}) => {
 module.exports = {
   listBackupBanners,
   listBackupCategories,
+  listBackupHomeServices,
   listBackupProducts,
   findBackupProductById
 };

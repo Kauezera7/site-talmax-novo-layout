@@ -1,8 +1,36 @@
 import API_URL from '../services/api';
 
+const isAbsoluteUrl = (path = '') => /^(?:[a-z]+:)?\/\//i.test(path);
+
+const normalizeApiAssetRelativePath = (path = '') => {
+  if (!path) return path;
+  if (isAbsoluteUrl(path)) return path;
+
+  const trimmedPath = String(path).trim();
+  const withoutLeadingSlash = trimmedPath.replace(/^\/+/, '');
+
+  if (!withoutLeadingSlash) {
+    return '';
+  }
+
+  if (withoutLeadingSlash.startsWith('img/')) {
+    return `/${withoutLeadingSlash}`;
+  }
+
+  if (trimmedPath.startsWith('/')) {
+    return trimmedPath;
+  }
+
+  if (!withoutLeadingSlash.includes('/')) {
+    return `/img/${withoutLeadingSlash}`;
+  }
+
+  return `/${withoutLeadingSlash}`;
+};
+
 export const assetPath = (path = '') => {
   if (!path) return path;
-  if (/^(?:[a-z]+:)?\/\//i.test(path)) return path;
+  if (isAbsoluteUrl(path)) return path;
 
   const normalizedPath = path.replace(/^\/+/, '');
   return `${import.meta.env.BASE_URL}${normalizedPath}`;
@@ -36,9 +64,9 @@ const getApiBasePath = () => {
 
 export const apiAssetPath = (path = '') => {
   if (!path) return path;
-  if (/^(?:[a-z]+:)?\/\//i.test(path)) return path;
+  if (isAbsoluteUrl(path)) return path;
 
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const normalizedPath = normalizeApiAssetRelativePath(path);
   const apiOrigin = getApiOrigin();
   const apiBasePath = getApiBasePath();
 
@@ -51,13 +79,5 @@ export const apiAssetPath = (path = '') => {
 
 export const resolveStoredAssetPath = (path = '') => {
   if (!path) return path;
-  if (/^(?:[a-z]+:)?\/\//i.test(path)) return path;
-
-  const normalizedPath = path.replace(/^\/+/, '');
-
-  if (normalizedPath.startsWith('img/')) {
-    return assetPath(normalizedPath);
-  }
-
   return apiAssetPath(path);
 };

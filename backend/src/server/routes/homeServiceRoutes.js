@@ -8,9 +8,42 @@ const upload = require('../config/upload');
 const { safe } = require('../utils/common');
 const { parseBooleanFlag, parseInteger } = require('../utils/requestParsers');
 const { persistUploadedFile } = require('../services/fileStorageService');
+const { listBackupHomeServices } = require('../services/backupContentService');
 
 const router = express.Router();
 let homeServicesColumnsReady = false;
+let cachedHomeServicesSchemaState = null;
+
+const getTableColumnSet = async (tableName) => {
+  const [rows] = await db.query(
+    `
+      SELECT COLUMN_NAME
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = ?
+    `,
+    [tableName]
+  );
+
+  return new Set(rows.map((row) => row.COLUMN_NAME));
+};
+
+const getHomeServicesSchemaState = async () => {
+  if (cachedHomeServicesSchemaState) {
+    return cachedHomeServicesSchemaState;
+  }
+
+  const columns = await getTableColumnSet('home_services');
+
+  cachedHomeServicesSchemaState = {
+    hasLinkTargetType: columns.has('link_target_type'),
+    hasCustomPageId: columns.has('custom_page_id'),
+    hasDigitalGroupId: columns.has('digital_group_id'),
+    hasActions: columns.has('actions')
+  };
+
+  return cachedHomeServicesSchemaState;
+};
 
 const ensureColumn = async (tableName, columnName, definition) => {
   const [rows] = await db.query(
@@ -26,6 +59,7 @@ const ensureColumn = async (tableName, columnName, definition) => {
 
   if (Number(rows?.[0]?.total || 0) === 0) {
     await db.query(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+    cachedHomeServicesSchemaState = null;
   }
 };
 
@@ -55,6 +89,81 @@ const parseActionsPayload = (value) => {
 
   return value;
 };
+
+const buildHomeServicesQuery = (schemaState) => {
+  const linkTargetTypeSelect = schemaState.hasLinkTargetType
+    ? 'home_services.link_target_type'
+    : 'NULL AS link_target_type';
+  const customPageIdSelect = schemaState.hasCustomPageId
+    ? 'home_services.custom_page_id'
+    : 'NULL AS custom_page_id';
+  const digitalGroupIdSelect = schemaState.hasDigitalGroupId
+    ? 'home_services.digital_group_id'
+    : 'NULL AS digital_group_id';
+  const actionsSelect = schemaState.hasActions
+    ? 'home_services.actions'
+    : 'NULL AS actions';
+  const customPageTitleSelect = schemaState.hasCustomPageId
+    ? 'custom_pages.title AS custom_page_title'
+    : "'' AS custom_page_title";
+  const customPageSlugSelect = schemaState.hasCustomPageId
+    ? 'custom_pages.slug AS custom_page_slug'
+    : "'' AS custom_page_slug";
+  const digitalGroupTitleSelect = schemaState.hasDigitalGroupId
+    ? 'digital_groups.title AS digital_group_title'
+    : "'' AS digital_group_title";
+  const digitalGroupSlugSelect = schemaState.hasDigitalGroupId
+    ? 'digital_groups.slug AS digital_group_slug'
+    : "'' AS digital_group_slug";
+  const customPageJoin = schemaState.hasCustomPageId
+    ? 'LEFT JOIN custom_pages ON custom_pages.id = home_services.custom_page_id'
+    : '';
+  const digitalGroupJoin = schemaState.hasDigitalGroupId
+    ? 'LEFT JOIN digital_groups ON digital_groups.id = home_services.digital_group_id'
+    : '';
+
+  return `
+    SELECT
+      home_services.id,
+      home_services.name,
+      home_services.description,
+      home_services.image_url,
+      home_services.link_url,
+      home_services.is_external,
+      home_services.display_order,
+      home_services.active,
+      ${actionsSelect},
+      ${linkTargetTypeSelect},
+      ${customPageIdSelect},
+      ${digitalGroupIdSelect},
+      ${customPageTitleSelect},
+      ${customPageSlugSelect},
+      ${digitalGroupTitleSelect},
+      ${digitalGroupSlugSelect}
+    FROM home_services
+    ${customPageJoin}
+    ${digitalGroupJoin}
+    ORDER BY home_services.display_order ASC, home_services.name ASC
+  `;
+};
+
+const normalizeHomeServiceRow = (row) => ({
+  ...row,
+  link_target_type: row.link_target_type || null,
+  custom_page_id: row.custom_page_id ? Number(row.custom_page_id) : null,
+  custom_page_title: row.custom_page_title || '',
+  digital_group_id: row.digital_group_id ? Number(row.digital_group_id) : null,
+  digital_group_title: row.digital_group_title || '',
+  link_url:
+    row.link_target_type === 'custom-page' && row.custom_page_slug
+      ? buildCustomPagePath(row.custom_page_slug)
+      : row.link_target_type === 'digital-group' && (row.digital_group_slug || row.digital_group_id)
+        ? buildDigitalGroupPath(row.digital_group_slug || row.digital_group_id)
+        : row.link_url,
+  actions: parseActionsPayload(row.actions),
+  is_external: !!row.is_external,
+  active: !!row.active
+});
 
 const getUploadedFileByField = (files = [], fieldName) => (
   Array.isArray(files) ? files.find((file) => file.fieldname === fieldName) || null : null
@@ -179,42 +288,14 @@ const persistDigitalCardsConfig = async (files, incomingActions, previousActions
 
 router.get('/', async (req, res) => {
   try {
-    await ensureHomeServicesColumns();
-    const [rows] = await db.query(`
-      SELECT
-        home_services.*,
-        custom_pages.title AS custom_page_title,
-        custom_pages.slug AS custom_page_slug,
-        digital_groups.title AS digital_group_title,
-        digital_groups.slug AS digital_group_slug
-      FROM home_services
-      LEFT JOIN custom_pages ON custom_pages.id = home_services.custom_page_id
-      LEFT JOIN digital_groups ON digital_groups.id = home_services.digital_group_id
-      ORDER BY home_services.display_order ASC, home_services.name ASC
-    `);
-
-    const services = rows.map((row) => ({
-      ...row,
-      link_target_type: row.link_target_type || null,
-      custom_page_id: row.custom_page_id ? Number(row.custom_page_id) : null,
-      custom_page_title: row.custom_page_title || '',
-      digital_group_id: row.digital_group_id ? Number(row.digital_group_id) : null,
-      digital_group_title: row.digital_group_title || '',
-      link_url:
-        row.link_target_type === 'custom-page' && row.custom_page_slug
-          ? buildCustomPagePath(row.custom_page_slug)
-          : row.link_target_type === 'digital-group' && (row.digital_group_slug || row.digital_group_id)
-            ? buildDigitalGroupPath(row.digital_group_slug || row.digital_group_id)
-            : row.link_url,
-      actions: parseActionsPayload(row.actions),
-      is_external: !!row.is_external,
-      active: !!row.active
-    }));
+    const schemaState = await getHomeServicesSchemaState();
+    const [rows] = await db.query(buildHomeServicesQuery(schemaState));
+    const services = rows.map(normalizeHomeServiceRow);
 
     res.json(services);
   } catch (err) {
     console.error('Erro ao buscar servicos da home:', err);
-    res.status(500).json({ error: 'Erro interno ao buscar servicos' });
+    res.json(listBackupHomeServices());
   }
 });
 

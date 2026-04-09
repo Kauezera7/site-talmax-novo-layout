@@ -25,6 +25,10 @@ const HomeCategoriesSection = ({ categories }) => {
                 loading="lazy"
                 fetchPriority="low"
                 decoding="async"
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = assetPath('img/placeholder.png');
+                }}
               />
             </div>
             <h3>{cat.name}</h3>

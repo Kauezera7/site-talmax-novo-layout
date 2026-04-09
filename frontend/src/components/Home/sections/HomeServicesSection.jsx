@@ -21,6 +21,10 @@ const ServiceBanner = ({ service }) => {
         loading="lazy"
         fetchPriority="low"
         decoding="async"
+        onError={(event) => {
+          event.currentTarget.onerror = null;
+          event.currentTarget.src = assetPath('img/placeholder.png');
+        }}
       />
       <div className="service-banner-overlay">
         <strong>{service.name}</strong>
