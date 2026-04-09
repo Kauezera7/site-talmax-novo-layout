@@ -21,7 +21,7 @@ O painel administrativo gerencia:
 ## Entrada Principal
 
 O arquivo principal do painel é:
-
+.
 ```txt
 frontend/src/pages/Admin/AdminDashboard.jsx
 ```
