@@ -1,12 +1,18 @@
 import API_URL from '../services/api';
 
-const isAbsoluteUrl = (path = '') => /^(?:[a-z]+:)?\/\//i.test(path);
+const normalizeRawPath = (path = '') => String(path || '').trim();
+
+const isCloudinaryPathWithoutProtocol = (path = '') => /^res\.cloudinary\.com\//i.test(path);
+
+const isAbsoluteUrl = (path = '') => /^(?:[a-z]+:)?\/\//i.test(normalizeRawPath(path));
 
 const normalizeApiAssetRelativePath = (path = '') => {
   if (!path) return path;
-  if (isAbsoluteUrl(path)) return path;
+  const trimmedPath = normalizeRawPath(path);
 
-  const trimmedPath = String(path).trim();
+  if (isAbsoluteUrl(trimmedPath)) return trimmedPath;
+  if (isCloudinaryPathWithoutProtocol(trimmedPath)) return `https://${trimmedPath}`;
+
   const withoutLeadingSlash = trimmedPath.replace(/^\/+/, '');
 
   if (!withoutLeadingSlash) {
@@ -30,9 +36,11 @@ const normalizeApiAssetRelativePath = (path = '') => {
 
 export const assetPath = (path = '') => {
   if (!path) return path;
-  if (isAbsoluteUrl(path)) return path;
+  const trimmedPath = normalizeRawPath(path);
 
-  const normalizedPath = path.replace(/^\/+/, '');
+  if (isAbsoluteUrl(trimmedPath)) return trimmedPath;
+
+  const normalizedPath = trimmedPath.replace(/^\/+/, '');
   return `${import.meta.env.BASE_URL}${normalizedPath}`;
 };
 
@@ -64,9 +72,11 @@ const getApiBasePath = () => {
 
 export const apiAssetPath = (path = '') => {
   if (!path) return path;
-  if (isAbsoluteUrl(path)) return path;
+  const trimmedPath = normalizeRawPath(path);
 
-  const normalizedPath = normalizeApiAssetRelativePath(path);
+  if (isAbsoluteUrl(trimmedPath)) return trimmedPath;
+
+  const normalizedPath = normalizeApiAssetRelativePath(trimmedPath);
   const apiOrigin = getApiOrigin();
   const apiBasePath = getApiBasePath();
 
