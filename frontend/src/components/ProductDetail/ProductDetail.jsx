@@ -36,7 +36,8 @@ const shouldShowQuoteButton = (value) => !(
 const normalizeModelTable = (modelTable) => {
   const fallback = {
     headers: ['Tipo / Referencia', 'Codigo'],
-    rows: [['', '']]
+    rows: [['', '']],
+    mergeRanges: []
   };
 
   if (!modelTable || !Array.isArray(modelTable.headers) || !Array.isArray(modelTable.rows)) {
@@ -55,10 +56,68 @@ const normalizeModelTable = (modelTable) => {
       }
       return normalizedRow.slice(0, headers.length);
     })
-    : fallback.rows;
+    : [];
 
-  return { headers, rows };
+  const normalizeMergeRanges = (mergeRanges) => {
+    if (!Array.isArray(mergeRanges)) {
+      return [];
+    }
+
+    return mergeRanges
+      .map((range) => {
+        const startRow = Number.parseInt(range?.startRow ?? range?.row, 10);
+        const endRow = Number.parseInt(range?.endRow ?? range?.row, 10);
+        const rawStart = Number.parseInt(range?.startCol, 10);
+        const rawEnd = Number.parseInt(range?.endCol, 10);
+
+        if (!Number.isInteger(startRow) || !Number.isInteger(endRow) || !Number.isInteger(rawStart) || !Number.isInteger(rawEnd)) {
+          return null;
+        }
+
+        const normalizedStartRow = Math.max(0, Math.min(Math.min(startRow, endRow), rows.length));
+        const normalizedEndRow = Math.max(0, Math.min(Math.max(startRow, endRow), rows.length));
+        const startCol = Math.max(0, Math.min(Math.min(rawStart, rawEnd), headers.length - 1));
+        const endCol = Math.max(0, Math.min(Math.max(rawStart, rawEnd), headers.length - 1));
+
+        if ((normalizedEndRow <= normalizedStartRow) && (endCol <= startCol)) {
+          return null;
+        }
+
+        return { startRow: normalizedStartRow, endRow: normalizedEndRow, startCol, endCol };
+      })
+      .filter(Boolean);
+  };
+
+  const legacyMergeRanges = modelTable?.mergedHeader
+    ? [{
+      startRow: 0,
+      endRow: 0,
+      startCol: 0,
+      endCol: Number.isInteger(modelTable.mergedHeaderEndColumn)
+        ? Math.max(0, Math.min(modelTable.mergedHeaderEndColumn, headers.length - 1))
+        : headers.length - 1
+    }]
+    : [];
+
+  const mergeRanges = normalizeMergeRanges(
+    Array.isArray(modelTable?.mergeRanges) && modelTable.mergeRanges.length > 0
+      ? modelTable.mergeRanges
+      : legacyMergeRanges
+  );
+
+  return { headers, rows, mergeRanges };
 };
+
+const getMergeRangeForCell = (mergeRanges, rowIndex, colIndex) => (
+  Array.isArray(mergeRanges)
+    ? mergeRanges.find((range) => (
+      range.startRow <= rowIndex
+      && range.endRow >= rowIndex
+      && range.startCol <= colIndex
+      && range.endCol >= colIndex
+    )) || null
+    : null
+);
 
 const normalizeTechnicalTables = (tables, legacyTitle = '', legacyTable = null) => {
   if (Array.isArray(tables) && tables.length > 0) {
@@ -358,6 +417,26 @@ const ProductDetail = () => {
 
   const whatsappMessage = encodeURIComponent(`Ola! Gostaria de mais informacoes sobre o produto: ${product.name}`);
   const whatsappUrl = `https://wa.me/554130123456?text=${whatsappMessage}`;
+  const renderMergedRowCells = (values, mergeRanges, rowIndex, cellTag = 'td') => {
+    const CellTag = cellTag;
+
+    return values.map((cell, cellIndex) => {
+      const mergeRange = getMergeRangeForCell(mergeRanges, rowIndex, cellIndex);
+
+      if (mergeRange && (mergeRange.startCol !== cellIndex || mergeRange.startRow !== rowIndex)) {
+        return null;
+      }
+
+      const colSpan = mergeRange ? (mergeRange.endCol - mergeRange.startCol + 1) : 1;
+      const rowSpan = mergeRange ? (mergeRange.endRow - mergeRange.startRow + 1) : 1;
+
+      return (
+        <CellTag key={`${rowIndex}-${cellIndex}`} colSpan={colSpan} rowSpan={rowSpan}>
+          {cell}
+        </CellTag>
+      );
+    });
+  };
 
   return (
     <div className="product-detail-container">
@@ -519,27 +598,28 @@ const ProductDetail = () => {
                       </div>
 
                       <div className="table-container">
-                        <table className={`models-table ${product.hideModelData ? 'strip-mode' : ''}`}>
+                        <table className="models-table">
                           <thead>
                             <tr>
-                              {product.singleCellFirstRow ? (
-                                <th colSpan={tableConfig.modelTable.headers.length} className="models-table__single-cell-row">
-                                  {tableConfig.modelTable.headers[0]}
-                                </th>
-                              ) : (
-                                tableConfig.modelTable.headers.map((header, index) => <th key={index}>{header}</th>)
+                              {renderMergedRowCells(
+                                tableConfig.modelTable.headers,
+                                tableConfig.modelTable.mergeRanges,
+                                0,
+                                'th'
                               )}
                             </tr>
                           </thead>
-                          {!product.hideModelData && (
-                            <tbody>
-                              {tableConfig.modelTable.rows.map((row, rowIndex) => (
-                                <tr key={rowIndex}>
-                                  {row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}
-                                </tr>
-                              ))}
-                            </tbody>
-                          )}
+                          <tbody>
+                            {tableConfig.modelTable.rows.map((row, rowIndex) => (
+                              <tr key={rowIndex}>
+                                {renderMergedRowCells(
+                                  row,
+                                  tableConfig.modelTable.mergeRanges,
+                                  rowIndex + 1
+                                )}
+                              </tr>
+                            ))}
+                          </tbody>
                         </table>
                       </div>
                     </div>

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Plus, Minus, Trash2, Save, X, UploadCloud, ChevronRight, CheckCircle
+  Plus, Minus, Trash2, Save, X, UploadCloud, ChevronRight, CheckCircle, Table
 } from 'lucide-react';
 import { apiAssetPath } from '../../../utils/assets';
 import './AdminProducts.css';
@@ -18,7 +18,6 @@ const createInitialFormState = () => ({
   showFeatures: false,
   hideModelData: false,
   showModelSection: true,
-  singleCellFirstRow: false,
   showQuoteButton: true,
   images: [],
   features: [''],
@@ -31,12 +30,173 @@ const createInitialFormState = () => ({
 
 const createEmptyModelTable = () => ({
   headers: ['Tipo / Referencia', 'Codigo'],
-  rows: [['', '']]
+  rows: [['', '']],
+  mergedHeader: false,
+  mergedHeaderEndColumn: null,
+  mergeRanges: []
 });
 
 const createTechnicalTable = () => ({
   title: '',
   modelTable: createEmptyModelTable()
+});
+
+const clampTableDimension = (value, fallback) => {
+  const parsedValue = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsedValue)) return fallback;
+  return Math.min(Math.max(parsedValue, 1), 20);
+};
+
+const getSpreadsheetColumnLabel = (index) => {
+  let value = index + 1;
+  let label = '';
+
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    label = String.fromCharCode(65 + remainder) + label;
+    value = Math.floor((value - 1) / 26);
+  }
+
+  return label;
+};
+
+const sanitizeMergeRanges = (mergeRanges, rowCount, columnCount) => {
+  if (!Array.isArray(mergeRanges) || rowCount <= 0 || columnCount <= 0) {
+    return [];
+  }
+
+  const uniqueRanges = new Map();
+
+  mergeRanges.forEach((range) => {
+    const rawStartRow = Number.parseInt(range?.startRow ?? range?.row, 10);
+    const rawEndRow = Number.parseInt(range?.endRow ?? range?.row, 10);
+    const rawStart = Number.parseInt(range?.startCol, 10);
+    const rawEnd = Number.parseInt(range?.endCol, 10);
+
+    if (!Number.isInteger(rawStartRow) || !Number.isInteger(rawEndRow) || !Number.isInteger(rawStart) || !Number.isInteger(rawEnd)) {
+      return;
+    }
+
+    const startRow = Math.min(Math.max(Math.min(rawStartRow, rawEndRow), 0), rowCount - 1);
+    const endRow = Math.min(Math.max(Math.max(rawStartRow, rawEndRow), 0), rowCount - 1);
+    const startCol = Math.min(Math.max(Math.min(rawStart, rawEnd), 0), columnCount - 1);
+    const endCol = Math.min(Math.max(Math.max(rawStart, rawEnd), 0), columnCount - 1);
+
+    if (endCol <= startCol && endRow <= startRow) {
+      return;
+    }
+
+    uniqueRanges.set(`${startRow}-${endRow}-${startCol}-${endCol}`, { startRow, endRow, startCol, endCol });
+  });
+
+  return Array.from(uniqueRanges.values()).sort((left, right) => {
+    if (left.startRow !== right.startRow) {
+      return left.startRow - right.startRow;
+    }
+
+    if (left.endRow !== right.endRow) {
+      return left.endRow - right.endRow;
+    }
+
+    if (left.startCol !== right.startCol) {
+      return left.startCol - right.startCol;
+    }
+
+    return left.endCol - right.endCol;
+  });
+};
+
+const getLegacyMergedHeaderRange = (modelTable, columnCount) => {
+  if (!modelTable?.mergedHeader || columnCount <= 1) {
+    return [];
+  }
+
+  const endCol = Number.isInteger(modelTable.mergedHeaderEndColumn)
+    ? Math.max(0, Math.min(modelTable.mergedHeaderEndColumn, columnCount - 1))
+    : columnCount - 1;
+
+  if (endCol <= 0) {
+    return [];
+  }
+
+  return [{ startRow: 0, endRow: 0, startCol: 0, endCol }];
+};
+
+const getMergedHeaderRange = (mergeRanges) => (
+  Array.isArray(mergeRanges)
+    ? mergeRanges.find((range) => range.startRow === 0 && range.endRow === 0 && range.startCol === 0) || null
+    : null
+);
+
+const getMergeRangeForCell = (mergeRanges, rowIndex, colIndex) => (
+  Array.isArray(mergeRanges)
+    ? mergeRanges.find((range) => (
+      range.startRow <= rowIndex
+      && range.endRow >= rowIndex
+      && range.startCol <= colIndex
+      && range.endCol >= colIndex
+    )) || null
+    : null
+);
+
+const removeOverlappingMergeRanges = (mergeRanges, startRow, endRow, startCol, endCol) => (
+  (Array.isArray(mergeRanges) ? mergeRanges : []).filter((range) => (
+    range.endRow < startRow
+    || range.startRow > endRow
+    || range.endCol < startCol
+    || range.startCol > endCol
+  ))
+);
+
+const adjustMergeRangesForRemovedColumn = (mergeRanges, removedColumnIndex, rowCount, columnCount) => (
+  sanitizeMergeRanges(
+    (Array.isArray(mergeRanges) ? mergeRanges : []).map((range) => {
+      if (removedColumnIndex < range.startCol) {
+        return {
+          ...range,
+          startCol: range.startCol - 1,
+          endCol: range.endCol - 1
+        };
+      }
+
+      if (removedColumnIndex > range.endCol) {
+        return range;
+      }
+
+      return {
+        ...range,
+        endCol: range.endCol - 1
+      };
+    }),
+    rowCount,
+    columnCount
+  )
+);
+
+const adjustMergeRangesForRemovedRow = (mergeRanges, removedRowIndex, rowCount, columnCount) => (
+  sanitizeMergeRanges(
+    (Array.isArray(mergeRanges) ? mergeRanges : [])
+      .filter((range) => !(range.startRow === removedRowIndex && range.endRow === removedRowIndex))
+      .map((range) => (
+        removedRowIndex < range.startRow
+          ? { ...range, startRow: range.startRow - 1, endRow: range.endRow - 1 }
+          : removedRowIndex > range.endRow
+            ? range
+            : { ...range, endRow: range.endRow - 1 }
+      )),
+    rowCount,
+    columnCount
+  )
+);
+
+const createDragSelectionState = () => ({
+  tableIndex: null,
+  startRow: null,
+  startCol: null,
+  endRow: null,
+  endCol: null,
+  isDragging: false,
+  hasMoved: false
 });
 
 const createDynamicSection = () => ({
@@ -64,9 +224,25 @@ const normalizeModelTable = (modelTable) => {
       }
       return normalizedRow.slice(0, headers.length);
     })
-    : fallback.rows.map((row) => [...row]);
+    : [];
 
-  return { headers, rows };
+  const mergeRanges = sanitizeMergeRanges(
+    Array.isArray(modelTable.mergeRanges) && modelTable.mergeRanges.length > 0
+      ? modelTable.mergeRanges
+      : getLegacyMergedHeaderRange(modelTable, headers.length),
+    rows.length + 1,
+    headers.length
+  );
+
+  const mergedHeaderRange = getMergedHeaderRange(mergeRanges);
+
+  return {
+    headers,
+    rows,
+    mergeRanges,
+    mergedHeader: Boolean(mergedHeaderRange),
+    mergedHeaderEndColumn: mergedHeaderRange?.endCol ?? headers.length - 1
+  };
 };
 
 const normalizeTechnicalTables = (tables, legacyTitle = '', legacyTable = null) => {
@@ -146,6 +322,11 @@ const ProductForm = ({
   const [removedExistingImages, setRemovedExistingImages] = useState([]);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isSubCategoryDropdownOpen, setIsSubCategoryDropdownOpen] = useState(false);
+  const [isTableSizeOpen, setIsTableSizeOpen] = useState(false);
+  const [tablePickerPreview, setTablePickerPreview] = useState({});
+  const [dragSelection, setDragSelection] = useState(createDragSelectionState);
+  const [activeSheetCell, setActiveSheetCell] = useState(null);
+  const cellInputRefs = useRef({});
   const previews = [...existingImages, ...newImagePreviews];
 
   useEffect(() => {
@@ -168,9 +349,8 @@ const ProductForm = ({
         technicalTabLabel: extra.technicalTabLabel || '',
         productTabs: normalizeProductTabs(initialData.product_tabs, extra.dynamicSections),
         showFeatures: extra.showFeatures !== false && Boolean(extra.features && extra.features.length > 0),
-        hideModelData: extra.hideModelData || false,
+        hideModelData: false,
         showModelSection: extra.showModelSection !== false,
-        singleCellFirstRow: Boolean(extra.singleCellFirstRow),
         showQuoteButton: extra.showQuoteButton !== false,
         images: [],
         features: (extra.features && extra.features.length > 0) ? extra.features : [''],
@@ -181,7 +361,18 @@ const ProductForm = ({
 
       setFormData((current) => ({
         ...current,
-        modelTables: normalizeTechnicalTables(extra.modelTables, extra.modelTitle, extra.modelTable)
+        modelTables: normalizeTechnicalTables(extra.modelTables, extra.modelTitle, extra.modelTable).map((table, index) => ({
+          ...table,
+          modelTable: normalizeModelTable(
+            index === 0 && extra.singleCellFirstRow
+              ? {
+                ...table.modelTable,
+                mergedHeader: true,
+                mergedHeaderEndColumn: table.modelTable.mergedHeaderEndColumn ?? (table.modelTable.headers.length - 1)
+              }
+              : table.modelTable
+          )
+        }))
       }));
 
       const initialPreviews = buildInitialPreviewList(initialData.main_image, extra.images);
@@ -205,6 +396,22 @@ const ProductForm = ({
     setPrimaryPreview('');
     setRemovedExistingImages([]);
   }, [initialData]);
+
+  useEffect(() => {
+    const handlePointerUp = () => {
+      setDragSelection((current) => (
+        current.isDragging
+          ? { ...current, isDragging: false }
+          : current
+      ));
+    };
+
+    window.addEventListener('mouseup', handlePointerUp);
+
+    return () => {
+      window.removeEventListener('mouseup', handlePointerUp);
+    };
+  }, []);
 
   const getFilteredSubCategories = () => {
     // Se nenhuma categoria principal selecionada, mostra todas as subcategorias
@@ -307,7 +514,13 @@ const ProductForm = ({
       ...table,
       modelTable: {
         headers: table.modelTable.headers.filter((_, index) => index !== headerIndex),
-        rows: table.modelTable.rows.map((row) => row.filter((_, index) => index !== headerIndex))
+        rows: table.modelTable.rows.map((row) => row.filter((_, index) => index !== headerIndex)),
+        mergeRanges: adjustMergeRangesForRemovedColumn(
+          table.modelTable.mergeRanges,
+          headerIndex,
+          table.modelTable.rows.length + 1,
+          table.modelTable.headers.length - 1
+        )
       }
     }));
   };
@@ -316,6 +529,45 @@ const ProductForm = ({
     const currentTable = formData.modelTables[tableIndex];
     if (!currentTable || currentTable.modelTable.headers.length <= 1) return;
     removeTableHeader(tableIndex, currentTable.modelTable.headers.length - 1);
+  };
+
+  const resizeTable = (tableIndex, nextRowCount, nextColumnCount) => {
+    updateTechnicalTable(tableIndex, (table) => {
+      const columnCount = clampTableDimension(nextColumnCount, table.modelTable.headers.length || 1);
+      const rowCount = clampTableDimension(nextRowCount, table.modelTable.rows.length || 1);
+
+      const headers = Array.from({ length: columnCount }, (_, index) => (
+        table.modelTable.headers[index] ?? `Coluna ${index + 1}`
+      ));
+
+      const rows = Array.from({ length: rowCount }, (_, rowIndex) => {
+        const sourceRow = Array.isArray(table.modelTable.rows[rowIndex]) ? table.modelTable.rows[rowIndex] : [];
+        return Array.from({ length: columnCount }, (_, columnIndex) => sourceRow[columnIndex] ?? '');
+      });
+
+      return {
+        ...table,
+        modelTable: {
+          headers,
+          rows,
+          mergeRanges: sanitizeMergeRanges(table.modelTable.mergeRanges, rows.length + 1, headers.length)
+        }
+      };
+    });
+  };
+
+  const updateTablePickerPreview = (tableIndex, rows, columns) => {
+    setTablePickerPreview((current) => ({
+      ...current,
+      [tableIndex]: { rows, columns }
+    }));
+  };
+
+  const clearTablePickerPreview = (tableIndex, fallbackRows, fallbackColumns) => {
+    setTablePickerPreview((current) => ({
+      ...current,
+      [tableIndex]: { rows: fallbackRows, columns: fallbackColumns }
+    }));
   };
 
   const updateTableHeader = (tableIndex, headerIndex, value) => {
@@ -328,6 +580,219 @@ const ProductForm = ({
         modelTable: { ...table.modelTable, headers: newHeaders }
       };
     });
+  };
+
+  const startDragSelection = (tableIndex, rowIndex, colIndex) => {
+    setDragSelection({
+      tableIndex,
+      startRow: rowIndex,
+      startCol: colIndex,
+      endRow: rowIndex,
+      endCol: colIndex,
+      isDragging: true,
+      hasMoved: false
+    });
+  };
+
+  const updateDragSelection = (tableIndex, rowIndex, colIndex) => {
+    setDragSelection((current) => {
+      if (!current.isDragging || current.tableIndex !== tableIndex || current.startRow === null || current.startCol === null) {
+        return current;
+      }
+
+      const nextSelection = {
+        ...current,
+        endRow: rowIndex,
+        endCol: colIndex,
+        hasMoved: current.hasMoved
+          || current.startRow !== rowIndex
+          || current.startCol !== colIndex
+      };
+
+      return nextSelection;
+    });
+  };
+
+  const focusCellInput = (tableIndex, rowIndex, colIndex) => {
+    const key = `${tableIndex}-${rowIndex}-${colIndex}`;
+    const target = cellInputRefs.current[key];
+
+    if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+      requestAnimationFrame(() => {
+        target.focus();
+        target.select?.();
+      });
+    }
+  };
+
+  const finishDragSelection = (tableIndex, rowIndex, colIndex) => {
+    setDragSelection((current) => {
+      if (!current.isDragging || current.tableIndex !== tableIndex) {
+        return current;
+      }
+
+      const hasMoved = current.hasMoved
+        || current.startRow !== rowIndex
+        || current.startCol !== colIndex;
+
+      if (!hasMoved) {
+        focusCellInput(tableIndex, rowIndex, colIndex);
+      }
+
+      return {
+        ...current,
+        endRow: rowIndex,
+        endCol: colIndex,
+        isDragging: false,
+        hasMoved
+      };
+    });
+  };
+
+  const clearDragSelection = () => {
+    setDragSelection(createDragSelectionState());
+  };
+
+  const getSelectedMergeRange = (tableIndex) => {
+    if (dragSelection.tableIndex !== tableIndex || dragSelection.startRow === null || dragSelection.startCol === null || dragSelection.endCol === null) {
+      return null;
+    }
+
+    return {
+      startRow: Math.min(dragSelection.startRow, dragSelection.endRow ?? dragSelection.startRow),
+      endRow: Math.max(dragSelection.startRow, dragSelection.endRow ?? dragSelection.startRow),
+      startCol: Math.min(dragSelection.startCol, dragSelection.endCol),
+      endCol: Math.max(dragSelection.startCol, dragSelection.endCol)
+    };
+  };
+
+  const isCellInsideDragSelection = (tableIndex, rowIndex, colIndex) => {
+    const selectedRange = getSelectedMergeRange(tableIndex);
+
+    if (!selectedRange) {
+      return false;
+    }
+
+    return rowIndex >= selectedRange.startRow
+      && rowIndex <= selectedRange.endRow
+      && colIndex >= selectedRange.startCol
+      && colIndex <= selectedRange.endCol;
+  };
+
+  const applyMergeRange = (tableIndex) => {
+    const table = formData.modelTables[tableIndex];
+    if (!table) return;
+
+    const selection = getSelectedMergeRange(tableIndex);
+    if (!selection) return;
+
+    const { startRow, endRow, startCol, endCol } = selection;
+
+    if (endCol <= startCol && endRow <= startRow) {
+      return;
+    }
+
+    updateTechnicalTable(tableIndex, (currentTable) => ({
+      ...currentTable,
+      modelTable: normalizeModelTable({
+        ...currentTable.modelTable,
+        mergeRanges: [
+          ...removeOverlappingMergeRanges(currentTable.modelTable.mergeRanges, startRow, endRow, startCol, endCol),
+          { startRow, endRow, startCol, endCol }
+        ]
+      })
+    }));
+    clearDragSelection();
+  };
+
+  const removeMergeRange = (tableIndex) => {
+    const table = formData.modelTables[tableIndex];
+    if (!table) return;
+
+    const selection = getSelectedMergeRange(tableIndex);
+    if (!selection) return;
+
+    const mergeRange = getMergeRangeForCell(table.modelTable.mergeRanges, selection.startRow, selection.startCol) || selection;
+    const startRow = mergeRange.startRow;
+    const endRow = mergeRange.endRow;
+    const startCol = mergeRange.startCol;
+    const endCol = mergeRange.endCol;
+
+    updateTechnicalTable(tableIndex, (currentTable) => ({
+      ...currentTable,
+      modelTable: normalizeModelTable({
+        ...currentTable.modelTable,
+        mergeRanges: removeOverlappingMergeRanges(currentTable.modelTable.mergeRanges, startRow, endRow, startCol, endCol)
+      })
+    }));
+    clearDragSelection();
+  };
+
+  const clearSelectedRange = (tableIndex) => {
+    const table = formData.modelTables[tableIndex];
+    if (!table) return;
+
+    const selection = getSelectedMergeRange(tableIndex);
+    if (!selection) return;
+
+    updateTechnicalTable(tableIndex, (currentTable) => {
+      const headers = [...currentTable.modelTable.headers];
+      const rows = currentTable.modelTable.rows.map((row) => [...row]);
+      const cellsToClear = new Set();
+
+      for (let rowIndex = selection.startRow; rowIndex <= selection.endRow; rowIndex += 1) {
+        for (let colIndex = selection.startCol; colIndex <= selection.endCol; colIndex += 1) {
+          const mergeRange = getMergeRangeForCell(currentTable.modelTable.mergeRanges, rowIndex, colIndex);
+          const targetRow = mergeRange ? mergeRange.startRow : rowIndex;
+          const targetCol = mergeRange ? mergeRange.startCol : colIndex;
+
+          cellsToClear.add(`${targetRow}-${targetCol}`);
+        }
+      }
+
+      cellsToClear.forEach((cellKey) => {
+        const [targetRow, targetCol] = cellKey.split('-').map((value) => Number.parseInt(value, 10));
+
+        if (targetRow === 0) {
+          headers[targetCol] = '';
+          return;
+        }
+
+        if (rows[targetRow - 1]) {
+          rows[targetRow - 1][targetCol] = '';
+        }
+      });
+
+      return {
+        ...currentTable,
+        modelTable: {
+          ...currentTable.modelTable,
+          headers,
+          rows
+        }
+      };
+    });
+
+    clearDragSelection();
+  };
+
+  const handleSelectionDeleteKey = (event, tableIndex) => {
+    if (event.key !== 'Delete') {
+      return;
+    }
+
+    const selection = getSelectedMergeRange(tableIndex);
+    if (!selection) {
+      return;
+    }
+
+    const hasMultiCellSelection = selection.endRow > selection.startRow || selection.endCol > selection.startCol;
+    if (!hasMultiCellSelection) {
+      return;
+    }
+
+    event.preventDefault();
+    clearSelectedRange(tableIndex);
   };
 
   const addTableRow = (tableIndex) => {
@@ -346,13 +811,19 @@ const ProductForm = ({
 
   const removeTableRow = (tableIndex, rowIndex) => {
     const currentTable = formData.modelTables[tableIndex];
-    if (!currentTable || currentTable.modelTable.rows.length <= 1) return;
+    if (!currentTable || currentTable.modelTable.rows.length === 0) return;
 
     updateTechnicalTable(tableIndex, (table) => ({
       ...table,
       modelTable: {
         ...table.modelTable,
-        rows: table.modelTable.rows.filter((_, index) => index !== rowIndex)
+        rows: table.modelTable.rows.filter((_, index) => index !== rowIndex),
+        mergeRanges: adjustMergeRangesForRemovedRow(
+          table.modelTable.mergeRanges,
+          rowIndex + 1,
+          table.modelTable.rows.length,
+          table.modelTable.headers.length
+        )
       }
     }));
   };
@@ -367,6 +838,163 @@ const ProductForm = ({
         modelTable: { ...table.modelTable, rows: newRows }
       };
     });
+  };
+
+  const renderBuilderCells = ({
+    tableIndex,
+    rowNumber,
+    values,
+    isHeaderRow = false
+  }) => {
+    const table = formData.modelTables[tableIndex];
+    if (!table) return null;
+
+    return table.modelTable.headers.map((_, colIndex) => {
+      const mergeRange = getMergeRangeForCell(table.modelTable.mergeRanges, rowNumber - 1, colIndex);
+      const cellRefKey = `${tableIndex}-${rowNumber - 1}-${colIndex}`;
+      const isMergedOrigin = Boolean(
+        mergeRange
+        && mergeRange.startCol === colIndex
+        && mergeRange.startRow === rowNumber - 1
+      );
+      const isMergedCovered = Boolean(mergeRange && !isMergedOrigin);
+      const sharedProps = {
+        key: `${tableIndex}-${rowNumber}-${colIndex}`,
+        className: [
+          'builder-table__cell',
+          isHeaderRow ? 'builder-table__cell--header' : '',
+          mergeRange ? 'builder-table__cell--merged' : '',
+          isMergedOrigin ? 'builder-table__cell--merged-origin' : '',
+          isMergedCovered ? 'builder-table__cell--merged-covered' : '',
+          isCellInsideDragSelection(tableIndex, rowNumber - 1, colIndex) ? 'is-selection-preview' : '',
+          !isHeaderRow
+            && activeSheetCell?.tableIndex === tableIndex
+            && activeSheetCell?.rowIndex === rowNumber - 2
+            && activeSheetCell?.colIndex === colIndex
+            ? 'is-active'
+            : ''
+        ].filter(Boolean).join(' '),
+        onMouseDown: (event) => {
+          event.preventDefault();
+          startDragSelection(tableIndex, rowNumber - 1, colIndex);
+        },
+        onMouseEnter: () => updateDragSelection(tableIndex, rowNumber - 1, colIndex),
+        onMouseUp: () => finishDragSelection(tableIndex, rowNumber - 1, colIndex)
+      };
+
+      if (isHeaderRow) {
+        return (
+          <td {...sharedProps}>
+            <input
+              ref={(node) => {
+                if (node) {
+                  cellInputRefs.current[cellRefKey] = node;
+                } else {
+                  delete cellInputRefs.current[cellRefKey];
+                }
+              }}
+              value={values[colIndex] || ''}
+              onChange={(e) => updateTableHeader(tableIndex, colIndex, e.target.value)}
+              onKeyDown={(event) => handleSelectionDeleteKey(event, tableIndex)}
+            />
+          </td>
+        );
+      }
+
+      return (
+        <td {...sharedProps}>
+          <input
+            ref={(node) => {
+              if (node) {
+                cellInputRefs.current[cellRefKey] = node;
+              } else {
+                delete cellInputRefs.current[cellRefKey];
+              }
+            }}
+            type="text"
+            disabled={isMergedCovered}
+            value={values[colIndex] || ''}
+            onFocus={() => setActiveSheetCell({ tableIndex, rowIndex: rowNumber - 2, colIndex })}
+            onChange={(e) => updateTableCell(tableIndex, rowNumber - 2, colIndex, e.target.value)}
+            onPaste={(e) => handleTableCellPaste(e, tableIndex, rowNumber - 2, colIndex)}
+            onKeyDown={(event) => handleSelectionDeleteKey(event, tableIndex)}
+          />
+        </td>
+      );
+    });
+  };
+
+  const renderSelectionActions = (tableIndex) => {
+    const selectedRange = getSelectedMergeRange(tableIndex);
+    const table = formData.modelTables[tableIndex];
+
+    if (!selectedRange || !table) {
+      return null;
+    }
+
+    const selectedMergeRange = getMergeRangeForCell(
+      table.modelTable.mergeRanges,
+      selectedRange.startRow,
+      selectedRange.startCol
+    );
+    const canMergeSelection = selectedRange.endCol > selectedRange.startCol;
+    const canMergeVerticalSelection = selectedRange.endRow > selectedRange.startRow;
+    const canClearSelection = selectedRange.endCol > selectedRange.startCol || selectedRange.endRow > selectedRange.startRow;
+    const canUnmergeSelection = Boolean(
+      selectedMergeRange
+      && selectedRange.startRow >= selectedMergeRange.startRow
+      && selectedRange.endRow <= selectedMergeRange.endRow
+      && selectedRange.startCol >= selectedMergeRange.startCol
+      && selectedRange.endCol <= selectedMergeRange.endCol
+    );
+
+    if (!canMergeSelection && !canMergeVerticalSelection && !canUnmergeSelection && !canClearSelection) {
+      return null;
+    }
+
+    const labelRange = canUnmergeSelection ? selectedMergeRange : selectedRange;
+
+    return (
+      <div className="table-selection-actions">
+        <span className="table-selection-actions__label">
+          Seleção {getSpreadsheetColumnLabel(labelRange.startCol)}{labelRange.startRow + 1}:{getSpreadsheetColumnLabel(labelRange.endCol)}{labelRange.endRow + 1}
+        </span>
+        {canClearSelection && (
+          <button
+            type="button"
+            className="btn-secondary table-builder-toolbar-button table-builder-toolbar-button--remove"
+            onClick={() => clearSelectedRange(tableIndex)}
+          >
+            Apagar células
+          </button>
+        )}
+        {(canMergeSelection || canMergeVerticalSelection) && (
+          <button
+            type="button"
+            className="btn-secondary table-builder-toolbar-button table-builder-toolbar-button--merge"
+            onClick={() => applyMergeRange(tableIndex)}
+          >
+            Mesclar células
+          </button>
+        )}
+        {canUnmergeSelection && (
+          <button
+            type="button"
+            className="btn-secondary table-builder-toolbar-button table-builder-toolbar-button--remove"
+            onClick={() => removeMergeRange(tableIndex)}
+          >
+            Desfazer mescla
+          </button>
+        )}
+        <button
+          type="button"
+          className="btn-secondary table-builder-toolbar-button table-builder-toolbar-button--remove"
+          onClick={clearDragSelection}
+        >
+          Cancelar seleção
+        </button>
+      </div>
+    );
   };
 
   const parseBulkTablePaste = (rawText, expectedColumnCount) => {
@@ -517,15 +1145,17 @@ const ProductForm = ({
           || section.content
         )),
       showFeatures: formData.showFeatures,
-      hideModelData: formData.hideModelData,
+      hideModelData: false,
       showModelSection: formData.showModelSection,
-      singleCellFirstRow: formData.singleCellFirstRow,
       showQuoteButton: formData.showQuoteButton,
       features: formData.showFeatures ? formData.features.filter((f) => f.trim() !== '') : [],
       techSpecs: formData.techSpecs.filter((s) => s.label.trim() !== '' || s.value.trim() !== ''),
       modelTables: formData.modelTables.map((table) => ({
         title: table.title?.trim() || '',
-        modelTable: normalizeModelTable(table.modelTable)
+        modelTable: normalizeModelTable({
+          ...table.modelTable,
+          mergedHeader: Boolean(table.modelTable?.mergedHeader)
+        })
       })),
       modelTitle: formData.modelTables[0]?.title || '',
       modelTable: normalizeModelTable(formData.modelTables[0]?.modelTable),
@@ -882,71 +1512,17 @@ const ProductForm = ({
 
       <div className="admin-section-group">
         <span className="section-label">5. Configuração da Tabela</span>
-        <div className="product-form-options">
-          <label className="product-form-option">
-            <input
-              type="checkbox"
-              checked={formData.showModelSection}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  showModelSection: e.target.checked
-                })
-              }
-            />
-            <div>
-              <strong>Exibir tabela no site</strong>
-              <span>Desmarque se quiser salvar a tabela no painel, mas esconder a seção na página do produto.</span>
-            </div>
-          </label>
-
-          <label className="product-form-option">
-            <input
-              type="checkbox"
-              checked={formData.hideModelData}
-              disabled={!formData.showModelSection}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  hideModelData: e.target.checked
-                })
-              }
-            />
-            <div>
-              <strong>Mostrar apenas o cabeçalho</strong>
-              <span>Exibe só os títulos das colunas da tabela e oculta todas as linhas de dados.</span>
-            </div>
-          </label>
-
-          <label className="product-form-option">
-            <input
-              type="checkbox"
-              checked={formData.singleCellFirstRow}
-              disabled={!formData.showModelSection || formData.hideModelData}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  singleCellFirstRow: e.target.checked
-                })
-              }
-            />
-            <div>
-              <strong>Primeira linha em célula única</strong>
-              <span>Faz o cabeçalho da tabela ocupar todas as colunas com um único campo.</span>
-            </div>
-          </label>
-        </div>
-
-        <div className="form-group table-title-group">
+        <div className="table-title-group table-title-group--split">
+          <div className="form-group">
           <label>Nome da aba técnica</label>
           <input
             value={formData.technicalTabLabel}
             placeholder="Ex.: Informação Técnica, Técnico, Especificações"
             onChange={(e) => setFormData({ ...formData, technicalTabLabel: e.target.value })}
           />
-        </div>
+          </div>
 
-        <div className="form-group table-title-group">
+          <div className="form-group">
           <label>Título da Tabela</label>
           <p className="product-form-helper">
             Defina o nome que sera exibido acima da tabela técnica do produto.
@@ -956,9 +1532,15 @@ const ProductForm = ({
             placeholder="Ex.: Tabela Técnica / Modelos Disponíveis"
             onChange={(e) => updateTechnicalTableTitle(0, e.target.value)}
           />
+          </div>
         </div>
 
-        <div className={`table-builder-container ${formData.showModelSection ? '' : 'product-form-group-disabled'}`}>
+        <div
+          className={[
+            'table-builder-container',
+            isTableSizeOpen ? 'table-builder-container--size-open' : ''
+          ].filter(Boolean).join(' ')}
+        >
           <div className="table-builder-toolbar">
             <div className="table-builder-toolbar-copy">
               <span className="table-builder-kicker">Configuração da tabela</span>
@@ -966,103 +1548,127 @@ const ProductForm = ({
               <p>Cadastre os títulos principais e preencha as informações técnicas que serão exibidas no site.</p>
             </div>
             <div className="table-builder-toolbar-actions">
-              <button
-                disabled={!formData.showModelSection || formData.modelTables[0].modelTable.headers.length <= 1}
-                type="button"
-                className="btn-secondary table-builder-toolbar-button"
-                onClick={() => removeLastTableHeader(0)}
-              >
-                <Minus size={16} /> Remover Coluna
-              </button>
-              <button
-                disabled={!formData.showModelSection}
-                type="button"
-                className="btn-add table-builder-toolbar-button"
-                onClick={() => addTableHeader(0)}
-              >
-                <Plus size={16} /> Adicionar Coluna
-              </button>
+              {/* Dropdown: Tamanho da Grade */}
+              <div className="table-config-icon-dropdown">
+                <button
+                  type="button"
+                  className={`table-config-icon-trigger ${isTableSizeOpen ? 'is-active' : ''}`}
+                  onClick={() => setIsTableSizeOpen(!isTableSizeOpen)}
+                  title="Ajustar Tamanho da Grade"
+                >
+                  <Table size={20} />
+                </button>
+
+                {isTableSizeOpen && (
+                  <div className="multi-select-options table-config-dropdown-panel">
+                    <div
+                      className="table-size-picker"
+                      onMouseLeave={() => clearTablePickerPreview(0, formData.modelTables[0].modelTable.rows.length, formData.modelTables[0].modelTable.headers.length)}
+                    >
+                      <span className="table-size-picker__label">Criar grade visual</span>
+                      <div className="table-size-picker__grid">
+                        {Array.from({ length: 8 }).map((_, rowIndex) => (
+                          Array.from({ length: 8 }).map((__, columnIndex) => {
+                            const preview = tablePickerPreview[0] || {
+                              rows: formData.modelTables[0].modelTable.rows.length,
+                              columns: formData.modelTables[0].modelTable.headers.length
+                            };
+                            const isActive = rowIndex < preview.rows && columnIndex < preview.columns;
+
+                            return (
+                              <button
+                                key={`picker-main-${rowIndex}-${columnIndex}`}
+                                type="button"
+                                className={`table-size-picker__cell ${isActive ? 'is-active' : ''}`}
+                                onMouseEnter={() => updateTablePickerPreview(0, rowIndex + 1, columnIndex + 1)}
+                                onFocus={() => updateTablePickerPreview(0, rowIndex + 1, columnIndex + 1)}
+                                onClick={() => resizeTable(0, rowIndex + 1, columnIndex + 1)}
+                                aria-label={`Criar tabela ${rowIndex + 1} por ${columnIndex + 1}`}
+                              />
+                            );
+                          })
+                        ))}
+                      </div>
+                      <span className="table-size-picker__summary">
+                        {(tablePickerPreview[0]?.rows || formData.modelTables[0].modelTable.rows.length)} x {(tablePickerPreview[0]?.columns || formData.modelTables[0].modelTable.headers.length)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-          <table className="builder-table" style={{ '--table-column-count': formData.modelTables[0].modelTable.headers.length }}>
-            <thead>
-              <tr>
-                {formData.singleCellFirstRow ? (
-                  <th colSpan={formData.modelTables[0].modelTable.headers.length} className="builder-table__single-cell-row">
-                    <div>
-                      <input
-                        disabled={!formData.showModelSection}
-                        value={formData.modelTables[0].modelTable.headers[0] || ''}
-                        onChange={(e) => updateTableHeader(0, 0, e.target.value)}
-                      />
-                      <button
-                        disabled={!formData.showModelSection}
-                        type="button"
-                        className="table-remove-button"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        onClick={() => updateTableHeader(0, 0, '')}
-                        aria-label="Limpar cabeçalho da tabela"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  </th>
-                ) : (
-                  formData.modelTables[0].modelTable.headers.map((header, hIdx) => (
-                    <th key={hIdx}>
-                      <div>
-                        <input disabled={!formData.showModelSection} value={header} onChange={(e) => updateTableHeader(0, hIdx, e.target.value)} />
-                        <button disabled={!formData.showModelSection} type="button" className="table-remove-button" onClick={() => removeTableHeader(0, hIdx)}><X size={14} /></button>
-                      </div>
-                    </th>
-                  ))
-                )}
-                <th className="table-action-spacer" aria-hidden="true" />
-              </tr>
-            </thead>
-            {!formData.hideModelData && (
-              <tbody>
-                {formData.modelTables[0].modelTable.rows.map((row, rIdx) => (
-                  <tr key={rIdx}>
-                    {row.map((cell, cIdx) => (
-                      <td key={cIdx}>
-                        <textarea
-                          disabled={!formData.showModelSection}
-                          value={cell}
-                          onChange={(e) => {
-                            updateTableCell(0, rIdx, cIdx, e.target.value);
-                            autoResizeTableTextarea(e.target);
-                          }}
-                          onPaste={(e) => handleTableCellPaste(e, 0, rIdx, cIdx)}
-                          rows={3}
-                          style={{ height: '48px' }}
-                          ref={(element) => autoResizeTableTextarea(element)}
-                        />
-                      </td>
-                    ))}
-                    <td className="table-action-cell"><button disabled={!formData.showModelSection} type="button" className="btn-icon delete" onClick={() => removeTableRow(0, rIdx)}><Trash2 size={16} /></button></td>
-                  </tr>
+          <div className="table-builder-scroll-wrapper">
+            <table className="builder-table" style={{ '--table-column-count': formData.modelTables[0].modelTable.headers.length }}>
+              <colgroup>
+                <col className="builder-table__col-number" />
+                {formData.modelTables[0].modelTable.headers.map((_, hIdx) => (
+                  <col key={`main-col-${hIdx}`} className="builder-table__col-data" />
                 ))}
+                <col className="builder-table__col-action" />
+              </colgroup>
+              <thead>
+                <tr className="builder-table__sheet-row builder-table__sheet-row--labels">
+                  <th className="builder-table__corner-cell" aria-hidden="true" />
+                  {formData.modelTables[0].modelTable.headers.map((_, hIdx) => (
+                    <th key={`sheet-label-${hIdx}`} className="builder-table__sheet-label">
+                      {getSpreadsheetColumnLabel(hIdx)}
+                    </th>
+                  ))}
+                  <th className="table-action-spacer table-action-spacer--adder">
+                    <button
+                      type="button"
+                      className="table-grid-plus"
+                      onClick={() => addTableHeader(0)}
+                      aria-label="Adicionar coluna"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="builder-table__row-number">1</td>
+                  {renderBuilderCells({
+                    tableIndex: 0,
+                    rowNumber: 1,
+                    values: formData.modelTables[0].modelTable.headers,
+                    isHeaderRow: true
+                  })}
+                  <td className="table-action-cell table-action-cell--adder">
+                    <button
+                      type="button"
+                      className="table-grid-plus"
+                      onClick={() => addTableRow(0)}
+                      aria-label="Adicionar linha"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </td>
+                </tr>
+                {formData.modelTables[0].modelTable.rows.map((row, rIdx) => (
+                    <tr key={rIdx}>
+                      <td className="builder-table__row-number">{rIdx + 2}</td>
+                      {renderBuilderCells({
+                        tableIndex: 0,
+                        rowNumber: rIdx + 2,
+                        values: row
+                      })}
+                      <td className="table-action-cell"><button type="button" className="btn-icon delete" onClick={() => removeTableRow(0, rIdx)}><Trash2 size={16} /></button></td>
+                    </tr>
+                  ))}
               </tbody>
-            )}
-          </table>
-          {formData.hideModelData ? (
-            <p className="product-form-helper">
-              As linhas ficaram ocultas no painel porque esta tabela está configurada para mostrar apenas o cabeçalho no site.
-            </p>
-          ) : (
-            <button disabled={!formData.showModelSection} type="button" className="btn-add" onClick={() => addTableRow(0)}><Plus size={16} /> Adicionar Linha</button>
-          )}
+            </table>
+          </div>
+          {renderSelectionActions(0)}
         </div>
 
         {formData.modelTables.slice(1).map((tableConfig, extraIndex) => {
           const tableIndex = extraIndex + 1;
 
           return (
-            <div key={`technical-table-${tableIndex}`} className={`table-builder-container ${formData.showModelSection ? '' : 'product-form-group-disabled'}`}>
+            <div key={`technical-table-${tableIndex}`} className="table-builder-container">
               <div className="dynamic-section-card__header">
                 <strong>Tabela {tableIndex + 1}</strong>
                 <button
@@ -1093,105 +1699,125 @@ const ProductForm = ({
                   <h4>Organize colunas e linhas com mais clareza</h4>
                   <p>Cadastre os títulos principais e preencha as informações técnicas que serão exibidas no site.</p>
                 </div>
-                <div className="table-builder-toolbar-actions">
-                  <button
-                    disabled={!formData.showModelSection || tableConfig.modelTable.headers.length <= 1}
-                    type="button"
-                    className="btn-secondary table-builder-toolbar-button"
-                    onClick={() => removeLastTableHeader(tableIndex)}
-                  >
-                    <Minus size={16} /> Remover Coluna
-                  </button>
-                  <button
-                    disabled={!formData.showModelSection}
-                    type="button"
-                    className="btn-add table-builder-toolbar-button"
-                    onClick={() => addTableHeader(tableIndex)}
-                  >
-                    <Plus size={16} /> Adicionar Coluna
-                  </button>
+                <div
+                  className="table-size-picker"
+                  onMouseLeave={() => clearTablePickerPreview(tableIndex, tableConfig.modelTable.rows.length, tableConfig.modelTable.headers.length)}
+                >
+                  <span className="table-size-picker__label">Criar grade visual</span>
+                  <div className="table-size-picker__grid">
+                    {Array.from({ length: 8 }).map((_, rowIndex) => (
+                      Array.from({ length: 8 }).map((__, columnIndex) => {
+                        const preview = tablePickerPreview[tableIndex] || {
+                          rows: tableConfig.modelTable.rows.length,
+                          columns: tableConfig.modelTable.headers.length
+                        };
+                        const isActive = rowIndex < preview.rows && columnIndex < preview.columns;
+
+                        return (
+                          <button
+                            key={`picker-${tableIndex}-${rowIndex}-${columnIndex}`}
+                            type="button"
+                            className={`table-size-picker__cell ${isActive ? 'is-active' : ''}`}
+                            onMouseEnter={() => updateTablePickerPreview(tableIndex, rowIndex + 1, columnIndex + 1)}
+                            onFocus={() => updateTablePickerPreview(tableIndex, rowIndex + 1, columnIndex + 1)}
+                            onClick={() => resizeTable(tableIndex, rowIndex + 1, columnIndex + 1)}
+                            aria-label={`Criar tabela ${rowIndex + 1} por ${columnIndex + 1}`}
+                          />
+                        );
+                      })
+                    ))}
+                  </div>
+                  <span className="table-size-picker__summary">
+                    {(tablePickerPreview[tableIndex]?.rows || tableConfig.modelTable.rows.length)} x {(tablePickerPreview[tableIndex]?.columns || tableConfig.modelTable.headers.length)}
+                  </span>
                 </div>
               </div>
 
-              <table className="builder-table" style={{ '--table-column-count': tableConfig.modelTable.headers.length }}>
-                <thead>
-                  <tr>
-                    {formData.singleCellFirstRow ? (
-                      <th colSpan={tableConfig.modelTable.headers.length} className="builder-table__single-cell-row">
-                        <div>
-                          <input
-                            disabled={!formData.showModelSection}
-                            value={tableConfig.modelTable.headers[0] || ''}
-                            onChange={(e) => updateTableHeader(tableIndex, 0, e.target.value)}
-                          />
-                          <button
-                            disabled={!formData.showModelSection}
-                            type="button"
-                            className="table-remove-button"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                            onClick={() => updateTableHeader(tableIndex, 0, '')}
-                            aria-label={`Limpar cabeçalho da tabela ${tableIndex + 1}`}
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      </th>
-                    ) : (
-                      tableConfig.modelTable.headers.map((header, hIdx) => (
-                        <th key={hIdx}>
-                          <div>
-                            <input disabled={!formData.showModelSection} value={header} onChange={(e) => updateTableHeader(tableIndex, hIdx, e.target.value)} />
-                            <button disabled={!formData.showModelSection} type="button" className="table-remove-button" onClick={() => removeTableHeader(tableIndex, hIdx)}><X size={14} /></button>
-                          </div>
-                        </th>
-                      ))
-                    )}
-                    <th className="table-action-spacer" aria-hidden="true" />
-                  </tr>
-                </thead>
-                {!formData.hideModelData && (
-                  <tbody>
-                    {tableConfig.modelTable.rows.map((row, rIdx) => (
-                      <tr key={rIdx}>
-                        {row.map((cell, cIdx) => (
-                          <td key={cIdx}>
-                            <textarea
-                              disabled={!formData.showModelSection}
-                              value={cell}
-                              onChange={(e) => {
-                                updateTableCell(tableIndex, rIdx, cIdx, e.target.value);
-                                autoResizeTableTextarea(e.target);
-                              }}
-                              onPaste={(e) => handleTableCellPaste(e, tableIndex, rIdx, cIdx)}
-                              rows={3}
-                              style={{ height: '48px' }}
-                              ref={(element) => autoResizeTableTextarea(element)}
-                            />
-                          </td>
-                        ))}
-                        <td className="table-action-cell"><button disabled={!formData.showModelSection} type="button" className="btn-icon delete" onClick={() => removeTableRow(tableIndex, rIdx)}><Trash2 size={16} /></button></td>
-                      </tr>
+              <div className="table-builder-scroll-wrapper">
+                <table className="builder-table" style={{ '--table-column-count': tableConfig.modelTable.headers.length }}>
+                  <colgroup>
+                    <col className="builder-table__col-number" />
+                    {tableConfig.modelTable.headers.map((_, hIdx) => (
+                      <col key={`extra-col-${tableIndex}-${hIdx}`} className="builder-table__col-data" />
                     ))}
+                    <col className="builder-table__col-action" />
+                  </colgroup>
+                  <thead>
+                    <tr className="builder-table__sheet-row builder-table__sheet-row--labels">
+                      <th className="builder-table__corner-cell" aria-hidden="true" />
+                      {tableConfig.modelTable.headers.map((_, hIdx) => (
+                        <th key={`sheet-label-${tableIndex}-${hIdx}`} className="builder-table__sheet-label">
+                          {getSpreadsheetColumnLabel(hIdx)}
+                        </th>
+                      ))}
+                      <th className="table-action-spacer table-action-spacer--adder">
+                        <button
+                          type="button"
+                          className="table-grid-plus"
+                          onClick={() => addTableHeader(tableIndex)}
+                          aria-label={`Adicionar coluna na tabela ${tableIndex + 1}`}
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="builder-table__row-number">1</td>
+                      {renderBuilderCells({
+                        tableIndex,
+                        rowNumber: 1,
+                        values: tableConfig.modelTable.headers,
+                        isHeaderRow: true
+                      })}
+                      <td className="table-action-cell table-action-cell--adder">
+                        <button
+                          type="button"
+                          className="table-grid-plus"
+                          onClick={() => addTableRow(tableIndex)}
+                          aria-label={`Adicionar linha na tabela ${tableIndex + 1}`}
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                    {tableConfig.modelTable.rows.map((row, rIdx) => (
+                        <tr key={rIdx}>
+                          <td className="builder-table__row-number">{rIdx + 2}</td>
+                          {renderBuilderCells({
+                            tableIndex,
+                            rowNumber: rIdx + 2,
+                            values: row
+                          })}
+                          <td className="table-action-cell"><button type="button" className="btn-icon delete" onClick={() => removeTableRow(tableIndex, rIdx)}><Trash2 size={16} /></button></td>
+                        </tr>
+                      ))}
                   </tbody>
-                )}
-              </table>
-              {formData.hideModelData ? (
-                <p className="product-form-helper">
-                  As linhas ficaram ocultas no painel porque esta tabela esta configurada para mostrar apenas o cabeçalho no site.
-                </p>
-              ) : (
-                <button disabled={!formData.showModelSection} type="button" className="btn-add" onClick={() => addTableRow(tableIndex)}><Plus size={16} /> Adicionar Linha</button>
-              )}
+                </table>
+              </div>
+              {renderSelectionActions(tableIndex)}
             </div>
           );
         })}
 
-        <button disabled={!formData.showModelSection} type="button" className="btn-add" onClick={addTechnicalTable}>
+        <button type="button" className="btn-add" onClick={addTechnicalTable}>
           <Plus size={16} /> Adicionar Nova Tabela
         </button>
+
+        <div className="product-form-toggle-bar table-config-visibility-toggle">
+          <div className="product-form-toggle-copy">
+            <strong>Exibir tabela no site</strong>
+            <span>Status atual: {formData.showModelSection ? 'ON' : 'OFF'}</span>
+          </div>
+          <button
+            type="button"
+            className={`btn-secondary product-form-toggle-button ${formData.showModelSection ? 'is-on' : 'is-off'}`}
+            onClick={() => setFormData((current) => ({ ...current, showModelSection: !current.showModelSection }))}
+          >
+            {formData.showModelSection ? 'Ocultar no site' : 'Exibir no site'}
+          </button>
+        </div>
       </div>
 
       <div className="product-form-actions">

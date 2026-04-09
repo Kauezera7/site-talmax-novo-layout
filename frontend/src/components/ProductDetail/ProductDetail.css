@@ -530,6 +530,14 @@
   font-weight: 700;
 }
 
+.models-table th[colspan],
+.models-table th[rowspan],
+.models-table td[colspan],
+.models-table td[rowspan] {
+  text-align: center !important;
+  vertical-align: middle;
+}
+
 .models-table tbody tr:nth-child(even) td {
   background: #f8fbff;
 }
