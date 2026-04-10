@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { apiAssetPath, assetPath } from '../../../utils/assets';
+import { apiAssetPath } from '../../../utils/assets';
 
 const HomeCategoriesSection = ({ categories }) => {
   if (!categories.length) {
@@ -17,20 +17,21 @@ const HomeCategoriesSection = ({ categories }) => {
             to={`/categoria/${cat.slug}`}
             className="category-card"
           >
-            <div className="category-icon-wrapper">
-              <img
-                src={cat.icon_url ? apiAssetPath(cat.icon_url) : assetPath('img/placeholder.png')}
-                alt={cat.name}
-                className="category-custom-icon"
-                loading="lazy"
-                fetchPriority="low"
-                decoding="async"
-                onError={(event) => {
-                  event.currentTarget.onerror = null;
-                  event.currentTarget.src = assetPath('img/placeholder.png');
-                }}
-              />
-            </div>
+            {cat.icon_url && (
+              <div className="category-icon-wrapper">
+                <img
+                  src={apiAssetPath(cat.icon_url)}
+                  alt={cat.name}
+                  className="category-custom-icon"
+                  loading="lazy"
+                  fetchPriority="low"
+                  decoding="async"
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
             <h3>{cat.name}</h3>
           </Link>
         ))}

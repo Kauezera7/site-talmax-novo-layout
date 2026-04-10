@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { apiAssetPath, assetPath } from '../../../utils/assets';
+import { apiAssetPath } from '../../../utils/assets';
 
 const CustomPageHeroCentered = ({ page, navigate }) => {
   const accentColor = '#ff6a1a';
@@ -61,14 +61,19 @@ const CustomPageHeroCentered = ({ page, navigate }) => {
                 <div className="custom-page__launch-stage-top">
                   <div className="custom-page__launch-ring" />
                   <div className="custom-page__launch-ring custom-page__launch-ring--inner" />
-                  <motion.img
-                    src={featuredProduct.main_image ? apiAssetPath(featuredProduct.main_image) : assetPath('img/placeholder.png')}
-                    alt={featuredProduct.name}
-                    className="custom-page__launch-product-image"
-                    whileHover={{ scale: 1.04, rotate: -1.2 }}
-                    transition={{ duration: 0.35 }}
-                    onClick={() => navigate(`/produto/${featuredProduct.id}`)}
-                  />
+                  {featuredProduct.main_image && (
+                    <motion.img
+                      src={apiAssetPath(featuredProduct.main_image)}
+                      alt={featuredProduct.name}
+                      className="custom-page__launch-product-image"
+                      whileHover={{ scale: 1.04, rotate: -1.2 }}
+                      transition={{ duration: 0.35 }}
+                      onClick={() => navigate(`/produto/${featuredProduct.id}`)}
+                      onError={(event) => {
+                        event.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  )}
                 </div>
                 <div className="custom-page__launch-product-panel">
                   <span style={{ color: accentColor }}>LANÇAMENTO</span>

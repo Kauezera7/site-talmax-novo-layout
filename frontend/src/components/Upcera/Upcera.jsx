@@ -111,7 +111,7 @@ const Upcera = () => {
               id: p.id,
               name: p.name,
               description: p.description,
-              image: p.main_image ? apiAssetPath(p.main_image) : assetPath('img/placeholder.png'),
+              image: p.main_image ? apiAssetPath(p.main_image) : '',
               ...extra
             };
           });
@@ -190,14 +190,19 @@ const Upcera = () => {
                 >
                   <div className="image-stage" style={{ flex: '1', position: 'relative', display: 'flex', justifyContent: 'center' }}>
                     <div style={{ position: 'absolute', width: '100%', maxWidth: '400px', aspectRatio: '1/1', background: `radial-gradient(circle, ${accentColor}14 0%, transparent 70%)`, zIndex: 0, top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}></div>
-                    <motion.img
-                      src={product.image}
-                      alt={product.name}
-                      style={{ width: '100%', maxWidth: '550px', height: 'auto', zIndex: 1, filter: 'drop-shadow(0 30px 60px rgba(0, 0, 0, 0.2))', cursor: 'pointer' }}
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.5 }}
-                      onClick={() => navigate(`/produto/${product.id}`)}
-                    />
+                    {product.image && (
+                      <motion.img
+                        src={product.image}
+                        alt={product.name}
+                        style={{ width: '100%', maxWidth: '550px', height: 'auto', zIndex: 1, filter: 'drop-shadow(0 30px 60px rgba(0, 0, 0, 0.2))', cursor: 'pointer' }}
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.5 }}
+                        onClick={() => navigate(`/produto/${product.id}`)}
+                        onError={(event) => {
+                          event.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    )}
                   </div>
                   <div className="product-details" style={{ flex: '1.2' }}>
                     <div className="feature-header" style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
@@ -289,7 +294,7 @@ const Upcera = () => {
                     <ProductCard
                       product={{
                         ...p,
-                        image: p.main_image ? apiAssetPath(p.main_image) : assetPath('img/placeholder.png')
+                        image: p.main_image ? apiAssetPath(p.main_image) : ''
                       }}
                       index={index}
                     />

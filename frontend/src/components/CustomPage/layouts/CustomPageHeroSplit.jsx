@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ProductCard from '../../ProductCard/ProductCard';
-import { apiAssetPath, assetPath } from '../../../utils/assets';
+import { apiAssetPath } from '../../../utils/assets';
 import { getLayoutMeta } from './layoutMeta';
 
 const CustomPageHeroSplit = ({ page, navigate }) => {
@@ -71,7 +71,7 @@ const CustomPageHeroSplit = ({ page, navigate }) => {
                 index={index}
                 product={{
                   ...product,
-                  image: product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.png')
+                  image: product.main_image ? apiAssetPath(product.main_image) : ''
                 }}
               />
             ))}

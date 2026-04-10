@@ -15,7 +15,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
-import { apiAssetPath, assetPath } from '../../utils/assets';
+import { apiAssetPath } from '../../utils/assets';
 import { getNormalizedCategoryNames, getVisibleCategoryLabel } from '../../utils/productCategories';
 import './ProductCatalog.css';
 
@@ -98,9 +98,9 @@ const ProductCatalog = () => {
             name: product.name,
             allCategoryNames: productCatNames,
             category: getVisibleCategoryLabel(productCatNames, segmentNames),
-            image: product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.png'),
+            image: product.main_image ? apiAssetPath(product.main_image) : '',
             ...extra,
-            images: Array.isArray(extra.images) ? extra.images.map((image) => apiAssetPath(image)) : extra.images
+            images: Array.isArray(extra.images) ? extra.images.map((image) => apiAssetPath(image)).filter(Boolean) : extra.images
           };
         });
 

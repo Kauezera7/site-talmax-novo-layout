@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Edit, Trash2, Search, List, Plus, Eye, EyeOff } from 'lucide-react';
-import { apiAssetPath, assetPath } from '../../../utils/assets';
+import { apiAssetPath } from '../../../utils/assets';
 
 const parseExtraData = (value) => {
   if (!value) return {};
@@ -60,7 +60,15 @@ const ProductTable = ({ products, onCreate, onEdit, onDelete, onToggleActive, on
             onClick={() => onEdit(product)}
           >
             <div className="product-cell">
-              <img src={product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.png')} alt={product.name} />
+              {product.main_image && (
+                <img
+                  src={apiAssetPath(product.main_image)}
+                  alt={product.name}
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none';
+                  }}
+                />
+              )}
               <div className="product-info">
                 <h4>{product.name}</h4>
                 <p>ID: #{product.id}</p>

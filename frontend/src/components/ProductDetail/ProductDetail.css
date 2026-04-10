@@ -88,6 +88,15 @@
   overflow: hidden;
 }
 
+.main-image-card.is-empty::after {
+  content: 'Sem foto';
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .main-image-card img {
   width: 100%;
   height: 100%;

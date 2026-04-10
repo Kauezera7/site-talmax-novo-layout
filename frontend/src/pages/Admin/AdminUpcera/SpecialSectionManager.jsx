@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Save, CheckCircle, ChevronRight } from 'lucide-react';
-import { apiAssetPath, assetPath } from '../../../utils/assets';
+import { apiAssetPath } from '../../../utils/assets';
 
 const DISPLAY_MODE_OPTIONS = [
   { value: 'description', label: 'Descrição' },
@@ -270,7 +270,16 @@ const SpecialSectionManager = ({
                       {isSelected && <CheckCircle size={14} color="white" />}
                     </div>
                     <div className="product-select-image-shell">
-                      <img src={product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.png')} alt={product.name} className="product-select-image" />
+                      {product.main_image && (
+                        <img
+                          src={apiAssetPath(product.main_image)}
+                          alt={product.name}
+                          className="product-select-image"
+                          onError={(event) => {
+                            event.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
                     </div>
                     <div className="product-select-info">
                       <p className="product-select-name">{product.name}</p>

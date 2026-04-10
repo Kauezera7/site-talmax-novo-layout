@@ -7,17 +7,23 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import { assetPath } from '../../utils/assets';
 import './ProductCard.css';
 
+const getAvailableImages = (product) => (
+  [product.image, ...(Array.isArray(product.images) ? product.images : [])]
+    .filter(Boolean)
+    .filter((image, index, images) => images.indexOf(image) === index)
+);
+
 const ProductCard = ({ product, index, imageLoading = 'lazy', imageFetchPriority = 'auto' }) => {
-  const [activeImage, setActiveImage] = React.useState(product.image);
+  const availableImages = getAvailableImages(product);
+  const [activeImage, setActiveImage] = React.useState(availableImages[0] || '');
   const navigate = useNavigate();
 
   // Sincroniza a imagem ativa quando o produto muda
   React.useEffect(() => {
-    setActiveImage(product.image);
-  }, [product.image]);
+    setActiveImage(getAvailableImages(product)[0] || '');
+  }, [product]);
 
   const handleCardClick = () => {
     navigate(`/produto/${product.id}`);
@@ -35,21 +41,23 @@ const ProductCard = ({ product, index, imageLoading = 'lazy', imageFetchPriority
       onClick={handleCardClick}
       style={{ cursor: 'pointer' }}
     >
-      <div className="card-image-box">
-        <img 
-          src={activeImage} 
-          alt={product.name} 
-          loading={imageLoading}
-          fetchPriority={imageFetchPriority}
-          decoding="async"
-          onError={(e) => {
-            e.target.src = assetPath('img/placeholder.webp');
-          }} 
-        />
+      <div className={`card-image-box${activeImage ? '' : ' is-empty'}`}>
+        {activeImage && (
+          <img
+            src={activeImage}
+            alt={product.name}
+            loading={imageLoading}
+            fetchPriority={imageFetchPriority}
+            decoding="async"
+            onError={() => {
+              setActiveImage(availableImages.find((image) => image !== activeImage) || '');
+            }}
+          />
+        )}
         
-        {product.images && product.images.length > 1 && (
+        {availableImages.length > 1 && (
           <div className="product-thumbnails">
-            {product.images.map((img, idx) => (
+            {availableImages.map((img, idx) => (
               <img 
                 key={idx} 
                 src={img} 

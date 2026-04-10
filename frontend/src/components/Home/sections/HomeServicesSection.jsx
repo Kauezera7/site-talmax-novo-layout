@@ -2,30 +2,31 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation } from 'swiper/modules';
-import { apiAssetPath, assetPath } from '../../../utils/assets';
+import { apiAssetPath } from '../../../utils/assets';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
 const ServiceBanner = ({ service }) => {
   const imageSrc = service.image_url
     ? apiAssetPath(service.image_url)
-    : assetPath('img/placeholder.png');
+    : '';
 
   const bannerContent = (
     <>
-      <img
-        src={imageSrc}
-        alt=""
-        aria-hidden="true"
-        className="service-banner-media"
-        loading="lazy"
-        fetchPriority="low"
-        decoding="async"
-        onError={(event) => {
-          event.currentTarget.onerror = null;
-          event.currentTarget.src = assetPath('img/placeholder.png');
-        }}
-      />
+      {imageSrc && (
+        <img
+          src={imageSrc}
+          alt=""
+          aria-hidden="true"
+          className="service-banner-media"
+          loading="lazy"
+          fetchPriority="low"
+          decoding="async"
+          onError={(event) => {
+            event.currentTarget.style.display = 'none';
+          }}
+        />
+      )}
       <div className="service-banner-overlay">
         <strong>{service.name}</strong>
         <p>{service.description}</p>

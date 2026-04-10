@@ -3,7 +3,7 @@ import { AlertCircle, Copy, Eye, LayoutTemplate, Pencil, PlusCircle, Save, Trash
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAdmin } from '../../../context/AdminContext';
 import customPageService from '../../../services/customPageService';
-import { apiAssetPath, assetPath } from '../../../utils/assets';
+import { apiAssetPath } from '../../../utils/assets';
 import './AdminCustomPages.css';
 
 const LAYOUT_OPTIONS = [
@@ -487,11 +487,16 @@ const AdminCustomPages = () => {
                       onChange={() => handleProductToggle(product.id)}
                     />
                     <div className="admin-custom-pages__product-thumb-frame">
-                      <img
-                        className="admin-custom-pages__product-thumb"
-                        src={product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.webp')}
-                        alt={product.name}
-                      />
+                      {product.main_image && (
+                        <img
+                          className="admin-custom-pages__product-thumb"
+                          src={apiAssetPath(product.main_image)}
+                          alt={product.name}
+                          onError={(event) => {
+                            event.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
                     </div>
                     <div className="admin-custom-pages__product-meta">
                       <span>{product.name}</span>

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Package, Search, ExternalLink, Filter, Check, ChevronDown, Edit, Eye, EyeOff } from 'lucide-react';
 import { useAdmin } from '../../../context/AdminContext';
-import { apiAssetPath, assetPath } from '../../../utils/assets';
+import { apiAssetPath } from '../../../utils/assets';
 import './AdminProducts.css';
 
 const normalizeSearchValue = (value = '') => value.toString().toLowerCase().trim();
@@ -216,10 +216,15 @@ const AdminProductsList = ({ onOpenRegister, onEditProduct }) => {
                   >
                     <td>
                       <div className="admin-products-table__product">
-                        <img
-                          src={product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.png')}
-                          alt={product.name}
-                        />
+                        {product.main_image && (
+                          <img
+                            src={apiAssetPath(product.main_image)}
+                            alt={product.name}
+                            onError={(event) => {
+                              event.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        )}
                         <div>
                           <strong>{product.name}</strong>
                           <span>ID: #{product.id}</span>

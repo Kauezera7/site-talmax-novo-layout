@@ -20,7 +20,7 @@ import {
 import { motion } from 'framer-motion';
 import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
-import { apiAssetPath, assetPath } from '../../utils/assets';
+import { apiAssetPath } from '../../utils/assets';
 import { getVisibleCategoryLabel } from '../../utils/productCategories';
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -256,16 +256,16 @@ const ProductDetail = () => {
           category: getVisibleCategoryLabel(data.category_names || data.category_name || '', fixedSegmentNames),
           categoryIds: normalizeCategoryIds(data.category_ids),
           description: data.description,
-          image: data.main_image ? apiAssetPath(data.main_image) : assetPath('img/placeholder.png'),
+          image: data.main_image ? apiAssetPath(data.main_image) : '',
           product_tabs: Array.isArray(data.product_tabs) ? data.product_tabs : [],
           ...extra,
-          images: Array.isArray(extra.images) ? extra.images.map((image) => apiAssetPath(image)) : extra.images,
+          images: Array.isArray(extra.images) ? extra.images.map((image) => apiAssetPath(image)).filter(Boolean) : extra.images,
           modelTable: finalTable,
           modelTables: normalizeTechnicalTables(extra.modelTables, extra.modelTitle, finalTable)
         };
 
         setProduct(formattedProduct);
-        setActiveImage(formattedProduct.image);
+        setActiveImage(formattedProduct.image || (Array.isArray(formattedProduct.images) ? formattedProduct.images[0] : '') || '');
         setIsFeaturesCollapsed(true);
         setActiveTab('description');
         setAllProducts(others.map((currentProduct) => ({
@@ -278,7 +278,7 @@ const ProductDetail = () => {
           categoryIds: normalizeCategoryIds(currentProduct.category_ids),
           image: currentProduct.main_image
             ? apiAssetPath(currentProduct.main_image)
-            : assetPath('img/placeholder.png'),
+            : '',
           images: []
         })));
       } catch (err) {
@@ -293,17 +293,17 @@ const ProductDetail = () => {
   }, [id, navigate]);
 
   const handleNextImage = () => {
-    if (!product || !Array.isArray(product.images) || product.images.length === 0) return;
-    const currentIndex = product.images.indexOf(activeImage);
-    const nextIndex = (currentIndex + 1) % product.images.length;
-    setActiveImage(product.images[nextIndex]);
+    if (galleryImages.length === 0) return;
+    const currentIndex = galleryImages.indexOf(activeImage);
+    const nextIndex = (currentIndex + 1) % galleryImages.length;
+    setActiveImage(galleryImages[nextIndex]);
   };
 
   const handlePrevImage = () => {
-    if (!product || !Array.isArray(product.images) || product.images.length === 0) return;
-    const currentIndex = product.images.indexOf(activeImage);
-    const prevIndex = (currentIndex - 1 + product.images.length) % product.images.length;
-    setActiveImage(product.images[prevIndex]);
+    if (galleryImages.length === 0) return;
+    const currentIndex = galleryImages.indexOf(activeImage);
+    const prevIndex = (currentIndex - 1 + galleryImages.length) % galleryImages.length;
+    setActiveImage(galleryImages[prevIndex]);
   };
 
   const relatedProducts = useMemo(() => {
@@ -341,6 +341,12 @@ const ProductDetail = () => {
     () => normalizeDynamicSections(product?.product_tabs, product?.dynamicSections),
     [product]
   );
+  const galleryImages = useMemo(() => (
+    Array.from(new Set([
+      product?.image,
+      ...(Array.isArray(product?.images) ? product.images : [])
+    ].filter(Boolean)))
+  ), [product?.image, product?.images]);
 
   const descriptionTabLabel = useMemo(
     () => {
@@ -460,18 +466,18 @@ const ProductDetail = () => {
             animate={{ opacity: 1, x: 0 }}
             className="product-images-section"
           >
-            <div className="main-image-card">
-              <img src={activeImage} alt={product.name} />
-              {product.images && product.images.length > 1 && (
+            <div className={`main-image-card${activeImage ? '' : ' is-empty'}`}>
+              {activeImage && <img src={activeImage} alt={product.name} />}
+              {galleryImages.length > 1 && (
                 <>
                   <button className="img-nav-btn prev" onClick={handlePrevImage}><ChevronLeft size={24} /></button>
                   <button className="img-nav-btn next" onClick={handleNextImage}><ChevronRight size={24} /></button>
                 </>
               )}
             </div>
-            {product.images && product.images.length > 1 && (
+            {galleryImages.length > 1 && (
               <div className="thumbnail-grid">
-                {product.images.map((img, idx) => (
+                {galleryImages.map((img, idx) => (
                   <div
                     key={idx}
                     className={`thumb-item ${activeImage === img ? 'active' : ''}`}

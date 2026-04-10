@@ -6,7 +6,7 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import HeroSlider from '../HeroSlider/HeroSlider';
 import API_URL from '../../services/api';
-import { apiAssetPath, assetPath } from '../../utils/assets';
+import { apiAssetPath } from '../../utils/assets';
 import useDeferredSection from '../../hooks/useDeferredSection';
 import '../ProductCatalog/ProductCatalog.css';
 import './Home.css';
@@ -99,7 +99,7 @@ const Home = () => {
             return {
               ...product,
               featuredOrder: Number(extra.featured_order || 0),
-              image: product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.png'),
+              image: product.main_image ? apiAssetPath(product.main_image) : '',
               images: Array.isArray(extra.images) ? extra.images.map((image) => apiAssetPath(image)) : []
             };
           })

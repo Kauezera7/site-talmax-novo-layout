@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { apiAssetPath, assetPath } from '../../../utils/assets';
+import { apiAssetPath } from '../../../utils/assets';
 
 const parseExtraData = (value) => {
   if (!value) return {};
@@ -124,14 +124,19 @@ const CustomPageHeroLeft = ({ page, navigate }) => {
                       className="custom-page__showcase-glow"
                       style={{ background: `radial-gradient(circle, ${accentColor}18 0%, transparent 70%)` }}
                     />
-                    <motion.img
-                      src={product.main_image ? apiAssetPath(product.main_image) : assetPath('img/placeholder.png')}
-                      alt={product.name}
-                      className="custom-page__showcase-image"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.4 }}
-                      onClick={() => navigate(`/produto/${product.id}`)}
-                    />
+                    {product.main_image && (
+                      <motion.img
+                        src={apiAssetPath(product.main_image)}
+                        alt={product.name}
+                        className="custom-page__showcase-image"
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.4 }}
+                        onClick={() => navigate(`/produto/${product.id}`)}
+                        onError={(event) => {
+                          event.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    )}
                   </div>
 
                   <div className="custom-page__showcase-details">

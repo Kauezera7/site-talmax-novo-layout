@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check, Edit2, Trash2, Eye, EyeOff, Image as ImageIcon, X } from 'lucide-react';
-import { apiAssetPath, assetPath } from '../../../utils/assets';
+import { apiAssetPath } from '../../../utils/assets';
 
 const SegmentTable = ({
   segments,
@@ -30,14 +30,16 @@ const SegmentTable = ({
       {segments.map((segment) => (
         <article key={segment.id} className="admin-segments-card">
           <div className="admin-segments-card__media">
-            <img
-              src={segment.image_url ? apiAssetPath(segment.image_url) : assetPath('img/placeholder.png')}
-              alt={segment.name}
-              className="admin-segments-card__image"
-              onError={(event) => {
-                event.target.src = assetPath('img/placeholder.png');
-              }}
-            />
+            {segment.image_url && (
+              <img
+                src={apiAssetPath(segment.image_url)}
+                alt={segment.name}
+                className="admin-segments-card__image"
+                onError={(event) => {
+                  event.currentTarget.style.display = 'none';
+                }}
+              />
+            )}
             {editingOrderId === segment.id ? (
               <div className="admin-segments-card__order-editor">
                 <input

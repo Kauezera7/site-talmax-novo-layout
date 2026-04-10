@@ -9,7 +9,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade, Pagination, Navigation } from 'swiper/modules';
 import { slides as staticSlides } from '../../data';
 import API_URL from '../../services/api';
-import { apiAssetPath, assetPath } from '../../utils/assets';
+import { apiAssetPath } from '../../utils/assets';
 
 import 'swiper/css';
 import 'swiper/css/effect-fade';
@@ -158,8 +158,7 @@ const HeroSlider = () => {
                 fetchPriority={index === 0 ? 'high' : 'low'}
                 decoding="async"
                 onError={(event) => {
-                  event.currentTarget.onerror = null;
-                  event.currentTarget.src = assetPath('img/placeholder.png');
+                  event.currentTarget.style.display = 'none';
                 }}
                 onLoad={measureActiveBanner}
               />
