@@ -582,7 +582,6 @@ const ProductForm = ({
       );
       const isMergedCovered = Boolean(mergeRange && !isMergedOrigin);
       const sharedProps = {
-        key: `${tableIndex}-${rowNumber}-${colIndex}`,
         className: [
           'builder-table__cell',
           isHeaderRow ? 'builder-table__cell--header' : '',
@@ -607,7 +606,7 @@ const ProductForm = ({
 
       if (isHeaderRow) {
         return (
-          <td {...sharedProps}>
+          <td key={`${tableIndex}-${rowNumber}-${colIndex}`} {...sharedProps}>
             <input
               ref={(node) => {
                 if (node) {
@@ -625,7 +624,7 @@ const ProductForm = ({
       }
 
       return (
-        <td {...sharedProps}>
+        <td key={`${tableIndex}-${rowNumber}-${colIndex}`} {...sharedProps}>
           <input
             ref={(node) => {
               if (node) {
