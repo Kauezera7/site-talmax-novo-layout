@@ -8,11 +8,16 @@ const upload = require('../config/upload');
 const { safe } = require('../utils/common');
 const { requireAdminSession } = require('../auth/adminSession');
 const {
-  parseJsonObject,
-  parseIdArray,
   parseInteger,
   parseBooleanFlag
 } = require('../utils/requestParsers');
+const { sendValidationError } = require('../validation/requestValidation');
+const {
+  normalizeProductExtraDataForStorage,
+  normalizeStoredProductExtraData,
+  parseProductWriteRequest,
+  validateQuoteButtonPayload
+} = require('../validation/productSchemas');
 const {
   listProducts,
   findProductById,
@@ -27,6 +32,7 @@ const {
 } = require('../services/backupContentService');
 
 const router = express.Router();
+const MAX_PRODUCT_IMAGES = 50;
 
 const normalizeProductText = (value) => safe(value || '').trim();
 const normalizeImageList = (value) => (
@@ -97,18 +103,41 @@ const findDuplicateProductByName = async (connection, name, excludeId = null) =>
   return rows[0] || null;
 };
 
-const hasMainCategory = async (connection, categoryIds) => {
+const hasAllMainCategories = async (connection, categoryIds) => {
   if (categoryIds.length === 0) {
     return false;
   }
 
   const placeholders = categoryIds.map(() => '?').join(', ');
   const [rows] = await connection.query(
-    `SELECT id FROM categorias WHERE id IN (${placeholders}) LIMIT 1`,
+    `SELECT COUNT(DISTINCT id) AS total FROM categorias WHERE id IN (${placeholders})`,
     categoryIds
   );
 
-  return rows.length > 0;
+  return Number(rows?.[0]?.total || 0) === categoryIds.length;
+};
+
+const hasValidSubCategories = async (connection, categoryIds, subCategoryIds) => {
+  if (subCategoryIds.length === 0) {
+    return true;
+  }
+
+  if (categoryIds.length === 0) {
+    return false;
+  }
+
+  const placeholders = subCategoryIds.map(() => '?').join(', ');
+  const [rows] = await connection.query(
+    `SELECT id, category_id FROM sub_categorias WHERE id IN (${placeholders})`,
+    subCategoryIds
+  );
+
+  if (rows.length !== subCategoryIds.length) {
+    return false;
+  }
+
+  const mainCategorySet = new Set(categoryIds);
+  return rows.every((row) => mainCategorySet.has(Number(row.category_id)));
 };
 
 router.get('/', async (req, res) => {
@@ -160,14 +189,14 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
   try {
     await connection.beginTransaction();
 
-    const { name, category_ids, sub_category_ids, description, extra_data, is_active } = req.body;
-    const normalizedName = normalizeProductText(name);
-    const normalizedDescription = normalizeProductText(description);
-    const parsedCategoryIds = parseIdArray(category_ids);
-    const parsedSubCategoryIds = parseIdArray(sub_category_ids);
-    const primaryImageIndex = parseInteger(req.body.primary_image_index, 0);
+    const payload = parseProductWriteRequest(req.body);
+    const normalizedName = normalizeProductText(payload.name);
+    const normalizedDescription = normalizeProductText(payload.description);
+    const parsedCategoryIds = payload.category_ids;
+    const parsedSubCategoryIds = payload.sub_category_ids;
+    const primaryImageIndex = parseInteger(payload.primary_image_index, 0);
     const uploadedImagePaths = await persistUploadedFilesByType(req.files || [], { resourceType: 'produtos' });
-    const extra = parseJsonObject(extra_data);
+    const extra = normalizeProductExtraDataForStorage(payload.extra_data);
     const productTabs = Array.isArray(extra.product_tabs) ? extra.product_tabs : [];
     const retainedImagePaths = normalizeImageList(extra.images);
     const mergedImagePaths = reorderImagePaths([...retainedImagePaths, ...uploadedImagePaths], primaryImageIndex);
@@ -184,13 +213,25 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
       return res.status(400).json({ error: 'Adicione pelo menos uma foto para salvar o produto.' });
     }
 
-    if (!(await hasMainCategory(connection, parsedCategoryIds))) {
+    if (mergedImagePaths.length > MAX_PRODUCT_IMAGES) {
       await rollbackIfPossible(connection);
-      return res.status(400).json({ error: 'Selecione pelo menos uma categoria principal para salvar o produto.' });
+      return res.status(400).json({ error: `O produto pode ter no maximo ${MAX_PRODUCT_IMAGES} imagens.` });
+    }
+
+    if (!(await hasAllMainCategories(connection, parsedCategoryIds))) {
+      await rollbackIfPossible(connection);
+      return res.status(400).json({ error: 'As categorias principais informadas sao invalidas.' });
+    }
+
+    if (!(await hasValidSubCategories(connection, parsedCategoryIds, parsedSubCategoryIds))) {
+      await rollbackIfPossible(connection);
+      return res.status(400).json({
+        error: 'As subcategorias informadas precisam existir e pertencer as categorias principais selecionadas.'
+      });
     }
 
     extra.images = mergedImagePaths;
-    const isActive = parseBooleanFlag(is_active) ? 1 : 0;
+    const isActive = payload.is_active === false ? 0 : 1;
 
     const [result] = await connection.query(
       'INSERT INTO products (name, description, main_image, extra_data, is_active) VALUES (?, ?, ?, ?, ?)',
@@ -205,6 +246,9 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
     return res.status(201).json({ message: 'Produto criado!' });
   } catch (err) {
     await rollbackIfPossible(connection);
+    if (sendValidationError(res, err)) {
+      return res;
+    }
     console.error('ERRO NO POST PRODUCT:', err.message);
     return res.status(500).json({ error: err.message });
   } finally {
@@ -217,23 +261,26 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
   const productId = Number(req.params.id);
 
   try {
+    if (!Number.isInteger(productId) || productId <= 0) {
+      return res.status(400).json({ error: 'Produto invalido.' });
+    }
+
     await connection.beginTransaction();
 
-    const name = normalizeProductText(req.body.name);
-    const description = normalizeProductText(req.body.description);
-    const category_ids = req.body.category_ids;
-    const sub_category_ids = req.body.sub_category_ids;
-    const parsedCategoryIds = parseIdArray(category_ids);
-    const parsedSubCategoryIds = parseIdArray(sub_category_ids);
-    const primaryImageIndex = parseInteger(req.body.primary_image_index, 0);
-    const extra_data = req.body.extra_data;
-    const isActive = parseBooleanFlag(req.body.is_active) ? 1 : 0;
+    const payload = parseProductWriteRequest(req.body);
+    const name = normalizeProductText(payload.name);
+    const description = normalizeProductText(payload.description);
+    const parsedCategoryIds = payload.category_ids;
+    const parsedSubCategoryIds = payload.sub_category_ids;
+    const primaryImageIndex = parseInteger(payload.primary_image_index, 0);
+    const isActive = payload.is_active === false ? 0 : 1;
     const newImagePaths = await persistUploadedFilesByType(req.files || [], { resourceType: 'produtos' });
-    const extra = parseJsonObject(extra_data);
+    const requestedExtraData = payload.extra_data;
+    const extra = normalizeProductExtraDataForStorage(requestedExtraData);
     const productTabs = Array.isArray(extra.product_tabs) ? extra.product_tabs : [];
     const duplicateProduct = await findDuplicateProductByName(connection, name, productId);
     const retainedImagePaths = normalizeImageList(extra.images);
-    const removedImagePaths = normalizeImageList(extra.removedImages);
+    const removedImagePaths = normalizeImageList(requestedExtraData.removedImages);
     const currentProduct = await findProductById(connection, productId);
 
     if (!currentProduct) {
@@ -241,7 +288,7 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
       return res.status(404).json({ error: 'Produto nao encontrado.' });
     }
 
-    const currentExtra = parseJsonObject(currentProduct.extra_data);
+    const currentExtra = normalizeStoredProductExtraData(currentProduct.extra_data);
     const storedImagePaths = buildStoredImageList(currentProduct.main_image, currentExtra.images);
     const preservedImagePaths = [
       ...retainedImagePaths,
@@ -261,9 +308,21 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
       return res.status(400).json({ error: 'Adicione pelo menos uma foto para salvar o produto.' });
     }
 
-    if (!(await hasMainCategory(connection, parsedCategoryIds))) {
+    if (mergedImagePaths.length > MAX_PRODUCT_IMAGES) {
       await rollbackIfPossible(connection);
-      return res.status(400).json({ error: 'Selecione pelo menos uma categoria principal para salvar o produto.' });
+      return res.status(400).json({ error: `O produto pode ter no maximo ${MAX_PRODUCT_IMAGES} imagens.` });
+    }
+
+    if (!(await hasAllMainCategories(connection, parsedCategoryIds))) {
+      await rollbackIfPossible(connection);
+      return res.status(400).json({ error: 'As categorias principais informadas sao invalidas.' });
+    }
+
+    if (!(await hasValidSubCategories(connection, parsedCategoryIds, parsedSubCategoryIds))) {
+      await rollbackIfPossible(connection);
+      return res.status(400).json({
+        error: 'As subcategorias informadas precisam existir e pertencer as categorias principais selecionadas.'
+      });
     }
 
     extra.images = mergedImagePaths;
@@ -282,6 +341,9 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     return res.json({ message: 'Produto atualizado!' });
   } catch (err) {
     await rollbackIfPossible(connection);
+    if (sendValidationError(res, err)) {
+      return res;
+    }
     console.error('ERRO NO UPDATE PRODUCT:', err.message);
     return res.status(500).json({ error: err.message });
   } finally {
@@ -313,19 +375,27 @@ router.put('/:id/quote-button', requireAdminSession, async (req, res) => {
   const productId = Number(req.params.id);
 
   try {
+    if (!Number.isInteger(productId) || productId <= 0) {
+      return res.status(400).json({ error: 'Produto invalido.' });
+    }
+
+    const payload = validateQuoteButtonPayload(req.body || {});
     const product = await findProductById(connection, productId, { includeInactive: true });
 
     if (!product) {
       return res.status(404).json({ error: 'Produto nao encontrado.' });
     }
 
-    const extra = parseJsonObject(product.extra_data);
-    extra.showQuoteButton = parseBooleanFlag(req.body?.showQuoteButton);
+    const extra = normalizeStoredProductExtraData(product.extra_data);
+    extra.showQuoteButton = payload.showQuoteButton;
 
     await connection.query('UPDATE products SET extra_data = ? WHERE id = ?', [JSON.stringify(extra), productId]);
 
     return res.json({ message: 'Botao de orcamento atualizado!' });
   } catch (err) {
+    if (sendValidationError(res, err)) {
+      return res;
+    }
     return res.status(500).json({ error: err.message });
   } finally {
     releaseIfPossible(connection);

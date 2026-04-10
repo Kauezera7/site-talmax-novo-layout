@@ -5,20 +5,15 @@
 const express = require('express');
 const db = require('../../config/database');
 const { requireAdminSession } = require('../auth/adminSession');
+const { sendValidationError } = require('../validation/requestValidation');
+const {
+  normalizeStoredProductExtraData,
+  validateSpecialSectionPayload
+} = require('../validation/productSchemas');
 
 const router = express.Router();
 
 const VALID_DISPLAY_MODES = new Set(['description', 'features', 'none']);
-
-const parseExtraData = (value) => {
-  if (!value) return {};
-
-  try {
-    return typeof value === 'string' ? JSON.parse(value) : value;
-  } catch (error) {
-    return {};
-  }
-};
 
 const normalizeDisplayMode = (value) => (
   VALID_DISPLAY_MODES.has(value) ? value : 'features'
@@ -32,19 +27,14 @@ const saveSpecialSectionProducts = async (req, res, config) => {
   const connection = await db.getConnection();
 
   try {
-    const { selected_products } = req.body;
-
-    if (!Array.isArray(selected_products)) {
-      return res.status(400).json({ error: 'O campo selected_products deve ser um array.' });
-    }
+    const { selected_products } = validateSpecialSectionPayload(req.body || {});
 
     const normalizedProducts = selected_products
       .map((item) => ({
-        id: Number(item.id),
+        id: item.id,
         order: Number(item.order) || 0,
         displayMode: normalizeDisplayMode(item.displayMode)
-      }))
-      .filter((item) => Number.isInteger(item.id) && item.id > 0);
+      }));
 
     const selectedIds = normalizedProducts.map((item) => item.id);
     const selectedIdSet = new Set(selectedIds);
@@ -58,6 +48,15 @@ const saveSpecialSectionProducts = async (req, res, config) => {
        WHERE ${config.flagColumn} = TRUE${selectedIds.length > 0 ? ` OR id IN (${selectedIdPlaceholders})` : ''}`,
       selectedIds
     );
+    const foundProductIdSet = new Set(affectedProducts.map((product) => Number(product.id)));
+    const missingProductIds = selectedIds.filter((id) => !foundProductIdSet.has(id));
+
+    if (missingProductIds.length > 0) {
+      await connection.rollback().catch(() => {});
+      return res.status(400).json({
+        error: `Os seguintes produtos nao foram encontrados: ${missingProductIds.join(', ')}.`
+      });
+    }
 
     if (config.orderColumn) {
       await connection.query(`UPDATE products SET ${config.flagColumn} = FALSE, ${config.orderColumn} = 0`);
@@ -68,7 +67,7 @@ const saveSpecialSectionProducts = async (req, res, config) => {
     for (const product of affectedProducts) {
       if (selectedIdSet.has(product.id)) continue;
 
-      const extra = parseExtraData(product.extra_data);
+      const extra = normalizeStoredProductExtraData(product.extra_data);
       if (config.sectionKey) {
         const specialSectionDisplay = { ...(extra.specialSectionDisplay || {}) };
         delete specialSectionDisplay[config.sectionKey];
@@ -89,7 +88,7 @@ const saveSpecialSectionProducts = async (req, res, config) => {
 
     for (const item of normalizedProducts) {
       const existingProduct = affectedProducts.find((product) => product.id === item.id);
-      const extra = parseExtraData(existingProduct?.extra_data);
+      const extra = normalizeStoredProductExtraData(existingProduct?.extra_data);
       if (config.sectionKey) {
         const specialSectionDisplay = { ...(extra.specialSectionDisplay || {}) };
         specialSectionDisplay[config.sectionKey] = item.displayMode;
@@ -117,6 +116,9 @@ const saveSpecialSectionProducts = async (req, res, config) => {
     return res.json({ message: config.successMessage });
   } catch (err) {
     await connection.rollback().catch(() => {});
+    if (sendValidationError(res, err)) {
+      return res;
+    }
     console.error(`ERRO AO SALVAR ${parseSectionLabel(config)} NO BACKEND:`, err.message);
     return res.status(500).json({ error: err.message });
   } finally {

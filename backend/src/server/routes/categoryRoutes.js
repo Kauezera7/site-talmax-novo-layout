@@ -7,7 +7,8 @@ const db = require('../../config/database');
 const upload = require('../config/upload');
 const { safe } = require('../utils/common');
 const { requireAdminSession } = require('../auth/adminSession');
-const { parseBooleanFlag } = require('../utils/requestParsers');
+const { sendValidationError } = require('../validation/requestValidation');
+const { validateCategoryWritePayload } = require('../validation/contentSchemas');
 const { persistUploadedFile } = require('../services/fileStorageService');
 const { listBackupCategories } = require('../services/backupContentService');
 const { sanitizeServedImageUrl } = require('../config/imageStorage');
@@ -94,46 +95,59 @@ router.get('/', async (req, res) => {
 
 router.post('/', requireAdminSession, upload.single('icon'), async (req, res) => {
   try {
-    const { name, slug, is_visible, parent_id } = req.body;
+    const payload = validateCategoryWritePayload({
+      name: req.body.name,
+      slug: req.body.slug,
+      is_visible: req.body.is_visible,
+      parent_id: req.body.parent_id === 'null' || req.body.parent_id === '' ? undefined : req.body.parent_id
+    });
     const icon_url = req.file
       ? await persistUploadedFile(req.file, { resourceType: 'categorias' })
       : null;
-    const visible = parseBooleanFlag(is_visible) ? 1 : 0;
+    const visible = payload.is_visible === false ? 0 : 1;
 
-    if (parent_id && parent_id !== 'null' && parent_id !== '') {
+    if (payload.parent_id) {
       await db.query(
         'INSERT INTO sub_categorias (category_id, name, slug, display_order) VALUES (?, ?, ?, ?)',
-        [Number(parent_id), safe(name) || '', safe(slug) || '', 0]
+        [payload.parent_id, safe(payload.name) || '', safe(payload.slug) || '', 0]
       );
       return res.status(201).json({ message: 'Subcategoria criada!' });
     }
 
     await db.query(
       'INSERT INTO categorias (name, slug, icon_url, display_order, is_visible) VALUES (?, ?, ?, ?, ?)',
-      [safe(name) || '', safe(slug) || '', safe(icon_url), 0, visible]
+      [safe(payload.name) || '', safe(payload.slug) || '', safe(icon_url), 0, visible]
     );
     return res.status(201).json({ message: 'Categoria criada!' });
   } catch (err) {
+    if (sendValidationError(res, err)) {
+      return res;
+    }
     return res.status(500).json({ error: err.message });
   }
 });
 
 router.put('/:id', requireAdminSession, upload.single('icon'), async (req, res) => {
   try {
-    const { name, slug, is_visible, parent_id } = req.body;
-    const visible = parseBooleanFlag(is_visible) ? 1 : 0;
+    const payload = validateCategoryWritePayload({
+      name: req.body.name,
+      slug: req.body.slug,
+      is_visible: req.body.is_visible,
+      parent_id: req.body.parent_id === 'null' || req.body.parent_id === '' ? undefined : req.body.parent_id
+    });
+    const visible = payload.is_visible === false ? 0 : 1;
     const { id } = req.params;
 
-    if (parent_id && parent_id !== 'null' && parent_id !== '') {
+    if (payload.parent_id) {
       await db.query(
         'UPDATE sub_categorias SET name = ?, slug = ?, category_id = ?, is_visible = ? WHERE id = ?',
-        [safe(name) || '', safe(slug) || '', Number(parent_id), visible, id]
+        [safe(payload.name) || '', safe(payload.slug) || '', payload.parent_id, visible, id]
       );
       return res.json({ message: 'Subcategoria atualizada!' });
     }
 
     let query = 'UPDATE categorias SET name = ?, slug = ?, is_visible = ?';
-    const params = [safe(name) || '', safe(slug) || '', visible];
+    const params = [safe(payload.name) || '', safe(payload.slug) || '', visible];
 
     if (req.file) {
       query += ', icon_url = ?';
@@ -146,6 +160,9 @@ router.put('/:id', requireAdminSession, upload.single('icon'), async (req, res) 
     await db.query(query, params.map(safe));
     return res.json({ message: 'Categoria atualizada!' });
   } catch (err) {
+    if (sendValidationError(res, err)) {
+      return res;
+    }
     return res.status(500).json({ error: err.message });
   }
 });
