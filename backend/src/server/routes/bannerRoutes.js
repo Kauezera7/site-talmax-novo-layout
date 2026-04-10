@@ -10,6 +10,7 @@ const { requireAdminSession } = require('../auth/adminSession');
 const { parseBooleanFlag, parseInteger } = require('../utils/requestParsers');
 const { persistUploadedFile } = require('../services/fileStorageService');
 const { listBackupBanners } = require('../services/backupContentService');
+const { sanitizeServedImageUrl } = require('../config/imageStorage');
 
 const router = express.Router();
 let cachedBannerSchemaState = null;
@@ -74,10 +75,16 @@ router.get('/', async (req, res) => {
   try {
     const schemaState = await getBannerSchemaState();
     const [rows] = await db.query(buildBannerListQuery(schemaState));
-    res.json(rows);
+    res.json(rows.map((row) => ({
+      ...row,
+      image_url: sanitizeServedImageUrl(row.image_url)
+    })));
   } catch (err) {
     if (shouldUseBackupFallback) {
-      res.json(listBackupBanners());
+      res.json(listBackupBanners().map((row) => ({
+        ...row,
+        image_url: sanitizeServedImageUrl(row.image_url)
+      })));
       return;
     }
 

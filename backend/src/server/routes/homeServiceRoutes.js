@@ -9,6 +9,7 @@ const { safe } = require('../utils/common');
 const { parseBooleanFlag, parseInteger } = require('../utils/requestParsers');
 const { persistUploadedFile } = require('../services/fileStorageService');
 const { listBackupHomeServices } = require('../services/backupContentService');
+const { sanitizeServedImageUrl } = require('../config/imageStorage');
 
 const router = express.Router();
 let homeServicesColumnsReady = false;
@@ -149,6 +150,7 @@ const buildHomeServicesQuery = (schemaState) => {
 
 const normalizeHomeServiceRow = (row) => ({
   ...row,
+  image_url: sanitizeServedImageUrl(row.image_url),
   link_target_type: row.link_target_type || null,
   custom_page_id: row.custom_page_id ? Number(row.custom_page_id) : null,
   custom_page_title: row.custom_page_title || '',
@@ -295,7 +297,7 @@ router.get('/', async (req, res) => {
     res.json(services);
   } catch (err) {
     console.error('Erro ao buscar servicos da home:', err);
-    res.json(listBackupHomeServices());
+    res.json(listBackupHomeServices().map(normalizeHomeServiceRow));
   }
 });
 

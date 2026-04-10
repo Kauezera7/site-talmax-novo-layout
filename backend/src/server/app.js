@@ -4,7 +4,6 @@
  */
 const express = require('express');
 const multer = require('multer');
-const fs = require('fs');
 const path = require('path');
 const corsMiddleware = require('./config/cors');
 const { getServedImageDirs } = require('./config/imageStorage');
@@ -20,6 +19,21 @@ const customPageRoutes = require('./routes/customPageRoutes');
 const digitalGroupRoutes = require('./routes/digitalGroupRoutes');
 
 const MAX_FILE_SIZE_MB = Number(process.env.UPLOAD_MAX_FILE_SIZE_MB || 15);
+const INLINE_IMAGE_PLACEHOLDER = [
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Talmax">',
+  '<defs>',
+  '<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">',
+  '<stop offset="0%" stop-color="#0f3f75"/>',
+  '<stop offset="100%" stop-color="#1f2937"/>',
+  '</linearGradient>',
+  '</defs>',
+  '<rect width="1200" height="630" fill="url(#bg)"/>',
+  '<circle cx="960" cy="140" r="90" fill="rgba(255,255,255,0.12)"/>',
+  '<circle cx="210" cy="520" r="130" fill="rgba(255,255,255,0.08)"/>',
+  '<text x="80" y="300" fill="#ffffff" font-family="Arial, sans-serif" font-size="84" font-weight="700">Talmax</text>',
+  '<text x="80" y="370" fill="#dbeafe" font-family="Arial, sans-serif" font-size="32">Imagem indisponivel</text>',
+  '</svg>'
+].join('');
 
 const createApp = () => {
   const app = express();
@@ -33,13 +47,9 @@ const createApp = () => {
     app.use('/img', express.static(directoryPath));
   });
   app.use('/img', (req, res) => {
-    const fallbackImagePath = path.resolve(__dirname, '../../../frontend/public/img/placeholder.png');
-
-    if (fs.existsSync(fallbackImagePath)) {
-      return res.sendFile(fallbackImagePath);
-    }
-
-    return res.status(404).end();
+    res.type('image/svg+xml');
+    res.set('Cache-Control', 'public, max-age=3600');
+    return res.send(INLINE_IMAGE_PLACEHOLDER);
   });
   app.use(express.static(frontendDistPath));
 

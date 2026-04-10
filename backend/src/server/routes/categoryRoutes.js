@@ -10,6 +10,7 @@ const { requireAdminSession } = require('../auth/adminSession');
 const { parseBooleanFlag } = require('../utils/requestParsers');
 const { persistUploadedFile } = require('../services/fileStorageService');
 const { listBackupCategories } = require('../services/backupContentService');
+const { sanitizeServedImageUrl } = require('../config/imageStorage');
 
 const router = express.Router();
 let cachedCategorySchemaState = null;
@@ -73,12 +74,15 @@ router.get('/', async (req, res) => {
     const schemaState = await getCategorySchemaState();
     const query = buildCategoryListQuery(schemaState);
     const [rows] = await db.query(query);
-    res.json(rows);
+    res.json(rows.map((row) => ({
+      ...row,
+      icon_url: sanitizeServedImageUrl(row.icon_url)
+    })));
   } catch (err) {
     if (shouldUseBackupFallback) {
       res.json(listBackupCategories().map((category) => ({
         ...category,
-        icon_url: null
+        icon_url: sanitizeServedImageUrl(category.icon_url)
       })));
       return;
     }
