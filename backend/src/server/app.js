@@ -7,6 +7,7 @@ const multer = require('multer');
 const path = require('path');
 const corsMiddleware = require('./config/cors');
 const { getServedImageDirs } = require('./config/imageStorage');
+const applyTrustProxy = require('./seguranca/trustProxy');
 const applySecurityHeaders = require('./seguranca/helmet');
 const adminAuthRoutes = require('./routes/adminAuthRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
@@ -40,6 +41,7 @@ const createApp = () => {
   const frontendDistPath = path.resolve(__dirname, '../../../frontend/dist');
   const imageDirectories = getServedImageDirs();
 
+  applyTrustProxy(app);
   applySecurityHeaders(app);
   app.use(corsMiddleware);
   app.use(express.json());

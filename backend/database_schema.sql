@@ -123,6 +123,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) NOT NULL,
     password VARCHAR(255) NOT NULL,
     full_name VARCHAR(100) DEFAULT NULL,
+    bloq_user TINYINT NOT NULL DEFAULT 1,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uk_users_username (username)
@@ -291,12 +292,13 @@ ON DUPLICATE KEY UPDATE
     logo_url = VALUES(logo_url),
     content = VALUES(content);
 
-INSERT INTO users (id, username, password, full_name) VALUES
-(1, 'admin', 'talmax123', 'Administrador Talmax')
+INSERT INTO users (id, username, password, full_name, bloq_user) VALUES
+(1, 'admin', 'talmax123', 'Administrador Talmax', 1)
 ON DUPLICATE KEY UPDATE
     username = VALUES(username),
     password = VALUES(password),
-    full_name = VALUES(full_name);
+    full_name = VALUES(full_name),
+    bloq_user = VALUES(bloq_user);
 
 -- ======================================================
 -- FIM DO SCRIPT

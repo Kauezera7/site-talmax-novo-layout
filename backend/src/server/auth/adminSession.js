@@ -4,8 +4,17 @@
  */
 const crypto = require('crypto');
 const db = require('../../config/database');
+const {
+  clearAdminLoginRateLimitByUsername,
+  getAdminLoginRateLimitStateByUsername,
+  getRetryAfterSecondsFromResetTime,
+  normalizeAdminUsername
+} = require('../seguranca/adminLoginRateLimit');
 
 const ADMIN_SESSION_COOKIE = 'talmax-admin-session';
+const ADMIN_USER_FREE_FLAG_VALUE = 1;
+const ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE = 2;
+
 if (!process.env.ADMIN_JWT_SECRET) {
   throw new Error('A variavel ADMIN_JWT_SECRET nao foi definida no ambiente.');
 }
@@ -14,6 +23,8 @@ const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 const ADMIN_JWT_EXPIRES_IN_SECONDS = Number(process.env.ADMIN_JWT_EXPIRES_IN_SECONDS || 60 * 60 * 8);
 const isProduction = process.env.NODE_ENV === 'production';
 const ADMIN_COOKIE_SAME_SITE = String(process.env.ADMIN_COOKIE_SAME_SITE || (isProduction ? 'none' : 'lax')).toLowerCase();
+
+let usersTableHasBloqUserColumn = null;
 
 const safeEqual = (valueA, valueB) => {
   const bufferA = Buffer.from(String(valueA));
@@ -140,6 +151,67 @@ const getAdminCookieOptions = () => ({
   maxAge: ADMIN_JWT_EXPIRES_IN_SECONDS * 1000
 });
 
+const usersTableSupportsBloqUser = async () => {
+  if (typeof usersTableHasBloqUserColumn === 'boolean') {
+    return usersTableHasBloqUserColumn;
+  }
+
+  const [columns] = await db.query("SHOW COLUMNS FROM users LIKE 'bloq_user'");
+  usersTableHasBloqUserColumn = columns.length > 0;
+
+  return usersTableHasBloqUserColumn;
+};
+
+const getAdminUserByUsername = async (username) => {
+  const normalizedUsername = normalizeAdminUsername(username);
+
+  if (!normalizedUsername) {
+    return null;
+  }
+
+  const selectQuery = (await usersTableSupportsBloqUser())
+    ? 'SELECT id, username, password, full_name, bloq_user FROM users WHERE LOWER(username) = ? LIMIT 1'
+    : 'SELECT id, username, password, full_name, 1 AS bloq_user FROM users WHERE LOWER(username) = ? LIMIT 1';
+
+  const [users] = await db.query(selectQuery, [normalizedUsername]);
+  return users[0] || null;
+};
+
+const setAdminBlockState = async (adminUserId, value) => {
+  if (!await usersTableSupportsBloqUser()) {
+    const error = new Error('A coluna bloq_user nao existe na tabela users. Execute a migration antes de usar o desbloqueio manual.');
+    error.code = 'BLOQ_USER_COLUMN_MISSING';
+    throw error;
+  }
+
+  await db.query(
+    'UPDATE users SET bloq_user = ? WHERE id = ? LIMIT 1',
+    [value, adminUserId]
+  );
+};
+
+const ensureAdminUserIsNotTemporarilyBlocked = async (adminUser, res) => {
+  if (!adminUser || Number(adminUser.bloq_user || ADMIN_USER_FREE_FLAG_VALUE) !== ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE) {
+    return true;
+  }
+
+  const rateLimitState = await getAdminLoginRateLimitStateByUsername(adminUser.username);
+  const resetTime = rateLimitState?.resetTime instanceof Date ? rateLimitState.resetTime : null;
+
+  if (!resetTime || resetTime.getTime() <= Date.now()) {
+    await setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE);
+    adminUser.bloq_user = ADMIN_USER_FREE_FLAG_VALUE;
+    return true;
+  }
+
+  res.status(429).json({
+    error: 'Muitas tentativas de login. Aguarde alguns minutos antes de tentar novamente.',
+    retry_after_seconds: getRetryAfterSecondsFromResetTime(resetTime)
+  });
+
+  return false;
+};
+
 const requireAdminSession = (req, res, next) => {
   const token = getAdminSessionToken(req);
   const session = verifyJwtToken(token);
@@ -161,16 +233,24 @@ const loginAdmin = async (req, res) => {
       return res.status(400).json({ error: 'Informe usuario e senha.' });
     }
 
-    const [users] = await db.query(
-      'SELECT id, username, password, full_name FROM users WHERE username = ? LIMIT 1',
-      [username]
-    );
+    const adminUser = await getAdminUserByUsername(username);
 
-    const adminUser = users[0];
-
-    if (!adminUser || !verifyAdminPassword(password, adminUser.password)) {
+    if (!adminUser) {
       return res.status(401).json({ error: 'Credenciais invalidas.' });
     }
+
+    const canContinueLogin = await ensureAdminUserIsNotTemporarilyBlocked(adminUser, res);
+
+    if (!canContinueLogin) {
+      return undefined;
+    }
+
+    if (!verifyAdminPassword(password, adminUser.password)) {
+      return res.status(401).json({ error: 'Credenciais invalidas.' });
+    }
+
+    await clearAdminLoginRateLimitByUsername(adminUser.username);
+    await setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE).catch(() => null);
 
     const sessionPayload = {
       id: adminUser.id,
@@ -190,6 +270,41 @@ const loginAdmin = async (req, res) => {
   }
 };
 
+const unlockAdminLoginByUser = async (req, res) => {
+  try {
+    const { username } = req.body || {};
+
+    if (!normalizeAdminUsername(username)) {
+      return res.status(400).json({ error: 'Informe o usuario que deve ser liberado.' });
+    }
+
+    const adminUser = await getAdminUserByUsername(username);
+
+    if (!adminUser) {
+      return res.status(404).json({ error: 'Usuario admin nao encontrado.' });
+    }
+
+    await setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE);
+    await clearAdminLoginRateLimitByUsername(adminUser.username);
+
+    return res.json({
+      message: 'Usuario desbloqueado com sucesso. Oriente a pessoa a recarregar a pagina e tentar de novo.',
+      user: {
+        id: adminUser.id,
+        username: adminUser.username,
+        full_name: adminUser.full_name,
+        bloq_user: ADMIN_USER_FREE_FLAG_VALUE
+      }
+    });
+  } catch (error) {
+    if (error.code === 'BLOQ_USER_COLUMN_MISSING') {
+      return res.status(503).json({ error: error.message });
+    }
+
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 const getAdminSession = (req, res) => {
   res.json({ user: req.adminSession });
 };
@@ -202,6 +317,7 @@ const logoutAdmin = (req, res) => {
 module.exports = {
   requireAdminSession,
   loginAdmin,
+  unlockAdminLoginByUser,
   getAdminSession,
   logoutAdmin
 };

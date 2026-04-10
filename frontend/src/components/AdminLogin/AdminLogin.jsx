@@ -5,6 +5,22 @@ import { loginAdmin, validateAdminSession } from '../../services/adminAuth';
 import { ADMIN_SESSION_EXPIRED_MESSAGE } from '../../services/adminSessionEvents';
 import './AdminLogin.css';
 
+const getRemainingLockSeconds = (lockExpiresAt) => {
+  if (!lockExpiresAt) {
+    return 0;
+  }
+
+  return Math.max(0, Math.ceil((lockExpiresAt - Date.now()) / 1000));
+};
+
+const formatCountdown = (totalSeconds) => {
+  const safeSeconds = Math.max(0, totalSeconds);
+  const minutes = Math.floor(safeSeconds / 60);
+  const seconds = safeSeconds % 60;
+
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
+
 const AdminLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,6 +31,31 @@ const AdminLogin = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [lockExpiresAt, setLockExpiresAt] = useState(null);
+  const [lockRemainingSeconds, setLockRemainingSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!lockExpiresAt) {
+      setLockRemainingSeconds(0);
+      return undefined;
+    }
+
+    const updateRemainingTime = () => {
+      const remainingSeconds = getRemainingLockSeconds(lockExpiresAt);
+      setLockRemainingSeconds(remainingSeconds);
+
+      if (remainingSeconds <= 0) {
+        setLockExpiresAt(null);
+      }
+    };
+
+    updateRemainingTime();
+    const intervalId = window.setInterval(updateRemainingTime, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [lockExpiresAt]);
 
   useEffect(() => {
     if (location.state?.sessionExpired) {
@@ -65,18 +106,34 @@ const AdminLogin = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (lockRemainingSeconds > 0) {
+      setError('Muitas tentativas de login.');
+      return;
+    }
+
     setError('');
     setIsLoading(true);
 
     try {
       await loginAdmin(formData);
+      setLockExpiresAt(null);
       navigate('/admin/painel');
     } catch (loginError) {
+      if (loginError.retryAfterSeconds) {
+        setLockExpiresAt(Date.now() + (loginError.retryAfterSeconds * 1000));
+      }
+
       setError(loginError.message);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const isLocked = lockRemainingSeconds > 0;
+  const displayedError = isLocked
+    ? 'Muitas tentativas de login. Tente novamente mais tarde.'
+    : error;
 
   if (isCheckingSession) {
     return <div className="admin-login-page"><div className="admin-login-shell">Carregando...</div></div>;
@@ -100,7 +157,7 @@ const AdminLogin = () => {
           </div>
 
           <label className="admin-login-field">
-            <span>Usuário</span>
+            <span>Usuario</span>
             <div className="admin-login-input">
               <User size={18} />
               <input
@@ -108,8 +165,9 @@ const AdminLogin = () => {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                placeholder="Digite seu usuário"
+                placeholder="Digite seu usuario"
                 autoComplete="username"
+                disabled={isLoading}
                 required
               />
             </div>
@@ -126,15 +184,16 @@ const AdminLogin = () => {
                 onChange={handleChange}
                 placeholder="Digite sua senha"
                 autoComplete="current-password"
+                disabled={isLoading}
                 required
               />
             </div>
           </label>
 
-          {error && <div className="admin-login-error">{error}</div>}
+          {displayedError && <div className="admin-login-error">{displayedError}</div>}
 
-          <button type="submit" className="admin-login-submit" disabled={isLoading}>
-            {isLoading ? 'Entrando...' : 'Acessar painel'}
+          <button type="submit" className="admin-login-submit" disabled={isLoading || isLocked}>
+            {isLoading ? 'Entrando...' : isLocked ? `Aguarde ${formatCountdown(lockRemainingSeconds)}` : 'Acessar painel'}
           </button>
         </form>
       </div>

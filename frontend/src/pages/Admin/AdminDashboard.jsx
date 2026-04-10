@@ -18,7 +18,8 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Menu
+  Menu,
+  ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin, AdminProvider } from '../../context/AdminContext';
@@ -37,6 +38,7 @@ const AdminSegments = lazy(() => import('./AdminSegments/AdminSegments'));
 const AdminTalmaxDigital = lazy(() => import('./AdminTalmaxDigital/AdminTalmaxDigital'));
 const AdminDigitalGroups = lazy(() => import('./AdminTalmaxDigital/AdminDigitalGroups'));
 const AdminCustomPages = lazy(() => import('./AdminCustomPages/AdminCustomPages'));
+const AdminSecurity = lazy(() => import('./AdminSecurity/AdminSecurity'));
 
 const AdminLoadingScreen = ({ label = 'Carregando painel...' }) => (
   <div className="app-loader-overlay app-loader-overlay-admin" role="status" aria-live="polite" aria-label={label}>
@@ -129,7 +131,8 @@ const AdminDashboardContent = () => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-    { id: 'categories', label: 'Categorias', icon: <Layers size={20} /> }
+    { id: 'categories', label: 'Categorias', icon: <Layers size={20} /> },
+    { id: 'security', label: 'Seguranca', icon: <ShieldCheck size={20} /> }
   ];
   const catalogItems = [
     { id: 'products', label: 'Cadastro de Produtos', icon: <Package size={18} /> },
@@ -181,6 +184,7 @@ const AdminDashboardContent = () => {
           'Carregando lista de produtos...'
         );
       case 'categories': return withAdminSectionLoader(<AdminCategories />, 'Carregando categorias...');
+      case 'security': return withAdminSectionLoader(<AdminSecurity />, 'Carregando seguranca do login...');
       case 'banners': return withAdminSectionLoader(<AdminBanners />, 'Carregando banners...');
       case 'featured': return withAdminSectionLoader(<AdminFeatured />, 'Carregando destaques da home...');
       case 'segments': return withAdminSectionLoader(<AdminSegments />, 'Carregando segmentos...');
