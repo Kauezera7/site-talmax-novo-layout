@@ -52,6 +52,32 @@ const parseIdArray = (value) => {
   );
 };
 
+const parseStringArray = (value) => {
+  if (value === undefined || value === null || value === '') {
+    return [];
+  }
+
+  let parsedValue = value;
+
+  if (typeof value === 'string') {
+    try {
+      parsedValue = JSON.parse(value);
+    } catch (error) {
+      parsedValue = value.split(',');
+    }
+  }
+
+  const list = Array.isArray(parsedValue) ? parsedValue : [parsedValue];
+
+  return Array.from(
+    new Set(
+      list
+        .map((item) => String(item ?? '').trim())
+        .filter(Boolean)
+    )
+  );
+};
+
 const getUploadedImagePaths = (files = []) => files.map((file) => file?.filename ? `/img/${file.filename}` : null).filter(Boolean);
 
 module.exports = {
@@ -59,5 +85,6 @@ module.exports = {
   parseInteger,
   parseJsonObject,
   parseIdArray,
+  parseStringArray,
   getUploadedImagePaths
 };

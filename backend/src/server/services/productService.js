@@ -133,11 +133,138 @@ const formatProductRow = (row) => ({
   is_3d_printer: Number(row.is_3d_printer) === 1
 });
 
+const normalizeTextSearch = (value = '') => (
+  sanitizeTextInput(value || '', { preserveNewlines: false })
+    .trim()
+    .toLowerCase()
+);
+
+const normalizeSlugList = (value = []) => (
+  Array.from(new Set(
+    (Array.isArray(value) ? value : [])
+      .map((item) => sanitizeTextInput(item || '', { preserveNewlines: false }).trim())
+      .filter(Boolean)
+  ))
+);
+
+const buildProductListWhereClause = (options = {}) => {
+  const {
+    includeInactive = false,
+    search = '',
+    categorySlugs = []
+  } = options;
+
+  const conditions = [];
+  const params = [];
+  const normalizedSearch = normalizeTextSearch(search);
+  const filteredCategorySlugs = normalizeSlugList(categorySlugs);
+
+  if (!includeInactive) {
+    conditions.push('p.is_active = 1');
+  }
+
+  if (normalizedSearch) {
+    const searchWildcard = `%${normalizedSearch}%`;
+
+    conditions.push(`
+      (
+        LOWER(TRIM(p.name)) LIKE ?
+        OR EXISTS (
+          SELECT 1
+          FROM categorias c
+          JOIN product_categorias pc ON c.id = pc.category_id
+          WHERE pc.product_id = p.id
+            AND LOWER(TRIM(c.name)) LIKE ?
+        )
+        OR EXISTS (
+          SELECT 1
+          FROM sub_categorias sc
+          JOIN product_sub_categorias psc ON sc.id = psc.sub_category_id
+          WHERE psc.product_id = p.id
+            AND LOWER(TRIM(sc.name)) LIKE ?
+        )
+      )
+    `);
+
+    params.push(searchWildcard, searchWildcard, searchWildcard);
+  }
+
+  if (filteredCategorySlugs.length > 0) {
+    conditions.push(`
+      (
+        EXISTS (
+          SELECT 1
+          FROM categorias c
+          JOIN product_categorias pc ON c.id = pc.category_id
+          WHERE pc.product_id = p.id
+            AND c.slug IN (?)
+        )
+        OR EXISTS (
+          SELECT 1
+          FROM sub_categorias sc
+          JOIN product_sub_categorias psc ON sc.id = psc.sub_category_id
+          WHERE psc.product_id = p.id
+            AND sc.slug IN (?)
+        )
+      )
+    `);
+
+    params.push(filteredCategorySlugs, filteredCategorySlugs);
+  }
+
+  return {
+    normalizedSearch,
+    whereClause: conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '',
+    params
+  };
+};
+
 const listProducts = async (db, options = {}) => {
   const { includeInactive = false } = options;
   const whereClause = includeInactive ? '' : ' WHERE p.is_active = 1';
   const [rows] = await db.query(`${PRODUCT_SELECT_QUERY}${whereClause} ORDER BY p.id DESC`);
   return attachTabsToProducts(db, rows.map(formatProductRow));
+};
+
+const listProductsPage = async (db, options = {}) => {
+  const requestedPage = Number(options.page) || 1;
+  const requestedLimit = Number(options.limit) || 12;
+  const page = Math.max(1, requestedPage);
+  const limit = Math.min(Math.max(1, requestedLimit), 60);
+  const { normalizedSearch, whereClause, params } = buildProductListWhereClause(options);
+
+  const [countRows] = await db.query(
+    `SELECT COUNT(DISTINCT p.id) AS total FROM products p${whereClause}`,
+    params
+  );
+
+  const total = Number(countRows?.[0]?.total || 0);
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const safePage = Math.min(page, totalPages);
+  const offset = (safePage - 1) * limit;
+  const orderParams = normalizedSearch ? [`${normalizedSearch}%`] : [];
+  const orderClause = normalizedSearch
+    ? ' ORDER BY CASE WHEN LOWER(TRIM(p.name)) LIKE ? THEN 0 ELSE 1 END, p.name ASC, p.id DESC'
+    : ' ORDER BY p.id DESC';
+
+  const [rows] = await db.query(
+    `${PRODUCT_SELECT_QUERY}${whereClause}${orderClause} LIMIT ? OFFSET ?`,
+    [...params, ...orderParams, limit, offset]
+  );
+
+  const items = await attachTabsToProducts(db, rows.map(formatProductRow));
+
+  return {
+    items,
+    pagination: {
+      page: safePage,
+      limit,
+      total,
+      totalPages,
+      hasNextPage: safePage < totalPages,
+      hasPreviousPage: safePage > 1
+    }
+  };
 };
 
 const findProductById = async (db, productId, options = {}) => {
@@ -209,6 +336,7 @@ const replaceProductTabs = async (connection, productId, tabs = []) => {
 module.exports = {
   formatProductRow,
   listProducts,
+  listProductsPage,
   findProductById,
   attachProductCategories,
   replaceProductTabs,

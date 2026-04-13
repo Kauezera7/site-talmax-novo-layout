@@ -9,7 +9,8 @@ const { safe } = require('../utils/common');
 const { requireAdminSession } = require('../auth/adminSession');
 const {
   parseInteger,
-  parseBooleanFlag
+  parseBooleanFlag,
+  parseStringArray
 } = require('../utils/requestParsers');
 const {
   normalizeProductExtraDataForStorage,
@@ -19,6 +20,7 @@ const {
 } = require('../validation/productSchemas');
 const {
   listProducts,
+  listProductsPage,
   findProductById,
   attachProductCategories,
   replaceProductTabs,
@@ -27,15 +29,24 @@ const {
 const { persistUploadedFilesByType } = require('../services/fileStorageService');
 const {
   listBackupProducts,
-  findBackupProductById
+  findBackupProductById,
+  listBackupCategories
 } = require('../services/backupContentService');
 const { wrapError } = require('../utils/errorHandling');
 const logger = require('../utils/logger');
 
 const router = express.Router();
 const MAX_PRODUCT_IMAGES = 50;
+const DEFAULT_PUBLIC_PRODUCT_PAGE_SIZE = 12;
+const MAX_PUBLIC_PRODUCT_PAGE_SIZE = 60;
 
 const normalizeProductText = (value) => safe(value || '').trim();
+const normalizeSearchableText = (value = '') => (
+  normalizeProductText(value)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+);
 const normalizeImageList = (value) => (
   Array.isArray(value)
     ? value.map((imagePath) => safe(imagePath)).filter(Boolean)
@@ -141,16 +152,143 @@ const hasValidSubCategories = async (connection, categoryIds, subCategoryIds) =>
   return rows.every((row) => mainCategorySet.has(Number(row.category_id)));
 };
 
+const shouldUseProductPagination = (query = {}) => (
+  query.page !== undefined
+  || query.limit !== undefined
+  || query.search !== undefined
+  || query.category_slugs !== undefined
+);
+
+const buildPublicProductPagination = (query = {}) => {
+  const page = Math.max(1, parseInteger(query.page, 1));
+  const limit = Math.min(
+    Math.max(1, parseInteger(query.limit, DEFAULT_PUBLIC_PRODUCT_PAGE_SIZE)),
+    MAX_PUBLIC_PRODUCT_PAGE_SIZE
+  );
+
+  return {
+    page,
+    limit,
+    search: normalizeProductText(query.search || ''),
+    categorySlugs: parseStringArray(query.category_slugs)
+  };
+};
+
+const filterBackupProducts = (products, categories, options = {}) => {
+  const normalizedSearch = normalizeSearchableText(options.search || '');
+  const normalizedCategorySlugs = parseStringArray(options.categorySlugs).map(normalizeSearchableText);
+
+  if (!normalizedSearch && normalizedCategorySlugs.length === 0) {
+    return products;
+  }
+
+  const categoriesBySlug = new Map(
+    (Array.isArray(categories) ? categories : []).map((category) => [
+      normalizeSearchableText(category.slug),
+      category
+    ])
+  );
+
+  const categoryNamesToMatch = new Set();
+
+  normalizedCategorySlugs.forEach((slug) => {
+    const matchedCategory = categoriesBySlug.get(slug);
+
+    if (!matchedCategory) {
+      return;
+    }
+
+    categoryNamesToMatch.add(normalizeSearchableText(matchedCategory.name));
+
+    if (!matchedCategory.parent_id) {
+      categories
+        .filter((category) => Number(category.parent_id) === Number(matchedCategory.id))
+        .forEach((childCategory) => categoryNamesToMatch.add(normalizeSearchableText(childCategory.name)));
+    }
+  });
+
+  return products.filter((product) => {
+    const searchableText = normalizeSearchableText([
+      product.name,
+      product.category_names
+    ].filter(Boolean).join(' '));
+
+    const matchesSearch = !normalizedSearch || searchableText.includes(normalizedSearch);
+
+    if (!matchesSearch) {
+      return false;
+    }
+
+    if (categoryNamesToMatch.size === 0) {
+      return true;
+    }
+
+    const productCategoryNames = String(product.category_names || '')
+      .split(',')
+      .map((categoryName) => normalizeSearchableText(categoryName))
+      .filter(Boolean);
+
+    return productCategoryNames.some((categoryName) => categoryNamesToMatch.has(categoryName));
+  });
+};
+
+const paginateProducts = (products, options = {}) => {
+  const page = Math.max(1, parseInteger(options.page, 1));
+  const limit = Math.min(
+    Math.max(1, parseInteger(options.limit, DEFAULT_PUBLIC_PRODUCT_PAGE_SIZE)),
+    MAX_PUBLIC_PRODUCT_PAGE_SIZE
+  );
+  const total = Array.isArray(products) ? products.length : 0;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const safePage = Math.min(page, totalPages);
+  const startIndex = (safePage - 1) * limit;
+  const items = (Array.isArray(products) ? products : []).slice(startIndex, startIndex + limit);
+
+  return {
+    items,
+    pagination: {
+      page: safePage,
+      limit,
+      total,
+      totalPages,
+      hasNextPage: safePage < totalPages,
+      hasPreviousPage: safePage > 1
+    }
+  };
+};
+
 router.get('/', async (req, res, next) => {
   const includeInactive = parseBooleanFlag(req.query.include_inactive);
+  const shouldPaginate = shouldUseProductPagination(req.query);
+  const publicPagination = buildPublicProductPagination(req.query);
 
   try {
     await ensureProductTabsTable(db);
+    if (shouldPaginate) {
+      const response = await listProductsPage(db, {
+        includeInactive,
+        ...publicPagination
+      });
+      return res.json(response);
+    }
+
     const products = await listProducts(db, { includeInactive });
-    res.json(products);
+    return res.json(products);
   } catch (err) {
     try {
-      res.json(listBackupProducts({ includeInactive }));
+      const backupProducts = listBackupProducts({ includeInactive });
+
+      if (shouldPaginate) {
+        const filteredBackupProducts = filterBackupProducts(
+          backupProducts,
+          listBackupCategories(),
+          publicPagination
+        );
+
+        return res.json(paginateProducts(filteredBackupProducts, publicPagination));
+      }
+
+      return res.json(backupProducts);
     } catch (backupError) {
       return next(wrapError(err, {
         publicMessage: 'Erro ao listar produtos.',
