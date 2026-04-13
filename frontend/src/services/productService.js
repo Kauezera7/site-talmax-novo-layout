@@ -1,114 +1,99 @@
 import API_URL from './api';
-import { ensureAdminResponse } from './adminRequest';
+import { createAdminRequestOptions, ensureAdminResponse } from './adminRequest';
 
 export const productService = {
   getAll: async () => {
-    const res = await fetch(`${API_URL}/products?include_inactive=true`, {
-      credentials: 'include'
-    });
+    const res = await fetch(`${API_URL}/products?include_inactive=true`, createAdminRequestOptions());
     await ensureAdminResponse(res, 'Erro ao carregar produtos');
     return res.json();
   },
 
   getById: async (id) => {
-    const res = await fetch(`${API_URL}/products/${id}`, {
-      credentials: 'include'
-    });
+    const res = await fetch(`${API_URL}/products/${id}`, createAdminRequestOptions());
     if (!res.ok) throw new Error('Erro ao carregar produto');
     return res.json();
   },
 
   create: async (formData) => {
-    const res = await fetch(`${API_URL}/products`, {
+    const res = await fetch(`${API_URL}/products`, createAdminRequestOptions({
       method: 'POST',
-      credentials: 'include',
       body: formData
-    });
+    }));
     await ensureAdminResponse(res, 'Erro ao criar produto');
     return res.json();
   },
 
   update: async (id, formData) => {
-    const res = await fetch(`${API_URL}/products/${id}`, {
+    const res = await fetch(`${API_URL}/products/${id}`, createAdminRequestOptions({
       method: 'PUT',
-      credentials: 'include',
       body: formData
-    });
+    }));
     await ensureAdminResponse(res, 'Erro ao atualizar produto');
     return res.json();
   },
 
   delete: async (id) => {
-    const res = await fetch(`${API_URL}/products/${id}`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
+    const res = await fetch(`${API_URL}/products/${id}`, createAdminRequestOptions({ method: 'DELETE' }));
     await ensureAdminResponse(res, 'Erro ao excluir produto');
     return res.json();
   },
 
   updateActiveStatus: async (id, isActive) => {
-    const res = await fetch(`${API_URL}/products/${id}/active`, {
+    const res = await fetch(`${API_URL}/products/${id}/active`, createAdminRequestOptions({
       method: 'PUT',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ is_active: isActive })
-    });
+    }));
     await ensureAdminResponse(res, 'Erro ao atualizar status do produto');
     return res.json();
   },
 
   updateQuoteButtonStatus: async (id, showQuoteButton) => {
-    const res = await fetch(`${API_URL}/products/${id}/quote-button`, {
+    const res = await fetch(`${API_URL}/products/${id}/quote-button`, createAdminRequestOptions({
       method: 'PUT',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ showQuoteButton })
-    });
-    await ensureAdminResponse(res, 'Erro ao atualizar botão de orçamento');
+    }));
+    await ensureAdminResponse(res, 'Erro ao atualizar botao de orcamento');
     return res.json();
   },
 
   updateUpcera: async (selectedProducts) => {
-    const res = await fetch(`${API_URL}/upcera/products`, {
+    const res = await fetch(`${API_URL}/upcera/products`, createAdminRequestOptions({
       method: 'PUT',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ selected_products: selectedProducts })
-    });
+    }));
     await ensureAdminResponse(res, 'Erro ao atualizar produtos Upcera');
     return res.json();
   },
 
   updateScanners: async (selectedProducts) => {
-    const res = await fetch(`${API_URL}/scanners/products`, {
+    const res = await fetch(`${API_URL}/scanners/products`, createAdminRequestOptions({
       method: 'PUT',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ selected_products: selectedProducts })
-    });
+    }));
     await ensureAdminResponse(res, 'Erro ao atualizar produtos Scanners');
     return res.json();
   },
 
   updatePrinters: async (selectedProducts) => {
-    const res = await fetch(`${API_URL}/3d-printers/products`, {
+    const res = await fetch(`${API_URL}/3d-printers/products`, createAdminRequestOptions({
       method: 'PUT',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ selected_products: selectedProducts })
-    });
+    }));
     await ensureAdminResponse(res, 'Erro ao atualizar produtos de Impressoras 3D');
     return res.json();
   },
 
   updateFeatured: async (selectedProducts) => {
-    const res = await fetch(`${API_URL}/featured-products`, {
+    const res = await fetch(`${API_URL}/featured-products`, createAdminRequestOptions({
       method: 'PUT',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ selected_products: selectedProducts })
-    });
+    }));
     await ensureAdminResponse(res, 'Erro ao atualizar produtos em destaque');
     return res.json();
   }

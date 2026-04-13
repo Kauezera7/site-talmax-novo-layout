@@ -4,7 +4,29 @@
  */
 const cors = require('cors');
 
+const isProduction = process.env.NODE_ENV === 'production';
+const developmentPorts = new Set(['3000', '4173', '5173']);
+const privateNetworkHostnamePattern = /^(10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})$/;
+
 const normalizeOrigin = (origin) => origin.trim().replace(/\/+$/, '');
+
+const isAllowedDevelopmentOrigin = (origin) => {
+  if (isProduction) {
+    return false;
+  }
+
+  try {
+    const parsedOrigin = new URL(origin);
+    const normalizedHostname = parsedOrigin.hostname.toLowerCase();
+    const normalizedPort = parsedOrigin.port || (parsedOrigin.protocol === 'https:' ? '443' : '80');
+    const isLoopbackHost = normalizedHostname === 'localhost' || normalizedHostname === '127.0.0.1' || normalizedHostname === '[::1]';
+    const isPrivateNetworkHost = privateNetworkHostnamePattern.test(normalizedHostname) || normalizedHostname.endsWith('.local');
+
+    return developmentPorts.has(normalizedPort) && (isLoopbackHost || isPrivateNetworkHost);
+  } catch (error) {
+    return false;
+  }
+};
 
 const defaultAllowedOrigins = [
   'http://localhost:5173',
@@ -36,13 +58,15 @@ const corsMiddleware = cors({
 
     const normalizedOrigin = normalizeOrigin(origin);
 
-    if (allowedOrigins.has(normalizedOrigin)) {
+    if (allowedOrigins.has(normalizedOrigin) || isAllowedDevelopmentOrigin(normalizedOrigin)) {
       return callback(null, true);
     }
 
     return callback(null, false);
   },
-  credentials: true
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 });
 
 module.exports = corsMiddleware;

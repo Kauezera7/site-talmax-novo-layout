@@ -1,13 +1,13 @@
 import API_URL from './api';
-import { ensureAdminResponse } from './adminRequest';
+import { createAdminRequestOptions, ensureAdminResponse } from './adminRequest';
 
 export const DEFAULT_SPECIAL_PAGE_SETTINGS = {
   'talmax-digital': {
     page_name: 'talmax-digital',
     label: 'Talmax Digital',
-    overline: 'TECNOLOGIA ODONTOLÓGICA',
+    overline: 'TECNOLOGIA ODONTOLOGICA',
     title: 'Talmax Digital',
-    description: 'O futuro da prótese dentária com tecnologia de ponta e precisão absoluta.',
+    description: 'O futuro da protese dentaria com tecnologia de ponta e precisao absoluta.',
     logo_url: '/img/logo-talmax-digital-pos.png'
   },
   upcera: {
@@ -15,7 +15,7 @@ export const DEFAULT_SPECIAL_PAGE_SETTINGS = {
     label: 'Upcera',
     overline: '',
     title: 'Innovation in Restorative Dentistry',
-    description: 'Líder mundial em cerâmicas odontológicas de alta performance, unindo estética natural e resistência extrema.',
+    description: 'Lider mundial em ceramicas odontologicas de alta performance, unindo estetica natural e resistencia extrema.',
     logo_url: '/img/logo-upcera-.webp'
   },
   scanners: {
@@ -23,7 +23,7 @@ export const DEFAULT_SPECIAL_PAGE_SETTINGS = {
     label: 'Scanners',
     overline: '',
     title: 'Digital Reality Capture',
-    description: 'A mais alta tecnologia em digitalização 3D, transformando o fluxo físico em digital com precisão absoluta.',
+    description: 'A mais alta tecnologia em digitalizacao 3D, transformando o fluxo fisico em digital com precisao absoluta.',
     logo_url: '/img/titulo-pag-scanners.png'
   },
   printers: {
@@ -31,7 +31,7 @@ export const DEFAULT_SPECIAL_PAGE_SETTINGS = {
     label: 'Impressoras 3D',
     overline: '',
     title: 'High Precision Printing',
-    description: 'A revolução da manufatura aditiva com precisão industrial para o fluxo digital odontológico.',
+    description: 'A revolucao da manufatura aditiva com precisao industrial para o fluxo digital odontologico.',
     logo_url: '/img/impressoras3d.png'
   }
 };
@@ -59,20 +59,19 @@ const pageSettingsService = {
   async getAll() {
     const response = await fetch(`${API_URL}/page-settings`);
     if (!response.ok) {
-      throw new Error('Erro ao buscar configurações das páginas especiais');
+      throw new Error('Erro ao buscar configuracoes das paginas especiais');
     }
 
     return response.json();
   },
 
   async update(pageName, formData) {
-    const response = await fetch(`${API_URL}/page-settings/${pageName}`, {
+    const response = await fetch(`${API_URL}/page-settings/${pageName}`, createAdminRequestOptions({
       method: 'PUT',
-      credentials: 'include',
       body: formData
-    });
+    }));
 
-    await ensureAdminResponse(response, 'Erro ao atualizar configuração da página especial');
+    await ensureAdminResponse(response, 'Erro ao atualizar configuracao da pagina especial');
     return response.json();
   }
 };

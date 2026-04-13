@@ -1,11 +1,12 @@
 import API_URL from './api';
-import { ensureAdminResponse } from './adminRequest';
+import { createAdminRequestOptions, ensureAdminResponse } from './adminRequest';
 
 const digitalGroupService = {
   async getAll({ admin = false } = {}) {
-    const response = await fetch(`${API_URL}/digital-groups${admin ? '?admin=1' : ''}`, {
-      credentials: admin ? 'include' : 'same-origin'
-    });
+    const response = await fetch(
+      `${API_URL}/digital-groups${admin ? '?admin=1' : ''}`,
+      admin ? createAdminRequestOptions() : { credentials: 'same-origin' }
+    );
 
     if (admin) {
       await ensureAdminResponse(response, 'Erro ao buscar grupos digitais');
@@ -20,39 +21,34 @@ const digitalGroupService = {
     const response = await fetch(`${API_URL}/digital-groups/public/${encodeURIComponent(slug)}`);
 
     if (!response.ok) {
-      throw new Error('Grupo digital não encontrado');
+      throw new Error('Grupo digital nao encontrado');
     }
 
     return response.json();
   },
 
   async create(formData) {
-    const response = await fetch(`${API_URL}/digital-groups`, {
+    const response = await fetch(`${API_URL}/digital-groups`, createAdminRequestOptions({
       method: 'POST',
-      credentials: 'include',
       body: formData
-    });
+    }));
 
     await ensureAdminResponse(response, 'Erro ao criar grupo digital');
     return response.json();
   },
 
   async update(id, formData) {
-    const response = await fetch(`${API_URL}/digital-groups/${id}`, {
+    const response = await fetch(`${API_URL}/digital-groups/${id}`, createAdminRequestOptions({
       method: 'PUT',
-      credentials: 'include',
       body: formData
-    });
+    }));
 
     await ensureAdminResponse(response, 'Erro ao atualizar grupo digital');
     return response.json();
   },
 
   async remove(id) {
-    const response = await fetch(`${API_URL}/digital-groups/${id}`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
+    const response = await fetch(`${API_URL}/digital-groups/${id}`, createAdminRequestOptions({ method: 'DELETE' }));
 
     await ensureAdminResponse(response, 'Erro ao remover grupo digital');
     return response.json();

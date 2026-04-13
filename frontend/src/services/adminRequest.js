@@ -1,4 +1,33 @@
 import { ADMIN_SESSION_EXPIRED_MESSAGE, dispatchAdminSessionExpired } from './adminSessionEvents';
+import {
+  clearStoredAdminSessionToken,
+  readStoredAdminSessionToken
+} from './adminSessionStorage';
+
+const buildAdminHeaders = (headers) => {
+  const requestHeaders = new Headers(headers || undefined);
+  const sessionToken = readStoredAdminSessionToken();
+
+  if (sessionToken && !requestHeaders.has('Authorization')) {
+    requestHeaders.set('Authorization', `Bearer ${sessionToken}`);
+  }
+
+  return requestHeaders;
+};
+
+export const createAdminRequestOptions = (options = {}) => {
+  const requestOptions = {
+    credentials: 'include',
+    ...options
+  };
+  const headers = buildAdminHeaders(options.headers);
+
+  if (Array.from(headers.keys()).length > 0) {
+    requestOptions.headers = headers;
+  }
+
+  return requestOptions;
+};
 
 const parseErrorBody = async (response, fallbackMessage) => {
   try {
@@ -22,6 +51,7 @@ export const ensureAdminResponse = async (response, fallbackMessage) => {
   const errorMessage = await parseErrorBody(response, fallbackMessage);
 
   if (response.status === 401) {
+    clearStoredAdminSessionToken();
     dispatchAdminSessionExpired();
   }
 

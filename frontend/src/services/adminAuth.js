@@ -1,5 +1,9 @@
 import API_URL from './api';
-import { ensureAdminResponse } from './adminRequest';
+import { createAdminRequestOptions, ensureAdminResponse } from './adminRequest';
+import {
+  clearStoredAdminSessionToken,
+  storeAdminSessionToken
+} from './adminSessionStorage';
 
 const API_BASE_URL = `${API_URL}/admin`;
 
@@ -45,14 +49,13 @@ export const loginAdmin = async (credentials) => {
   let response;
 
   try {
-    response = await fetch(`${API_BASE_URL}/login`, {
+    response = await fetch(`${API_BASE_URL}/login`, createAdminRequestOptions({
       method: 'POST',
-      credentials: 'include',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(credentials)
-    });
+    }));
   } catch (error) {
     throw normalizeAdminRequestError(error);
   }
@@ -63,6 +66,7 @@ export const loginAdmin = async (credentials) => {
     throw createAdminApiError(response, data, 'Nao foi possivel entrar no painel.');
   }
 
+  storeAdminSessionToken(data.session_token);
   return data;
 };
 
@@ -70,14 +74,16 @@ export const validateAdminSession = async () => {
   let response;
 
   try {
-    response = await fetch(`${API_BASE_URL}/session`, {
-      credentials: 'include'
-    });
+    response = await fetch(`${API_BASE_URL}/session`, createAdminRequestOptions());
   } catch (error) {
     throw normalizeAdminRequestError(error);
   }
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearStoredAdminSessionToken();
+    }
+
     return { authenticated: false };
   }
 
@@ -89,14 +95,13 @@ export const unlockAdminLoginByUser = async (username) => {
   let response;
 
   try {
-    response = await fetch(`${API_BASE_URL}/login-unlock`, {
+    response = await fetch(`${API_BASE_URL}/login-unlock`, createAdminRequestOptions({
       method: 'POST',
-      credentials: 'include',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ username })
-    });
+    }));
   } catch (error) {
     throw normalizeAdminRequestError(error);
   }
@@ -107,11 +112,10 @@ export const unlockAdminLoginByUser = async (username) => {
 
 export const logoutAdmin = async () => {
   try {
-    await fetch(`${API_BASE_URL}/logout`, {
-      method: 'POST',
-      credentials: 'include'
-    });
+    await fetch(`${API_BASE_URL}/logout`, createAdminRequestOptions({ method: 'POST' }));
   } catch (error) {
     throw normalizeAdminRequestError(error);
+  } finally {
+    clearStoredAdminSessionToken();
   }
 };

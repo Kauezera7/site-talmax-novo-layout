@@ -15,6 +15,7 @@ const { createHttpError, wrapError } = require('../utils/errorHandling');
 const ADMIN_SESSION_COOKIE = 'talmax-admin-session';
 const ADMIN_USER_FREE_FLAG_VALUE = 1;
 const ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE = 2;
+const ADMIN_AUTHORIZATION_SCHEME = 'bearer';
 
 if (!process.env.ADMIN_JWT_SECRET) {
   throw new Error('A variavel ADMIN_JWT_SECRET nao foi definida no ambiente.');
@@ -140,6 +141,20 @@ const verifyJwtToken = (token) => {
 };
 
 const getAdminSessionToken = (req) => {
+  const authorizationHeader = req.headers.authorization;
+
+  if (typeof authorizationHeader === 'string' && authorizationHeader.trim()) {
+    const [scheme, ...tokenParts] = authorizationHeader.trim().split(/\s+/);
+
+    if (scheme && scheme.toLowerCase() === ADMIN_AUTHORIZATION_SCHEME) {
+      const bearerToken = tokenParts.join(' ').trim();
+
+      if (bearerToken) {
+        return bearerToken;
+      }
+    }
+  }
+
   const cookies = parseCookies(req);
   return cookies[ADMIN_SESSION_COOKIE] || null;
 };
@@ -264,7 +279,8 @@ const loginAdmin = async (req, res, next) => {
     res.cookie(ADMIN_SESSION_COOKIE, token, getAdminCookieOptions());
 
     return res.json({
-      user: sessionPayload
+      user: sessionPayload,
+      session_token: token
     });
   } catch (err) {
     return next(wrapError(err, { publicMessage: 'Erro ao processar login do admin.' }));

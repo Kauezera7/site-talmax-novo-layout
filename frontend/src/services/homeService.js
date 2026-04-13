@@ -2,7 +2,7 @@
  * Servico para interagir com a API de servicos/segmentos da home.
  */
 import API_URL from './api';
-import { ensureAdminResponse } from './adminRequest';
+import { createAdminRequestOptions, ensureAdminResponse } from './adminRequest';
 
 const homeService = {
   async getAll() {
@@ -14,44 +14,40 @@ const homeService = {
   },
 
   async create(formData) {
-    const response = await fetch(`${API_URL}/home-services`, {
+    const response = await fetch(`${API_URL}/home-services`, createAdminRequestOptions({
       method: 'POST',
-      credentials: 'include',
-      body: formData,
-    });
-    await ensureAdminResponse(response, 'Erro ao criar serviço');
+      body: formData
+    }));
+    await ensureAdminResponse(response, 'Erro ao criar servico');
     return response.json();
   },
 
   async update(id, formData) {
-    const response = await fetch(`${API_URL}/home-services/${id}`, {
+    const response = await fetch(`${API_URL}/home-services/${id}`, createAdminRequestOptions({
       method: 'PUT',
-      credentials: 'include',
-      body: formData,
-    });
-    await ensureAdminResponse(response, 'Erro ao atualizar serviço');
+      body: formData
+    }));
+    await ensureAdminResponse(response, 'Erro ao atualizar servico');
     return response.json();
   },
 
   async updateActiveStatus(id, active) {
-    const response = await fetch(`${API_URL}/home-services/${id}/active`, {
+    const response = await fetch(`${API_URL}/home-services/${id}/active`, createAdminRequestOptions({
       method: 'PUT',
-      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ active }),
-    });
-    await ensureAdminResponse(response, 'Erro ao atualizar status do serviço');
+    }));
+    await ensureAdminResponse(response, 'Erro ao atualizar status do servico');
     return response.json();
   },
 
   async delete(id) {
-    const response = await fetch(`${API_URL}/home-services/${id}`, {
+    const response = await fetch(`${API_URL}/home-services/${id}`, createAdminRequestOptions({
       method: 'DELETE',
-      credentials: 'include',
-    });
-    await ensureAdminResponse(response, 'Erro ao excluir serviço');
+    }));
+    await ensureAdminResponse(response, 'Erro ao excluir servico');
     return response.json();
   }
 };
