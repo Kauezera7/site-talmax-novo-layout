@@ -1,6 +1,8 @@
 import API_URL from '../services/api';
 import { sanitizeAssetReference } from './contentSafety';
 
+const INLINE_ASSET_PATTERN = /^(?:blob|data):/i;
+
 const normalizeRawPath = (path = '') => sanitizeAssetReference(path, { allowExternal: true, allowRelative: true });
 
 const isCloudinaryPathWithoutProtocol = (path = '') => /^res\.cloudinary\.com\//i.test(path);
@@ -37,6 +39,8 @@ const normalizeApiAssetRelativePath = (path = '') => {
 
 export const assetPath = (path = '') => {
   if (!path) return path;
+  const rawPath = String(path || '').trim();
+  if (INLINE_ASSET_PATTERN.test(rawPath)) return rawPath;
   const trimmedPath = normalizeRawPath(path);
 
   if (!trimmedPath) return '';
@@ -74,6 +78,8 @@ const getApiBasePath = () => {
 
 export const apiAssetPath = (path = '') => {
   if (!path) return path;
+  const rawPath = String(path || '').trim();
+  if (INLINE_ASSET_PATTERN.test(rawPath)) return rawPath;
   const trimmedPath = normalizeRawPath(path);
 
   if (!trimmedPath) return '';
