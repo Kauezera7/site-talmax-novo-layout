@@ -508,6 +508,13 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
   useEffect(() => {
     setSearchDropdownOpen(false);
     setSearchPreviewId(null);
+    
+    // Sincroniza o input do Header com a busca da URL
+    const queryParams = new URLSearchParams(location.search);
+    const searchQuery = queryParams.get('busca') || '';
+    if (searchQuery !== searchTerm) {
+      setSearchTerm(searchQuery);
+    }
   }, [location.pathname, location.search]);
 
   const resetSearchState = () => {
@@ -526,6 +533,17 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
   const handleSearchInputChange = (value) => {
     setSearchTerm(value);
     setSearchDropdownOpen(normalizeSearchText(value).length >= MIN_SEARCH_TERM_LENGTH);
+
+    // BUSCA AO VIVO: Se estiver no catálogo, atualiza a URL enquanto digita
+    if (location.pathname === '/produtos' || location.pathname.startsWith('/categoria/')) {
+      const params = new URLSearchParams(location.search);
+      if (value.trim()) {
+        params.set('busca', value.trim());
+      } else {
+        params.delete('busca');
+      }
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+    }
   };
 
   const handleSearchInputFocus = () => {

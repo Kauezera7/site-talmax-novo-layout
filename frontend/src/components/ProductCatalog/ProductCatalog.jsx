@@ -3,14 +3,15 @@
  * Rota: /produtos e /categoria/:slug
  * Responsabilidade: listar produtos e aplicar filtros por busca e categoria
  */
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Search,
   ChevronRight,
   SlidersHorizontal,
   X,
-  PackageSearch
+  PackageSearch,
+  ChevronLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../ProductCard/ProductCard';
@@ -21,12 +22,69 @@ import { getNormalizedCategoryNames, getVisibleCategoryLabel } from '../../utils
 import './ProductCatalog.css';
 
 const normalizeSearchText = (value = '') =>
-  value
+  (value || '')
     .toString()
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .trim();
+
+const ITEMS_PER_PAGE = 20;
+
+const CustomPagination = ({ total, current, onChange }) => {
+  const pages = [];
+  for (let i = 1; i <= total; i++) {
+    pages.push(i);
+  }
+
+  // Lógica para mostrar apenas algumas páginas se houver muitas
+  const visiblePages = pages.filter(p => 
+    p === 1 || p === total || (p >= current - 2 && p <= current + 2)
+  );
+
+  const renderPages = [];
+  let lastPage = 0;
+
+  visiblePages.forEach(p => {
+    if (lastPage !== 0 && p - lastPage > 1) {
+      renderPages.push(<span key={`dots-${p}`} className="pagination-dots">...</span>);
+    }
+    renderPages.push(
+      <button
+        key={p}
+        className={`pagination-btn ${current === p ? 'active' : ''}`}
+        onClick={() => onChange(p)}
+      >
+        {p}
+      </button>
+    );
+    lastPage = p;
+  });
+
+  return (
+    <div className="custom-pagination">
+      <button 
+        className="pagination-arrow" 
+        disabled={current === 1} 
+        onClick={() => onChange(current - 1)}
+      >
+        <ChevronLeft size={18} />
+      </button>
+      
+      <div className="pagination-numbers">
+        {renderPages}
+      </div>
+
+      <button 
+        className="pagination-arrow" 
+        disabled={current === total} 
+        onClick={() => onChange(current + 1)}
+      >
+        <ChevronRight size={18} />
+      </button>
+    </div>
+  );
+};
 
 const featuredCategoryOrder = [
   'Troquelizacao',
@@ -62,13 +120,51 @@ const ProductCatalog = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Sincroniza o estado inicial e as mudanças de URL
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const searchQuery = queryParams.get('busca') || '';
+    const categoryQuery = queryParams.get('categoria');
+
+    console.log('URL alterada. Busca:', searchQuery, 'Categoria:', categoryQuery);
+
+    // Sincroniza o termo de busca local com a URL
+    setSearchTerm(searchQuery);
+
+    if (categoryQuery && allCategories.length > 0) {
+      const category = allCategories.find((item) => item.slug === categoryQuery);
+      if (category) {
+        setActiveCategories([category.name]);
+      }
+    } else if (slug && allCategories.length > 0) {
+      const category = allCategories.find((item) => item.slug === slug);
+      if (category) {
+        setActiveCategories([category.name]);
+      }
+    } else if (!categoryQuery && !slug) {
+      setActiveCategories([]);
+    }
+    
+    // Sempre volta para a primeira página ao mudar busca ou categoria na URL
+    setCurrentPage(1);
+  }, [location.search, slug, allCategories]);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
+        const queryParams = new URLSearchParams(location.search);
+        const searchQuery = queryParams.get('busca') || '';
+        
+        // Se houver busca, pedimos para a API filtrar para garantir consistência
+        const productsUrl = searchQuery 
+          ? `${API_URL}/products?search=${encodeURIComponent(searchQuery)}`
+          : `${API_URL}/products`;
+
         const [prodRes, catRes] = await Promise.all([
-          fetch(`${API_URL}/products`),
+          fetch(productsUrl),
           fetch(`${API_URL}/categories`)
         ]);
 
@@ -76,14 +172,16 @@ const ProductCatalog = () => {
         const catData = await catRes.json();
         setAllCategories(catData);
 
-        const formattedProducts = prodData.map((product) => {
+        // Se a API retornou um objeto com paginação (comum em buscas), pegamos os itens
+        const rawProducts = Array.isArray(prodData) ? prodData : (prodData.items || []);
+
+        const segmentSlugs = ['talmax-digital', 'protese-dentaria', 'nail-e-podologia'];
+        const segmentNames = catData
+          .filter((category) => segmentSlugs.includes(category.slug))
+          .map((category) => category.name);
+
+        const formattedProducts = rawProducts.map((product) => {
           const extra = parseSafeExtraData(product.extra_data);
-
-          const segmentSlugs = ['talmax-digital', 'protese-dentaria', 'nail-e-podologia'];
-          const segmentNames = catData
-            .filter((category) => segmentSlugs.includes(category.slug))
-            .map((category) => category.name);
-
           const productCatNames = getNormalizedCategoryNames(product.category_names);
 
           return {
@@ -106,43 +204,11 @@ const ProductCatalog = () => {
     };
 
     fetchData();
-  }, []);
-
-  useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const categoryQuery = queryParams.get('categoria');
-    const searchQuery = queryParams.get('busca') || '';
-
-    setSearchTerm(searchQuery);
-
-    if (categoryQuery && allCategories.length > 0) {
-      const category = allCategories.find((item) => item.slug === categoryQuery);
-      if (category) {
-        setActiveCategories([category.name]);
-        return;
-      }
-    }
-
-    if (slug && allCategories.length > 0) {
-      const category = allCategories.find((item) => item.slug === slug);
-      if (category) {
-        setActiveCategories([category.name]);
-        return;
-      }
-    }
-
-    setActiveCategories([]);
-  }, [slug, location.search, allCategories]);
+  }, [location.search]); // Recarrega sempre que a URL mudar
 
   const activeCategoryLabel = useMemo(() => {
-    if (activeCategories.length === 0) {
-      return 'Ver todos';
-    }
-
-    if (activeCategories.length === 1) {
-      return activeCategories[0];
-    }
-
+    if (activeCategories.length === 0) return 'Ver todos';
+    if (activeCategories.length === 1) return activeCategories[0];
     return `${activeCategories.length} categorias selecionadas`;
   }, [activeCategories]);
 
@@ -160,28 +226,39 @@ const ProductCatalog = () => {
 
   const filteredProducts = useMemo(() => {
     const normalizedTerm = normalizeSearchText(searchTerm);
+    
+    console.log('--- DEBUG FILTRAGEM ---');
+    console.log('Termo de busca (original):', searchTerm);
+    console.log('Termo de busca (normalizado):', normalizedTerm);
+    console.log('Total de produtos antes do filtro:', products.length);
 
-    return products.filter((product) => {
-      const searchableContent = [
-        product.name,
-        product.category,
-        ...(product.allCategoryNames || [])
-      ]
-        .filter(Boolean)
-        .map(normalizeSearchText)
-        .join(' ');
+    if (!normalizedTerm && activeCategories.length === 0) {
+      console.log('Sem filtros ativos, retornando todos.');
+      return products;
+    }
 
-      const matchesSearch = !normalizedTerm || searchableContent.includes(normalizedTerm);
+    const results = products.filter((product) => {
+      const productName = String(product.name || '');
+      const productCategory = String(product.category || '');
+      const allCategoryNames = Array.isArray(product.allCategoryNames) ? product.allCategoryNames : [];
+
+      const normName = normalizeSearchText(productName);
+      const normCat = normalizeSearchText(productCategory);
+
+      // Verifica se o termo de busca bate com o nome, categoria visível ou qualquer categoria interna
+      const matchesSearch = !normalizedTerm || 
+        normName.includes(normalizedTerm) ||
+        normCat.includes(normalizedTerm) ||
+        allCategoryNames.some(cat => normalizeSearchText(String(cat)).includes(normalizedTerm));
 
       if (activeCategories.length === 0) {
         return matchesSearch;
       }
 
+      // Lógica de categorias ativas (Filtro Lateral)
       const categoriesToMatch = activeCategories.flatMap((selectedCategoryName) => {
         const currentCategory = allCategories.find((category) => category.name === selectedCategoryName);
-        if (!currentCategory) {
-          return [];
-        }
+        if (!currentCategory) return [];
 
         const matchedNames = [currentCategory.name];
         if (!currentCategory.parent_id) {
@@ -192,24 +269,50 @@ const ProductCatalog = () => {
         return matchedNames;
       });
 
-      const matchesCategory = (product.allCategoryNames || []).some((name) =>
-        categoriesToMatch.includes(name)
+      const matchesCategory = allCategoryNames.some((name) =>
+        categoriesToMatch.some(catToMatch => 
+          normalizeSearchText(String(name)) === normalizeSearchText(String(catToMatch))
+        )
       );
 
       return matchesSearch && matchesCategory;
     });
+
+    console.log('Total de produtos após o filtro:', results.length);
+    if (results.length > 0) {
+      console.log('Exemplo de produto filtrado:', results[0].name);
+    }
+    return results;
   }, [searchTerm, activeCategories, products, allCategories]);
+
+  // Paginação
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
 
   const handleSearchChange = (value) => {
     setSearchTerm(value);
+    setCurrentPage(1);
+    
+    // Atualizar a URL sem recarregar a página (opcional, mas recomendado para consistência)
+    const params = new URLSearchParams(location.search);
+    if (value) {
+      params.set('busca', value);
+    } else {
+      params.delete('busca');
+    }
+    navigate(`${location.pathname}?${params.toString()}`, { replace: true });
   };
 
   const handleCategorySelect = (categoryName) => {
-    setActiveCategories((current) =>
-      current.includes(categoryName)
-        ? current.filter((item) => item !== categoryName)
-        : [...current, categoryName]
-    );
+    const nextCategories = activeCategories.includes(categoryName)
+      ? activeCategories.filter((item) => item !== categoryName)
+      : [...activeCategories, categoryName];
+    
+    setActiveCategories(nextCategories);
+    setCurrentPage(1);
 
     if (window.innerWidth < 768) {
       setIsDrawerOpen(false);
@@ -219,6 +322,7 @@ const ProductCatalog = () => {
   const resetFilters = () => {
     setSearchTerm('');
     setActiveCategories([]);
+    setCurrentPage(1);
     setIsDrawerOpen(false);
     navigate('/produtos');
   };
@@ -267,7 +371,7 @@ const ProductCatalog = () => {
                   if (item.id === 'upcera') {
                     navigate('/upcera');
                   } else {
-                    setSearchTerm(item.title);
+                    handleSearchChange(item.title);
                     setActiveCategories([]);
                   }
                 }}
@@ -381,24 +485,36 @@ const ProductCatalog = () => {
             <p>Sincronizando catálogo...</p>
           </div>
         ) : activeCategories.length === 1 && activeCategories[0] === 'Talmax Digital' ? null : (
-          <div className={`catalog-grid-lux ${activeCategories.length === 1 && activeCategories[0] === 'Talmax Digital' ? 'five-cols' : ''}`}>
-            <AnimatePresence mode="popLayout">
-              {filteredProducts.length > 0 ? (
-                filteredProducts.map((product, index) => (
-                  <ProductCard key={product.id} product={product} index={index} />
-                ))
-              ) : (
-                <div className="empty-state">
-                  <PackageSearch size={60} strokeWidth={1} color="#d2d2d7" />
-                  <h3>Nenhum produto encontrado</h3>
-                  <p>Tente ajustar sua busca ou filtro para encontrar o que deseja.</p>
-                  <button onClick={resetFilters} className="btn-clear-filters">
-                    Ver todos os produtos
-                  </button>
-                </div>
-              )}
-            </AnimatePresence>
-          </div>
+          <>
+            <div className={`catalog-grid-lux ${activeCategories.length === 1 && activeCategories[0] === 'Talmax Digital' ? 'five-cols' : ''}`}>
+              <AnimatePresence mode="popLayout">
+                {paginatedProducts.length > 0 ? (
+                  paginatedProducts.map((product, index) => (
+                    <ProductCard key={product.id} product={product} index={index} />
+                  ))
+                ) : (
+                  <div className="empty-state">
+                    <PackageSearch size={60} strokeWidth={1} color="#d2d2d7" />
+                    <h3>Nenhum produto encontrado</h3>
+                    <p>Tente ajustar sua busca ou filtro para encontrar o que deseja.</p>
+                    <button onClick={resetFilters} className="btn-clear-filters">
+                      Ver todos os produtos
+                    </button>
+                  </div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="catalog-pagination">
+                <CustomPagination
+                  total={totalPages}
+                  current={currentPage}
+                  onChange={setCurrentPage}
+                />
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
