@@ -18,9 +18,12 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 import './HeroSlider.css';
 
+const LOADER_DELAY_MS = 1000;
+
 const HeroSlider = () => {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showLoadingIndicator, setShowLoadingIndicator] = useState(false);
   const [sliderHeight, setSliderHeight] = useState(null);
   const swiperRef = useRef(null);
   const containerRef = useRef(null);
@@ -69,6 +72,21 @@ const HeroSlider = () => {
   };
 
   useEffect(() => {
+    if (!loading) {
+      setShowLoadingIndicator(false);
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShowLoadingIndicator(true);
+    }, LOADER_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [loading]);
+
+  useEffect(() => {
     const fetchBanners = async () => {
       try {
         const response = await fetch(`${API_URL}/banners`);
@@ -99,6 +117,10 @@ const HeroSlider = () => {
   }, []);
 
   if (loading) {
+    if (!showLoadingIndicator) {
+      return null;
+    }
+
     return (
       <section className="hero-slider-container hero-slider-loading">
         <div className="spinner"></div>

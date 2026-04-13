@@ -38,6 +38,7 @@ const Admin = lazy(() => import('./pages/Admin/AdminDashboard'));
 const AdminLogin = lazy(() => import('./components/AdminLogin/AdminLogin'));
 
 const THEME_STORAGE_KEY = 'talmax-theme';
+const LOADER_DELAY_MS = 1000;
 
 const FullScreenLoader = ({ label = 'Carregando...' }) => (
   <div className="app-loader-overlay" role="status" aria-live="polite" aria-label={label}>
@@ -48,7 +49,7 @@ const FullScreenLoader = ({ label = 'Carregando...' }) => (
   </div>
 );
 
-const DelayedFullScreenLoader = ({ label = 'Carregando...', delay = 140 }) => {
+const DelayedFullScreenLoader = ({ label = 'Carregando...', delay = LOADER_DELAY_MS }) => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
