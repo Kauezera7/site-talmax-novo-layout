@@ -48,8 +48,28 @@ const FullScreenLoader = ({ label = 'Carregando...' }) => (
   </div>
 );
 
+const DelayedFullScreenLoader = ({ label = 'Carregando...', delay = 140 }) => {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setVisible(true);
+    }, delay);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [delay]);
+
+  if (!visible) {
+    return null;
+  }
+
+  return <FullScreenLoader label={label} />;
+};
+
 const RouteLoader = ({ children, label = 'Carregando pagina...' }) => (
-  <Suspense fallback={<FullScreenLoader label={label} />}>
+  <Suspense fallback={<DelayedFullScreenLoader label={label} />}>
     {children}
   </Suspense>
 );
@@ -94,7 +114,7 @@ const ProtectedAdminRoute = ({ children }) => {
   }, []);
 
   if (status === 'checking') {
-    return <FullScreenLoader label="Carregando painel..." />;
+    return <DelayedFullScreenLoader label="Carregando painel..." />;
   }
 
   if (status === 'unauthenticated') {
@@ -106,7 +126,13 @@ const ProtectedAdminRoute = ({ children }) => {
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [appReady, setAppReady] = useState(false);
+  const [appReady, setAppReady] = useState(() => {
+    if (typeof document === 'undefined') {
+      return false;
+    }
+
+    return document.readyState === 'complete';
+  });
   const [theme, setTheme] = useState(() => {
     if (typeof window === 'undefined') {
       return 'light';
@@ -117,36 +143,25 @@ function App() {
   const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '');
 
   useEffect(() => {
-    let mounted = true;
-    let releaseTimeout;
-
-    const releaseApp = () => {
-      releaseTimeout = window.setTimeout(() => {
-        if (mounted) {
-          setAppReady(true);
-        }
-      }, 450);
-    };
-
-    if (document.readyState === 'complete') {
-      releaseApp();
-    } else {
-      window.addEventListener('load', releaseApp, { once: true });
+    if (appReady) {
+      return undefined;
     }
 
-    return () => {
-      mounted = false;
-      window.removeEventListener('load', releaseApp);
-      if (releaseTimeout) {
-        window.clearTimeout(releaseTimeout);
-      }
+    const releaseApp = () => {
+      setAppReady(true);
     };
-  }, []);
+
+    window.addEventListener('load', releaseApp, { once: true });
+
+    return () => {
+      window.removeEventListener('load', releaseApp);
+    };
+  }, [appReady]);
 
   return (
     <Router basename={routerBasename}>
       <ScrollToTop />
-      {!appReady && <FullScreenLoader label="Carregando site..." />}
+      {!appReady && <DelayedFullScreenLoader label="Carregando site..." />}
       <AppContent
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
