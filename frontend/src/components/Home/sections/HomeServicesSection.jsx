@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation } from 'swiper/modules';
 import { apiAssetPath } from '../../../utils/assets';
+import { isExternalNavigationTarget, sanitizeNavigationTarget } from '../../../utils/contentSafety';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
@@ -10,6 +11,8 @@ const ServiceBanner = ({ service }) => {
   const imageSrc = service.image_url
     ? apiAssetPath(service.image_url)
     : '';
+  const safeLinkUrl = sanitizeNavigationTarget(service.link_url, { allowExternal: true, allowRelative: true });
+  const shouldUseExternalLink = Boolean(service.is_external || isExternalNavigationTarget(safeLinkUrl));
 
   const bannerContent = (
     <>
@@ -34,10 +37,21 @@ const ServiceBanner = ({ service }) => {
     </>
   );
 
-  if (service.is_external) {
+  if (!safeLinkUrl) {
+    return (
+      <div
+        className="service-banner"
+        aria-label={service.name}
+      >
+        {bannerContent}
+      </div>
+    );
+  }
+
+  if (shouldUseExternalLink) {
     return (
       <a
-        href={service.link_url}
+        href={safeLinkUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="service-banner"
@@ -50,7 +64,7 @@ const ServiceBanner = ({ service }) => {
 
   return (
     <Link
-      to={service.link_url}
+      to={safeLinkUrl}
       className="service-banner"
       aria-label={service.name}
     >

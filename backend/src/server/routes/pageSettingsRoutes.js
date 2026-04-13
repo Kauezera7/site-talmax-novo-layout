@@ -10,6 +10,11 @@ const { requireAdminSession } = require('../auth/adminSession');
 const { persistUploadedFile, persistExistingLocalFile, hasCloudinaryConfig } = require('../services/fileStorageService');
 const { getServedImageDirs } = require('../config/imageStorage');
 const { safe } = require('../utils/common');
+const { wrapError } = require('../utils/errorHandling');
+const {
+  sanitizeAssetReference,
+  sanitizeTextInput
+} = require('../utils/inputSanitization');
 
 const router = express.Router();
 
@@ -114,10 +119,10 @@ const normalizePageSetting = (pageName, content = {}, explicitLogoUrl = null) =>
 
   return {
     ...defaults,
-    overline: safe(content.overline ?? defaults.overline),
-    title: safe(content.title ?? defaults.title),
-    description: safe(content.description ?? defaults.description),
-    logo_url: safe(explicitLogoUrl ?? content.logo_url ?? defaults.logo_url)
+    overline: sanitizeTextInput(content.overline ?? defaults.overline, { preserveNewlines: false }),
+    title: sanitizeTextInput(content.title ?? defaults.title, { preserveNewlines: false }),
+    description: sanitizeTextInput(content.description ?? defaults.description, { preserveNewlines: true }),
+    logo_url: sanitizeAssetReference(explicitLogoUrl ?? content.logo_url ?? defaults.logo_url)
   };
 };
 
@@ -142,7 +147,7 @@ const ensureDefaultRows = async () => {
   }
 };
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
   try {
     await ensureDefaultRows();
 
@@ -168,12 +173,11 @@ router.get('/', async (req, res) => {
 
     res.json(items);
   } catch (error) {
-    console.error('Erro ao carregar configuracoes das paginas:', error);
-    res.status(500).json({ error: 'Erro ao carregar configuracoes das paginas.' });
+    return next(wrapError(error, { publicMessage: 'Erro ao carregar configuracoes das paginas.' }));
   }
 });
 
-router.put('/:pageName', requireAdminSession, upload.any(), async (req, res) => {
+router.put('/:pageName', requireAdminSession, upload.any(), async (req, res, next) => {
   const { pageName } = req.params;
 
   if (!DEFAULT_PAGE_SETTINGS[pageName]) {
@@ -192,7 +196,7 @@ router.put('/:pageName', requireAdminSession, upload.any(), async (req, res) => 
     const logoFile = Array.isArray(req.files) ? req.files.find((file) => file.fieldname === 'logo') : null;
     let nextLogoUrl = logoFile
       ? await persistUploadedFile(logoFile, { resourceType: 'page-settings' })
-      : safe(req.body.logo_url ?? currentContent.logo_url);
+      : sanitizeAssetReference(req.body.logo_url ?? currentContent.logo_url ?? '');
 
     if (!logoFile && hasCloudinaryConfig() && typeof nextLogoUrl === 'string' && nextLogoUrl.startsWith('/img/')) {
       const existingAssetPath = resolveLegacyImagePath(nextLogoUrl);
@@ -212,7 +216,7 @@ router.put('/:pageName', requireAdminSession, upload.any(), async (req, res) => 
     await db.query(
       'UPDATE page_settings SET logo_url = ?, content = ? WHERE page_name = ?',
       [
-        nextLogoUrl,
+        safe(nextLogoUrl || null),
         JSON.stringify({
           page_name: updatedContent.page_name,
           label: updatedContent.label,
@@ -228,12 +232,11 @@ router.put('/:pageName', requireAdminSession, upload.any(), async (req, res) => 
       message: 'Configuracao atualizada com sucesso.',
       item: {
         ...updatedContent,
-        logo_url: nextLogoUrl
+        logo_url: sanitizeAssetReference(nextLogoUrl)
       }
     });
   } catch (error) {
-    console.error('Erro ao salvar configuracao da pagina especial:', error);
-    res.status(500).json({ error: error.message || 'Erro ao salvar configuracao da pagina especial.' });
+    return next(wrapError(error, { publicMessage: 'Erro ao salvar configuracao da pagina especial.' }));
   }
 });
 

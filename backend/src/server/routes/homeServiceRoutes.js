@@ -10,6 +10,13 @@ const { parseBooleanFlag, parseInteger } = require('../utils/requestParsers');
 const { persistUploadedFile } = require('../services/fileStorageService');
 const { listBackupHomeServices } = require('../services/backupContentService');
 const { sanitizeServedImageUrl } = require('../config/imageStorage');
+const { wrapError } = require('../utils/errorHandling');
+const {
+  sanitizeAssetReference,
+  sanitizeNavigationTarget,
+  sanitizeTextInput
+} = require('../utils/inputSanitization');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 let homeServicesColumnsReady = false;
@@ -74,6 +81,14 @@ const ensureHomeServicesColumns = async () => {
 
 const buildCustomPagePath = (slug = '') => (slug ? `/pagina/${slug}` : '');
 const buildDigitalGroupPath = (slugOrId = '') => (slugOrId ? `/grupo-digital/${String(slugOrId).replace(/^\/+/, '')}` : '');
+const VALID_LINK_TARGET_TYPES = new Set(['custom-page', 'digital-group']);
+
+const isExternalNavigationTarget = (value = '') => /^(?:https?:|mailto:|tel:)/i.test(String(value || '').trim());
+
+const normalizeLinkTargetType = (value) => {
+  const normalizedValue = sanitizeTextInput(value || '', { preserveNewlines: false }).toLowerCase();
+  return VALID_LINK_TARGET_TYPES.has(normalizedValue) ? normalizedValue : null;
+};
 
 const parseActionsPayload = (value) => {
   if (value === undefined || value === null || value === '') {
@@ -89,6 +104,113 @@ const parseActionsPayload = (value) => {
   }
 
   return value;
+};
+
+const normalizeActionButtons = (items = []) => (
+  (Array.isArray(items) ? items : [])
+    .map((item) => {
+      const label = sanitizeTextInput(item?.label || item?.title || '', { preserveNewlines: false });
+      const href = sanitizeNavigationTarget(item?.href || item?.link_url || '', {
+        allowExternal: true,
+        allowRelative: true
+      });
+
+      if (!label && !href) {
+        return null;
+      }
+
+      return {
+        label,
+        href,
+        external: Boolean(item?.external) || isExternalNavigationTarget(href)
+      };
+    })
+    .filter(Boolean)
+);
+
+const normalizeActionCard = (card, index = 0) => {
+  const id = sanitizeTextInput(card?.id || `card-${index}`, { preserveNewlines: false, maxLength: 120 });
+
+  if (!id) {
+    return null;
+  }
+
+  const linkUrl = sanitizeNavigationTarget(card?.link_url || '', {
+    allowExternal: true,
+    allowRelative: true
+  });
+
+  return {
+    id,
+    title: sanitizeTextInput(card?.title || '', { preserveNewlines: false }),
+    description: sanitizeTextInput(card?.description || '', { preserveNewlines: true }),
+    link_url: linkUrl,
+    is_external: Boolean(card?.is_external) || isExternalNavigationTarget(linkUrl),
+    front_image_url: sanitizeAssetReference(card?.front_image_url || ''),
+    back_image_url: sanitizeAssetReference(card?.back_image_url || '')
+  };
+};
+
+const normalizeActionGroups = (groups = []) => (
+  (Array.isArray(groups) ? groups : [])
+    .map((group, index) => {
+      const id = sanitizeTextInput(group?.id || `group-${index}`, { preserveNewlines: false, maxLength: 120 });
+      const cards = (Array.isArray(group?.cards) ? group.cards : [])
+        .map((card, cardIndex) => normalizeActionCard(card, cardIndex))
+        .filter(Boolean);
+
+      if (!id && cards.length === 0) {
+        return null;
+      }
+
+      return {
+        id,
+        title: sanitizeTextInput(group?.title || '', { preserveNewlines: false }),
+        description: sanitizeTextInput(group?.description || '', { preserveNewlines: true }),
+        cards
+      };
+    })
+    .filter(Boolean)
+);
+
+const normalizeActionsPayload = (value) => {
+  const parsedValue = parseActionsPayload(value);
+
+  if (Array.isArray(parsedValue)) {
+    const buttons = normalizeActionButtons(parsedValue);
+
+    return buttons.length > 0
+      ? { buttons, actions: buttons }
+      : [];
+  }
+
+  if (!parsedValue || typeof parsedValue !== 'object') {
+    return [];
+  }
+
+  const buttons = normalizeActionButtons(
+    Array.isArray(parsedValue.buttons) ? parsedValue.buttons : parsedValue.actions
+  );
+  const digitalCards = (Array.isArray(parsedValue.digital_cards) ? parsedValue.digital_cards : [])
+    .map((card, index) => normalizeActionCard(card, index))
+    .filter(Boolean);
+  const digitalGroups = normalizeActionGroups(parsedValue.digital_groups);
+  const normalizedPayload = {};
+
+  if (buttons.length > 0) {
+    normalizedPayload.buttons = buttons;
+    normalizedPayload.actions = buttons;
+  }
+
+  if (digitalCards.length > 0) {
+    normalizedPayload.digital_cards = digitalCards;
+  }
+
+  if (digitalGroups.length > 0) {
+    normalizedPayload.digital_groups = digitalGroups;
+  }
+
+  return Object.keys(normalizedPayload).length > 0 ? normalizedPayload : [];
 };
 
 const buildHomeServicesQuery = (schemaState) => {
@@ -150,19 +272,21 @@ const buildHomeServicesQuery = (schemaState) => {
 
 const normalizeHomeServiceRow = (row) => ({
   ...row,
-  image_url: sanitizeServedImageUrl(row.image_url),
+  name: sanitizeTextInput(row.name || '', { preserveNewlines: false }),
+  description: sanitizeTextInput(row.description || '', { preserveNewlines: true }),
+  image_url: sanitizeAssetReference(sanitizeServedImageUrl(row.image_url) || ''),
   link_target_type: row.link_target_type || null,
   custom_page_id: row.custom_page_id ? Number(row.custom_page_id) : null,
-  custom_page_title: row.custom_page_title || '',
+  custom_page_title: sanitizeTextInput(row.custom_page_title || '', { preserveNewlines: false }),
   digital_group_id: row.digital_group_id ? Number(row.digital_group_id) : null,
-  digital_group_title: row.digital_group_title || '',
+  digital_group_title: sanitizeTextInput(row.digital_group_title || '', { preserveNewlines: false }),
   link_url:
     row.link_target_type === 'custom-page' && row.custom_page_slug
       ? buildCustomPagePath(row.custom_page_slug)
       : row.link_target_type === 'digital-group' && (row.digital_group_slug || row.digital_group_id)
         ? buildDigitalGroupPath(row.digital_group_slug || row.digital_group_id)
-        : row.link_url,
-  actions: parseActionsPayload(row.actions),
+        : sanitizeNavigationTarget(row.link_url || ''),
+  actions: normalizeActionsPayload(row.actions),
   is_external: !!row.is_external,
   active: !!row.active
 });
@@ -183,31 +307,31 @@ const persistCardAssets = async (files, card, { frontFieldPrefix, backFieldPrefi
 
   const front_image_url = frontImageFile
     ? await persistUploadedFile(frontImageFile, { resourceType: 'talmax-digital' })
-    : safe(card.front_image_url || null);
+    : sanitizeAssetReference(card.front_image_url || '');
 
   const back_image_url = backImageFile
     ? await persistUploadedFile(backImageFile, { resourceType: 'talmax-digital' })
-    : safe(card.back_image_url || null);
+    : sanitizeAssetReference(card.back_image_url || '');
+
+  const linkUrl = sanitizeNavigationTarget(card.link_url || '', {
+    allowExternal: true,
+    allowRelative: true
+  });
 
   return {
     id: cardId,
-    title: safe(card.title || ''),
-    description: safe(card.description || ''),
-    link_url: safe(card.link_url || ''),
-    is_external: parseBooleanFlag(card.is_external) ? 1 : 0,
+    title: sanitizeTextInput(card.title || '', { preserveNewlines: false }),
+    description: sanitizeTextInput(card.description || '', { preserveNewlines: true }),
+    link_url: linkUrl,
+    is_external: (parseBooleanFlag(card.is_external) || isExternalNavigationTarget(linkUrl)) ? 1 : 0,
     front_image_url,
     back_image_url
   };
 };
 
 const persistDigitalCardsConfig = async (files, incomingActions, previousActions = {}) => {
-  const currentActions = incomingActions && typeof incomingActions === 'object'
-    ? incomingActions
-    : {};
-
-  const normalizedPreviousActions = previousActions && typeof previousActions === 'object'
-    ? previousActions
-    : {};
+  const currentActions = normalizeActionsPayload(incomingActions);
+  const normalizedPreviousActions = normalizeActionsPayload(previousActions);
 
   const baseGroups = Array.isArray(currentActions.digital_groups)
     ? currentActions.digital_groups
@@ -241,8 +365,8 @@ const persistDigitalCardsConfig = async (files, incomingActions, previousActions
 
       digitalGroups.push({
         id: groupId,
-        title: safe(group.title || ''),
-        description: safe(group.description || ''),
+        title: sanitizeTextInput(group.title || '', { preserveNewlines: false }),
+        description: sanitizeTextInput(group.description || '', { preserveNewlines: true }),
         cards
       });
     }
@@ -296,16 +420,16 @@ router.get('/', async (req, res) => {
 
     res.json(services);
   } catch (err) {
-    console.error('Erro ao buscar servicos da home:', err);
+    logger.error({ err }, 'Erro ao buscar servicos da home.');
     res.json(listBackupHomeServices().map(normalizeHomeServiceRow));
   }
 });
 
-router.post('/', requireAdminSession, upload.any(), async (req, res) => {
+router.post('/', requireAdminSession, upload.any(), async (req, res, next) => {
   try {
     await ensureHomeServicesColumns();
     const { name, description, link_url, is_external, display_order, active, actions } = req.body;
-    const linkTargetType = safe(req.body.link_target_type || null);
+    const linkTargetType = normalizeLinkTargetType(req.body.link_target_type);
     const customPageId = parseInteger(req.body.custom_page_id, 0);
     const digitalGroupId = parseInteger(req.body.digital_group_id, 0);
     const incomingActions = parseActionsPayload(actions);
@@ -313,8 +437,11 @@ router.post('/', requireAdminSession, upload.any(), async (req, res) => {
     const imageFile = getUploadedFileByField(req.files, 'image');
     const image_url = imageFile
       ? await persistUploadedFile(imageFile, { resourceType: 'segmentos' })
-      : null;
-    let resolvedLinkUrl = safe(link_url);
+      : sanitizeAssetReference(req.body.image_url || '');
+    let resolvedLinkUrl = sanitizeNavigationTarget(link_url || '', {
+      allowExternal: true,
+      allowRelative: true
+    });
     let resolvedCustomPageId = null;
     let resolvedDigitalGroupId = null;
 
@@ -339,9 +466,9 @@ router.post('/', requireAdminSession, upload.any(), async (req, res) => {
       (name, description, image_url, link_url, link_target_type, custom_page_id, digital_group_id, is_external, display_order, active, actions)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        safe(name),
-        safe(description),
-        safe(image_url),
+        safe(sanitizeTextInput(name || '', { preserveNewlines: false })),
+        safe(sanitizeTextInput(description || '', { preserveNewlines: true })),
+        safe(image_url || null),
         resolvedLinkUrl,
         linkTargetType,
         resolvedCustomPageId,
@@ -355,18 +482,17 @@ router.post('/', requireAdminSession, upload.any(), async (req, res) => {
 
     res.status(201).json({ id: result.insertId, message: 'Servico criado com sucesso' });
   } catch (err) {
-    console.error('Erro ao criar servico da home:', err);
-    res.status(500).json({ error: err.message || 'Erro interno ao criar servico' });
+    return next(wrapError(err, { publicMessage: 'Erro ao criar servico da home.' }));
   }
 });
 
-router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
+router.put('/:id', requireAdminSession, upload.any(), async (req, res, next) => {
   const { id } = req.params;
 
   try {
     await ensureHomeServicesColumns();
     const { name, description, link_url, is_external, display_order, active, actions } = req.body;
-    const linkTargetType = safe(req.body.link_target_type || null);
+    const linkTargetType = normalizeLinkTargetType(req.body.link_target_type);
     const customPageId = parseInteger(req.body.custom_page_id, 0);
     const digitalGroupId = parseInteger(req.body.digital_group_id, 0);
     const [currentRows] = await db.query('SELECT image_url, actions FROM home_services WHERE id = ? LIMIT 1', [id]);
@@ -388,7 +514,12 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
     if (image_url === undefined) {
       image_url = currentRows[0].image_url || null;
     }
-    let resolvedLinkUrl = safe(link_url);
+
+    image_url = sanitizeAssetReference(image_url || '');
+    let resolvedLinkUrl = sanitizeNavigationTarget(link_url || '', {
+      allowExternal: true,
+      allowRelative: true
+    });
     let resolvedCustomPageId = null;
     let resolvedDigitalGroupId = null;
 
@@ -423,9 +554,9 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
         actions = ?
       WHERE id = ?`,
       [
-        safe(name),
-        safe(description),
-        safe(image_url),
+        safe(sanitizeTextInput(name || '', { preserveNewlines: false })),
+        safe(sanitizeTextInput(description || '', { preserveNewlines: true })),
+        safe(image_url || null),
         resolvedLinkUrl,
         linkTargetType,
         resolvedCustomPageId,
@@ -440,24 +571,22 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
 
     res.json({ message: 'Servico atualizado com sucesso' });
   } catch (err) {
-    console.error('Erro ao atualizar servico da home:', err);
-    res.status(500).json({ error: err.message || 'Erro interno ao atualizar servico' });
+    return next(wrapError(err, { publicMessage: 'Erro ao atualizar servico da home.' }));
   }
 });
 
-router.delete('/:id', requireAdminSession, async (req, res) => {
+router.delete('/:id', requireAdminSession, async (req, res, next) => {
   const { id } = req.params;
 
   try {
     await db.query('DELETE FROM home_services WHERE id = ?', [id]);
     res.json({ message: 'Servico removido com sucesso' });
   } catch (err) {
-    console.error('Erro ao remover servico da home:', err);
-    res.status(500).json({ error: err.message || 'Erro interno ao remover servico' });
+    return next(wrapError(err, { publicMessage: 'Erro ao remover servico da home.' }));
   }
 });
 
-router.put('/:id/active', requireAdminSession, async (req, res) => {
+router.put('/:id/active', requireAdminSession, async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -465,8 +594,7 @@ router.put('/:id/active', requireAdminSession, async (req, res) => {
     await db.query('UPDATE home_services SET active = ? WHERE id = ?', [active, id]);
     res.json({ message: `Servico ${active ? 'ativado' : 'ocultado'} com sucesso` });
   } catch (err) {
-    console.error('Erro ao atualizar status do servico da home:', err);
-    res.status(500).json({ error: err.message || 'Erro interno ao atualizar status do servico' });
+    return next(wrapError(err, { publicMessage: 'Erro ao atualizar status do servico da home.' }));
   }
 });
 

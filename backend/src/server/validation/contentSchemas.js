@@ -1,5 +1,11 @@
 const { z } = require('zod');
-const { booleanLike, integerLike, stringField, validateWithSchema } = require('./requestValidation');
+const {
+  booleanLike,
+  integerLike,
+  navigationField,
+  stringField,
+  validateWithSchema
+} = require('./requestValidation');
 
 const categoryWritePayloadSchema = {
   name: stringField('O nome da categoria', { minLength: 1, maxLength: 160 }),
@@ -9,8 +15,8 @@ const categoryWritePayloadSchema = {
 };
 
 const bannerWritePayloadSchema = {
-  title: stringField('O titulo do banner', { maxLength: 255, optional: true }).optional(),
-  link_url: stringField('O link do banner', { maxLength: 1000, optional: true }).optional(),
+  title: stringField('O titulo do banner', { maxLength: 255, optional: true }),
+  link_url: navigationField('O link do banner', { maxLength: 1000, optional: true }),
   display_order: integerLike('display_order', { min: 0, optional: true }).optional(),
   active: booleanLike('active', { optional: true }).optional()
 };

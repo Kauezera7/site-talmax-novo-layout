@@ -1,6 +1,6 @@
 /**
  * Define as rotas de banners do site.
- * Cuida da leitura pública e da manutenção protegida pelo admin.
+ * Cuida da leitura publica e da manutencao protegida pelo admin.
  */
 const express = require('express');
 const db = require('../../config/database');
@@ -8,11 +8,17 @@ const upload = require('../config/upload');
 const { safe } = require('../utils/common');
 const { requireAdminSession } = require('../auth/adminSession');
 const { parseInteger } = require('../utils/requestParsers');
-const { sendValidationError } = require('../validation/requestValidation');
 const { validateBannerWritePayload } = require('../validation/contentSchemas');
 const { persistUploadedFile } = require('../services/fileStorageService');
 const { listBackupBanners } = require('../services/backupContentService');
 const { sanitizeServedImageUrl } = require('../config/imageStorage');
+const { wrapError } = require('../utils/errorHandling');
+const {
+  sanitizeAssetReference,
+  sanitizeNavigationTarget,
+  sanitizeTextInput
+} = require('../utils/inputSanitization');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 let cachedBannerSchemaState = null;
@@ -79,23 +85,29 @@ router.get('/', async (req, res) => {
     const [rows] = await db.query(buildBannerListQuery(schemaState));
     res.json(rows.map((row) => ({
       ...row,
-      image_url: sanitizeServedImageUrl(row.image_url)
+      title: sanitizeTextInput(row.title || '', { preserveNewlines: false }),
+      subtitle: sanitizeTextInput(row.subtitle || '', { preserveNewlines: true }),
+      image_url: sanitizeAssetReference(sanitizeServedImageUrl(row.image_url) || ''),
+      link_url: sanitizeNavigationTarget(row.link_url || '')
     })));
   } catch (err) {
     if (shouldUseBackupFallback) {
       res.json(listBackupBanners().map((row) => ({
         ...row,
-        image_url: sanitizeServedImageUrl(row.image_url)
+        title: sanitizeTextInput(row.title || '', { preserveNewlines: false }),
+        subtitle: sanitizeTextInput(row.subtitle || '', { preserveNewlines: true }),
+        image_url: sanitizeAssetReference(sanitizeServedImageUrl(row.image_url) || ''),
+        link_url: sanitizeNavigationTarget(row.link_url || '')
       })));
       return;
     }
 
-    console.error('Erro ao buscar banners:', err);
+    logger.error({ err }, 'Erro ao buscar banners.');
     res.json([]);
   }
 });
 
-router.post('/', requireAdminSession, upload.single('image'), async (req, res) => {
+router.post('/', requireAdminSession, upload.single('image'), async (req, res, next) => {
   try {
     const payload = validateBannerWritePayload(req.body || {});
     const image_url = req.file
@@ -103,7 +115,7 @@ router.post('/', requireAdminSession, upload.single('image'), async (req, res) =
       : null;
 
     if (!image_url) {
-      return res.status(400).json({ error: 'A imagem do banner é obrigatória.' });
+      return res.status(400).json({ error: 'A imagem do banner e obrigatoria.' });
     }
 
     const isActive = payload.active === false ? 0 : 1;
@@ -111,18 +123,15 @@ router.post('/', requireAdminSession, upload.single('image'), async (req, res) =
 
     await db.query(
       'INSERT INTO banners (image_url, title, link_url, display_order, active) VALUES (?, ?, ?, ?, ?)',
-      [image_url, safe(payload.title), safe(payload.link_url), order, isActive]
+      [sanitizeAssetReference(image_url) || null, safe(payload.title), safe(payload.link_url), order, isActive]
     );
     return res.status(201).json({ message: 'Banner criado!' });
   } catch (err) {
-    if (sendValidationError(res, err)) {
-      return res;
-    }
-    return res.status(500).json({ error: err.message });
+    return next(wrapError(err, { publicMessage: 'Erro ao criar banner.' }));
   }
 });
 
-router.put('/:id', requireAdminSession, upload.single('image'), async (req, res) => {
+router.put('/:id', requireAdminSession, upload.single('image'), async (req, res, next) => {
   try {
     const payload = validateBannerWritePayload(req.body || {});
     const { id } = req.params;
@@ -134,7 +143,7 @@ router.put('/:id', requireAdminSession, upload.single('image'), async (req, res)
 
     if (req.file) {
       query += ', image_url = ?';
-      params.push(await persistUploadedFile(req.file, { resourceType: 'banners' }));
+      params.push(sanitizeAssetReference(await persistUploadedFile(req.file, { resourceType: 'banners' })) || null);
     }
 
     query += ' WHERE id = ?';
@@ -143,19 +152,16 @@ router.put('/:id', requireAdminSession, upload.single('image'), async (req, res)
     await db.query(query, params);
     return res.json({ message: 'Banner atualizado!' });
   } catch (err) {
-    if (sendValidationError(res, err)) {
-      return res;
-    }
-    return res.status(500).json({ error: err.message });
+    return next(wrapError(err, { publicMessage: 'Erro ao atualizar banner.' }));
   }
 });
 
-router.delete('/:id', requireAdminSession, async (req, res) => {
+router.delete('/:id', requireAdminSession, async (req, res, next) => {
   try {
     await db.query('DELETE FROM banners WHERE id = ?', [req.params.id]);
-    return res.json({ message: 'Banner excluído!' });
+    return res.json({ message: 'Banner excluido!' });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return next(wrapError(err, { publicMessage: 'Erro ao excluir banner.' }));
   }
 });
 

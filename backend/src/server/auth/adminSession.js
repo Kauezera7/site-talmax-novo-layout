@@ -10,6 +10,7 @@ const {
   getRetryAfterSecondsFromResetTime,
   normalizeAdminUsername
 } = require('../seguranca/adminLoginRateLimit');
+const { createHttpError, wrapError } = require('../utils/errorHandling');
 
 const ADMIN_SESSION_COOKIE = 'talmax-admin-session';
 const ADMIN_USER_FREE_FLAG_VALUE = 1;
@@ -225,7 +226,7 @@ const requireAdminSession = (req, res, next) => {
   return next();
 };
 
-const loginAdmin = async (req, res) => {
+const loginAdmin = async (req, res, next) => {
   try {
     const { username, password } = req.body || {};
 
@@ -266,11 +267,11 @@ const loginAdmin = async (req, res) => {
       user: sessionPayload
     });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return next(wrapError(err, { publicMessage: 'Erro ao processar login do admin.' }));
   }
 };
 
-const unlockAdminLoginByUser = async (req, res) => {
+const unlockAdminLoginByUser = async (req, res, next) => {
   try {
     const { username } = req.body || {};
 
@@ -298,10 +299,14 @@ const unlockAdminLoginByUser = async (req, res) => {
     });
   } catch (error) {
     if (error.code === 'BLOQ_USER_COLUMN_MISSING') {
-      return res.status(503).json({ error: error.message });
+      return next(createHttpError(503, error.message, {
+        code: error.code,
+        expose: true,
+        cause: error
+      }));
     }
 
-    return res.status(500).json({ error: error.message });
+    return next(wrapError(error, { publicMessage: 'Erro ao desbloquear login do admin.' }));
   }
 };
 

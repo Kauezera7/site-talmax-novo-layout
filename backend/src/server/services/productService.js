@@ -2,6 +2,12 @@
  * Centraliza a logica de consulta e relacionamento dos produtos.
  * Mantem as rotas menores e reaproveita SQL e transformacoes repetidas.
  */
+const {
+  sanitizeAssetReference,
+  sanitizeTextInput
+} = require('../utils/inputSanitization');
+const { normalizeStoredProductExtraData } = require('../validation/productSchemas');
+
 const PRODUCT_SELECT_QUERY = `
   SELECT p.*,
          (SELECT GROUP_CONCAT(name SEPARATOR ', ') FROM (
@@ -38,8 +44,8 @@ let productTabsTableReady = false;
 const normalizeProductTabRow = (row) => ({
   id: Number(row.id),
   product_id: Number(row.product_id),
-  title: row.title || '',
-  content: row.content || '',
+  title: sanitizeTextInput(row.title || '', { preserveNewlines: false }),
+  content: sanitizeTextInput(row.content || '', { preserveNewlines: true }),
   content_as_list: Number(row.content_as_list ?? 0) === 1 || row.content_as_list === true,
   display_order: Number(row.display_order || 0),
   is_active: Number(row.is_active ?? 1) === 1
@@ -58,8 +64,8 @@ const normalizeIncomingTabs = (tabs = []) => (
   Array.isArray(tabs)
     ? tabs
       .map((tab, index) => ({
-        title: String(tab?.title || '').trim(),
-        content: String(tab?.content || '').trim(),
+        title: sanitizeTextInput(tab?.title || '', { preserveNewlines: false }),
+        content: sanitizeTextInput(tab?.content || '', { preserveNewlines: true }),
         content_as_list: Boolean(tab?.contentAsList || tab?.content_as_list),
         display_order: Number.isFinite(Number(tab?.display_order))
           ? Number(tab.display_order)
@@ -109,6 +115,11 @@ const attachTabsToProducts = async (db, products = []) => {
 
 const formatProductRow = (row) => ({
   ...row,
+  name: sanitizeTextInput(row.name || '', { preserveNewlines: false }),
+  description: sanitizeTextInput(row.description || '', { preserveNewlines: true }),
+  main_image: sanitizeAssetReference(row.main_image || ''),
+  category_names: sanitizeTextInput(row.category_names || '', { preserveNewlines: false }),
+  extra_data: normalizeStoredProductExtraData(row.extra_data),
   category_ids: row.main_category_ids
     ? String(row.main_category_ids).split(',').filter(Boolean).map(Number)
     : [],

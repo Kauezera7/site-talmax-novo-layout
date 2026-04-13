@@ -1,4 +1,10 @@
 import { assetPath, resolveStoredAssetPath } from '../../utils/assets';
+import {
+  isExternalNavigationTarget,
+  sanitizeAssetReference,
+  sanitizeNavigationTarget,
+  sanitizeTextInput
+} from '../../utils/contentSafety';
 
 export const DIGITAL_CARD_TEMPLATES = [
   {
@@ -56,13 +62,32 @@ export const parseDigitalActionsPayload = (value) => {
   }
 
   if (typeof value === 'object') {
+    const digitalCards = (Array.isArray(value.digital_cards) ? value.digital_cards : [])
+      .map((card, index) => {
+        const safeLinkUrl = sanitizeNavigationTarget(card?.link_url || '', {
+          allowExternal: true,
+          allowRelative: true
+        });
+
+        return {
+          id: sanitizeTextInput(card?.id || `digital-card-${index}`, { preserveNewlines: false, maxLength: 120 }),
+          title: sanitizeTextInput(card?.title || '', { preserveNewlines: false, maxLength: 255 }),
+          description: sanitizeTextInput(card?.description || '', { preserveNewlines: true, maxLength: 4000 }),
+          link_url: safeLinkUrl,
+          is_external: Boolean(card?.is_external) || isExternalNavigationTarget(safeLinkUrl),
+          front_image_url: sanitizeAssetReference(card?.front_image_url || ''),
+          back_image_url: sanitizeAssetReference(card?.back_image_url || '')
+        };
+      })
+      .filter((card) => card.id);
+
     return {
       buttons: Array.isArray(value.buttons)
         ? value.buttons
         : Array.isArray(value.actions)
           ? value.actions
           : [],
-      digital_cards: Array.isArray(value.digital_cards) ? value.digital_cards : []
+      digital_cards: digitalCards
     };
   }
 
@@ -75,12 +100,12 @@ export const buildTalmaxDigitalReferenceCards = (storedCards = []) => (
 
     return {
       id: template.id,
-      title: storedCard.title || template.title,
-      description: storedCard.description || template.description,
-      link_url: storedCard.link_url || '',
+      title: storedCard.title || sanitizeTextInput(template.title, { preserveNewlines: false, maxLength: 255 }),
+      description: storedCard.description || sanitizeTextInput(template.description, { preserveNewlines: true, maxLength: 4000 }),
+      link_url: sanitizeNavigationTarget(storedCard.link_url || '', { allowExternal: true, allowRelative: true }),
       is_external: Boolean(storedCard.is_external),
-      front_image_url: storedCard.front_image_url || '',
-      back_image_url: storedCard.back_image_url || '',
+      front_image_url: sanitizeAssetReference(storedCard.front_image_url || ''),
+      back_image_url: sanitizeAssetReference(storedCard.back_image_url || ''),
       default_front_image: assetPath(template.frontAsset),
       default_back_image: assetPath(template.backAsset)
     };

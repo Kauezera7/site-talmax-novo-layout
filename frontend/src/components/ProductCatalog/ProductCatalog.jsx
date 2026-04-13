@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
 import { apiAssetPath } from '../../utils/assets';
+import { parseSafeExtraData } from '../../utils/contentSafety';
 import { getNormalizedCategoryNames, getVisibleCategoryLabel } from '../../utils/productCategories';
 import './ProductCatalog.css';
 
@@ -76,15 +77,7 @@ const ProductCatalog = () => {
         setAllCategories(catData);
 
         const formattedProducts = prodData.map((product) => {
-          let extra = {};
-          try {
-            extra =
-              typeof product.extra_data === 'string'
-                ? JSON.parse(product.extra_data)
-                : product.extra_data;
-          } catch (error) {
-            extra = {};
-          }
+          const extra = parseSafeExtraData(product.extra_data);
 
           const segmentSlugs = ['talmax-digital', 'protese-dentaria', 'nail-e-podologia'];
           const segmentNames = catData

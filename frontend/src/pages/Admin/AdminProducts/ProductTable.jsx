@@ -1,15 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Edit, Trash2, Search, List, Plus, Eye, EyeOff } from 'lucide-react';
 import { apiAssetPath } from '../../../utils/assets';
-
-const parseExtraData = (value) => {
-  if (!value) return {};
-  try {
-    return typeof value === 'string' ? JSON.parse(value) : value;
-  } catch (error) {
-    return {};
-  }
-};
+import { parseSafeExtraData } from '../../../utils/contentSafety';
 
 const shouldShowQuoteButton = (value) => !(
   value === false ||
@@ -81,14 +73,14 @@ const ProductTable = ({ products, onCreate, onEdit, onDelete, onToggleActive, on
               </span>
               <button
                 type="button"
-                className={`status-badge product-quote-toggle ${shouldShowQuoteButton(parseExtraData(product.extra_data).showQuoteButton) ? 'status-active' : 'status-inactive'}`}
+                className={`status-badge product-quote-toggle ${shouldShowQuoteButton(parseSafeExtraData(product.extra_data).showQuoteButton) ? 'status-active' : 'status-inactive'}`}
                 onClick={(event) => {
                   event.stopPropagation();
                   onToggleQuoteButton(product);
                 }}
                 title="Alternar botão de orçamento"
               >
-                {shouldShowQuoteButton(parseExtraData(product.extra_data).showQuoteButton) ? 'Orçamento on' : 'Orçamento off'}
+                {shouldShowQuoteButton(parseSafeExtraData(product.extra_data).showQuoteButton) ? 'Orçamento on' : 'Orçamento off'}
               </button>
             </div>
 

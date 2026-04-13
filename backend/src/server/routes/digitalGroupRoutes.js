@@ -5,6 +5,13 @@ const { requireAdminSession } = require('../auth/adminSession');
 const { parseBooleanFlag, parseInteger } = require('../utils/requestParsers');
 const { persistUploadedFile } = require('../services/fileStorageService');
 const { safe } = require('../utils/common');
+const { createHttpError, wrapError } = require('../utils/errorHandling');
+const {
+  sanitizeAssetReference,
+  sanitizeNavigationTarget,
+  sanitizeTextInput
+} = require('../utils/inputSanitization');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 
@@ -237,13 +244,15 @@ const listGroups = async ({ onlyActive = false } = {}) => {
     current.push({
       id: Number(card.id),
       custom_page_id: card.custom_page_id ? Number(card.custom_page_id) : null,
-      custom_page_title: card.custom_page_title || '',
-      title: card.title || '',
-      description: card.description || '',
-      link_url: card.custom_page_slug ? buildCustomPagePath(card.custom_page_slug) : (card.link_url || ''),
+      custom_page_title: sanitizeTextInput(card.custom_page_title || '', { preserveNewlines: false }),
+      title: sanitizeTextInput(card.title || '', { preserveNewlines: false }),
+      description: sanitizeTextInput(card.description || '', { preserveNewlines: true }),
+      link_url: card.custom_page_slug
+        ? buildCustomPagePath(card.custom_page_slug)
+        : sanitizeNavigationTarget(card.link_url || ''),
       is_external: Number(card.is_external) === 1,
-      front_image_url: card.front_image_url || '',
-      back_image_url: card.back_image_url || '',
+      front_image_url: sanitizeAssetReference(card.front_image_url || ''),
+      back_image_url: sanitizeAssetReference(card.back_image_url || ''),
       display_order: Number(card.display_order || 0),
       is_active: Number(card.is_active ?? 1) === 1
     });
@@ -253,13 +262,13 @@ const listGroups = async ({ onlyActive = false } = {}) => {
 
   return groups.map((group) => ({
     id: Number(group.id),
-    title: group.title || '',
+    title: sanitizeTextInput(group.title || '', { preserveNewlines: false }),
     slug: group.slug || buildFallbackSlug(group.title, group.id),
-    description: group.description || '',
-    overline: group.overline || '',
-    hero_title: group.hero_title || '',
-    hero_description: group.hero_description || '',
-    logo_url: group.logo_url || '',
+    description: sanitizeTextInput(group.description || '', { preserveNewlines: true }),
+    overline: sanitizeTextInput(group.overline || '', { preserveNewlines: false }),
+    hero_title: sanitizeTextInput(group.hero_title || '', { preserveNewlines: false }),
+    hero_description: sanitizeTextInput(group.hero_description || '', { preserveNewlines: true }),
+    logo_url: sanitizeAssetReference(group.logo_url || ''),
     display_order: Number(group.display_order || 0),
     is_active: Number(group.is_active ?? 1) === 1,
     cards: cardsByGroupId.get(Number(group.id)) || []
@@ -279,11 +288,11 @@ const replaceGroupCards = async (connection, groupId, files, cards = []) => {
 
     const frontImageUrl = frontImageFile
       ? await persistUploadedFile(frontImageFile, { resourceType: 'digital-groups' })
-      : safe(card.front_image_url || '');
+      : sanitizeAssetReference(card.front_image_url || '');
     const backImageUrl = backImageFile
       ? await persistUploadedFile(backImageFile, { resourceType: 'digital-groups' })
-      : safe(card.back_image_url || '');
-    let resolvedLinkUrl = safe(card.link_url || '');
+      : sanitizeAssetReference(card.back_image_url || '');
+    let resolvedLinkUrl = sanitizeNavigationTarget(card.link_url || '');
     let resolvedCustomPageId = null;
 
     if (hasCustomPagesTable && Number.isInteger(customPageId) && customPageId > 0) {
@@ -308,12 +317,12 @@ const replaceGroupCards = async (connection, groupId, files, cards = []) => {
       [
         groupId,
         resolvedCustomPageId,
-        safe(card.title || ''),
-        safe(card.description || ''),
+        safe(sanitizeTextInput(card.title || '', { preserveNewlines: false })),
+        safe(sanitizeTextInput(card.description || '', { preserveNewlines: true })),
         resolvedLinkUrl,
         parseBooleanFlag(card.is_external) ? 1 : 0,
-        frontImageUrl,
-        backImageUrl,
+        safe(frontImageUrl || null),
+        safe(backImageUrl || null),
         index,
         card.is_active === false ? 0 : 1
       ]
@@ -321,23 +330,23 @@ const replaceGroupCards = async (connection, groupId, files, cards = []) => {
   }
 };
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
   try {
     const onlyActive = req.query.admin !== '1';
     const items = await listGroups({ onlyActive });
     res.json(items);
   } catch (error) {
-    console.error('Erro ao listar grupos digitais:', error);
+    logger.error({ err: error }, 'Erro ao listar grupos digitais.');
 
      if (isMissingTableError(error) || isSchemaPermissionError(error)) {
       return res.json([]);
     }
 
-    res.status(500).json({ error: 'Erro ao listar grupos digitais.' });
+    return next(wrapError(error, { publicMessage: 'Erro ao listar grupos digitais.' }));
   }
 });
 
-router.get('/public/:slug', async (req, res) => {
+router.get('/public/:slug', async (req, res, next) => {
   try {
     const items = await listGroups({ onlyActive: true });
     const target = String(req.params.slug || '').trim().toLowerCase();
@@ -352,17 +361,17 @@ router.get('/public/:slug', async (req, res) => {
 
     res.json(item);
   } catch (error) {
-    console.error('Erro ao buscar grupo digital publico:', error);
+    logger.error({ err: error }, 'Erro ao buscar grupo digital publico.');
 
     if (isMissingTableError(error) || isSchemaPermissionError(error)) {
       return res.status(404).json({ error: 'Grupo digital nao encontrado.' });
     }
 
-    res.status(500).json({ error: 'Erro ao buscar grupo digital publico.' });
+    return next(wrapError(error, { publicMessage: 'Erro ao buscar grupo digital publico.' }));
   }
 });
 
-router.post('/', requireAdminSession, upload.any(), async (req, res) => {
+router.post('/', requireAdminSession, upload.any(), async (req, res, next) => {
   const connection = await db.getConnection();
 
   try {
@@ -371,8 +380,8 @@ router.post('/', requireAdminSession, upload.any(), async (req, res) => {
     const logoFile = getUploadedFileByField(req.files, 'logo');
     const logoUrl = logoFile
       ? await persistUploadedFile(logoFile, { resourceType: 'digital-groups' })
-      : safe(req.body.logo_url || '');
-    const requestedSlug = safe(req.body.slug || '');
+      : sanitizeAssetReference(req.body.logo_url || '');
+    const requestedSlug = sanitizeTextInput(req.body.slug || '', { preserveNewlines: false, maxLength: 180 });
 
     await connection.beginTransaction();
     const [result] = await connection.query(
@@ -381,13 +390,13 @@ router.post('/', requireAdminSession, upload.any(), async (req, res) => {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
-        safe(req.body.title || ''),
+        safe(sanitizeTextInput(req.body.title || '', { preserveNewlines: false })),
         null,
-        safe(req.body.description || ''),
-        safe(req.body.overline || ''),
-        safe(req.body.hero_title || ''),
-        safe(req.body.hero_description || ''),
-        logoUrl,
+        safe(sanitizeTextInput(req.body.description || '', { preserveNewlines: true })),
+        safe(sanitizeTextInput(req.body.overline || '', { preserveNewlines: false })),
+        safe(sanitizeTextInput(req.body.hero_title || '', { preserveNewlines: false })),
+        safe(sanitizeTextInput(req.body.hero_description || '', { preserveNewlines: true })),
+        safe(logoUrl || null),
         parseInteger(req.body.display_order, 0),
         req.body.is_active === 'false' ? 0 : 1
       ]
@@ -407,21 +416,23 @@ router.post('/', requireAdminSession, upload.any(), async (req, res) => {
     res.status(201).json({ message: 'Grupo digital criado com sucesso.' });
   } catch (error) {
     await connection.rollback().catch(() => {});
-    console.error('Erro ao criar grupo digital:', error);
+    logger.error({ err: error }, 'Erro ao criar grupo digital.');
 
     if (isMissingTableError(error) || isSchemaPermissionError(error)) {
-      return res.status(503).json({
-        error: 'As tabelas de grupos digitais nao estao disponiveis no banco de producao.'
-      });
+      return next(createHttpError(503, 'As tabelas de grupos digitais nao estao disponiveis no banco de producao.', {
+        code: error.code,
+        expose: true,
+        cause: error
+      }));
     }
 
-    res.status(500).json({ error: error.message || 'Erro ao criar grupo digital.' });
+    return next(wrapError(error, { publicMessage: 'Erro ao criar grupo digital.' }));
   } finally {
     connection.release();
   }
 });
 
-router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
+router.put('/:id', requireAdminSession, upload.any(), async (req, res, next) => {
   const connection = await db.getConnection();
 
   try {
@@ -431,8 +442,8 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
     const logoFile = getUploadedFileByField(req.files, 'logo');
     const logoUrl = logoFile
       ? await persistUploadedFile(logoFile, { resourceType: 'digital-groups' })
-      : safe(req.body.logo_url || '');
-    const requestedSlug = safe(req.body.slug || '');
+      : sanitizeAssetReference(req.body.logo_url || '');
+    const requestedSlug = sanitizeTextInput(req.body.slug || '', { preserveNewlines: false, maxLength: 180 });
     const nextSlug = await resolveUniqueSlug(
       connection,
       requestedSlug || buildFallbackSlug(req.body.title, groupId),
@@ -447,13 +458,13 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
         WHERE id = ?
       `,
       [
-        safe(req.body.title || ''),
+        safe(sanitizeTextInput(req.body.title || '', { preserveNewlines: false })),
         nextSlug,
-        safe(req.body.description || ''),
-        safe(req.body.overline || ''),
-        safe(req.body.hero_title || ''),
-        safe(req.body.hero_description || ''),
-        logoUrl,
+        safe(sanitizeTextInput(req.body.description || '', { preserveNewlines: true })),
+        safe(sanitizeTextInput(req.body.overline || '', { preserveNewlines: false })),
+        safe(sanitizeTextInput(req.body.hero_title || '', { preserveNewlines: false })),
+        safe(sanitizeTextInput(req.body.hero_description || '', { preserveNewlines: true })),
+        safe(logoUrl || null),
         parseInteger(req.body.display_order, 0),
         req.body.is_active === 'false' ? 0 : 1,
         groupId
@@ -466,35 +477,39 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
     res.json({ message: 'Grupo digital atualizado com sucesso.' });
   } catch (error) {
     await connection.rollback().catch(() => {});
-    console.error('Erro ao atualizar grupo digital:', error);
+    logger.error({ err: error }, 'Erro ao atualizar grupo digital.');
 
     if (isMissingTableError(error) || isSchemaPermissionError(error)) {
-      return res.status(503).json({
-        error: 'As tabelas de grupos digitais nao estao disponiveis no banco de producao.'
-      });
+      return next(createHttpError(503, 'As tabelas de grupos digitais nao estao disponiveis no banco de producao.', {
+        code: error.code,
+        expose: true,
+        cause: error
+      }));
     }
 
-    res.status(500).json({ error: error.message || 'Erro ao atualizar grupo digital.' });
+    return next(wrapError(error, { publicMessage: 'Erro ao atualizar grupo digital.' }));
   } finally {
     connection.release();
   }
 });
 
-router.delete('/:id', requireAdminSession, async (req, res) => {
+router.delete('/:id', requireAdminSession, async (req, res, next) => {
   try {
     await ensureTables();
     await db.query('DELETE FROM digital_groups WHERE id = ?', [req.params.id]);
     res.json({ message: 'Grupo digital removido com sucesso.' });
   } catch (error) {
-    console.error('Erro ao remover grupo digital:', error);
+    logger.error({ err: error }, 'Erro ao remover grupo digital.');
 
     if (isMissingTableError(error) || isSchemaPermissionError(error)) {
-      return res.status(503).json({
-        error: 'As tabelas de grupos digitais nao estao disponiveis no banco de producao.'
-      });
+      return next(createHttpError(503, 'As tabelas de grupos digitais nao estao disponiveis no banco de producao.', {
+        code: error.code,
+        expose: true,
+        cause: error
+      }));
     }
 
-    res.status(500).json({ error: 'Erro ao remover grupo digital.' });
+    return next(wrapError(error, { publicMessage: 'Erro ao remover grupo digital.' }));
   }
 });
 

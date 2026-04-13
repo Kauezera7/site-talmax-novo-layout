@@ -1,4 +1,12 @@
 const { z } = require('zod');
+const {
+  sanitizeAssetReference,
+  sanitizeNavigationTarget,
+  sanitizeTextInput
+} = require('../utils/inputSanitization');
+
+const INVALID_NAVIGATION_TARGET = '__invalid_navigation_target__';
+const INVALID_ASSET_REFERENCE = '__invalid_asset_reference__';
 
 class RequestValidationError extends Error {
   constructor(issues = []) {
@@ -67,22 +75,11 @@ const parseJsonField = (value, schema, fieldName) => {
   return validateWithSchema(schema, parsedValue, [fieldName]);
 };
 
-const sendValidationError = (res, error) => {
-  if (!(error instanceof RequestValidationError)) {
-    return false;
-  }
-
-  res.status(error.statusCode || 400).json({
-    error: 'Payload invalido.',
-    details: error.issues
-  });
-
-  return true;
-};
-
-const coerceTrimmedString = (value) => {
+const coerceTrimmedString = (value, options = {}) => {
   if (typeof value === 'string') {
-    return value.trim();
+    return sanitizeTextInput(value, {
+      preserveNewlines: Boolean(options.preserveNewlines)
+    });
   }
 
   return value;
@@ -92,11 +89,12 @@ const stringField = (label, options = {}) => {
   const {
     minLength = 0,
     maxLength = 255,
-    optional = false
+    optional = false,
+    preserveNewlines = false
   } = options;
 
   const schema = z.preprocess(
-    coerceTrimmedString,
+    (value) => coerceTrimmedString(value, { preserveNewlines }),
     z.string({
       required_error: `${label} e obrigatorio.`,
       invalid_type_error: `${label} precisa ser um texto.`
@@ -104,6 +102,82 @@ const stringField = (label, options = {}) => {
       .min(minLength, `${label} e obrigatorio.`)
       .max(maxLength, `${label} deve ter no maximo ${maxLength} caracteres.`)
   );
+
+  return optional ? schema.optional() : schema;
+};
+
+const navigationField = (label, options = {}) => {
+  const {
+    minLength = 0,
+    maxLength = 1000,
+    optional = false,
+    allowExternal = true,
+    allowRelative = true
+  } = options;
+
+  const schema = z.preprocess((value) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    const normalizedValue = sanitizeTextInput(value, { preserveNewlines: false });
+
+    if (!normalizedValue) {
+      return '';
+    }
+
+    const sanitizedValue = sanitizeNavigationTarget(normalizedValue, {
+      allowExternal,
+      allowRelative
+    });
+
+    return sanitizedValue || INVALID_NAVIGATION_TARGET;
+  }, z.string({
+    required_error: `${label} e obrigatorio.`,
+    invalid_type_error: `${label} precisa ser um texto.`
+  })
+    .min(minLength, `${label} e obrigatorio.`)
+    .max(maxLength, `${label} deve ter no maximo ${maxLength} caracteres.`)
+    .refine((value) => value !== INVALID_NAVIGATION_TARGET, `${label} precisa ser um link valido.`)
+    .transform((value) => (value === INVALID_NAVIGATION_TARGET ? '' : value)));
+
+  return optional ? schema.optional() : schema;
+};
+
+const assetReferenceField = (label, options = {}) => {
+  const {
+    minLength = 0,
+    maxLength = 1000,
+    optional = false,
+    allowExternal = true,
+    allowRelative = true
+  } = options;
+
+  const schema = z.preprocess((value) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    const normalizedValue = sanitizeTextInput(value, { preserveNewlines: false });
+
+    if (!normalizedValue) {
+      return '';
+    }
+
+    const sanitizedValue = sanitizeAssetReference(normalizedValue, {
+      allowExternal,
+      allowRelative
+    });
+
+    return sanitizedValue || INVALID_ASSET_REFERENCE;
+  }, z.string({
+    required_error: `${label} e obrigatorio.`,
+    invalid_type_error: `${label} precisa ser um texto.`
+  })
+    .min(minLength, `${label} e obrigatorio.`)
+    .max(maxLength, `${label} deve ter no maximo ${maxLength} caracteres.`)
+    .refine((value) => value !== INVALID_ASSET_REFERENCE, `${label} precisa ser uma referencia valida.`)
+    .transform((value) => (value === INVALID_ASSET_REFERENCE ? '' : value)));
 
   return optional ? schema.optional() : schema;
 };
@@ -180,11 +254,12 @@ const integerLike = (label, options = {}) => {
 
 module.exports = {
   RequestValidationError,
+  assetReferenceField,
   booleanLike,
   formatZodIssues,
   integerLike,
+  navigationField,
   parseJsonField,
-  sendValidationError,
   stringField,
   validateWithSchema
 };

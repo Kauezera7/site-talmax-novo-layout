@@ -16,6 +16,7 @@ import 'swiper/css/pagination';
 import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
 import { apiAssetPath, assetPath } from '../../utils/assets';
+import { parseSafeExtraData } from '../../utils/contentSafety';
 import pageSettingsService, { DEFAULT_SPECIAL_PAGE_SETTINGS, normalizeSpecialPageSettings } from '../../services/pageSettingsService';
 import './Upcera.css';
 import '../ProductCatalog/ProductCatalog.css';
@@ -100,12 +101,7 @@ const Upcera = () => {
           .filter((p) => p.is_upcera)
           .sort((a, b) => (a.upcera_order || 0) - (b.upcera_order || 0))
           .map((p) => {
-            let extra = {};
-            try {
-              extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data;
-            } catch (e) {
-              extra = {};
-            }
+            const extra = parseSafeExtraData(p.extra_data);
 
             return {
               id: p.id,

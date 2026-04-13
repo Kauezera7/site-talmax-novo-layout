@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import digitalGroupService from '../../services/digitalGroupService';
 import { assetPath, resolveStoredAssetPath } from '../../utils/assets';
+import { isExternalNavigationTarget, sanitizeNavigationTarget } from '../../utils/contentSafety';
 import './TalmaxDigital.css';
 
 const DEFAULT_HERO = {
@@ -17,7 +18,7 @@ const buildGroupCategories = (cards = []) => (
     image: resolveStoredAssetPath(card.front_image_url),
     backIcon: resolveStoredAssetPath(card.back_image_url),
     backImage: resolveStoredAssetPath(card.back_image_url),
-    link_url: card.link_url || ''
+    link_url: sanitizeNavigationTarget(card.link_url, { allowExternal: true, allowRelative: true })
   }))
 );
 
@@ -50,14 +51,16 @@ const DigitalGroupPage = () => {
   const resolvedHeroDescription = String(group?.hero_description || '').trim();
 
   const handleCategoryClick = (cat) => {
-    if (!cat.link_url) return;
+    const safeTarget = sanitizeNavigationTarget(cat.link_url, { allowExternal: true, allowRelative: true });
 
-    if (/^https?:\/\//i.test(cat.link_url)) {
-      window.open(cat.link_url, '_blank', 'noopener,noreferrer');
+    if (!safeTarget) return;
+
+    if (isExternalNavigationTarget(safeTarget)) {
+      window.open(safeTarget, '_blank', 'noopener,noreferrer');
       return;
     }
 
-    navigate(cat.link_url);
+    navigate(safeTarget);
   };
 
   const containerVariants = {

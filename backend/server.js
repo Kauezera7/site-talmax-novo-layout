@@ -6,23 +6,24 @@ const path = require('path');
 const fs = require('fs');
 const dotenv = require('dotenv');
 
-console.log('--- INICIANDO SERVIDOR ---');
-console.log(`📂 Diretorio atual: ${process.cwd()}`);
-console.log(`📂 Diretorio do script: ${__dirname}`);
-
-// 1. Tenta carregar do arquivo .env na pasta backend
 const envPath = path.resolve(__dirname, '.env');
-if (fs.existsSync(envPath)) {
-    dotenv.config({ path: envPath });
-    console.log('✅ Arquivo .env detectado e carregado.');
-} else {
-    console.log('ℹ️ Arquivo .env nao encontrado (comum em producao).');
+const envFileLoaded = fs.existsSync(envPath);
+
+if (envFileLoaded) {
+  dotenv.config({ path: envPath });
 }
 
-// 2. Carrega variaveis do sistema (Render Dashboard)
-dotenv.config(); 
+dotenv.config();
 
+const logger = require('./src/server/utils/logger');
 const createApp = require('./src/server/app');
+
+logger.info({
+  cwd: process.cwd(),
+  scriptDir: __dirname,
+  envFileLoaded
+}, 'Iniciando servidor');
+
 const app = createApp();
 const PORT = process.env.PORT || 5000;
 
@@ -31,17 +32,15 @@ app.listen(PORT, '0.0.0.0', () => {
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
-  console.log(`\n🚀 Servidor rodando em http://localhost:${PORT}`);
-  console.log(`📦 Ambiente: ${process.env.NODE_ENV}`);
-  
-  console.log('🔍 STATUS CLOUDINARY:');
-  console.log(`   - Cloud Name: ${cloudName ? 'OK (' + cloudName + ')' : '❌ FALTANDO'}`);
-  console.log(`   - API Key: ${apiKey ? 'OK' : '❌ FALTANDO'}`);
-  console.log(`   - API Secret: ${apiSecret ? 'OK' : '❌ FALTANDO'}`);
-
-  if (cloudName && apiKey && apiSecret) {
-    console.log(`✨ STORAGE CONFIGURADO: Cloudinary\n`);
-  } else {
-    console.log(`⚠️  STORAGE CONFIGURADO: LOCAL (Atenção: imagens nao serao salvas no Cloudinary!)\n`);
-  }
+  logger.info({
+    port: PORT,
+    host: '0.0.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    cloudinary: {
+      cloudName: cloudName || null,
+      apiKeyConfigured: !!apiKey,
+      apiSecretConfigured: !!apiSecret,
+      storageMode: cloudName && apiKey && apiSecret ? 'cloudinary' : 'local'
+    }
+  }, 'Servidor rodando');
 });

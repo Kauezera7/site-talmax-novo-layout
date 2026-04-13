@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../../services/api';
 import { apiAssetPath, assetPath } from '../../utils/assets';
+import { isExternalNavigationTarget, sanitizeNavigationTarget } from '../../utils/contentSafety';
 import pageSettingsService, { DEFAULT_SPECIAL_PAGE_SETTINGS, normalizeSpecialPageSettings } from '../../services/pageSettingsService';
 import { buildTalmaxDigitalCategories, parseDigitalActionsPayload } from './digitalCardTemplates';
 import './TalmaxDigital.css';
@@ -53,13 +54,15 @@ const TalmaxDigital = () => {
   }, []);
 
   const handleCategoryClick = (cat) => {
-    if (cat.link_url) {
-      if (/^https?:\/\//i.test(cat.link_url)) {
-        window.open(cat.link_url, '_blank', 'noopener,noreferrer');
+    const safeTarget = sanitizeNavigationTarget(cat.link_url, { allowExternal: true, allowRelative: true });
+
+    if (safeTarget) {
+      if (isExternalNavigationTarget(safeTarget)) {
+        window.open(safeTarget, '_blank', 'noopener,noreferrer');
         return;
       }
 
-      navigate(cat.link_url);
+      navigate(safeTarget);
       return;
     }
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Save, CheckCircle, ChevronRight } from 'lucide-react';
 import { apiAssetPath } from '../../../utils/assets';
+import { parseSafeExtraData } from '../../../utils/contentSafety';
 
 const DISPLAY_MODE_OPTIONS = [
   { value: 'description', label: 'Descrição' },
@@ -8,18 +9,8 @@ const DISPLAY_MODE_OPTIONS = [
   { value: 'none', label: 'Sem nada' }
 ];
 
-const parseExtraData = (value) => {
-  if (!value) return {};
-
-  try {
-    return typeof value === 'string' ? JSON.parse(value) : value;
-  } catch (error) {
-    return {};
-  }
-};
-
 const getInitialDisplayMode = (product, sectionKey) => {
-  const extra = parseExtraData(product.extra_data);
+  const extra = parseSafeExtraData(product.extra_data);
   const storedMode = extra.specialSectionDisplay?.[sectionKey];
 
   if (storedMode) return storedMode;
@@ -29,7 +20,7 @@ const getInitialDisplayMode = (product, sectionKey) => {
 };
 
 const getInitialOrder = (product, sectionKey) => {
-  const extra = parseExtraData(product.extra_data);
+  const extra = parseSafeExtraData(product.extra_data);
 
   if (sectionKey === 'featured') {
     return extra.featured_order || '';

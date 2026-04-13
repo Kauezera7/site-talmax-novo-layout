@@ -5,11 +5,11 @@
 const express = require('express');
 const db = require('../../config/database');
 const { requireAdminSession } = require('../auth/adminSession');
-const { sendValidationError } = require('../validation/requestValidation');
 const {
   normalizeStoredProductExtraData,
   validateSpecialSectionPayload
 } = require('../validation/productSchemas');
+const { wrapError } = require('../utils/errorHandling');
 
 const router = express.Router();
 
@@ -23,7 +23,7 @@ const parseSectionLabel = (config) => (
   config.sectionKey ? config.sectionKey.toUpperCase() : config.flagColumn.toUpperCase()
 );
 
-const saveSpecialSectionProducts = async (req, res, config) => {
+const saveSpecialSectionProducts = async (req, res, next, config) => {
   const connection = await db.getConnection();
 
   try {
@@ -116,18 +116,17 @@ const saveSpecialSectionProducts = async (req, res, config) => {
     return res.json({ message: config.successMessage });
   } catch (err) {
     await connection.rollback().catch(() => {});
-    if (sendValidationError(res, err)) {
-      return res;
-    }
-    console.error(`ERRO AO SALVAR ${parseSectionLabel(config)} NO BACKEND:`, err.message);
-    return res.status(500).json({ error: err.message });
+    return next(wrapError(err, {
+      publicMessage: `Erro ao salvar configuracao da secao ${parseSectionLabel(config)}.`,
+      meta: { section: parseSectionLabel(config) }
+    }));
   } finally {
     connection.release();
   }
 };
 
-router.put('/upcera/products', requireAdminSession, async (req, res) => {
-  await saveSpecialSectionProducts(req, res, {
+router.put('/upcera/products', requireAdminSession, async (req, res, next) => {
+  await saveSpecialSectionProducts(req, res, next, {
     flagColumn: 'is_upcera',
     orderColumn: 'upcera_order',
     sectionKey: 'upcera',
@@ -135,8 +134,8 @@ router.put('/upcera/products', requireAdminSession, async (req, res) => {
   });
 });
 
-router.put('/scanners/products', requireAdminSession, async (req, res) => {
-  await saveSpecialSectionProducts(req, res, {
+router.put('/scanners/products', requireAdminSession, async (req, res, next) => {
+  await saveSpecialSectionProducts(req, res, next, {
     flagColumn: 'is_scanner',
     orderColumn: 'scanner_order',
     sectionKey: 'scanners',
@@ -144,8 +143,8 @@ router.put('/scanners/products', requireAdminSession, async (req, res) => {
   });
 });
 
-router.put('/3d-printers/products', requireAdminSession, async (req, res) => {
-  await saveSpecialSectionProducts(req, res, {
+router.put('/3d-printers/products', requireAdminSession, async (req, res, next) => {
+  await saveSpecialSectionProducts(req, res, next, {
     flagColumn: 'is_3d_printer',
     orderColumn: 'printer_order',
     sectionKey: 'printers',
@@ -153,8 +152,8 @@ router.put('/3d-printers/products', requireAdminSession, async (req, res) => {
   });
 });
 
-router.put('/featured-products', requireAdminSession, async (req, res) => {
-  await saveSpecialSectionProducts(req, res, {
+router.put('/featured-products', requireAdminSession, async (req, res, next) => {
+  await saveSpecialSectionProducts(req, res, next, {
     flagColumn: 'is_featured',
     extraOrderKey: 'featured_order',
     successMessage: 'Produtos em destaque atualizados com sucesso!'

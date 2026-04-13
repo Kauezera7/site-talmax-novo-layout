@@ -1,32 +1,40 @@
 const { z } = require('zod');
 const {
+  assetReferenceField,
   booleanLike,
   integerLike,
   parseJsonField,
   stringField,
   validateWithSchema
 } = require('./requestValidation');
+const { sanitizeTextInput } = require('../utils/inputSanitization');
 
 const VALID_SPECIAL_SECTION_MODES = ['description', 'features', 'none'];
 
-const trimValue = (value) => (
-  typeof value === 'string' ? value.trim() : value
-);
+const sanitizeTextValue = (value, options = {}) => {
+  if (value === undefined || value === null) {
+    return '';
+  }
 
-const textValueSchema = (label, maxLength) => z.preprocess(
-  trimValue,
+  if (typeof value === 'string') {
+    return sanitizeTextInput(value, {
+      preserveNewlines: Boolean(options.preserveNewlines)
+    });
+  }
+
+  return value;
+};
+
+const textValueSchema = (label, maxLength, options = {}) => z.preprocess(
+  (value) => sanitizeTextValue(value, options),
   z.string({
     invalid_type_error: `${label} precisa ser um texto.`
   }).max(maxLength, `${label} deve ter no maximo ${maxLength} caracteres.`)
 );
 
-const optionalTextValueSchema = (label, maxLength) => z.preprocess((value) => {
-  if (value === undefined || value === null) {
-    return '';
-  }
-
-  return trimValue(value);
-}, z.string({
+const optionalTextValueSchema = (label, maxLength, options = {}) => z.preprocess((value) => (
+  sanitizeTextValue(value, options)
+), z.string({
   invalid_type_error: `${label} precisa ser um texto.`
 }).max(maxLength, `${label} deve ter no maximo ${maxLength} caracteres.`));
 
@@ -41,7 +49,7 @@ const idListSchema = (fieldLabel, options = {}) => {
     .transform((items) => Array.from(new Set(items)));
 };
 
-const imagePathSchema = stringField('Cada imagem', { minLength: 1, maxLength: 1000 });
+const imagePathSchema = assetReferenceField('Cada imagem', { minLength: 1, maxLength: 1000 });
 const imagePathListSchema = z.array(imagePathSchema)
   .max(50, 'extra_data.images deve ter no maximo 50 itens.')
   .transform((items) => Array.from(new Set(items)));
@@ -69,7 +77,7 @@ const productTabSchema = z.object({
     textValueSchema('O id da aba', 120)
   ]).optional(),
   title: stringField('O titulo da aba', { minLength: 1, maxLength: 255 }),
-  content: stringField('O conteudo da aba', { minLength: 1, maxLength: 25000 }),
+  content: stringField('O conteudo da aba', { minLength: 1, maxLength: 25000, preserveNewlines: true }),
   contentAsList: booleanLike('O indicador contentAsList', { optional: true }),
   content_as_list: booleanLike('O indicador content_as_list', { optional: true })
 }).strict().transform((tab) => ({
@@ -188,7 +196,7 @@ const productExtraDataInputSchema = z.object({
 
 const productWritePayloadSchema = z.object({
   name: stringField('O nome do produto', { minLength: 1, maxLength: 255 }),
-  description: optionalTextValueSchema('A descricao do produto', 50000).default(''),
+  description: optionalTextValueSchema('A descricao do produto', 50000, { preserveNewlines: true }).default(''),
   category_ids: idListSchema('Cada categoria principal', { minItems: 1 }),
   sub_category_ids: idListSchema('Cada subcategoria').optional().default([]),
   primary_image_index: integerLike('primary_image_index', { min: 0, optional: true }).optional(),
@@ -238,6 +246,53 @@ const hasMeaningfulModelTable = (modelTable) => {
   return modelTable.rows.some((row) => (
     Array.isArray(row) && row.some((cell) => String(cell || '').trim() !== '')
   ));
+};
+
+const buildLegacyModelTableFromModels = (legacyModels, legacyHeaders = []) => {
+  if (!Array.isArray(legacyModels) || legacyModels.length === 0) {
+    return null;
+  }
+
+  const headers = Array.isArray(legacyHeaders) && legacyHeaders.length > 0
+    ? legacyHeaders
+      .map((header) => sanitizeTextInput(header, { preserveNewlines: false }))
+      .filter(Boolean)
+    : ['Tipo / Referencia', 'Codigo'];
+  const rows = legacyModels
+    .map((model) => {
+      if (Array.isArray(model)) {
+        const normalizedRow = headers.map((_, index) => (
+          sanitizeTextInput(model[index] || '', { preserveNewlines: false })
+        ));
+
+        return normalizedRow.some(Boolean) ? normalizedRow : null;
+      }
+
+      if (model && typeof model === 'object') {
+        const normalizedRow = [
+          sanitizeTextInput(model.type || model.label || '', { preserveNewlines: false }),
+          sanitizeTextInput(model.code || model.value || '', { preserveNewlines: false })
+        ];
+
+        return normalizedRow.some(Boolean) ? normalizedRow : null;
+      }
+
+      const normalizedValue = sanitizeTextInput(model || '', { preserveNewlines: false });
+      return normalizedValue ? [normalizedValue, ''] : null;
+    })
+    .filter(Boolean);
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  const parsedLegacyTable = modelTableSchema.safeParse({
+    headers,
+    rows,
+    mergeRanges: []
+  });
+
+  return parsedLegacyTable.success ? parsedLegacyTable.data : null;
 };
 
 const normalizeModelTableConfigList = (modelTables = [], legacyTitle = '', legacyTable = null) => {
@@ -359,10 +414,11 @@ const normalizeStoredProductExtraData = (value) => {
   const techSpecs = safeArray(techSpecsSchema, parsed.techSpecs, []);
   const modelTables = safeArray(modelTablesSchema, parsed.modelTables, []);
   const legacyModelTable = modelTableSchema.safeParse(parsed.modelTable);
+  const legacyModelTableFromModels = buildLegacyModelTableFromModels(parsed.models, parsed.modelHeaders);
   const normalizedModelTables = normalizeModelTableConfigList(
     modelTables,
     safeText(optionalTextValueSchema('extra_data.modelTitle', 255), parsed.modelTitle, ''),
-    legacyModelTable.success ? legacyModelTable.data : null
+    legacyModelTable.success ? legacyModelTable.data : legacyModelTableFromModels
   );
   const firstModelTable = normalizedModelTables[0] || null;
 

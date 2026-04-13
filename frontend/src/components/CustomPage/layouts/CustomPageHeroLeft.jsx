@@ -2,23 +2,10 @@ import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { apiAssetPath } from '../../../utils/assets';
-
-const parseExtraData = (value) => {
-  if (!value) return {};
-
-  if (typeof value === 'string') {
-    try {
-      return JSON.parse(value);
-    } catch (error) {
-      return {};
-    }
-  }
-
-  return typeof value === 'object' ? value : {};
-};
+import { parseSafeExtraData } from '../../../utils/contentSafety';
 
 const renderFeatureContent = (product, accentColor) => {
-  const extra = parseExtraData(product.extra_data);
+  const extra = parseSafeExtraData(product.extra_data);
   const features = Array.isArray(extra.features) ? extra.features.filter(Boolean).slice(0, 5) : [];
   const descriptionItems = String(product.description || '')
     .split('\n')

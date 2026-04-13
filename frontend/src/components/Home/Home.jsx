@@ -7,6 +7,7 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import HeroSlider from '../HeroSlider/HeroSlider';
 import API_URL from '../../services/api';
 import { apiAssetPath } from '../../utils/assets';
+import { parseSafeExtraData } from '../../utils/contentSafety';
 import useDeferredSection from '../../hooks/useDeferredSection';
 import '../ProductCatalog/ProductCatalog.css';
 import './Home.css';
@@ -14,16 +15,6 @@ import './Home.css';
 const HomeServicesSection = lazy(() => import('./sections/HomeServicesSection'));
 const HomeFeaturedProductsSection = lazy(() => import('./sections/HomeFeaturedProductsSection'));
 const HomeCategoriesSection = lazy(() => import('./sections/HomeCategoriesSection'));
-
-const parseExtraData = (value) => {
-  if (!value) return {};
-
-  try {
-    return typeof value === 'string' ? JSON.parse(value) : value;
-  } catch (error) {
-    return {};
-  }
-};
 
 const HomeSectionPlaceholder = ({ variant = 'default' }) => (
   <div
@@ -94,7 +85,7 @@ const Home = () => {
         const mappedFeaturedProducts = productsData
           .filter((product) => product.is_featured)
           .map((product) => {
-            const extra = parseExtraData(product.extra_data);
+            const extra = parseSafeExtraData(product.extra_data);
 
             return {
               ...product,

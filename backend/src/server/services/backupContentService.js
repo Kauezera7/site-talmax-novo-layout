@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { formatProductRow } = require('./productService');
+const { normalizeStoredProductExtraData } = require('../validation/productSchemas');
 
 const BACKUPS_DIR = path.resolve(__dirname, '../../../backups');
 
@@ -55,21 +56,7 @@ const getBackupTable = (tableName) => {
   return Array.isArray(rows) ? rows : [];
 };
 
-const normalizeExtraData = (value) => {
-  if (!value) {
-    return {};
-  }
-
-  if (typeof value === 'object') {
-    return value;
-  }
-
-  try {
-    return JSON.parse(value);
-  } catch (error) {
-    return {};
-  }
-};
+const normalizeExtraData = (value) => normalizeStoredProductExtraData(value);
 
 const listBackupBanners = () => (
   getBackupTable('banners')

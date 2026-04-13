@@ -7,11 +7,16 @@ const db = require('../../config/database');
 const upload = require('../config/upload');
 const { safe } = require('../utils/common');
 const { requireAdminSession } = require('../auth/adminSession');
-const { sendValidationError } = require('../validation/requestValidation');
 const { validateCategoryWritePayload } = require('../validation/contentSchemas');
 const { persistUploadedFile } = require('../services/fileStorageService');
 const { listBackupCategories } = require('../services/backupContentService');
 const { sanitizeServedImageUrl } = require('../config/imageStorage');
+const { wrapError } = require('../utils/errorHandling');
+const {
+  sanitizeAssetReference,
+  sanitizeTextInput
+} = require('../utils/inputSanitization');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 let cachedCategorySchemaState = null;
@@ -77,23 +82,27 @@ router.get('/', async (req, res) => {
     const [rows] = await db.query(query);
     res.json(rows.map((row) => ({
       ...row,
-      icon_url: sanitizeServedImageUrl(row.icon_url)
+      name: sanitizeTextInput(row.name || '', { preserveNewlines: false }),
+      slug: sanitizeTextInput(row.slug || '', { preserveNewlines: false }),
+      icon_url: sanitizeAssetReference(sanitizeServedImageUrl(row.icon_url) || '')
     })));
   } catch (err) {
     if (shouldUseBackupFallback) {
       res.json(listBackupCategories().map((category) => ({
         ...category,
-        icon_url: sanitizeServedImageUrl(category.icon_url)
+        name: sanitizeTextInput(category.name || '', { preserveNewlines: false }),
+        slug: sanitizeTextInput(category.slug || '', { preserveNewlines: false }),
+        icon_url: sanitizeAssetReference(sanitizeServedImageUrl(category.icon_url) || '')
       })));
       return;
     }
 
-    console.error('Erro ao buscar categorias:', err);
+    logger.error({ err }, 'Erro ao buscar categorias.');
     res.json([]);
   }
 });
 
-router.post('/', requireAdminSession, upload.single('icon'), async (req, res) => {
+router.post('/', requireAdminSession, upload.single('icon'), async (req, res, next) => {
   try {
     const payload = validateCategoryWritePayload({
       name: req.body.name,
@@ -116,18 +125,15 @@ router.post('/', requireAdminSession, upload.single('icon'), async (req, res) =>
 
     await db.query(
       'INSERT INTO categorias (name, slug, icon_url, display_order, is_visible) VALUES (?, ?, ?, ?, ?)',
-      [safe(payload.name) || '', safe(payload.slug) || '', safe(icon_url), 0, visible]
+      [safe(payload.name) || '', safe(payload.slug) || '', safe(sanitizeAssetReference(icon_url || '') || null), 0, visible]
     );
     return res.status(201).json({ message: 'Categoria criada!' });
   } catch (err) {
-    if (sendValidationError(res, err)) {
-      return res;
-    }
-    return res.status(500).json({ error: err.message });
+    return next(wrapError(err, { publicMessage: 'Erro ao criar categoria.' }));
   }
 });
 
-router.put('/:id', requireAdminSession, upload.single('icon'), async (req, res) => {
+router.put('/:id', requireAdminSession, upload.single('icon'), async (req, res, next) => {
   try {
     const payload = validateCategoryWritePayload({
       name: req.body.name,
@@ -151,7 +157,7 @@ router.put('/:id', requireAdminSession, upload.single('icon'), async (req, res) 
 
     if (req.file) {
       query += ', icon_url = ?';
-      params.push(await persistUploadedFile(req.file, { resourceType: 'categorias' }));
+      params.push(sanitizeAssetReference(await persistUploadedFile(req.file, { resourceType: 'categorias' })) || null);
     }
 
     query += ' WHERE id = ?';
@@ -160,14 +166,11 @@ router.put('/:id', requireAdminSession, upload.single('icon'), async (req, res) 
     await db.query(query, params.map(safe));
     return res.json({ message: 'Categoria atualizada!' });
   } catch (err) {
-    if (sendValidationError(res, err)) {
-      return res;
-    }
-    return res.status(500).json({ error: err.message });
+    return next(wrapError(err, { publicMessage: 'Erro ao atualizar categoria.' }));
   }
 });
 
-router.delete('/:id', requireAdminSession, async (req, res) => {
+router.delete('/:id', requireAdminSession, async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -176,8 +179,7 @@ router.delete('/:id', requireAdminSession, async (req, res) => {
 
     return res.json({ message: 'Categoria/Subcategoria excluida com sucesso!' });
   } catch (err) {
-    console.error('ERRO AO EXCLUIR CATEGORIA:', err.message);
-    return res.status(500).json({ error: err.message });
+    return next(wrapError(err, { publicMessage: 'Erro ao excluir categoria.' }));
   }
 });
 

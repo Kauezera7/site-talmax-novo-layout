@@ -4,6 +4,13 @@ const upload = require('../config/upload');
 const { requireAdminSession } = require('../auth/adminSession');
 const { persistUploadedFile } = require('../services/fileStorageService');
 const { safe } = require('../utils/common');
+const { createHttpError, wrapError } = require('../utils/errorHandling');
+const {
+  sanitizeAssetReference,
+  sanitizeTextInput
+} = require('../utils/inputSanitization');
+const logger = require('../utils/logger');
+const { normalizeStoredProductExtraData } = require('../validation/productSchemas');
 
 const router = express.Router();
 
@@ -111,13 +118,13 @@ const normalizeLayoutType = (value) => (
 
 const normalizeCustomPageRow = (row, products = []) => ({
   id: Number(row.id),
-  title: row.title || '',
-  slug: row.slug || '',
+  title: sanitizeTextInput(row.title || '', { preserveNewlines: false }),
+  slug: slugify(row.slug || ''),
   layout_type: normalizeLayoutType(row.layout_type),
-  banner_url: safe(row.banner_url),
-  logo_url: safe(row.logo_url),
-  description: row.description || '',
-  sub_description: row.sub_description || '',
+  banner_url: safe(sanitizeAssetReference(row.banner_url || '') || null),
+  logo_url: safe(sanitizeAssetReference(row.logo_url || '') || null),
+  description: sanitizeTextInput(row.description || '', { preserveNewlines: true }),
+  sub_description: sanitizeTextInput(row.sub_description || '', { preserveNewlines: true }),
   product_ids: parseProductIds(row.product_ids),
   is_active: Number(row.is_active ?? 1) === 1,
   created_at: row.created_at,
@@ -147,10 +154,10 @@ const listProductsByIds = async (productIds = []) => {
     .filter(Boolean)
     .map((row) => ({
       id: Number(row.id),
-      name: row.name || '',
-      description: row.description || '',
-      main_image: row.main_image || '',
-      extra_data: row.extra_data || null
+      name: sanitizeTextInput(row.name || '', { preserveNewlines: false }),
+      description: sanitizeTextInput(row.description || '', { preserveNewlines: true }),
+      main_image: sanitizeAssetReference(row.main_image || ''),
+      extra_data: normalizeStoredProductExtraData(row.extra_data)
     }));
 };
 
@@ -178,24 +185,24 @@ const isSchemaPermissionError = (error) => (
   error?.code === 'ER_ACCESS_DENIED_ERROR'
 );
 
-router.get('/', requireAdminSession, async (req, res) => {
+router.get('/', requireAdminSession, async (req, res, next) => {
   try {
     await ensureCustomPagesTable();
     const [rows] = await db.query('SELECT * FROM custom_pages ORDER BY updated_at DESC, id DESC');
     const items = await Promise.all(rows.map((row) => buildPayload(row)));
     res.json(items);
   } catch (error) {
-    console.error('Erro ao listar paginas personalizadas:', error);
+    logger.error({ err: error }, 'Erro ao listar paginas personalizadas.');
 
     if (isMissingCustomPagesTableError(error) || isSchemaPermissionError(error)) {
       return res.json([]);
     }
 
-    res.status(500).json({ error: 'Erro ao listar paginas personalizadas.' });
+    return next(wrapError(error, { publicMessage: 'Erro ao listar paginas personalizadas.' }));
   }
 });
 
-router.get('/public/:slug', async (req, res) => {
+router.get('/public/:slug', async (req, res, next) => {
   try {
     await ensureCustomPagesTable();
 
@@ -211,22 +218,22 @@ router.get('/public/:slug', async (req, res) => {
     const item = await buildPayload(rows[0], { includeProducts: true });
     return res.json(item);
   } catch (error) {
-    console.error('Erro ao buscar pagina personalizada publica:', error);
+    logger.error({ err: error }, 'Erro ao buscar pagina personalizada publica.');
 
     if (isMissingCustomPagesTableError(error) || isSchemaPermissionError(error)) {
       return res.status(404).json({ error: 'Pagina nao encontrada.' });
     }
 
-    return res.status(500).json({ error: 'Erro ao buscar pagina personalizada.' });
+    return next(wrapError(error, { publicMessage: 'Erro ao buscar pagina personalizada.' }));
   }
 });
 
-router.post('/', requireAdminSession, upload.any(), async (req, res) => {
+router.post('/', requireAdminSession, upload.any(), async (req, res, next) => {
   try {
     await ensureCustomPagesTable();
 
-    const title = String(req.body.title || '').trim();
-    const slug = slugify(req.body.slug || title);
+    const title = sanitizeTextInput(req.body.title || '', { preserveNewlines: false, maxLength: 160 });
+    const slug = slugify(sanitizeTextInput(req.body.slug || title, { preserveNewlines: false, maxLength: 180 }));
 
     if (!title) {
       return res.status(400).json({ error: 'Informe o titulo da pagina.' });
@@ -240,8 +247,12 @@ router.post('/', requireAdminSession, upload.any(), async (req, res) => {
     const bannerFile = files.find((file) => file.fieldname === 'banner');
     const logoFile = files.find((file) => file.fieldname === 'logo');
 
-    const bannerUrl = bannerFile ? await persistUploadedFile(bannerFile, { resourceType: 'custom-pages' }) : null;
-    const logoUrl = logoFile ? await persistUploadedFile(logoFile, { resourceType: 'custom-pages' }) : null;
+    const bannerUrl = bannerFile
+      ? await persistUploadedFile(bannerFile, { resourceType: 'custom-pages' })
+      : null;
+    const logoUrl = logoFile
+      ? await persistUploadedFile(logoFile, { resourceType: 'custom-pages' })
+      : null;
     const productIds = parseProductIds(req.body.product_ids);
 
     const [result] = await db.query(
@@ -255,10 +266,10 @@ router.post('/', requireAdminSession, upload.any(), async (req, res) => {
         title,
         slug,
         normalizeLayoutType(req.body.layout_type),
-        safe(bannerUrl),
-        safe(logoUrl),
-        safe(String(req.body.description || '').trim()),
-        safe(String(req.body.sub_description || '').trim()),
+        safe(sanitizeAssetReference(bannerUrl || '') || null),
+        safe(sanitizeAssetReference(logoUrl || '') || null),
+        safe(sanitizeTextInput(req.body.description || '', { preserveNewlines: true })),
+        safe(sanitizeTextInput(req.body.sub_description || '', { preserveNewlines: true })),
         JSON.stringify(productIds),
         req.body.is_active === 'false' ? 0 : 1
       ]
@@ -268,21 +279,29 @@ router.post('/', requireAdminSession, upload.any(), async (req, res) => {
     const item = await buildPayload(rows[0]);
     return res.status(201).json({ message: 'Pagina criada com sucesso.', item });
   } catch (error) {
-    console.error('Erro ao criar pagina personalizada:', error);
+    logger.error({ err: error }, 'Erro ao criar pagina personalizada.');
 
     if (isMissingCustomPagesTableError(error) || isSchemaPermissionError(error)) {
-      return res.status(503).json({
-        error: 'A tabela de paginas personalizadas nao esta disponivel no banco de producao.'
-      });
+      return next(createHttpError(503, 'A tabela de paginas personalizadas nao esta disponivel no banco de producao.', {
+        code: error.code,
+        expose: true,
+        cause: error
+      }));
     }
 
-    return res.status(error?.code === 'ER_DUP_ENTRY' ? 400 : 500).json({
-      error: getWriteErrorMessage(error, 'Erro ao criar pagina personalizada.')
-    });
+    if (error?.code === 'ER_DUP_ENTRY') {
+      return next(createHttpError(400, getWriteErrorMessage(error, 'Erro ao criar pagina personalizada.'), {
+        code: error.code,
+        expose: true,
+        cause: error
+      }));
+    }
+
+    return next(wrapError(error, { publicMessage: 'Erro ao criar pagina personalizada.' }));
   }
 });
 
-router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
+router.put('/:id', requireAdminSession, upload.any(), async (req, res, next) => {
   try {
     await ensureCustomPagesTable();
 
@@ -297,8 +316,11 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
     }
 
     const currentItem = rows[0];
-    const title = String(req.body.title || currentItem.title || '').trim();
-    const slug = slugify(req.body.slug || title || currentItem.slug);
+    const title = sanitizeTextInput(req.body.title ?? currentItem.title ?? '', { preserveNewlines: false, maxLength: 160 });
+    const slug = slugify(sanitizeTextInput(req.body.slug ?? title ?? currentItem.slug ?? '', {
+      preserveNewlines: false,
+      maxLength: 180
+    }));
 
     if (!title || !slug) {
       return res.status(400).json({ error: 'Titulo e slug sao obrigatorios.' });
@@ -310,10 +332,10 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
 
     const bannerUrl = bannerFile
       ? await persistUploadedFile(bannerFile, { resourceType: 'custom-pages' })
-      : safe(req.body.banner_url ?? currentItem.banner_url);
+      : sanitizeAssetReference(req.body.banner_url ?? currentItem.banner_url ?? '');
     const logoUrl = logoFile
       ? await persistUploadedFile(logoFile, { resourceType: 'custom-pages' })
-      : safe(req.body.logo_url ?? currentItem.logo_url);
+      : sanitizeAssetReference(req.body.logo_url ?? currentItem.logo_url ?? '');
     const productIds = parseProductIds(req.body.product_ids ?? currentItem.product_ids);
 
     await db.query(
@@ -334,10 +356,10 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
         title,
         slug,
         normalizeLayoutType(req.body.layout_type || currentItem.layout_type),
-        bannerUrl,
-        logoUrl,
-        safe(String(req.body.description ?? currentItem.description ?? '').trim()),
-        safe(String(req.body.sub_description ?? currentItem.sub_description ?? '').trim()),
+        safe(bannerUrl || null),
+        safe(logoUrl || null),
+        safe(sanitizeTextInput(req.body.description ?? currentItem.description ?? '', { preserveNewlines: true })),
+        safe(sanitizeTextInput(req.body.sub_description ?? currentItem.sub_description ?? '', { preserveNewlines: true })),
         JSON.stringify(productIds),
         req.body.is_active === undefined
           ? Number(currentItem.is_active ?? 1)
@@ -350,21 +372,29 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res) => {
     const item = await buildPayload(updatedRows[0]);
     return res.json({ message: 'Pagina atualizada com sucesso.', item });
   } catch (error) {
-    console.error('Erro ao atualizar pagina personalizada:', error);
+    logger.error({ err: error }, 'Erro ao atualizar pagina personalizada.');
 
     if (isMissingCustomPagesTableError(error) || isSchemaPermissionError(error)) {
-      return res.status(503).json({
-        error: 'A tabela de paginas personalizadas nao esta disponivel no banco de producao.'
-      });
+      return next(createHttpError(503, 'A tabela de paginas personalizadas nao esta disponivel no banco de producao.', {
+        code: error.code,
+        expose: true,
+        cause: error
+      }));
     }
 
-    return res.status(error?.code === 'ER_DUP_ENTRY' ? 400 : 500).json({
-      error: getWriteErrorMessage(error, 'Erro ao atualizar pagina personalizada.')
-    });
+    if (error?.code === 'ER_DUP_ENTRY') {
+      return next(createHttpError(400, getWriteErrorMessage(error, 'Erro ao atualizar pagina personalizada.'), {
+        code: error.code,
+        expose: true,
+        cause: error
+      }));
+    }
+
+    return next(wrapError(error, { publicMessage: 'Erro ao atualizar pagina personalizada.' }));
   }
 });
 
-router.delete('/:id', requireAdminSession, async (req, res) => {
+router.delete('/:id', requireAdminSession, async (req, res, next) => {
   try {
     await ensureCustomPagesTable();
 
@@ -380,15 +410,17 @@ router.delete('/:id', requireAdminSession, async (req, res) => {
 
     return res.json({ message: 'Pagina excluida com sucesso.' });
   } catch (error) {
-    console.error('Erro ao excluir pagina personalizada:', error);
+    logger.error({ err: error }, 'Erro ao excluir pagina personalizada.');
 
     if (isMissingCustomPagesTableError(error) || isSchemaPermissionError(error)) {
-      return res.status(503).json({
-        error: 'A tabela de paginas personalizadas nao esta disponivel no banco de producao.'
-      });
+      return next(createHttpError(503, 'A tabela de paginas personalizadas nao esta disponivel no banco de producao.', {
+        code: error.code,
+        expose: true,
+        cause: error
+      }));
     }
 
-    return res.status(500).json({ error: 'Erro ao excluir pagina personalizada.' });
+    return next(wrapError(error, { publicMessage: 'Erro ao excluir pagina personalizada.' }));
   }
 });
 

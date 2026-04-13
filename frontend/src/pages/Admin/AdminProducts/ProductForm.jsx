@@ -24,6 +24,7 @@ import DescriptionFeaturesSection from './sections/DescriptionFeaturesSection';
 import GallerySection from './sections/GallerySection';
 import ProductTabsSection from './sections/ProductTabsSection';
 import TechnicalTablesSection from './sections/TechnicalTablesSection';
+import { parseSafeExtraData } from '../../../utils/contentSafety';
 
 const ButtonSavingIndicator = () => (
   <span className="loader loader_bubble admin-button-loader" aria-hidden="true" />
@@ -54,12 +55,7 @@ const ProductForm = ({
 
   useEffect(() => {
     if (initialData) {
-      let extra = {};
-      try {
-        extra = typeof initialData.extra_data === 'string' ? JSON.parse(initialData.extra_data) : (initialData.extra_data || {});
-      } catch (e) {
-        extra = {};
-      }
+      const extra = parseSafeExtraData(initialData.extra_data);
 
       setFormData({
         name: initialData.name || '',

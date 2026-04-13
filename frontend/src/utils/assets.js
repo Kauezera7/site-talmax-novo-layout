@@ -1,11 +1,11 @@
 import API_URL from '../services/api';
+import { sanitizeAssetReference } from './contentSafety';
 
-const normalizeRawPath = (path = '') => String(path || '').trim();
+const normalizeRawPath = (path = '') => sanitizeAssetReference(path, { allowExternal: true, allowRelative: true });
 
 const isCloudinaryPathWithoutProtocol = (path = '') => /^res\.cloudinary\.com\//i.test(path);
 
 const isAbsoluteUrl = (path = '') => /^(?:[a-z]+:)?\/\//i.test(normalizeRawPath(path));
-const isInlineAsset = (path = '') => /^(?:data|blob):/i.test(normalizeRawPath(path));
 
 const normalizeApiAssetRelativePath = (path = '') => {
   if (!path) return path;
@@ -39,7 +39,8 @@ export const assetPath = (path = '') => {
   if (!path) return path;
   const trimmedPath = normalizeRawPath(path);
 
-  if (isAbsoluteUrl(trimmedPath) || isInlineAsset(trimmedPath)) return trimmedPath;
+  if (!trimmedPath) return '';
+  if (isAbsoluteUrl(trimmedPath)) return trimmedPath;
 
   const normalizedPath = trimmedPath.replace(/^\/+/, '');
   return `${import.meta.env.BASE_URL}${normalizedPath}`;
@@ -75,6 +76,7 @@ export const apiAssetPath = (path = '') => {
   if (!path) return path;
   const trimmedPath = normalizeRawPath(path);
 
+  if (!trimmedPath) return '';
   if (isAbsoluteUrl(trimmedPath)) return trimmedPath;
 
   const normalizedPath = normalizeApiAssetRelativePath(trimmedPath);

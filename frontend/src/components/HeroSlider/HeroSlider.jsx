@@ -10,6 +10,7 @@ import { Autoplay, EffectFade, Pagination, Navigation } from 'swiper/modules';
 import { slides as staticSlides } from '../../data';
 import API_URL from '../../services/api';
 import { apiAssetPath } from '../../utils/assets';
+import { isExternalNavigationTarget, sanitizeNavigationTarget } from '../../utils/contentSafety';
 
 import 'swiper/css';
 import 'swiper/css/effect-fade';
@@ -55,14 +56,16 @@ const HeroSlider = () => {
   };
 
   const handleBannerClick = (linkUrl) => {
-    if (!linkUrl) return;
+    const safeTarget = sanitizeNavigationTarget(linkUrl, { allowExternal: true, allowRelative: true });
 
-    if (/^(?:[a-z]+:)?\/\//i.test(linkUrl)) {
-      window.location.href = linkUrl;
+    if (!safeTarget) return;
+
+    if (isExternalNavigationTarget(safeTarget)) {
+      window.location.href = safeTarget;
       return;
     }
 
-    navigate(linkUrl);
+    navigate(safeTarget);
   };
 
   useEffect(() => {
@@ -147,7 +150,7 @@ const HeroSlider = () => {
           <SwiperSlide key={slide.id}>
             <div
               className="slide-content"
-              style={{ cursor: slide.link_url ? 'pointer' : 'default' }}
+              style={{ cursor: sanitizeNavigationTarget(slide.link_url) ? 'pointer' : 'default' }}
               onClick={() => handleBannerClick(slide.link_url)}
             >
               <img

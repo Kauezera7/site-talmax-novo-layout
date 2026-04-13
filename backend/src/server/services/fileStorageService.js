@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { v2: cloudinary } = require('cloudinary');
 const SftpClient = require('ssh2-sftp-client');
+const logger = require('../utils/logger');
 
 // As variaveis de ambiente sao carregadas pelo server.js no topo.
 
@@ -40,8 +41,12 @@ const buildCloudinaryFolder = (resourceType = 'geral') => {
 const uploadFileToCloudinary = async (file, options = {}) => {
   const folder = buildCloudinaryFolder(options.resourceType);
 
-  console.log(`[Storage] Configurando Cloudinary para upload: ${process.env.CLOUDINARY_CLOUD_NAME}`);
-  
+  logger.debug({
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME || null,
+    folder,
+    fileName: file.filename
+  }, 'Configurando Cloudinary para upload.');
+
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -56,15 +61,23 @@ const uploadFileToCloudinary = async (file, options = {}) => {
     unique_filename: true
   };
 
-  console.log(`[Storage] Enviando arquivo para Cloudinary: ${file.path}`);
+  logger.info({
+    fileName: file.filename,
+    filePath: file.path,
+    folder
+  }, 'Enviando arquivo para Cloudinary.');
+
   const result = await cloudinary.uploader.upload(file.path, uploadOptions);
-  
+
   if (!result || (!result.secure_url && !result.url)) {
-    throw new Error('Falha total no upload para Cloudinary: Nenhum link retornado.');
+    throw new Error('Falha total no upload para Cloudinary: nenhum link retornado.');
   }
 
   const finalUrl = result.secure_url || result.url;
-  console.log(`[Storage] Upload Cloudinary finalizado com SUCESSO: ${finalUrl}`);
+  logger.info({
+    fileName: file.filename,
+    finalUrl
+  }, 'Upload Cloudinary finalizado com sucesso.');
   return finalUrl;
 };
 
@@ -116,8 +129,13 @@ const uploadFileToSftp = async (file) => {
 
 const cleanupLocalTempFile = (file) => {
   if (!file || !file.path) return;
+
   fs.promises.unlink(file.path).catch((err) => {
-    console.warn(`[Storage] Nao foi possivel apagar arquivo temporario: ${err.message}`);
+    logger.warn({
+      err,
+      fileName: file.filename,
+      filePath: file.path
+    }, 'Nao foi possivel apagar arquivo temporario.');
   });
 };
 
@@ -127,10 +145,13 @@ const persistUploadedFile = async (file, options = {}) => {
   const useCloudinary = hasCloudinaryConfig();
   const useSftp = hasSftpConfig();
 
-  console.log(`\n--- INICIO DE PERSISTENCIA DE ARQUIVO: ${file.filename} ---`);
-  console.log(`[Storage] Analisando configuracoes disponíveis...`);
-  console.log(`[Storage] Cloudinary? ${useCloudinary ? 'SIM' : 'NAO'}`);
-  console.log(`[Storage] SFTP? ${useSftp ? 'SIM' : 'NAO'}`);
+  logger.debug({
+    fileName: file.filename,
+    filePath: file.path,
+    useCloudinary,
+    useSftp,
+    resourceType: options.resourceType || 'geral'
+  }, 'Iniciando persistencia de arquivo.');
 
   if (useCloudinary) {
     try {
@@ -138,9 +159,13 @@ const persistUploadedFile = async (file, options = {}) => {
       cleanupLocalTempFile(file);
       return publicUrl;
     } catch (error) {
-      console.error(`[Storage] ERRO FATAL AO UPAR NO CLOUDINARY: ${error.message}`);
-      // Se era pra ser Cloudinary e deu erro, não salvamos local pra evitar bagunça no banco
-      throw error; 
+      logger.error({
+        err: error,
+        fileName: file.filename,
+        filePath: file.path,
+        resourceType: options.resourceType || 'geral'
+      }, 'Falha fatal ao subir arquivo no Cloudinary.');
+      throw error;
     }
   }
 
@@ -150,14 +175,21 @@ const persistUploadedFile = async (file, options = {}) => {
       cleanupLocalTempFile(file);
       return publicUrl;
     } catch (error) {
-      console.error(`[Storage] ERRO FATAL AO UPAR NO SFTP: ${error.message}`);
+      logger.error({
+        err: error,
+        fileName: file.filename,
+        filePath: file.path,
+        resourceType: options.resourceType || 'geral'
+      }, 'Falha fatal ao subir arquivo no SFTP.');
       throw error;
     }
   }
 
-  // Se nada foi configurado, salvamos local
   const localUrl = buildLocalImageUrl(file);
-  console.log(`[Storage] Usando armazenamento LOCAL como fallback (caminho: ${localUrl})`);
+  logger.info({
+    fileName: file.filename,
+    localUrl
+  }, 'Usando armazenamento local como fallback.');
   return localUrl;
 };
 

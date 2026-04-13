@@ -3,12 +3,24 @@
  * Registra middlewares globais, arquivos estaticos e todas as rotas da API.
  */
 const express = require('express');
-const multer = require('multer');
 const path = require('path');
 const corsMiddleware = require('./config/cors');
-const { getServedImageDirs } = require('./config/imageStorage');
+const {
+  getPrimaryImageDir,
+  getServedImageDirs
+} = require('./config/imageStorage');
+const {
+  applyPlaceholderImageCache,
+  buildImageStaticOptions,
+  createCompressionMiddleware
+} = require('./config/performance');
 const applyTrustProxy = require('./seguranca/trustProxy');
 const applySecurityHeaders = require('./seguranca/helmet');
+const {
+  attachRequestId,
+  apiNotFoundHandler,
+  errorHandler
+} = require('./utils/errorHandling');
 const adminAuthRoutes = require('./routes/adminAuthRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const bannerRoutes = require('./routes/bannerRoutes');
@@ -19,7 +31,6 @@ const pageSettingsRoutes = require('./routes/pageSettingsRoutes');
 const customPageRoutes = require('./routes/customPageRoutes');
 const digitalGroupRoutes = require('./routes/digitalGroupRoutes');
 
-const MAX_FILE_SIZE_MB = Number(process.env.UPLOAD_MAX_FILE_SIZE_MB || 15);
 const INLINE_IMAGE_PLACEHOLDER = [
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Talmax">',
   '<defs>',
@@ -40,17 +51,22 @@ const createApp = () => {
   const app = express();
   const frontendDistPath = path.resolve(__dirname, '../../../frontend/dist');
   const imageDirectories = getServedImageDirs();
+  const primaryImageDir = getPrimaryImageDir();
 
   applyTrustProxy(app);
   applySecurityHeaders(app);
+  app.use(attachRequestId);
   app.use(corsMiddleware);
+  app.use(createCompressionMiddleware());
   app.use(express.json());
   imageDirectories.forEach((directoryPath) => {
-    app.use('/img', express.static(directoryPath));
+    app.use('/img', express.static(directoryPath, buildImageStaticOptions({
+      isPrimaryDirectory: directoryPath === primaryImageDir
+    })));
   });
   app.use('/img', (req, res) => {
     res.type('image/svg+xml');
-    res.set('Cache-Control', 'public, max-age=3600');
+    applyPlaceholderImageCache(res);
     return res.send(INLINE_IMAGE_PLACEHOLDER);
   });
   app.use(express.static(frontendDistPath));
@@ -64,6 +80,7 @@ const createApp = () => {
   app.use('/api/custom-pages', customPageRoutes);
   app.use('/api/digital-groups', digitalGroupRoutes);
   app.use('/api', specialSectionRoutes);
+  app.use('/api', apiNotFoundHandler);
 
   app.use((req, res, next) => {
     if (req.path.startsWith('/api')) {
@@ -77,21 +94,7 @@ const createApp = () => {
     return res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
 
-  app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError) {
-      if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({ error: `O arquivo enviado excede o limite de ${MAX_FILE_SIZE_MB} MB.` });
-      }
-
-      return res.status(400).json({ error: err.message || 'Erro ao processar upload.' });
-    }
-
-    if (err) {
-      return res.status(400).json({ error: err.message || 'Erro ao processar a requisicao.' });
-    }
-
-    return next();
-  });
+  app.use(errorHandler);
 
   return app;
 };

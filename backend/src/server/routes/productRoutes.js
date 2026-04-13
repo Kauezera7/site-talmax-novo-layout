@@ -11,7 +11,6 @@ const {
   parseInteger,
   parseBooleanFlag
 } = require('../utils/requestParsers');
-const { sendValidationError } = require('../validation/requestValidation');
 const {
   normalizeProductExtraDataForStorage,
   normalizeStoredProductExtraData,
@@ -30,6 +29,8 @@ const {
   listBackupProducts,
   findBackupProductById
 } = require('../services/backupContentService');
+const { wrapError } = require('../utils/errorHandling');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 const MAX_PRODUCT_IMAGES = 50;
@@ -74,7 +75,7 @@ const rollbackIfPossible = async (connection) => {
   try {
     await connection.rollback();
   } catch (rollbackError) {
-    console.error('Falha ao executar rollback da transacao de produto:', rollbackError.message);
+    logger.warn({ err: rollbackError }, 'Falha ao executar rollback da transacao de produto.');
   }
 };
 
@@ -86,7 +87,7 @@ const releaseIfPossible = (connection) => {
   try {
     connection.release();
   } catch (releaseError) {
-    console.error('Falha ao liberar conexao do pool de produtos:', releaseError.message);
+    logger.warn({ err: releaseError }, 'Falha ao liberar conexao do pool de produtos.');
   }
 };
 
@@ -140,7 +141,7 @@ const hasValidSubCategories = async (connection, categoryIds, subCategoryIds) =>
   return rows.every((row) => mainCategorySet.has(Number(row.category_id)));
 };
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
   const includeInactive = parseBooleanFlag(req.query.include_inactive);
 
   try {
@@ -151,12 +152,15 @@ router.get('/', async (req, res) => {
     try {
       res.json(listBackupProducts({ includeInactive }));
     } catch (backupError) {
-      res.status(500).json({ error: err.message });
+      return next(wrapError(err, {
+        publicMessage: 'Erro ao listar produtos.',
+        meta: { backupError: backupError.message }
+      }));
     }
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
   const includeInactive = parseBooleanFlag(req.query.include_inactive);
 
   try {
@@ -178,12 +182,15 @@ router.get('/:id', async (req, res) => {
 
       return res.json(backupProduct);
     } catch (backupError) {
-      return res.status(500).json({ error: err.message });
+      return next(wrapError(err, {
+        publicMessage: 'Erro ao buscar produto.',
+        meta: { backupError: backupError.message }
+      }));
     }
   }
 });
 
-router.post('/', requireAdminSession, upload.array('images', 20), async (req, res) => {
+router.post('/', requireAdminSession, upload.array('images', 20), async (req, res, next) => {
   const connection = await db.getConnection();
 
   try {
@@ -246,17 +253,13 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
     return res.status(201).json({ message: 'Produto criado!' });
   } catch (err) {
     await rollbackIfPossible(connection);
-    if (sendValidationError(res, err)) {
-      return res;
-    }
-    console.error('ERRO NO POST PRODUCT:', err.message);
-    return res.status(500).json({ error: err.message });
+    return next(wrapError(err, { publicMessage: 'Erro ao criar produto.' }));
   } finally {
     releaseIfPossible(connection);
   }
 });
 
-router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, res) => {
+router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, res, next) => {
   const connection = await db.getConnection();
   const productId = Number(req.params.id);
 
@@ -341,36 +344,32 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     return res.json({ message: 'Produto atualizado!' });
   } catch (err) {
     await rollbackIfPossible(connection);
-    if (sendValidationError(res, err)) {
-      return res;
-    }
-    console.error('ERRO NO UPDATE PRODUCT:', err.message);
-    return res.status(500).json({ error: err.message });
+    return next(wrapError(err, { publicMessage: 'Erro ao atualizar produto.' }));
   } finally {
     releaseIfPossible(connection);
   }
 });
 
-router.delete('/:id', requireAdminSession, async (req, res) => {
+router.delete('/:id', requireAdminSession, async (req, res, next) => {
   try {
     await db.query('DELETE FROM products WHERE id = ?', [req.params.id]);
     return res.json({ message: 'Produto excluido!' });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return next(wrapError(err, { publicMessage: 'Erro ao excluir produto.' }));
   }
 });
 
-router.put('/:id/active', requireAdminSession, async (req, res) => {
+router.put('/:id/active', requireAdminSession, async (req, res, next) => {
   try {
     const isActive = parseBooleanFlag(req.body?.is_active) ? 1 : 0;
     await db.query('UPDATE products SET is_active = ? WHERE id = ?', [isActive, req.params.id]);
     return res.json({ message: `Produto ${isActive ? 'ativado' : 'inativado'}!` });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return next(wrapError(err, { publicMessage: 'Erro ao atualizar status do produto.' }));
   }
 });
 
-router.put('/:id/quote-button', requireAdminSession, async (req, res) => {
+router.put('/:id/quote-button', requireAdminSession, async (req, res, next) => {
   const connection = await db.getConnection();
   const productId = Number(req.params.id);
 
@@ -393,10 +392,7 @@ router.put('/:id/quote-button', requireAdminSession, async (req, res) => {
 
     return res.json({ message: 'Botao de orcamento atualizado!' });
   } catch (err) {
-    if (sendValidationError(res, err)) {
-      return res;
-    }
-    return res.status(500).json({ error: err.message });
+    return next(wrapError(err, { publicMessage: 'Erro ao atualizar botao de orcamento.' }));
   } finally {
     releaseIfPossible(connection);
   }

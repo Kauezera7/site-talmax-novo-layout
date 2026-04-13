@@ -21,6 +21,7 @@ import { motion } from 'framer-motion';
 import ProductCard from '../ProductCard/ProductCard';
 import API_URL from '../../services/api';
 import { apiAssetPath } from '../../utils/assets';
+import { parseSafeExtraData } from '../../utils/contentSafety';
 import { getVisibleCategoryLabel } from '../../utils/productCategories';
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -226,17 +227,7 @@ const ProductDetail = () => {
         const data = await prodRes.json();
         const others = await allRes.json();
 
-        let extra = {};
-        try {
-          if (data.extra_data) {
-            extra = typeof data.extra_data === 'string' ? JSON.parse(data.extra_data) : data.extra_data;
-          }
-        } catch (e) {
-          console.error('Erro ao processar dados extras:', e);
-          extra = {};
-        }
-
-        if (!extra) extra = {};
+        const extra = parseSafeExtraData(data.extra_data);
 
         let finalTable = extra.modelTable;
         if (!finalTable && extra.models && extra.models.length > 0) {

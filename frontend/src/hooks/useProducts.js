@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { productService } from '../services/productService';
+import { parseSafeExtraData } from '../utils/contentSafety';
 
 export const useProducts = () => {
   const [products, setProducts] = useState([]);
@@ -80,12 +81,7 @@ export const useProducts = () => {
     setProducts((currentProducts) => currentProducts.map((product) => {
       if (product.id !== id) return product;
 
-      let extra = {};
-      try {
-        extra = typeof product.extra_data === 'string' ? JSON.parse(product.extra_data) : (product.extra_data || {});
-      } catch (error) {
-        extra = {};
-      }
+      const extra = parseSafeExtraData(product.extra_data);
 
       return {
         ...product,

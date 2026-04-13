@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../../../context/AdminContext';
+import { parseSafeExtraData } from '../../../utils/contentSafety';
 import ProductTable from './ProductTable';
 import ProductForm from './ProductForm';
 import './AdminProducts.css';
@@ -74,12 +75,7 @@ const AdminProducts = ({ productToEdit = null, onProductEditHandled }) => {
   };
 
   const handleToggleQuoteButton = async (product) => {
-    let extra = {};
-    try {
-      extra = typeof product.extra_data === 'string' ? JSON.parse(product.extra_data) : (product.extra_data || {});
-    } catch (error) {
-      extra = {};
-    }
+    const extra = parseSafeExtraData(product.extra_data);
 
     const nextValue = !(extra.showQuoteButton === false || extra.showQuoteButton === 'false' || extra.showQuoteButton === 0 || extra.showQuoteButton === '0');
     const result = await productsHook.updateProductQuoteButtonStatus(product.id, !nextValue);
@@ -89,12 +85,7 @@ const AdminProducts = ({ productToEdit = null, onProductEditHandled }) => {
       if (editingProduct?.id === product.id) {
         setEditingProduct((current) => {
           if (!current) return current;
-          let currentExtra = {};
-          try {
-            currentExtra = typeof current.extra_data === 'string' ? JSON.parse(current.extra_data) : (current.extra_data || {});
-          } catch (error) {
-            currentExtra = {};
-          }
+          const currentExtra = parseSafeExtraData(current.extra_data);
 
           return {
             ...current,

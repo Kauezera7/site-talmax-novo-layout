@@ -9,6 +9,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../../services/api';
 import { apiAssetPath, assetPath } from '../../utils/assets';
+import { parseSafeExtraData } from '../../utils/contentSafety';
 import pageSettingsService, { DEFAULT_SPECIAL_PAGE_SETTINGS, normalizeSpecialPageSettings } from '../../services/pageSettingsService';
 import './Scanners.css';
 
@@ -99,12 +100,7 @@ const Scanners = () => {
           })
           .sort((a, b) => (a.scanner_order || 0) - (b.scanner_order || 0))
           .map((p) => {
-            let extra = {};
-            try {
-              extra = typeof p.extra_data === 'string' ? JSON.parse(p.extra_data) : p.extra_data;
-            } catch (e) {
-              extra = {};
-            }
+            const extra = parseSafeExtraData(p.extra_data);
 
             return {
               id: p.id,

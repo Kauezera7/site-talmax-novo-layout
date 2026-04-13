@@ -2,17 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Package, Search, ExternalLink, Filter, Check, ChevronDown, Edit, Eye, EyeOff } from 'lucide-react';
 import { useAdmin } from '../../../context/AdminContext';
 import { apiAssetPath } from '../../../utils/assets';
+import { parseSafeExtraData } from '../../../utils/contentSafety';
 import './AdminProducts.css';
 
 const normalizeSearchValue = (value = '') => value.toString().toLowerCase().trim();
-const parseExtraData = (value) => {
-  if (!value) return {};
-  try {
-    return typeof value === 'string' ? JSON.parse(value) : value;
-  } catch (error) {
-    return {};
-  }
-};
 
 const shouldShowQuoteButton = (value) => !(
   value === false ||
@@ -35,7 +28,7 @@ const getCategoryCount = (product) => {
 };
 
 const getNextQuoteButtonValue = (product) => (
-  !shouldShowQuoteButton(parseExtraData(product.extra_data).showQuoteButton)
+  !shouldShowQuoteButton(parseSafeExtraData(product.extra_data).showQuoteButton)
 );
 
 const STATUS_OPTIONS = [
@@ -239,11 +232,11 @@ const AdminProductsList = ({ onOpenRegister, onEditProduct }) => {
                     <td>
                       <button
                         type="button"
-                        className={`status-badge product-quote-toggle ${shouldShowQuoteButton(parseExtraData(product.extra_data).showQuoteButton) ? 'status-active' : 'status-inactive'}`}
+                        className={`status-badge product-quote-toggle ${shouldShowQuoteButton(parseSafeExtraData(product.extra_data).showQuoteButton) ? 'status-active' : 'status-inactive'}`}
                         onClick={(event) => handleToggleQuoteButton(event, product)}
                         title="Alternar botão de orçamento"
                       >
-                        {shouldShowQuoteButton(parseExtraData(product.extra_data).showQuoteButton) ? 'Com botão' : 'Sem botão'}
+                        {shouldShowQuoteButton(parseSafeExtraData(product.extra_data).showQuoteButton) ? 'Com botão' : 'Sem botão'}
                       </button>
                     </td>
                     <td>
