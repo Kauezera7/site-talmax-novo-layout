@@ -42,7 +42,7 @@ const AdminSecurity = () => {
       <section className="admin-card">
         <div className="card-header admin-security__header">
           <div>
-            <h2><ShieldCheck size={20} /> Seguranca do Login</h2>
+            <h2><ShieldCheck size={20} /> Segurança do Login</h2>
             <p>Desbloqueie manualmente um usuario especifico do painel quando ele pedir nova tentativa.</p>
           </div>
         </div>
