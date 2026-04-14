@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LockKeyhole, User, ShieldCheck } from 'lucide-react';
 import { loginAdmin, validateAdminSession } from '../../services/adminAuth';
+import { readStoredAdminSessionToken } from '../../services/adminSessionStorage';
 import { ADMIN_SESSION_EXPIRED_MESSAGE } from '../../services/adminSessionEvents';
 import './AdminLogin.css';
 
@@ -30,7 +31,7 @@ const AdminLogin = () => {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isCheckingSession, setIsCheckingSession] = useState(() => Boolean(readStoredAdminSessionToken()));
   const [lockExpiresAt, setLockExpiresAt] = useState(null);
   const [lockRemainingSeconds, setLockRemainingSeconds] = useState(0);
 
@@ -70,9 +71,19 @@ const AdminLogin = () => {
       return undefined;
     }
 
+    const hasStoredToken = Boolean(readStoredAdminSessionToken());
+
+    if (!hasStoredToken) {
+      setIsCheckingSession(false);
+      return undefined;
+    }
+
     let mounted = true;
 
-    validateAdminSession()
+    validateAdminSession({
+      skipWhenNoStoredToken: true,
+      timeoutMs: 2500
+    })
       .then((result) => {
         if (!mounted) {
           return;
@@ -157,7 +168,7 @@ const AdminLogin = () => {
           </div>
 
           <label className="admin-login-field">
-            <span>Usuario</span>
+            <span>Usuario ou e-mail</span>
             <div className="admin-login-input">
               <User size={18} />
               <input
@@ -165,7 +176,7 @@ const AdminLogin = () => {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                placeholder="Digite seu usuario"
+                placeholder="Digite seu usuario ou e-mail"
                 autoComplete="username"
                 disabled={isLoading}
                 required

@@ -5,7 +5,7 @@ import { unlockAdminLoginByUser } from '../../../services/adminAuth';
 import './AdminSecurity.css';
 
 const AdminSecurity = () => {
-  const { addToast } = useAdmin();
+  const { addToast, isMasterAdmin } = useAdmin();
   const [username, setUsername] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -14,10 +14,15 @@ const AdminSecurity = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    if (!isMasterAdmin) {
+      setError('Somente o admin master pode liberar logins bloqueados.');
+      return;
+    }
+
     const normalizedUsername = username.trim();
 
     if (!normalizedUsername) {
-      setError('Informe o usuario do admin que pediu desbloqueio.');
+      setError('Informe o usuario ou e-mail do admin que pediu desbloqueio.');
       return;
     }
 
@@ -48,18 +53,24 @@ const AdminSecurity = () => {
         </div>
 
         <div className="card-body">
+          {!isMasterAdmin && (
+            <div className="admin-security__feedback is-error">
+              Somente o admin master pode liberar novas tentativas de login.
+            </div>
+          )}
+
           <form className="admin-form" onSubmit={handleSubmit}>
             <div className="admin-section-group">
               <div className="form-group">
-                <label htmlFor="admin-security-username">Usuario do admin</label>
+                <label htmlFor="admin-security-username">Usuario ou e-mail do admin</label>
                 <input
                   id="admin-security-username"
                   type="text"
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
-                  placeholder="Ex.: admin"
+                  placeholder="Ex.: admin ou ti6@talmax.com.br"
                   autoComplete="off"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !isMasterAdmin}
                 />
               </div>
 
@@ -78,7 +89,7 @@ const AdminSecurity = () => {
               )}
 
               <div className="admin-security__actions">
-                <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                <button type="submit" className="btn-primary" disabled={isSubmitting || !isMasterAdmin}>
                   <UnlockKeyhole size={18} />
                   {isSubmitting ? 'Liberando...' : 'Liberar nova tentativa'}
                 </button>

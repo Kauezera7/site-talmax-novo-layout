@@ -1,6 +1,6 @@
 /**
  * Centraliza a autenticacao do painel administrativo.
- * Aqui ficam login, logout, leitura do cookie de sessao e o middleware de protecao.
+ * Aqui ficam login, logout, leitura do cookie de sessao e permissoes do admin.
  */
 const crypto = require('crypto');
 const db = require('../../config/database');
@@ -11,6 +11,13 @@ const {
   normalizeAdminUsername
 } = require('../seguranca/adminLoginRateLimit');
 const { createHttpError, wrapError } = require('../utils/errorHandling');
+const { validateWithSchema } = require('../validation/requestValidation');
+const {
+  ADMIN_ROLE_MASTER,
+  ADMIN_ROLE_EDITOR,
+  createAdminUserSchema,
+  updateAdminUserSchema
+} = require('../validation/adminUserSchemas');
 
 const ADMIN_SESSION_COOKIE = 'talmax-admin-session';
 const ADMIN_USER_FREE_FLAG_VALUE = 1;
@@ -27,6 +34,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 const ADMIN_COOKIE_SAME_SITE = String(process.env.ADMIN_COOKIE_SAME_SITE || (isProduction ? 'none' : 'lax')).toLowerCase();
 
 let usersTableHasBloqUserColumn = null;
+let usersTableHasEmailColumn = null;
+let usersTableHasRoleColumn = null;
 
 const safeEqual = (valueA, valueB) => {
   const bufferA = Buffer.from(String(valueA));
@@ -39,6 +48,12 @@ const safeEqual = (valueA, valueB) => {
   return crypto.timingSafeEqual(bufferA, bufferB);
 };
 
+const hashAdminPassword = (password) => {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(String(password), salt, 64).toString('hex');
+  return `scrypt$${salt}$${hash}`;
+};
+
 const verifyAdminPassword = (password, storedPassword) => {
   if (!storedPassword) {
     return false;
@@ -46,15 +61,25 @@ const verifyAdminPassword = (password, storedPassword) => {
 
   if (storedPassword.startsWith('scrypt$')) {
     const [, salt, hash] = storedPassword.split('$');
+
     if (!salt || !hash) {
       return false;
     }
 
-    const candidateHash = crypto.scryptSync(password, salt, 64).toString('hex');
+    const candidateHash = crypto.scryptSync(String(password), salt, 64).toString('hex');
     return safeEqual(candidateHash, hash);
   }
 
   return safeEqual(password, storedPassword);
+};
+
+const normalizeAdminRole = (value) => {
+  if (typeof value !== 'string') {
+    return ADMIN_ROLE_EDITOR;
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+  return normalizedValue === ADMIN_ROLE_MASTER ? ADMIN_ROLE_MASTER : ADMIN_ROLE_EDITOR;
 };
 
 const parseCookies = (req) => {
@@ -112,6 +137,7 @@ const verifyJwtToken = (token) => {
   }
 
   const parts = token.split('.');
+
   if (parts.length !== 3) {
     return null;
   }
@@ -174,8 +200,118 @@ const usersTableSupportsBloqUser = async () => {
 
   const [columns] = await db.query("SHOW COLUMNS FROM users LIKE 'bloq_user'");
   usersTableHasBloqUserColumn = columns.length > 0;
-
   return usersTableHasBloqUserColumn;
+};
+
+const usersTableSupportsEmail = async () => {
+  if (typeof usersTableHasEmailColumn === 'boolean') {
+    return usersTableHasEmailColumn;
+  }
+
+  const [columns] = await db.query("SHOW COLUMNS FROM users LIKE 'email'");
+  usersTableHasEmailColumn = columns.length > 0;
+  return usersTableHasEmailColumn;
+};
+
+const usersTableSupportsRole = async () => {
+  if (typeof usersTableHasRoleColumn === 'boolean') {
+    return usersTableHasRoleColumn;
+  }
+
+  const [columns] = await db.query("SHOW COLUMNS FROM users LIKE 'role'");
+  usersTableHasRoleColumn = columns.length > 0;
+  return usersTableHasRoleColumn;
+};
+
+const assertAdminUserManagementIsAvailable = async () => {
+  const [supportsEmail, supportsRole] = await Promise.all([
+    usersTableSupportsEmail(),
+    usersTableSupportsRole()
+  ]);
+
+  if (supportsEmail && supportsRole) {
+    return;
+  }
+
+  throw createHttpError(503, 'A gestao de usuarios do painel exige as colunas email e role na tabela users. Execute a migration add_admin_user_identity.js antes de usar esta tela.', {
+    code: 'ADMIN_USER_MANAGEMENT_COLUMNS_MISSING',
+    expose: true
+  });
+};
+
+const getAdminSelectClause = async ({ includePassword = false } = {}) => {
+  const [supportsBloqUser, supportsEmail, supportsRole] = await Promise.all([
+    usersTableSupportsBloqUser(),
+    usersTableSupportsEmail(),
+    usersTableSupportsRole()
+  ]);
+
+  const fields = [
+    'id',
+    'username',
+    'full_name'
+  ];
+
+  if (includePassword) {
+    fields.push('password');
+  }
+
+  fields.push(
+    supportsEmail ? 'email' : 'NULL AS email',
+    supportsRole ? 'role' : `'${ADMIN_ROLE_MASTER}' AS role`,
+    supportsBloqUser ? 'bloq_user' : `${ADMIN_USER_FREE_FLAG_VALUE} AS bloq_user`,
+    'created_at'
+  );
+
+  return fields.join(', ');
+};
+
+const serializeAdminUser = (adminUser) => {
+  if (!adminUser) {
+    return null;
+  }
+
+  return {
+    id: adminUser.id,
+    username: adminUser.username,
+    full_name: adminUser.full_name,
+    email: adminUser.email || null,
+    role: normalizeAdminRole(adminUser.role),
+    bloq_user: Number(adminUser.bloq_user || ADMIN_USER_FREE_FLAG_VALUE),
+    created_at: adminUser.created_at || null
+  };
+};
+
+const getAdminUserByIdentifier = async (identifier) => {
+  const normalizedIdentifier = normalizeAdminUsername(identifier);
+
+  if (!normalizedIdentifier) {
+    return null;
+  }
+
+  const selectClause = await getAdminSelectClause({ includePassword: true });
+  const supportsEmail = await usersTableSupportsEmail();
+  const lookupQuery = supportsEmail
+    ? `SELECT ${selectClause} FROM users WHERE LOWER(username) = ? OR LOWER(email) = ? LIMIT 1`
+    : `SELECT ${selectClause} FROM users WHERE LOWER(username) = ? LIMIT 1`;
+  const params = supportsEmail
+    ? [normalizedIdentifier, normalizedIdentifier]
+    : [normalizedIdentifier];
+  const [users] = await db.query(lookupQuery, params);
+
+  return users[0] || null;
+};
+
+const getAdminUserById = async (adminUserId, options = {}) => {
+  const numericId = Number.parseInt(adminUserId, 10);
+
+  if (!Number.isInteger(numericId) || numericId <= 0) {
+    return null;
+  }
+
+  const selectClause = await getAdminSelectClause({ includePassword: Boolean(options.includePassword) });
+  const [users] = await db.query(`SELECT ${selectClause} FROM users WHERE id = ? LIMIT 1`, [numericId]);
+  return users[0] || null;
 };
 
 const getAdminUserByUsername = async (username) => {
@@ -185,11 +321,28 @@ const getAdminUserByUsername = async (username) => {
     return null;
   }
 
-  const selectQuery = (await usersTableSupportsBloqUser())
-    ? 'SELECT id, username, password, full_name, bloq_user FROM users WHERE LOWER(username) = ? LIMIT 1'
-    : 'SELECT id, username, password, full_name, 1 AS bloq_user FROM users WHERE LOWER(username) = ? LIMIT 1';
+  const selectClause = await getAdminSelectClause({ includePassword: true });
+  const [users] = await db.query(
+    `SELECT ${selectClause} FROM users WHERE LOWER(username) = ? LIMIT 1`,
+    [normalizedUsername]
+  );
 
-  const [users] = await db.query(selectQuery, [normalizedUsername]);
+  return users[0] || null;
+};
+
+const getAdminUserByEmail = async (email) => {
+  const normalizedEmail = normalizeAdminUsername(email);
+
+  if (!normalizedEmail || !await usersTableSupportsEmail()) {
+    return null;
+  }
+
+  const selectClause = await getAdminSelectClause({ includePassword: true });
+  const [users] = await db.query(
+    `SELECT ${selectClause} FROM users WHERE LOWER(email) = ? LIMIT 1`,
+    [normalizedEmail]
+  );
+
   return users[0] || null;
 };
 
@@ -206,13 +359,68 @@ const setAdminBlockState = async (adminUserId, value) => {
   );
 };
 
-const ensureAdminUserIsNotTemporarilyBlocked = async (adminUser, res) => {
+const clearRateLimitKeysForAdminUser = async (identifiers = []) => {
+  const normalizedIdentifiers = [];
+
+  identifiers.forEach((value) => {
+    const normalizedValue = normalizeAdminUsername(value);
+
+    if (normalizedValue && !normalizedIdentifiers.includes(normalizedValue)) {
+      normalizedIdentifiers.push(normalizedValue);
+    }
+  });
+
+  const tasks = normalizedIdentifiers
+    .map((value) => clearAdminLoginRateLimitByUsername(value).catch(() => false));
+
+  await Promise.all(tasks);
+};
+
+const maybeUpgradeLegacyAdminPassword = async (adminUser, plainPassword) => {
+  if (!adminUser?.id || typeof adminUser.password !== 'string' || adminUser.password.startsWith('scrypt$')) {
+    return;
+  }
+
+  await db.query(
+    'UPDATE users SET password = ? WHERE id = ? LIMIT 1',
+    [hashAdminPassword(plainPassword), adminUser.id]
+  );
+};
+
+const getRateLimitResetTimeForAdminUser = async (adminUser, attemptedIdentifier) => {
+  const identifiers = [attemptedIdentifier, adminUser?.username, adminUser?.email]
+    .map((value) => normalizeAdminUsername(value))
+    .filter((value, index, values) => Boolean(value) && values.indexOf(value) === index);
+
+  if (identifiers.length === 0) {
+    return null;
+  }
+
+  const states = await Promise.all(
+    identifiers.map((identifier) => getAdminLoginRateLimitStateByUsername(identifier))
+  );
+
+  return states.reduce((latestResetTime, state) => {
+    const resetTime = state?.resetTime instanceof Date ? state.resetTime : null;
+
+    if (!resetTime || resetTime.getTime() <= Date.now()) {
+      return latestResetTime;
+    }
+
+    if (!latestResetTime || resetTime.getTime() > latestResetTime.getTime()) {
+      return resetTime;
+    }
+
+    return latestResetTime;
+  }, null);
+};
+
+const ensureAdminUserIsNotTemporarilyBlocked = async (adminUser, res, attemptedIdentifier) => {
   if (!adminUser || Number(adminUser.bloq_user || ADMIN_USER_FREE_FLAG_VALUE) !== ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE) {
     return true;
   }
 
-  const rateLimitState = await getAdminLoginRateLimitStateByUsername(adminUser.username);
-  const resetTime = rateLimitState?.resetTime instanceof Date ? rateLimitState.resetTime : null;
+  const resetTime = await getRateLimitResetTimeForAdminUser(adminUser, attemptedIdentifier);
 
   if (!resetTime || resetTime.getTime() <= Date.now()) {
     await setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE);
@@ -228,17 +436,55 @@ const ensureAdminUserIsNotTemporarilyBlocked = async (adminUser, res) => {
   return false;
 };
 
-const requireAdminSession = (req, res, next) => {
+const getValidatedAdminSession = (req, res) => {
   const token = getAdminSessionToken(req);
   const session = verifyJwtToken(token);
 
   if (!session) {
     res.clearCookie(ADMIN_SESSION_COOKIE, getAdminCookieOptions());
-    return res.status(401).json({ error: 'Sessao invalida ou expirada.' });
+    res.status(401).json({ error: 'Sessao invalida ou expirada.' });
+    return null;
   }
 
   req.adminSession = session;
+  return session;
+};
+
+const requireAdminSession = (req, res, next) => {
+  const session = getValidatedAdminSession(req, res);
+
+  if (!session) {
+    return undefined;
+  }
+
   return next();
+};
+
+const requireMasterAdminSession = async (req, res, next) => {
+  try {
+    const session = getValidatedAdminSession(req, res);
+
+    if (!session) {
+      return undefined;
+    }
+
+    const currentAdminUser = await getAdminUserById(session.id);
+    const effectiveRole = normalizeAdminRole(currentAdminUser?.role || session.role);
+
+    if (effectiveRole !== ADMIN_ROLE_MASTER) {
+      return res.status(403).json({ error: 'Apenas o admin master pode gerenciar acessos do painel.' });
+    }
+
+    req.adminSession = {
+      ...session,
+      ...serializeAdminUser(currentAdminUser),
+      role: effectiveRole
+    };
+
+    return next();
+  } catch (error) {
+    return next(wrapError(error, { publicMessage: 'Erro ao validar permissao do admin.' }));
+  }
 };
 
 const loginAdmin = async (req, res, next) => {
@@ -246,16 +492,16 @@ const loginAdmin = async (req, res, next) => {
     const { username, password } = req.body || {};
 
     if (!username || !password) {
-      return res.status(400).json({ error: 'Informe usuario e senha.' });
+      return res.status(400).json({ error: 'Informe usuario ou e-mail e senha.' });
     }
 
-    const adminUser = await getAdminUserByUsername(username);
+    const adminUser = await getAdminUserByIdentifier(username);
 
     if (!adminUser) {
       return res.status(401).json({ error: 'Credenciais invalidas.' });
     }
 
-    const canContinueLogin = await ensureAdminUserIsNotTemporarilyBlocked(adminUser, res);
+    const canContinueLogin = await ensureAdminUserIsNotTemporarilyBlocked(adminUser, res, username);
 
     if (!canContinueLogin) {
       return undefined;
@@ -265,13 +511,14 @@ const loginAdmin = async (req, res, next) => {
       return res.status(401).json({ error: 'Credenciais invalidas.' });
     }
 
-    await clearAdminLoginRateLimitByUsername(adminUser.username);
-    await setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE).catch(() => null);
+    await Promise.all([
+      clearRateLimitKeysForAdminUser([username, adminUser.username, adminUser.email]),
+      setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE).catch(() => null),
+      maybeUpgradeLegacyAdminPassword(adminUser, password).catch(() => null)
+    ]);
 
     const sessionPayload = {
-      id: adminUser.id,
-      username: adminUser.username,
-      full_name: adminUser.full_name,
+      ...serializeAdminUser(adminUser),
       created_at: new Date().toISOString()
     };
     const token = createJwtToken(sessionPayload);
@@ -292,26 +539,24 @@ const unlockAdminLoginByUser = async (req, res, next) => {
     const { username } = req.body || {};
 
     if (!normalizeAdminUsername(username)) {
-      return res.status(400).json({ error: 'Informe o usuario que deve ser liberado.' });
+      return res.status(400).json({ error: 'Informe o usuario ou e-mail que deve ser liberado.' });
     }
 
-    const adminUser = await getAdminUserByUsername(username);
+    const adminUser = await getAdminUserByIdentifier(username);
 
     if (!adminUser) {
       return res.status(404).json({ error: 'Usuario admin nao encontrado.' });
     }
 
     await setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE);
-    await clearAdminLoginRateLimitByUsername(adminUser.username);
+    await clearRateLimitKeysForAdminUser([username, adminUser.username, adminUser.email]);
 
     return res.json({
       message: 'Usuario desbloqueado com sucesso. Oriente a pessoa a recarregar a pagina e tentar de novo.',
-      user: {
-        id: adminUser.id,
-        username: adminUser.username,
-        full_name: adminUser.full_name,
+      user: serializeAdminUser({
+        ...adminUser,
         bloq_user: ADMIN_USER_FREE_FLAG_VALUE
-      }
+      })
     });
   } catch (error) {
     if (error.code === 'BLOQ_USER_COLUMN_MISSING') {
@@ -326,8 +571,181 @@ const unlockAdminLoginByUser = async (req, res, next) => {
   }
 };
 
-const getAdminSession = (req, res) => {
-  res.json({ user: req.adminSession });
+const getAdminSession = async (req, res, next) => {
+  try {
+    const currentAdminUser = await getAdminUserById(req.adminSession?.id);
+
+    if (!currentAdminUser) {
+      return res.json({ user: req.adminSession });
+    }
+
+    return res.json({
+      user: {
+        ...req.adminSession,
+        ...serializeAdminUser(currentAdminUser)
+      }
+    });
+  } catch (error) {
+    return next(wrapError(error, { publicMessage: 'Erro ao consultar a sessao do admin.' }));
+  }
+};
+
+const listAdminUsers = async (_req, res, next) => {
+  try {
+    await assertAdminUserManagementIsAvailable();
+
+    const selectClause = await getAdminSelectClause();
+    const [users] = await db.query(`
+      SELECT ${selectClause}
+      FROM users
+      ORDER BY
+        CASE WHEN LOWER(role) = ? THEN 0 ELSE 1 END,
+        COALESCE(NULLIF(full_name, ''), username) ASC,
+        id ASC
+    `, [ADMIN_ROLE_MASTER]);
+
+    return res.json({
+      users: users.map(serializeAdminUser)
+    });
+  } catch (error) {
+    if (error.code === 'ADMIN_USER_MANAGEMENT_COLUMNS_MISSING') {
+      return next(error);
+    }
+
+    return next(wrapError(error, { publicMessage: 'Erro ao listar usuarios do painel.' }));
+  }
+};
+
+const createAdminUser = async (req, res, next) => {
+  try {
+    await assertAdminUserManagementIsAvailable();
+
+    const payload = validateWithSchema(createAdminUserSchema, req.body || {});
+    const [existingUsernameUser, existingEmailUser] = await Promise.all([
+      getAdminUserByUsername(payload.username),
+      getAdminUserByEmail(payload.email)
+    ]);
+
+    if (existingUsernameUser) {
+      return res.status(409).json({ error: 'Ja existe um admin com este usuario.' });
+    }
+
+    if (existingEmailUser) {
+      return res.status(409).json({ error: 'Ja existe um admin com este e-mail.' });
+    }
+
+    const [insertResult] = await db.query(`
+      INSERT INTO users (username, password, full_name, email, role, bloq_user)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [
+      payload.username,
+      hashAdminPassword(payload.password),
+      payload.full_name,
+      payload.email,
+      normalizeAdminRole(payload.role),
+      ADMIN_USER_FREE_FLAG_VALUE
+    ]);
+
+    const createdAdminUser = await getAdminUserById(insertResult.insertId);
+
+    return res.status(201).json({
+      message: 'Usuario admin criado com sucesso.',
+      user: serializeAdminUser(createdAdminUser)
+    });
+  } catch (error) {
+    if (error.code === 'ADMIN_USER_MANAGEMENT_COLUMNS_MISSING') {
+      return next(error);
+    }
+
+    return next(wrapError(error, { publicMessage: 'Erro ao criar usuario do painel.' }));
+  }
+};
+
+const updateAdminUser = async (req, res, next) => {
+  try {
+    await assertAdminUserManagementIsAvailable();
+
+    const adminUserId = Number.parseInt(req.params.id, 10);
+
+    if (!Number.isInteger(adminUserId) || adminUserId <= 0) {
+      return res.status(400).json({ error: 'Informe um usuario valido para atualizar.' });
+    }
+
+    const payload = validateWithSchema(updateAdminUserSchema, req.body || {});
+    const adminUser = await getAdminUserById(adminUserId, { includePassword: true });
+
+    if (!adminUser) {
+      return res.status(404).json({ error: 'Usuario admin nao encontrado.' });
+    }
+
+    if (payload.username && normalizeAdminUsername(payload.username) !== normalizeAdminUsername(adminUser.username)) {
+      const conflictingUsernameUser = await getAdminUserByUsername(payload.username);
+
+      if (conflictingUsernameUser && conflictingUsernameUser.id !== adminUserId) {
+        return res.status(409).json({ error: 'Ja existe um admin com este usuario.' });
+      }
+    }
+
+    if (payload.email && normalizeAdminUsername(payload.email) !== normalizeAdminUsername(adminUser.email)) {
+      const conflictingEmailUser = await getAdminUserByEmail(payload.email);
+
+      if (conflictingEmailUser && conflictingEmailUser.id !== adminUserId) {
+        return res.status(409).json({ error: 'Ja existe um admin com este e-mail.' });
+      }
+    }
+
+    const nextRole = payload.role ? normalizeAdminRole(payload.role) : normalizeAdminRole(adminUser.role);
+
+    if (req.adminSession?.id === adminUserId && nextRole !== ADMIN_ROLE_MASTER) {
+      return res.status(400).json({ error: 'O admin master logado nao pode remover a propria permissao master.' });
+    }
+
+    const updates = [];
+    const params = [];
+
+    if (payload.full_name !== undefined) {
+      updates.push('full_name = ?');
+      params.push(payload.full_name);
+    }
+
+    if (payload.email !== undefined) {
+      updates.push('email = ?');
+      params.push(payload.email);
+    }
+
+    if (payload.username !== undefined) {
+      updates.push('username = ?');
+      params.push(payload.username);
+    }
+
+    if (payload.password !== undefined) {
+      updates.push('password = ?');
+      params.push(hashAdminPassword(payload.password));
+    }
+
+    if (payload.role !== undefined) {
+      updates.push('role = ?');
+      params.push(nextRole);
+    }
+
+    await db.query(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ? LIMIT 1`,
+      [...params, adminUserId]
+    );
+
+    const updatedAdminUser = await getAdminUserById(adminUserId);
+
+    return res.json({
+      message: 'Usuario admin atualizado com sucesso.',
+      user: serializeAdminUser(updatedAdminUser)
+    });
+  } catch (error) {
+    if (error.code === 'ADMIN_USER_MANAGEMENT_COLUMNS_MISSING') {
+      return next(error);
+    }
+
+    return next(wrapError(error, { publicMessage: 'Erro ao atualizar usuario do painel.' }));
+  }
 };
 
 const logoutAdmin = (req, res) => {
@@ -336,9 +754,15 @@ const logoutAdmin = (req, res) => {
 };
 
 module.exports = {
+  ADMIN_ROLE_MASTER,
+  ADMIN_ROLE_EDITOR,
   requireAdminSession,
+  requireMasterAdminSession,
   loginAdmin,
   unlockAdminLoginByUser,
   getAdminSession,
+  listAdminUsers,
+  createAdminUser,
+  updateAdminUser,
   logoutAdmin
 };

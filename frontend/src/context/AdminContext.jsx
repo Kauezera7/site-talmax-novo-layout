@@ -12,10 +12,11 @@
  *
  * Todos eles podem consumir `useAdmin()` para acessar dados, loading, erros e funcoes auxiliares.
  */
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useProducts } from '../hooks/useProducts';
 import { useCategories } from '../hooks/useCategories';
 import { useBanners } from '../hooks/useBanners';
+import { validateAdminSession } from '../services/adminAuth';
 
 // Cria o contexto que sera compartilhado entre as telas do admin.
 const AdminContext = createContext();
@@ -26,10 +27,42 @@ export const AdminProvider = ({ children }) => {
   const productsHook = useProducts();
   const categoriesHook = useCategories();
   const bannersHook = useBanners();
+  const [sessionUser, setSessionUser] = useState(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
 
   // Toasts sao avisos temporarios exibidos na interface, como:
   // "Produto salvo com sucesso" ou "Erro ao excluir banner".
   const [toasts, setToasts] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSessionUser = async () => {
+      try {
+        const result = await validateAdminSession();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setSessionUser(result.authenticated ? result.user || null : null);
+      } catch (error) {
+        if (isMounted) {
+          setSessionUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsSessionLoading(false);
+        }
+      }
+    };
+
+    loadSessionUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const addToast = (message, type = 'success') => {
     const id = Date.now();
@@ -57,9 +90,11 @@ export const AdminProvider = ({ children }) => {
     mainCategories: categoriesHook.mainCategories,
     subCategories: categoriesHook.subCategories,
     banners: bannersHook.banners,
+    sessionUser,
+    isMasterAdmin: sessionUser?.role === 'master',
 
     // Se qualquer area estiver carregando, o admin inteiro pode considerar loading.
-    loading: productsHook.loading || categoriesHook.loading || bannersHook.loading,
+    loading: isSessionLoading || productsHook.loading || categoriesHook.loading || bannersHook.loading,
 
     // O mesmo raciocinio vale para erro:
     // se qualquer hook falhar, o contexto expoe esse erro para a interface.
@@ -70,6 +105,11 @@ export const AdminProvider = ({ children }) => {
       productsHook.refresh();
       categoriesHook.refresh();
       bannersHook.refresh();
+    },
+    refreshSessionUser: async () => {
+      const result = await validateAdminSession();
+      setSessionUser(result.authenticated ? result.user || null : null);
+      return result.user || null;
     },
 
     // Hooks completos expostos para as telas que precisam chamar create/update/delete.

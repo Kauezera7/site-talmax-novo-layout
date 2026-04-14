@@ -123,10 +123,13 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) NOT NULL,
     password VARCHAR(255) NOT NULL,
     full_name VARCHAR(100) DEFAULT NULL,
+    email VARCHAR(160) DEFAULT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'editor',
     bloq_user TINYINT NOT NULL DEFAULT 1,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_users_username (username)
+    UNIQUE KEY uk_users_username (username),
+    UNIQUE KEY uk_users_email (email)
 );
 
 CREATE TABLE IF NOT EXISTS page_settings (
@@ -292,12 +295,14 @@ ON DUPLICATE KEY UPDATE
     logo_url = VALUES(logo_url),
     content = VALUES(content);
 
-INSERT INTO users (id, username, password, full_name, bloq_user) VALUES
-(1, 'admin', 'talmax123', 'Administrador Talmax', 1)
+INSERT INTO users (id, username, password, full_name, email, role, bloq_user) VALUES
+(1, 'admin', 'talmax123', 'Administrador Talmax', NULL, 'master', 1)
 ON DUPLICATE KEY UPDATE
     username = VALUES(username),
     password = VALUES(password),
     full_name = VALUES(full_name),
+    email = VALUES(email),
+    role = VALUES(role),
     bloq_user = VALUES(bloq_user);
 
 -- ======================================================

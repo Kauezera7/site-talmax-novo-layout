@@ -2,6 +2,7 @@ import API_URL from './api';
 import { createAdminRequestOptions, ensureAdminResponse } from './adminRequest';
 import {
   clearStoredAdminSessionToken,
+  readStoredAdminSessionToken,
   storeAdminSessionToken
 } from './adminSessionStorage';
 
@@ -70,13 +71,32 @@ export const loginAdmin = async (credentials) => {
   return data;
 };
 
-export const validateAdminSession = async () => {
+export const validateAdminSession = async (options = {}) => {
+  const { skipWhenNoStoredToken = false, timeoutMs = 0 } = options;
+
+  if (skipWhenNoStoredToken && !readStoredAdminSessionToken()) {
+    return { authenticated: false };
+  }
+
   let response;
+  const controller = timeoutMs > 0 ? new AbortController() : null;
+  const timerApi = typeof window !== 'undefined' ? window : globalThis;
+  const timeoutId = controller
+    ? timerApi.setTimeout(() => {
+      controller.abort();
+    }, timeoutMs)
+    : null;
 
   try {
-    response = await fetch(`${API_BASE_URL}/session`, createAdminRequestOptions());
+    response = await fetch(`${API_BASE_URL}/session`, createAdminRequestOptions({
+      signal: controller?.signal
+    }));
   } catch (error) {
     throw normalizeAdminRequestError(error);
+  } finally {
+    if (timeoutId) {
+      timerApi.clearTimeout(timeoutId);
+    }
   }
 
   if (!response.ok) {

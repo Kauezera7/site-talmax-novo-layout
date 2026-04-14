@@ -14,6 +14,7 @@ const ADMIN_USER_FREE_FLAG_VALUE = 1;
 const ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE = 2;
 
 let usersTableHasBloqUserColumn = null;
+let usersTableHasEmailColumn = null;
 
 const parsePositiveInteger = (value, fallback) => {
   const parsedValue = Number.parseInt(value, 10);
@@ -69,6 +70,17 @@ const usersTableSupportsBloqUser = async () => {
   return usersTableHasBloqUserColumn;
 };
 
+const usersTableSupportsEmail = async () => {
+  if (typeof usersTableHasEmailColumn === 'boolean') {
+    return usersTableHasEmailColumn;
+  }
+
+  const [columns] = await db.query("SHOW COLUMNS FROM users LIKE 'email'");
+  usersTableHasEmailColumn = columns.length > 0;
+
+  return usersTableHasEmailColumn;
+};
+
 const getAdminUserBlockStateByUsername = async (username) => {
   const normalizedUsername = normalizeAdminUsername(username);
 
@@ -76,9 +88,14 @@ const getAdminUserBlockStateByUsername = async (username) => {
     return null;
   }
 
+  const supportsEmail = await usersTableSupportsEmail();
   const [users] = await db.query(
-    'SELECT id, username, bloq_user FROM users WHERE LOWER(username) = ? LIMIT 1',
-    [normalizedUsername]
+    supportsEmail
+      ? 'SELECT id, username, bloq_user FROM users WHERE LOWER(username) = ? OR LOWER(email) = ? LIMIT 1'
+      : 'SELECT id, username, bloq_user FROM users WHERE LOWER(username) = ? LIMIT 1',
+    supportsEmail
+      ? [normalizedUsername, normalizedUsername]
+      : [normalizedUsername]
   );
 
   return users[0] || null;
@@ -101,9 +118,15 @@ const setAdminUserBlockStateByUsername = async (username, value) => {
     return false;
   }
 
+  const supportsEmail = await usersTableSupportsEmail();
+
   await db.query(
-    'UPDATE users SET bloq_user = ? WHERE LOWER(username) = ? LIMIT 1',
-    [value, normalizedUsername]
+    supportsEmail
+      ? 'UPDATE users SET bloq_user = ? WHERE LOWER(username) = ? OR LOWER(email) = ? LIMIT 1'
+      : 'UPDATE users SET bloq_user = ? WHERE LOWER(username) = ? LIMIT 1',
+    supportsEmail
+      ? [value, normalizedUsername, normalizedUsername]
+      : [value, normalizedUsername]
   );
 
   return true;

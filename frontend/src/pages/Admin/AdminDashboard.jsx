@@ -19,7 +19,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
-  ShieldCheck
+  ShieldCheck,
+  UserCog
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin, AdminProvider } from '../../context/AdminContext';
@@ -39,6 +40,7 @@ const AdminTalmaxDigital = lazy(() => import('./AdminTalmaxDigital/AdminTalmaxDi
 const AdminDigitalGroups = lazy(() => import('./AdminTalmaxDigital/AdminDigitalGroups'));
 const AdminCustomPages = lazy(() => import('./AdminCustomPages/AdminCustomPages'));
 const AdminSecurity = lazy(() => import('./AdminSecurity/AdminSecurity'));
+const AdminUsers = lazy(() => import('./AdminUsers/AdminUsers'));
 
 const AdminLoadingScreen = ({ label = 'Carregando painel...' }) => (
   <div className="app-loader-overlay app-loader-overlay-admin" role="status" aria-live="polite" aria-label={label}>
@@ -95,7 +97,7 @@ const DashboardHome = ({ onOpenTab }) => {
           <h2><LayoutDashboard size={20} /> Bem-vindo ao Painel Administrativo</h2>
         </div>
         <div className="card-body">
-          <p>Utilize o menu lateral para gerenciar os produtos, categorias e banners do site Talmax.</p>
+          <p>Utilize o menu lateral para gerenciar os produtos, categorias, banners e acessos do painel Talmax.</p>
         </div>
       </div>
     </div>
@@ -122,7 +124,9 @@ const AdminDashboardContent = () => {
     setIsEditPagesOpen,
     isPagesOpen,
     setIsPagesOpen,
-    toasts
+    toasts,
+    sessionUser,
+    isMasterAdmin
   } = useAdminState();
 
   if (loading) {
@@ -132,7 +136,8 @@ const AdminDashboardContent = () => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { id: 'categories', label: 'Categorias', icon: <Layers size={20} /> },
-    { id: 'security', label: 'Segurança do Login', icon: <ShieldCheck size={20} /> }
+    ...(isMasterAdmin ? [{ id: 'users', label: 'Usuarios Admin', icon: <UserCog size={20} /> }] : []),
+    ...(isMasterAdmin ? [{ id: 'security', label: 'Seguranca do Login', icon: <ShieldCheck size={20} /> }] : [])
   ];
   const catalogItems = [
     { id: 'products', label: 'Cadastro de Produtos', icon: <Package size={18} /> },
@@ -160,7 +165,8 @@ const AdminDashboardContent = () => {
 
   const renderActiveTab = () => {
     switch (activeTab) {
-      case 'dashboard': return <DashboardHome onOpenTab={setActiveTab} />;
+      case 'dashboard':
+        return <DashboardHome onOpenTab={setActiveTab} />;
       case 'products':
         return withAdminSectionLoader(
           <AdminProducts
@@ -183,18 +189,32 @@ const AdminDashboardContent = () => {
           />,
           'Carregando lista de produtos...'
         );
-      case 'categories': return withAdminSectionLoader(<AdminCategories />, 'Carregando categorias...');
-      case 'security': return withAdminSectionLoader(<AdminSecurity />, 'Carregando segurança do login...');
-      case 'banners': return withAdminSectionLoader(<AdminBanners />, 'Carregando banners...');
-      case 'featured': return withAdminSectionLoader(<AdminFeatured />, 'Carregando destaques da home...');
-      case 'segments': return withAdminSectionLoader(<AdminSegments />, 'Carregando segmentos...');
-      case 'custom-pages': return withAdminSectionLoader(<AdminCustomPages />, 'Carregando paginas personalizadas...');
-      case 'talmax-digital': return withAdminSectionLoader(<AdminTalmaxDigital />, 'Carregando pagina Talmax Digital...');
-      case 'digital-groups': return withAdminSectionLoader(<AdminDigitalGroups />, 'Carregando grupos de segmentos...');
-      case 'upcera': return withAdminSectionLoader(<AdminUpcera />, 'Carregando pagina Upcera...');
-      case 'scanners': return withAdminSectionLoader(<AdminScanners />, 'Carregando pagina Scanners...');
-      case 'printers': return withAdminSectionLoader(<AdminPrinters />, 'Carregando pagina Impressoras 3D...');
-      default: return <DashboardHome onOpenTab={setActiveTab} />;
+      case 'categories':
+        return withAdminSectionLoader(<AdminCategories />, 'Carregando categorias...');
+      case 'users':
+        return withAdminSectionLoader(<AdminUsers />, 'Carregando usuarios do painel...');
+      case 'security':
+        return withAdminSectionLoader(<AdminSecurity />, 'Carregando seguranca do login...');
+      case 'banners':
+        return withAdminSectionLoader(<AdminBanners />, 'Carregando banners...');
+      case 'featured':
+        return withAdminSectionLoader(<AdminFeatured />, 'Carregando destaques da home...');
+      case 'segments':
+        return withAdminSectionLoader(<AdminSegments />, 'Carregando segmentos...');
+      case 'custom-pages':
+        return withAdminSectionLoader(<AdminCustomPages />, 'Carregando paginas personalizadas...');
+      case 'talmax-digital':
+        return withAdminSectionLoader(<AdminTalmaxDigital />, 'Carregando pagina Talmax Digital...');
+      case 'digital-groups':
+        return withAdminSectionLoader(<AdminDigitalGroups />, 'Carregando grupos de segmentos...');
+      case 'upcera':
+        return withAdminSectionLoader(<AdminUpcera />, 'Carregando pagina Upcera...');
+      case 'scanners':
+        return withAdminSectionLoader(<AdminScanners />, 'Carregando pagina Scanners...');
+      case 'printers':
+        return withAdminSectionLoader(<AdminPrinters />, 'Carregando pagina Impressoras 3D...');
+      default:
+        return <DashboardHome onOpenTab={setActiveTab} />;
     }
   };
 
@@ -281,7 +301,7 @@ const AdminDashboardContent = () => {
               }}
             >
               <Package size={20} />
-              {!isSidebarCollapsed && <span>Catálogo</span>}
+              {!isSidebarCollapsed && <span>Catalogo</span>}
               {!isSidebarCollapsed && <ChevronRight size={16} className="dropdown-arrow" />}
             </div>
 
@@ -398,7 +418,7 @@ const AdminDashboardContent = () => {
           </button>
           <h1>{activeItem?.label}</h1>
           <div className="user-profile">
-            <span className="user-name"></span>
+            <span className="user-name">{sessionUser?.full_name || sessionUser?.username || 'Admin'}</span>
           </div>
         </header>
 
@@ -446,7 +466,7 @@ const useAdminState = () => {
   const [isHomeOpen, setIsHomeOpen] = useState(false);
   const [isEditPagesOpen, setIsEditPagesOpen] = useState(false);
   const [isPagesOpen, setIsPagesOpen] = useState(false);
-  const { loading, toasts } = useAdmin();
+  const { loading, toasts, sessionUser, isMasterAdmin } = useAdmin();
 
   return {
     loading,
@@ -466,7 +486,9 @@ const useAdminState = () => {
     setIsEditPagesOpen,
     isPagesOpen,
     setIsPagesOpen,
-    toasts
+    toasts,
+    sessionUser,
+    isMasterAdmin
   };
 };
 

@@ -122,7 +122,7 @@ const ProtectedAdminRoute = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
-    validateAdminSession()
+    validateAdminSession({ timeoutMs: 2500 })
       .then((result) => {
         if (mounted) {
           setStatus(result.authenticated ? 'authenticated' : 'unauthenticated');
