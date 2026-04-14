@@ -1,82 +1,89 @@
 # Site Talmax
 
-Documentação principal do projeto `site-talmax`.
+Repositorio do site institucional e do painel administrativo da Talmax.
 
-## Visão Geral
+## Visao geral
 
-O projeto é composto por:
+O projeto tem duas aplicacoes principais:
 
 - `frontend/`
-  Aplicação React com Vite que entrega o site público e a interface do painel administrativo.
+  React 19 + Vite 8 + React Router 7 para o site publico e o painel.
 - `backend/`
-  API em Node.js com Express e MySQL, responsável por autenticação do admin, CRUD de conteúdo, upload de imagens e entrega do build do frontend em produção.
-- `docs/`
-  Documentação complementar de arquitetura, API, deploy e mapas rápidos.
+  Node.js + Express 5 + MySQL para autenticacao do admin, CRUD, paginas dinamicas e upload de imagens.
 
-## O Que O Sistema Faz
+Arquitetura em alto nivel:
 
-- publica o site institucional da Talmax
-- lista produtos e categorias
-- exibe páginas especiais como Upcera, Scanners e Impressoras 3D
-- permite administrar produtos, categorias, banners e seleções especiais pelo painel
-- persiste dados em MySQL
-- faz upload de imagens com armazenamento local, Cloudinary ou SFTP
+```txt
+Frontend React
+-> services do frontend
+-> API Express em /api
+-> MySQL + storage de imagens
+```
 
-## Estrutura Resumida
+Em producao o backend tambem serve:
+
+- `frontend/dist`
+- arquivos em `/img`
+
+## O que o sistema faz
+
+- publica o site da Talmax
+- lista produtos, categorias e detalhes de produto
+- entrega paginas especiais como Talmax Digital, Upcera, Scanners e Impressoras 3D
+- permite criar paginas personalizadas em `/pagina/:slug`
+- permite criar grupos digitais em `/grupo-digital/:slug`
+- administra produtos, categorias, banners, destaques da home, segmentos, paginas especiais e configuracoes pelo painel
+- aceita upload local, Cloudinary ou SFTP
+
+## Estrutura do repositorio
 
 ```txt
 site-talmax/
 |-- backend/
 |-- docs/
+|   `-- explicacao/
 |-- frontend/
-|-- README.md
 |-- GEMINI.md
-`-- KINGHOST_DEPLOY.md
+|-- KINGHOST_DEPLOY.md
+`-- README.md
 ```
-
-## Arquitetura Em Alto Nível
-
-```txt
-Frontend React
--> services do frontend
--> API Express (/api)
--> MySQL + storage de imagens
-```
-
-Em produção, o backend também serve:
-
-- `frontend/dist`
-- arquivos em `/img`
-
-## Frontend
-
-Tecnologias principais:
-
-- React 19
-- React Router 7
-- Vite
-- Framer Motion
-- Lucide React
 
 Arquivos centrais:
 
-- `frontend/src/main.jsx`
-  inicializa a aplicação React
 - `frontend/src/App.jsx`
-  concentra rotas, layout público, busca, proteção de rotas do admin e tema do painel
-- `frontend/src/services/`
-  integra o frontend com a API
-- `frontend/src/pages/Admin/`
-  implementa o painel administrativo
+  router principal, layout publico, busca e protecao da rota do admin
+- `frontend/src/pages/Admin/AdminDashboard.jsx`
+  estrutura do painel e selecao dos modulos internos
+- `backend/server.js`
+  bootstrap do backend
+- `backend/src/server/app.js`
+  middlewares, arquivos estaticos e montagem das rotas
+- `backend/database_schema.sql`
+  schema base do banco
 
-Rotas públicas principais:
+## Frontend
+
+Stack principal:
+
+- React 19
+- React Router 7
+- Vite 8
+- Mantine
+- Framer Motion
+- Lucide React
+
+Rotas publicas principais:
 
 - `/`
+- `/privacidade`
 - `/quem-somos`
 - `/historia-diretoria`
 - `/produtos`
 - `/categoria/:slug`
 - `/produto/:id`
+- `/categoria/talmax-digital`
+- `/grupo-digital/:slug`
+- `/pagina/:slug`
 - `/upcera`
 - `/scanners`
 - `/impressoras-3d`
@@ -87,88 +94,124 @@ Rotas do admin:
 - `/admin/login`
 - `/admin/painel`
 
+Observacoes importantes:
+
+- o frontend usa `VITE_API_URL` quando definido
+- em desenvolvimento, o fallback da API usa a mesma maquina atual na porta `5000`
+- `frontend/vite.config.js` esta com `base: '/site-talmax/'`, entao o build espera deploy nesse subdiretorio
+
+## Painel administrativo
+
+O painel usa autenticacao por cookie HTTP-only e hoje concentra os seguintes modulos:
+
+- dashboard
+- categorias
+- seguranca do login
+- cadastro de produtos
+- lista de produtos
+- banners
+- home destaques
+- home segmentos
+- paginas personalizadas
+- grupo de segmentos
+- Talmax Digital
+- Upcera
+- Scanners
+- Impressoras 3D
+
+Fluxo resumido:
+
+```txt
+AdminLogin
+-> /api/admin/login
+-> cookie talmax-admin-session
+-> /admin/painel
+-> services e hooks autenticados
+```
+
 ## Backend
 
-Tecnologias principais:
+Stack principal:
 
-- Node.js
 - Express 5
 - MySQL2
 - Multer
 - Cloudinary
 - SSH2 SFTP Client
+- Zod
 
-Arquivos centrais:
+Dominios principais da API:
 
-- `backend/server.js`
-  ponto de entrada do servidor
-- `backend/src/server/app.js`
-  composição da aplicação Express
-- `backend/src/server/routes/`
-  endpoints da API
-- `backend/src/server/auth/adminSession.js`
-  login, sessão e middleware de proteção
-- `backend/src/config/database.js`
-  pool do MySQL
-
-Endpoints principais:
-
-- `/api/admin/login`
-- `/api/admin/session`
-- `/api/admin/logout`
+- `/api/admin`
+  login, sessao, logout e desbloqueio de tentativas
 - `/api/categories`
+  CRUD de categorias e subcategorias
 - `/api/banners`
+  CRUD de banners da home
 - `/api/products`
+  CRUD de produtos, status ativo e botao de cotacao
+- `/api/home-services`
+  cards e segmentos da home
+- `/api/page-settings`
+  textos e logos das paginas especiais
+- `/api/custom-pages`
+  paginas dinamicas do site e CRUD do admin
+- `/api/digital-groups`
+  grupos digitais e CRUD do admin
 - `/api/upcera/products`
 - `/api/scanners/products`
 - `/api/3d-printers/products`
+- `/api/featured-products`
 
-## Banco de Dados
+Observacoes importantes:
 
-O schema base fica em:
+- rotas protegidas exigem sessao valida do admin
+- o backend responde `index.html` para `GET` fora de `/api`
+- imagens novas sao servidas a partir de `backend/storage/img` ou `UPLOAD_DIR`
+- imagens legadas em `frontend/public/img` e `frontend/dist/img` continuam sendo servidas por compatibilidade
+
+## Banco de dados
+
+Schema base:
 
 - `backend/database_schema.sql`
 
-Tabelas principais:
+Tabelas ja presentes no schema base:
 
 - `categorias`
 - `sub_categorias`
 - `products`
 - `product_categorias`
 - `product_sub_categorias`
+- `product_tabs`
 - `banners`
 - `users`
 - `page_settings`
+- `custom_pages`
 
-Observação importante:
+Tambem existem evolucoes adicionais por migration ou runtime:
 
-- o schema atual inclui um usuário inicial `admin`
-- no estado atual do arquivo SQL, a senha inicial é `talmax123`
-- isso deve ser trocado em qualquer ambiente real
+- `home_services`
+- `digital_groups`
+- `digital_group_cards`
+- colunas extras em `products`, `users` e `home_services`
 
-## Storage de Imagens
+Os scripts de apoio ficam em:
 
-O fluxo atual de imagens funciona assim:
+- `backend/src/scripts/migrations/`
 
-1. o upload entra pelo backend usando Multer
-2. o backend salva inicialmente em `backend/storage/img` ou no diretório definido por `UPLOAD_DIR`
-3. a persistência final pode seguir três caminhos:
-   - Cloudinary, se as variáveis `CLOUDINARY_*` existirem
-   - SFTP, se as variáveis `SFTP_*` existirem
-   - armazenamento local, se nada remoto estiver configurado
-4. a API expõe imagens por `/img/...`
+Seguranca:
 
-Compatibilidade legada:
+- o SQL base cria um usuario admin inicial
+- revise o arquivo SQL e troque as credenciais em qualquer ambiente real
 
-- o backend ainda serve `frontend/public/img` para imagens antigas publicadas antes da mudança de arquitetura
+## Variaveis de ambiente
 
-## Variáveis de Ambiente
-
-Arquivo de referência:
+Arquivo de referencia:
 
 - `backend/.env.example`
 
-Variáveis essenciais:
+Variaveis essenciais:
 
 - `DB_HOST`
 - `DB_USER`
@@ -180,9 +223,10 @@ Variáveis essenciais:
 - `ADMIN_JWT_EXPIRES_IN_SECONDS`
 - `CORS_ALLOWED_ORIGINS`
 
-Variáveis opcionais de storage:
+Variaveis opcionais de storage:
 
 - `UPLOAD_DIR`
+- `UPLOAD_MAX_FILE_SIZE_MB`
 - `CLOUDINARY_CLOUD_NAME`
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
@@ -194,21 +238,19 @@ Variáveis opcionais de storage:
 - `SFTP_REMOTE_DIR`
 - `SFTP_PUBLIC_BASE_URL`
 
-## Como Rodar em Desenvolvimento
+Variavel opcional do frontend:
 
-### Frontend
+- `VITE_API_URL`
 
-```powershell
-cd frontend
-npm install
-npm run dev
-```
+## Como rodar em desenvolvimento
 
-Por padrão, o frontend usa:
+1. Crie o banco MySQL.
+2. Importe `backend/database_schema.sql`.
+3. Crie `backend/.env` a partir de `backend/.env.example`.
+4. Instale e suba o backend.
+5. Instale e suba o frontend.
 
-- `http://localhost:5000/api` em desenvolvimento
-
-### Backend
+Backend:
 
 ```powershell
 cd backend
@@ -216,68 +258,36 @@ npm install
 npm start
 ```
 
-Antes de iniciar o backend:
+Frontend:
 
-1. crie o banco MySQL
-2. importe `backend/database_schema.sql`
-3. crie `backend/.env` baseado em `backend/.env.example`
+```powershell
+cd frontend
+npm install
+npm run dev
+```
 
 ## Scripts
 
-### Frontend
+Frontend:
 
 - `npm run dev`
 - `npm run build`
 - `npm run preview`
 - `npm run lint`
 
-### Backend
+Backend:
 
 - `npm start`
-  script confiável atual para subir o servidor
+  unico script de subida confiavel no estado atual
 - `npm run dev`
-  hoje está apontando para `setup-development.js`, mas esse arquivo não está presente no repositório atual
+  referencia `setup-development.js`, que nao existe no repositorio atual
 - `npm run dev:check`
-  hoje está apontando para `debug-storage.js`, mas esse arquivo não está presente no repositório atual
+  referencia `debug-storage.js`, que nao existe no repositorio atual
 
-Se esses arquivos auxiliares não forem restaurados, prefira usar `npm start`.
+## Documentacao complementar
 
-## Painel Administrativo
-
-Fluxo do painel:
-
-```txt
-AdminLogin
--> /api/admin/login
--> cookie de sessão HTTP-only
-
-AdminDashboard
--> AdminContext
--> hooks
--> services
--> endpoints protegidos
-```
-
-Módulos internos:
-
-- produtos
-- categorias
-- banners
-- Upcera
-- Scanners
-- Impressoras 3D
-
-## Documentação Complementar
-
-- [API do Projeto](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/docs/API.md)
-- [Arquitetura e Operação](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/docs/ARQUITETURA_E_OPERACAO.md)
-- [Mapa da Estrutura](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/docs/MAPA_ESTRUTURA_PROJETO.md)
-- [Guia rápido de explicação](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/docs/explicacao/README.md)
-- [Deploy na KingHost](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/KINGHOST_DEPLOY.md)
-
-## Pontos de Atenção Atuais
-
-- `frontend/vite.config.js` usa `base: '/site-talmax/'`, o que impacta o deploy do frontend
-- o backend exige `ADMIN_JWT_SECRET` e `DB_PASSWORD` para iniciar
-- o schema SQL atual cria um admin padrão; troque a senha em ambiente real
-- os scripts `backend` `dev` e `dev:check` referenciam arquivos ausentes no estado atual do repositório
+- [Resumo da documentacao](docs/explicacao/README.md)
+- [Guia de deploy na KingHost](KINGHOST_DEPLOY.md)
+- [Resumo do frontend](frontend/README.md)
+- [Resumo do painel admin](frontend/src/pages/Admin/README.md)
+- [Guia rapido para IA](GEMINI.md)

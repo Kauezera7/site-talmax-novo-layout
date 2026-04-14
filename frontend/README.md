@@ -1,58 +1,86 @@
 # Frontend Talmax
 
-Aplicação React do projeto `site-talmax`.
+Resumo da aplicacao React do projeto.
 
-## Tecnologias
+## Stack
 
 - React 19
 - React Router 7
-- Vite
+- Vite 8
+- Mantine
 - Framer Motion
 - Lucide React
+- Swiper
 
-## Scripts
-
-- `npm run dev`
-  Sobe o frontend em modo desenvolvimento.
-- `npm run build`
-  Gera a pasta `dist/`.
-- `npm run preview`
-  Publica localmente a build gerada.
-- `npm run lint`
-  Executa o ESLint.
-
-## Estrutura
+## Estrutura principal
 
 ```txt
 frontend/
 |-- public/
-|-- dist/
-`-- src/
-    |-- components/
-    |-- context/
-    |-- hooks/
-    |-- pages/
-    |-- services/
-    `-- utils/
+|-- src/
+|   |-- components/
+|   |-- context/
+|   |-- hooks/
+|   |-- pages/
+|   |-- services/
+|   `-- utils/
+`-- vite.config.js
 ```
 
-## Pontos de Entrada
+Arquivos centrais:
 
 - `src/main.jsx`
-  Inicializa o React.
+  monta a aplicacao React
 - `src/App.jsx`
-  Define layout, rotas públicas, busca do site e rotas do painel.
+  define router, busca do site, layout publico e protecao do admin
+- `src/services/api.js`
+  resolve a base da API
 
-## Integração com Backend
+## Rotas importantes
 
-- A URL base da API fica em `src/services/api.js`.
-- Em desenvolvimento, o fallback padrão é `http://localhost:5000/api`.
-- Em produção, o fallback padrão é `/api`.
-- Também é possível definir `VITE_API_URL`.
+Publicas:
 
-## Rotas do Painel
+- `/`
+- `/privacidade`
+- `/quem-somos`
+- `/historia-diretoria`
+- `/produtos`
+- `/categoria/:slug`
+- `/produto/:id`
+- `/categoria/talmax-digital`
+- `/grupo-digital/:slug`
+- `/pagina/:slug`
+- `/upcera`
+- `/scanners`
+- `/impressoras-3d`
+- `/suporte`
+
+Admin:
 
 - `/admin/login`
-  Tela de login
 - `/admin/painel`
-  Painel protegido
+
+Algumas rotas institucionais ainda usam `PagePlaceholder` enquanto o conteudo definitivo nao foi fechado.
+
+## Integracao com o backend
+
+- em desenvolvimento, `src/services/api.js` aponta para a mesma maquina atual na porta `5000`
+- em producao, o fallback e `/api`
+- `VITE_API_URL` pode sobrescrever esse comportamento
+
+## Build e deploy
+
+O build usa hoje:
+
+```js
+base: '/site-talmax/'
+```
+
+Se o deploy nao acontecer nesse subdiretorio, ajuste `vite.config.js` antes de rodar `npm run build`.
+
+## Scripts
+
+- `npm run dev`
+- `npm run build`
+- `npm run preview`
+- `npm run lint`

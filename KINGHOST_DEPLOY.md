@@ -1,27 +1,26 @@
 # Deploy na KingHost
 
-Este guia foi atualizado para refletir a arquitetura atual do projeto em 26 de março de 2026.
+Guia rapido para publicar o projeto com backend Node.js, frontend buildado e MySQL.
 
-## Resumo da Arquitetura de Produção
+## Resumo da arquitetura de producao
 
 - o frontend deve ser buildado em `frontend/dist`
-- o backend Express serve a pasta `frontend/dist`
-- a API fica sob `/api`
-- as imagens são servidas por `/img`
-- o banco usado pelo projeto é MySQL
+- o backend Express serve `frontend/dist`
+- a API fica em `/api`
+- as imagens ficam em `/img`
+- o banco e MySQL
 
-## Antes de Publicar
+## Checklist antes do deploy
 
-Confirme estes pontos:
+1. Criar o banco MySQL da hospedagem.
+2. Importar `backend/database_schema.sql`.
+3. Revisar migrations extras se o ambiente ainda nao tiver tabelas recentes.
+4. Criar `backend/.env`.
+5. Trocar as credenciais do admin inicial.
+6. Rodar o build do frontend.
+7. Instalar as dependencias do backend.
 
-1. o banco MySQL da hospedagem foi criado
-2. `backend/database_schema.sql` foi importado
-3. `backend/.env` foi configurado
-4. o frontend foi buildado
-5. as dependências do backend foram instaladas
-6. a senha do admin padrão foi trocada
-
-## Build do Frontend
+## Build do frontend
 
 ```powershell
 cd frontend
@@ -29,32 +28,25 @@ npm install
 npm run build
 ```
 
-Ao final, a pasta usada em produção será:
+Saida esperada:
 
 - `frontend/dist`
 
-## Instalação do Backend
+## Backend de producao
 
 ```powershell
 cd backend
 npm install
-```
-
-Script de início recomendado:
-
-```bash
 npm start
 ```
 
-Observação:
+Use `npm start` para subir o servidor. Os scripts `npm run dev` e `npm run dev:check` apontam para arquivos que nao existem no repositorio atual.
 
-- os scripts `npm run dev` e `npm run dev:check` do backend apontam para arquivos que não estão presentes no repositório atual
+## Variaveis de ambiente
 
-## Variáveis de Ambiente
+Use `backend/.env.example` como base.
 
-Use [backend/.env.example](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/backend/.env.example) como base.
-
-Exemplo mínimo:
+Exemplo minimo:
 
 ```env
 DB_HOST=seu_host_mysql
@@ -63,55 +55,51 @@ DB_PASSWORD=sua_senha_mysql
 DB_NAME=site-talmax
 PORT=5000
 NODE_ENV=production
-
-ADMIN_JWT_SECRET=uma_chave_bem_forte_e_longa
+ADMIN_JWT_SECRET=uma_chave_forte
 ADMIN_JWT_EXPIRES_IN_SECONDS=28800
 CORS_ALLOWED_ORIGINS=https://seudominio.com.br,https://www.seudominio.com.br
 ```
 
-## Storage de Imagens em Produção
+Se for usar storage remoto, complete tambem:
 
-O fluxo atual de imagens não deve mais ser documentado como dependente de `frontend/public/img`.
+- `CLOUDINARY_*`
+- ou `SFTP_*`
 
-Hoje o projeto funciona assim:
+## Imagens e storage
+
+Fluxo atual:
 
 - uploads entram pelo backend
-- o destino local principal é `backend/storage/img`
-- se `UPLOAD_DIR` estiver definido, ele passa a ser o destino local principal
-- se Cloudinary estiver configurado, o backend prioriza Cloudinary
-- se SFTP estiver configurado, o backend prioriza SFTP quando Cloudinary não estiver ativo
-- `frontend/public/img` continua apenas como pasta legada para imagens antigas
+- o destino local principal e `backend/storage/img`, a menos que `UPLOAD_DIR` esteja definido
+- Cloudinary tem prioridade quando configurado
+- SFTP entra como alternativa remota quando Cloudinary nao estiver ativo
+- `frontend/public/img` e `frontend/dist/img` seguem apenas como fontes legadas para arquivos antigos
 
-Em hospedagens com filesystem não persistente, prefira:
+Se a hospedagem nao tiver disco persistente, prefira Cloudinary ou SFTP.
 
-- Cloudinary
-ou
-- SFTP
+## Ponto de atencao no build do frontend
 
-## Observações sobre o Frontend
-
-O arquivo `frontend/vite.config.js` usa:
+O `vite.config.js` esta com:
 
 ```js
 base: '/site-talmax/'
 ```
 
-Se a aplicação for publicada em um caminho diferente, ajuste esse valor antes do build.
+Se o deploy final nao usar esse subdiretorio, ajuste esse valor antes do build. Caso contrario, links e assets podem quebrar.
 
-## URLs Esperadas em Produção
+## URLs esperadas em producao
 
-- frontend: servido pelo próprio backend
+- frontend: servido pelo backend
 - API: `/api`
 - imagens: `/img`
 - login admin: `/admin/login`
 - painel admin: `/admin/painel`
 
-## Checklist Final
+## Validacao final
 
-- banco importado com sucesso
-- `.env` criado
-- `ADMIN_JWT_SECRET` definido
-- senha do admin inicial alterada
-- frontend buildado
-- backend com `npm install`
-- aplicação iniciando com `npm start`
+- app sobe com `npm start`
+- frontend abre sem erro de asset
+- `/api` responde
+- `/img/...` responde
+- login do admin funciona
+- CORS cobre o dominio real

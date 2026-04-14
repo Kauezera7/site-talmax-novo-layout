@@ -1,72 +1,77 @@
-# Documentação do Painel Admin
+# Painel Admin
 
-Este arquivo resume a organização do painel administrativo do projeto.
+Resumo da area administrativa carregada em `/admin/painel`.
 
-## Entrada e Rotas
+## Entrada e fluxo
 
-- componente principal:
-  [AdminDashboard.jsx](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/pages/Admin/AdminDashboard.jsx)
-- rota de login:
-  `/admin/login`
-- rota protegida:
-  `/admin/painel`
+- login em `/admin/login`
+- validacao de sessao em `/api/admin/session`
+- dashboard principal em `frontend/src/pages/Admin/AdminDashboard.jsx`
+- estado compartilhado em `frontend/src/context/AdminContext.jsx`
 
-## Estrutura
+Fluxo resumido:
+
+```txt
+AdminLogin
+-> adminAuth.js
+-> /api/admin/login
+-> cookie talmax-admin-session
+-> /admin/painel
+```
+
+## Como o painel e organizado
+
+O painel nao usa subrotas internas por modulo. A troca entre telas acontece por estado local em `AdminDashboard.jsx`.
+
+Modulos disponiveis hoje:
+
+- `dashboard`
+- `categories`
+- `security`
+- `products`
+- `products-list`
+- `banners`
+- `featured`
+- `segments`
+- `custom-pages`
+- `digital-groups`
+- `talmax-digital`
+- `upcera`
+- `scanners`
+- `printers`
+
+## Pastas principais
 
 ```txt
 frontend/src/pages/Admin/
 |-- AdminDashboard.jsx
 |-- AdminBase.css
-|-- AdminProducts/
-|-- AdminCategories/
 |-- AdminBanners/
-|-- AdminUpcera/
+|-- AdminCategories/
+|-- AdminCustomPages/
+|-- AdminFeatured/
+|-- AdminPrinters/
+|-- AdminProducts/
 |-- AdminScanners/
-`-- AdminPrinters/
+|-- AdminSecurity/
+|-- AdminSegments/
+|-- AdminTalmaxDigital/
+`-- AdminUpcera/
 ```
 
-## Como o Painel Funciona
+## Arquivos importantes
 
-```txt
-AdminLogin.jsx
--> adminAuth.js
--> /api/admin/login
+- `frontend/src/pages/Admin/AdminDashboard.jsx`
+  layout principal, menu lateral, tabs e logout
+- `frontend/src/context/AdminContext.jsx`
+  dados globais, loading, erros e toasts
+- `frontend/src/services/adminAuth.js`
+  login, sessao e logout
+- `frontend/src/services/adminRequest.js`
+  requisicoes autenticadas
 
-AdminDashboard.jsx
--> AdminProvider
--> AdminContext.jsx
--> hooks
--> services
--> backend
-```
+## Observacoes
 
-## Arquivos Importantes
-
-- [AdminDashboard.jsx](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/pages/Admin/AdminDashboard.jsx)
-  Layout principal, menu lateral, trocas de aba e logout.
-- [AdminBase.css](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/pages/Admin/AdminBase.css)
-  Estilos compartilhados do admin.
-- [AdminContext.jsx](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/context/AdminContext.jsx)
-  Estado compartilhado para produtos, categorias, banners, loading, erro e toasts.
-- [adminAuth.js](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/services/adminAuth.js)
-  Login, validação de sessão e logout.
-
-## Módulos
-
-- [AdminProducts](/c:/Users/ti6/Desktop/Desvolvimento/site-talmax/frontend/src/pages/Admin/AdminProducts)
-  CRUD de produtos.
-- [AdminCategories](/c:/Users/ti6/Desktop/Desenvolvimento/site-talmax/frontend/src/pages/Admin/AdminCategories)
-  CRUD de categorias e subcategorias.
-- [AdminBanners](/c:/Users/ti6/Desktop/Desenvolvimento/site-talmax/frontend/src/pages/Admin/AdminBanners)
-  CRUD de banners.
-- [AdminUpcera](/c:/Users/ti6/Desktop/Desenvolvimento/site-talmax/frontend/src/pages/Admin/AdminUpcera)
-  Seleção de produtos da página Upcera.
-- [AdminScanners](/c:/Users/ti6/Desktop/Desenvolvimento/site-talmax/frontend/src/pages/Admin/AdminScanners)
-  Seleção de produtos da página Scanners.
-- [AdminPrinters](/c:/Users/ti6/Desktop/Desenvolvimento/site-talmax/frontend/src/pages/Admin/AdminPrinters)
-  Seleção de produtos da página Impressoras 3D.
-
-## Observações
-
-- O painel não usa sub-rotas internas por módulo; a troca entre áreas acontece por estado em `AdminDashboard.jsx`.
-- O acesso depende de sessão válida retornada por `/api/admin/session`.
+- a rota protegida real do painel e `/admin/painel`
+- o modulo `security` conversa com `/api/admin/login-unlock`
+- os modulos de paginas especiais tambem dependem de `/api/page-settings`
