@@ -1,10 +1,45 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LockKeyhole, User, ShieldCheck } from 'lucide-react';
-import { loginAdmin, validateAdminSession } from '../../services/adminAuth';
-import { readStoredAdminSessionToken } from '../../services/adminSessionStorage';
+import { loginAdmin } from '../../services/adminAuth';
+import { clearStoredAdminSessionToken } from '../../services/adminSessionStorage';
 import { ADMIN_SESSION_EXPIRED_MESSAGE } from '../../services/adminSessionEvents';
 import './AdminLogin.css';
+
+const ADMIN_LOGIN_LOCK_STORAGE_KEY = 'talmax-admin-login-lock-expires-at';
+
+const normalizeAdminIdentifier = (value = '') => String(value || '').trim().toLowerCase();
+
+const readStoredLockState = () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(ADMIN_LOGIN_LOCK_STORAGE_KEY);
+    const parsedValue = JSON.parse(rawValue || 'null');
+    const expiresAt = Number(parsedValue?.expiresAt);
+    const identifier = normalizeAdminIdentifier(parsedValue?.identifier);
+
+    if (!identifier || !Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+      window.localStorage.removeItem(ADMIN_LOGIN_LOCK_STORAGE_KEY);
+      return null;
+    }
+
+    return {
+      identifier,
+      expiresAt
+    };
+  } catch (error) {
+    try {
+      window.localStorage.removeItem(ADMIN_LOGIN_LOCK_STORAGE_KEY);
+    } catch (storageError) {
+      // Ignora erros de storage.
+    }
+
+    return null;
+  }
+};
 
 const getRemainingLockSeconds = (lockExpiresAt) => {
   if (!lockExpiresAt) {
@@ -31,22 +66,37 @@ const AdminLogin = () => {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingSession, setIsCheckingSession] = useState(() => Boolean(readStoredAdminSessionToken()));
-  const [lockExpiresAt, setLockExpiresAt] = useState(null);
+  const [lockState, setLockState] = useState(() => readStoredLockState());
   const [lockRemainingSeconds, setLockRemainingSeconds] = useState(0);
+  const currentIdentifier = normalizeAdminIdentifier(formData.username);
+  const isLocked = Boolean(
+    lockState?.identifier &&
+    currentIdentifier &&
+    lockState.identifier === currentIdentifier &&
+    lockRemainingSeconds > 0
+  );
 
   useEffect(() => {
-    if (!lockExpiresAt) {
+    if (!lockState?.identifier || !lockState?.expiresAt) {
       setLockRemainingSeconds(0);
+
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(ADMIN_LOGIN_LOCK_STORAGE_KEY);
+      }
+
       return undefined;
     }
 
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(ADMIN_LOGIN_LOCK_STORAGE_KEY, JSON.stringify(lockState));
+    }
+
     const updateRemainingTime = () => {
-      const remainingSeconds = getRemainingLockSeconds(lockExpiresAt);
+      const remainingSeconds = getRemainingLockSeconds(lockState.expiresAt);
       setLockRemainingSeconds(remainingSeconds);
 
       if (remainingSeconds <= 0) {
-        setLockExpiresAt(null);
+        setLockState(null);
       }
     };
 
@@ -56,7 +106,7 @@ const AdminLogin = () => {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [lockExpiresAt]);
+  }, [lockState]);
 
   useEffect(() => {
     if (location.state?.sessionExpired) {
@@ -65,50 +115,9 @@ const AdminLogin = () => {
     }
   }, [location.pathname, location.state, navigate]);
 
-  useEffect(() => {
-    if (location.state?.sessionExpired) {
-      setIsCheckingSession(false);
-      return undefined;
-    }
-
-    const hasStoredToken = Boolean(readStoredAdminSessionToken());
-
-    if (!hasStoredToken) {
-      setIsCheckingSession(false);
-      return undefined;
-    }
-
-    let mounted = true;
-
-    validateAdminSession({
-      skipWhenNoStoredToken: true,
-      timeoutMs: 2500
-    })
-      .then((result) => {
-        if (!mounted) {
-          return;
-        }
-
-        if (result.authenticated) {
-          navigate('/admin/painel', { replace: true });
-          return;
-        }
-
-        setIsCheckingSession(false);
-      })
-      .catch(() => {
-        if (mounted) {
-          setIsCheckingSession(false);
-        }
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [location.state, navigate]);
-
   const handleChange = (event) => {
     const { name, value } = event.target;
+    setError('');
     setFormData((current) => ({
       ...current,
       [name]: value
@@ -128,11 +137,20 @@ const AdminLogin = () => {
 
     try {
       await loginAdmin(formData);
-      setLockExpiresAt(null);
+      setLockState(null);
       navigate('/admin/painel');
     } catch (loginError) {
+      clearStoredAdminSessionToken();
+
       if (loginError.retryAfterSeconds) {
-        setLockExpiresAt(Date.now() + (loginError.retryAfterSeconds * 1000));
+        const attemptedIdentifier = normalizeAdminIdentifier(formData.username);
+
+        if (attemptedIdentifier) {
+          setLockState({
+            identifier: attemptedIdentifier,
+            expiresAt: Date.now() + (loginError.retryAfterSeconds * 1000)
+          });
+        }
       }
 
       setError(loginError.message);
@@ -141,14 +159,9 @@ const AdminLogin = () => {
     }
   };
 
-  const isLocked = lockRemainingSeconds > 0;
   const displayedError = isLocked
     ? 'Muitas tentativas de login. Tente novamente mais tarde.'
     : error;
-
-  if (isCheckingSession) {
-    return <div className="admin-login-page"><div className="admin-login-shell">Carregando...</div></div>;
-  }
 
   return (
     <div className="admin-login-page">

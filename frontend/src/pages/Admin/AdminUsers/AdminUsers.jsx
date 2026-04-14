@@ -185,7 +185,7 @@ const AdminUsers = () => {
                     type="text"
                     value={formData.full_name}
                     onChange={handleChange}
-                    placeholder="Ex.: Kaue"
+                    placeholder="Ex.: Administrador "
                     disabled={isSubmitting}
                   />
                 </div>
@@ -198,7 +198,7 @@ const AdminUsers = () => {
                     type="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="Ex.: ti6@talmax.com.br"
+                    placeholder="Ex.: admin@talmax.com.br"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -211,7 +211,7 @@ const AdminUsers = () => {
                     type="text"
                     value={formData.username}
                     onChange={handleChange}
-                    placeholder="Ex.: kaue"
+                    placeholder="Ex.: AdminTalmax"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -303,7 +303,7 @@ const AdminUsers = () => {
                     <th>Usuario</th>
                     <th>Perfil</th>
                     <th>Status</th>
-                    <th>Acoes</th>
+                    <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -324,7 +324,7 @@ const AdminUsers = () => {
                       </td>
                       <td>
                         <span className={`status-badge ${Number(user.bloq_user) === 2 ? 'status-inactive' : 'status-active'}`}>
-                          {Number(user.bloq_user) === 2 ? 'Bloqueado' : 'Livre'}
+                          {Number(user.bloq_user) === 2 ? 'Bloqueado' : 'Desbloqueado'}
                         </span>
                       </td>
                       <td className="actions-cell">

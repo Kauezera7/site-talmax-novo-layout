@@ -15,9 +15,11 @@ import {
 } from 'lucide-react';
 
 import Home from './components/Home/Home';
+import AdminLogin from './components/AdminLogin/AdminLogin';
 import CookieBanner from './components/CookieBanner/CookieBanner';
 import PagePlaceholder from './components/PagePlaceholder/PagePlaceholder';
 import { validateAdminSession } from './services/adminAuth';
+import { readStoredAdminSessionToken } from './services/adminSessionStorage';
 import { subscribeToAdminSessionExpired } from './services/adminSessionEvents';
 import API_URL from './services/api';
 import { parseSafeExtraData } from './utils/contentSafety';
@@ -37,7 +39,6 @@ const Scanners = lazy(() => import('./components/Scanners/Scanners'));
 const Impressoras3D = lazy(() => import('./components/Impressoras3D/Impressoras3D'));
 const CustomPage = lazy(() => import('./components/CustomPage/CustomPage'));
 const Admin = lazy(() => import('./pages/Admin/AdminDashboard'));
-const AdminLogin = lazy(() => import('./components/AdminLogin/AdminLogin'));
 
 const THEME_STORAGE_KEY = 'talmax-theme';
 const LOADER_DELAY_MS = 1000;
@@ -120,9 +121,17 @@ const ProtectedAdminRoute = ({ children }) => {
   const [status, setStatus] = useState('checking');
 
   useEffect(() => {
+    if (!readStoredAdminSessionToken()) {
+      setStatus('unauthenticated');
+      return undefined;
+    }
+
     let mounted = true;
 
-    validateAdminSession({ timeoutMs: 2500 })
+    validateAdminSession({
+      skipWhenNoStoredToken: true,
+      timeoutMs: 2500
+    })
       .then((result) => {
         if (mounted) {
           setStatus(result.authenticated ? 'authenticated' : 'unauthenticated');
@@ -277,8 +286,8 @@ function App() {
   return (
     <Router basename={routerBasename}>
       <ScrollToTop />
-      {!appReady && <DelayedFullScreenLoader label="Carregando site..." />}
       <AppContent
+        appReady={appReady}
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         theme={theme}
@@ -288,10 +297,11 @@ function App() {
   );
 }
 
-const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
+const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const isAdmin = location.pathname.startsWith('/admin');
+  const showGlobalLoader = !appReady && !isAdmin;
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchProducts, setSearchProducts] = useState([]);
@@ -658,6 +668,8 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
 
   return (
     <div className="app">
+      {showGlobalLoader && <DelayedFullScreenLoader label="Carregando site..." />}
+
       {isAdmin && (
         <button
           type="button"
@@ -895,7 +907,7 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
-          <Route path="/admin/login" element={withRouteLoader(<AdminLogin />, 'Carregando login...')} />
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route
             path="/admin/painel"
             element={
