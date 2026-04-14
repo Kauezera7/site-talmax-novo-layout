@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Edit, Trash2, Search, List, Plus, Eye, EyeOff } from 'lucide-react';
 import { apiAssetPath } from '../../../utils/assets';
 import { parseSafeExtraData } from '../../../utils/contentSafety';
+import { normalizeSearchText } from '../../../utils/searchText';
 
 const shouldShowQuoteButton = (value) => !(
   value === false ||
@@ -13,13 +14,22 @@ const shouldShowQuoteButton = (value) => !(
 const ProductTable = ({ products, onCreate, onEdit, onDelete, onToggleActive, onToggleQuoteButton, selectedProductId }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredProducts = useMemo(() => (
-    products.filter((product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.id.toString().includes(searchTerm) ||
-      (product.category_names && product.category_names.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-  ), [products, searchTerm]);
+  const filteredProducts = useMemo(() => {
+    const normalizedSearch = normalizeSearchText(searchTerm);
+
+    return products.filter((product) => {
+      const searchableText = [
+        product.name,
+        product.id,
+        product.category_names
+      ]
+        .filter(Boolean)
+        .map(normalizeSearchText)
+        .join(' ');
+
+      return !normalizedSearch || searchableText.includes(normalizedSearch);
+    });
+  }, [products, searchTerm]);
 
   return (
     <div className="admin-card">

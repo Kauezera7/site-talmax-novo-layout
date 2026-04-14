@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Save, CheckCircle, ChevronRight } from 'lucide-react';
 import { apiAssetPath } from '../../../utils/assets';
 import { parseSafeExtraData } from '../../../utils/contentSafety';
+import { normalizeSearchText } from '../../../utils/searchText';
 
 const DISPLAY_MODE_OPTIONS = [
   { value: 'description', label: 'Descrição' },
@@ -137,9 +138,12 @@ const SpecialSectionManager = ({
   }, [selectedProducts]);
 
   const filteredProducts = useMemo(() => {
+    const normalizedSearch = normalizeSearchText(searchTerm);
+
     return [...scopedProducts]
       .filter((product) => {
-        const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = !normalizedSearch
+          || normalizeSearchText(product.name).includes(normalizedSearch);
         const productMainCategoryIds = new Set([
           ...(product.category_ids || []),
           ...(product.sub_category_ids || [])

@@ -295,7 +295,7 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchProducts, setSearchProducts] = useState([]);
-  const [searchMatchesTotal, setSearchMatchesTotal] = useState(0);
+  const [searchProductsLoaded, setSearchProductsLoaded] = useState(false);
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const [searchPreviewId, setSearchPreviewId] = useState(null);
   const [navVisible, setNavVisible] = useState(true);
@@ -325,13 +325,34 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
       return [];
     }
 
-    return searchProducts;
+    return searchProducts
+      .filter((product) => normalizeSearchText(product.name).includes(normalizedSearchTerm))
+      .sort((productA, productB) => {
+        const normalizedNameA = normalizeSearchText(productA.name);
+        const normalizedNameB = normalizeSearchText(productB.name);
+        const startsWithA = normalizedNameA.startsWith(normalizedSearchTerm);
+        const startsWithB = normalizedNameB.startsWith(normalizedSearchTerm);
+
+        if (startsWithA !== startsWithB) {
+          return startsWithA ? -1 : 1;
+        }
+
+        const positionA = normalizedNameA.indexOf(normalizedSearchTerm);
+        const positionB = normalizedNameB.indexOf(normalizedSearchTerm);
+
+        if (positionA !== positionB) {
+          return positionA - positionB;
+        }
+
+        return productA.name.localeCompare(productB.name, 'pt-BR');
+      });
   }, [isAdmin, normalizedSearchTerm, searchProducts]);
 
   const productSuggestions = useMemo(
     () => productSearchMatches.slice(0, MAX_SEARCH_SUGGESTIONS),
     [productSearchMatches]
   );
+  const searchMatchesTotal = productSearchMatches.length;
 
   const previewProduct = useMemo(
     () => productSuggestions.find((product) => product.id === searchPreviewId) || productSuggestions[0] || null,
@@ -347,13 +368,15 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
   useEffect(() => {
     if (isAdmin) {
       setSearchProducts([]);
-      setSearchMatchesTotal(0);
+      setSearchProductsLoaded(false);
       return undefined;
     }
 
     if (normalizedSearchTerm.length < MIN_SEARCH_TERM_LENGTH) {
-      setSearchProducts([]);
-      setSearchMatchesTotal(0);
+      return undefined;
+    }
+
+    if (searchProductsLoaded) {
       return undefined;
     }
 
@@ -362,13 +385,7 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
 
     const fetchSearchProducts = async () => {
       try {
-        const params = new URLSearchParams({
-          page: '1',
-          limit: String(MAX_SEARCH_SUGGESTIONS),
-          search: searchTerm.trim()
-        });
-
-        const response = await fetch(`${API_URL}/products?${params.toString()}`, {
+        const response = await fetch(`${API_URL}/products`, {
           signal: controller.signal
         });
 
@@ -383,7 +400,6 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
         }
 
         const items = Array.isArray(data) ? data : (data.items || []);
-        const total = Array.isArray(data) ? items.length : Number(data.pagination?.total || items.length);
 
         setSearchProducts(items.map((product) => {
           const extra = parseSafeExtraData(product.extra_data);
@@ -403,7 +419,7 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
             image: product.main_image ? apiAssetPath(product.main_image) : (fallbackImage ? apiAssetPath(fallbackImage) : '')
           };
         }));
-        setSearchMatchesTotal(total);
+        setSearchProductsLoaded(true);
       } catch (error) {
         if (error.name === 'AbortError') {
           return;
@@ -412,7 +428,7 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
         if (active) {
           console.error('Erro ao carregar produtos da busca:', error);
           setSearchProducts([]);
-          setSearchMatchesTotal(0);
+          setSearchProductsLoaded(false);
         }
       }
     };
@@ -424,7 +440,7 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [isAdmin, normalizedSearchTerm, searchTerm]);
+  }, [isAdmin, normalizedSearchTerm, searchProductsLoaded]);
 
   useEffect(() => {
     const unsubscribe = subscribeToAdminSessionExpired(() => {
@@ -519,8 +535,6 @@ const AppContent = ({ menuOpen, setMenuOpen, theme, onToggleTheme }) => {
 
   const resetSearchState = () => {
     setSearchTerm('');
-    setSearchProducts([]);
-    setSearchMatchesTotal(0);
     setSearchDropdownOpen(false);
     setSearchPreviewId(null);
   };

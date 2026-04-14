@@ -3,9 +3,8 @@ import { Package, Search, ExternalLink, Filter, Check, ChevronDown, Edit, Eye, E
 import { useAdmin } from '../../../context/AdminContext';
 import { apiAssetPath } from '../../../utils/assets';
 import { parseSafeExtraData } from '../../../utils/contentSafety';
+import { normalizeSearchText } from '../../../utils/searchText';
 import './AdminProducts.css';
-
-const normalizeSearchValue = (value = '') => value.toString().toLowerCase().trim();
 
 const shouldShowQuoteButton = (value) => !(
   value === false ||
@@ -60,7 +59,7 @@ const AdminProductsList = ({ onOpenRegister, onEditProduct }) => {
   }, []);
 
   const filteredProducts = useMemo(() => {
-    const normalizedSearch = normalizeSearchValue(searchTerm);
+    const normalizedSearch = normalizeSearchText(searchTerm);
 
     let result = products.filter((product) => {
       const searchableText = [
@@ -69,7 +68,7 @@ const AdminProductsList = ({ onOpenRegister, onEditProduct }) => {
         product.category_names
       ]
         .filter(Boolean)
-        .map(normalizeSearchValue)
+        .map(normalizeSearchText)
         .join(' ');
 
       return !normalizedSearch || searchableText.includes(normalizedSearch);

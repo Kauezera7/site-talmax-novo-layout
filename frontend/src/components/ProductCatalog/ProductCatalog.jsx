@@ -19,15 +19,8 @@ import API_URL from '../../services/api';
 import { apiAssetPath } from '../../utils/assets';
 import { parseSafeExtraData } from '../../utils/contentSafety';
 import { getNormalizedCategoryNames, getVisibleCategoryLabel } from '../../utils/productCategories';
+import { normalizeSearchText } from '../../utils/searchText';
 import './ProductCatalog.css';
-
-const normalizeSearchText = (value = '') =>
-  (value || '')
-    .toString()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim();
 
 const ITEMS_PER_PAGE = 20;
 
@@ -128,8 +121,6 @@ const ProductCatalog = () => {
     const searchQuery = queryParams.get('busca') || '';
     const categoryQuery = queryParams.get('categoria');
 
-    console.log('URL alterada. Busca:', searchQuery, 'Categoria:', categoryQuery);
-
     // Sincroniza o termo de busca local com a URL
     setSearchTerm(searchQuery);
 
@@ -152,21 +143,26 @@ const ProductCatalog = () => {
   }, [location.search, slug, allCategories]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const queryParams = new URLSearchParams(location.search);
-        const searchQuery = queryParams.get('busca') || '';
         
         // Se houver busca, pedimos para a API filtrar para garantir consistência
-        const productsUrl = searchQuery 
-          ? `${API_URL}/products?search=${encodeURIComponent(searchQuery)}`
-          : `${API_URL}/products`;
 
         const [prodRes, catRes] = await Promise.all([
-          fetch(productsUrl),
-          fetch(`${API_URL}/categories`)
+          fetch(`${API_URL}/products`, { signal: controller.signal }),
+          fetch(`${API_URL}/categories`, { signal: controller.signal })
         ]);
+
+        if (!prodRes.ok) {
+          throw new Error('Erro ao carregar produtos do catalogo');
+        }
+
+        if (!catRes.ok) {
+          throw new Error('Erro ao carregar categorias do catalogo');
+        }
 
         const prodData = await prodRes.json();
         const catData = await catRes.json();
@@ -197,6 +193,9 @@ const ProductCatalog = () => {
 
         setProducts(formattedProducts);
       } catch (error) {
+        if (error.name === 'AbortError') {
+          return;
+        }
         console.error('Erro ao carregar dados do catálogo:', error);
       } finally {
         setIsLoading(false);
@@ -204,7 +203,11 @@ const ProductCatalog = () => {
     };
 
     fetchData();
-  }, [location.search]); // Recarrega sempre que a URL mudar
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
 
   const activeCategoryLabel = useMemo(() => {
     if (activeCategories.length === 0) return 'Ver todos';
@@ -226,30 +229,17 @@ const ProductCatalog = () => {
 
   const filteredProducts = useMemo(() => {
     const normalizedTerm = normalizeSearchText(searchTerm);
-    
-    console.log('--- DEBUG FILTRAGEM ---');
-    console.log('Termo de busca (original):', searchTerm);
-    console.log('Termo de busca (normalizado):', normalizedTerm);
-    console.log('Total de produtos antes do filtro:', products.length);
 
     if (!normalizedTerm && activeCategories.length === 0) {
-      console.log('Sem filtros ativos, retornando todos.');
       return products;
     }
 
     const results = products.filter((product) => {
       const productName = String(product.name || '');
-      const productCategory = String(product.category || '');
       const allCategoryNames = Array.isArray(product.allCategoryNames) ? product.allCategoryNames : [];
 
       const normName = normalizeSearchText(productName);
-      const normCat = normalizeSearchText(productCategory);
-
-      // Verifica se o termo de busca bate com o nome, categoria visível ou qualquer categoria interna
-      const matchesSearch = !normalizedTerm || 
-        normName.includes(normalizedTerm) ||
-        normCat.includes(normalizedTerm) ||
-        allCategoryNames.some(cat => normalizeSearchText(String(cat)).includes(normalizedTerm));
+      const matchesSearch = !normalizedTerm || normName.includes(normalizedTerm);
 
       if (activeCategories.length === 0) {
         return matchesSearch;
@@ -277,11 +267,6 @@ const ProductCatalog = () => {
 
       return matchesSearch && matchesCategory;
     });
-
-    console.log('Total de produtos após o filtro:', results.length);
-    if (results.length > 0) {
-      console.log('Exemplo de produto filtrado:', results[0].name);
-    }
     return results;
   }, [searchTerm, activeCategories, products, allCategories]);
 
