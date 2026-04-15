@@ -1,10 +1,5 @@
 import API_URL from './api';
 import { createAdminRequestOptions, ensureAdminResponse } from './adminRequest';
-import {
-  clearStoredAdminSessionToken,
-  readStoredAdminSessionToken,
-  storeAdminSessionToken
-} from './adminSessionStorage';
 
 const API_BASE_URL = `${API_URL}/admin`;
 
@@ -41,7 +36,7 @@ const parseApiResponse = async (response) => {
 
   try {
     return JSON.parse(responseText);
-  } catch (error) {
+  } catch {
     throw new Error('A resposta da API de login veio invalida. Confira o backend do admin.');
   }
 };
@@ -67,16 +62,11 @@ export const loginAdmin = async (credentials) => {
     throw createAdminApiError(response, data, 'Nao foi possivel entrar no painel.');
   }
 
-  storeAdminSessionToken(data.session_token);
   return data;
 };
 
 export const validateAdminSession = async (options = {}) => {
-  const { skipWhenNoStoredToken = false, timeoutMs = 0 } = options;
-
-  if (skipWhenNoStoredToken && !readStoredAdminSessionToken()) {
-    return { authenticated: false };
-  }
+  const { timeoutMs = 0 } = options;
 
   let response;
   const controller = timeoutMs > 0 ? new AbortController() : null;
@@ -100,10 +90,6 @@ export const validateAdminSession = async (options = {}) => {
   }
 
   if (!response.ok) {
-    if (response.status === 401) {
-      clearStoredAdminSessionToken();
-    }
-
     return { authenticated: false };
   }
 
@@ -135,7 +121,5 @@ export const logoutAdmin = async () => {
     await fetch(`${API_BASE_URL}/logout`, createAdminRequestOptions({ method: 'POST' }));
   } catch (error) {
     throw normalizeAdminRequestError(error);
-  } finally {
-    clearStoredAdminSessionToken();
   }
 };

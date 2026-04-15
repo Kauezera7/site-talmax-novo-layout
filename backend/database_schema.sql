@@ -295,15 +295,9 @@ ON DUPLICATE KEY UPDATE
     logo_url = VALUES(logo_url),
     content = VALUES(content);
 
-INSERT INTO users (id, username, password, full_name, email, role, bloq_user) VALUES
-(1, 'admin', 'talmax123', 'Administrador Talmax', NULL, 'master', 1)
-ON DUPLICATE KEY UPDATE
-    username = VALUES(username),
-    password = VALUES(password),
-    full_name = VALUES(full_name),
-    email = VALUES(email),
-    role = VALUES(role),
-    bloq_user = VALUES(bloq_user);
+-- Nenhum usuario admin padrao e criado pelo schema base.
+-- Crie o primeiro acesso com ADMIN_BOOTSTRAP_* no ambiente do backend
+-- ou por um procedimento operacional controlado fora do repositorio.
 
 -- ======================================================
 -- FIM DO SCRIPT

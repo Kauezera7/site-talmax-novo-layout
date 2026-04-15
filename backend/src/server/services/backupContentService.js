@@ -10,13 +10,17 @@ let cachedBackupMtimeMs = null;
 let cachedBackupData = null;
 
 const getLatestBackupFilePath = () => {
+  if (!fs.existsSync(BACKUPS_DIR)) {
+    return null;
+  }
+
   const backupFiles = fs
     .readdirSync(BACKUPS_DIR, { withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith('.json') && !entry.name.endsWith('-summary.json'))
     .map((entry) => path.join(BACKUPS_DIR, entry.name));
 
   if (backupFiles.length === 0) {
-    throw new Error('Nenhum backup JSON foi encontrado em backend/backups.');
+    return null;
   }
 
   return backupFiles
@@ -29,6 +33,11 @@ const getLatestBackupFilePath = () => {
 
 const loadBackupData = () => {
   const backupFilePath = getLatestBackupFilePath();
+
+  if (!backupFilePath) {
+    return { tables: {} };
+  }
+
   const { mtimeMs } = fs.statSync(backupFilePath);
 
   if (

@@ -16,7 +16,7 @@ Guia rapido para publicar o projeto com backend Node.js, frontend buildado e MyS
 2. Importar `backend/database_schema.sql`.
 3. Revisar migrations extras se o ambiente ainda nao tiver tabelas recentes.
 4. Criar `backend/.env`.
-5. Trocar as credenciais do admin inicial.
+5. Definir `ADMIN_BOOTSTRAP_*` para criar o primeiro admin com senha hasheada.
 6. Rodar o build do frontend.
 7. Instalar as dependencias do backend.
 
@@ -58,12 +58,21 @@ NODE_ENV=production
 ADMIN_JWT_SECRET=uma_chave_forte
 ADMIN_JWT_EXPIRES_IN_SECONDS=28800
 CORS_ALLOWED_ORIGINS=https://seudominio.com.br,https://www.seudominio.com.br
+ADMIN_BOOTSTRAP_USERNAME=admin.master
+ADMIN_BOOTSTRAP_PASSWORD=uma_senha_forte_e_unica
+ADMIN_BOOTSTRAP_EMAIL=admin@seudominio.com.br
+ADMIN_BOOTSTRAP_FULL_NAME=Administrador Talmax
 ```
 
 Se for usar storage remoto, complete tambem:
 
 - `CLOUDINARY_*`
 - ou `SFTP_*`
+
+Depois que o primeiro admin entrar no painel:
+
+- remova `ADMIN_BOOTSTRAP_PASSWORD`
+- remova as outras `ADMIN_BOOTSTRAP_*` se nao quiser manter esse bootstrap disponivel
 
 ## Imagens e storage
 

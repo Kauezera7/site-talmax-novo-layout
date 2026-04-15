@@ -20,7 +20,6 @@ import PagePlaceholder from './components/PagePlaceholder/PagePlaceholder';
 import SearchBar from './components/SearchBar/SearchBar';
 import { useProductSearch } from './hooks/useProductSearch';
 import { validateAdminSession } from './services/adminAuth';
-import { readStoredAdminSessionToken } from './services/adminSessionStorage';
 import { subscribeToAdminSessionExpired } from './services/adminSessionEvents';
 import { assetPath } from './utils/assets';
 import './App.css';
@@ -97,15 +96,9 @@ const ProtectedAdminRoute = ({ children }) => {
   const [status, setStatus] = useState('checking');
 
   useEffect(() => {
-    if (!readStoredAdminSessionToken()) {
-      setStatus('unauthenticated');
-      return undefined;
-    }
-
     let mounted = true;
 
     validateAdminSession({
-      skipWhenNoStoredToken: true,
       timeoutMs: 2500
     })
       .then((result) => {

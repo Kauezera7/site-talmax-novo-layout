@@ -17,6 +17,7 @@ dotenv.config();
 
 const logger = require('./src/server/utils/logger');
 const createApp = require('./src/server/app');
+const { ensureBootstrapAdmin } = require('./src/server/auth/adminBootstrap');
 
 logger.info({
   cwd: process.cwd(),
@@ -27,20 +28,29 @@ logger.info({
 const app = createApp();
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, '0.0.0.0', () => {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+const startServer = async () => {
+  await ensureBootstrapAdmin();
 
-  logger.info({
-    port: PORT,
-    host: '0.0.0.0',
-    environment: process.env.NODE_ENV || 'development',
-    cloudinary: {
-      cloudName: cloudName || null,
-      apiKeyConfigured: !!apiKey,
-      apiSecretConfigured: !!apiSecret,
-      storageMode: cloudName && apiKey && apiSecret ? 'cloudinary' : 'local'
-    }
-  }, 'Servidor rodando');
+  app.listen(PORT, '0.0.0.0', () => {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    logger.info({
+      port: PORT,
+      host: '0.0.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      cloudinary: {
+        cloudName: cloudName || null,
+        apiKeyConfigured: !!apiKey,
+        apiSecretConfigured: !!apiSecret,
+        storageMode: cloudName && apiKey && apiSecret ? 'cloudinary' : 'local'
+      }
+    }, 'Servidor rodando');
+  });
+};
+
+startServer().catch((error) => {
+  logger.error({ err: error }, 'Falha ao iniciar o servidor.');
+  process.exit(1);
 });

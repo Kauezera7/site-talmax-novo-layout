@@ -202,8 +202,8 @@ Os scripts de apoio ficam em:
 
 Seguranca:
 
-- o SQL base cria um usuario admin inicial
-- revise o arquivo SQL e troque as credenciais em qualquer ambiente real
+- o SQL base nao cria usuario admin padrao
+- o primeiro acesso deve ser criado via `ADMIN_BOOTSTRAP_*` no backend ou por um procedimento operacional controlado
 
 ## Variaveis de ambiente
 
@@ -222,6 +222,8 @@ Variaveis essenciais:
 - `ADMIN_JWT_SECRET`
 - `ADMIN_JWT_EXPIRES_IN_SECONDS`
 - `CORS_ALLOWED_ORIGINS`
+- `ADMIN_BOOTSTRAP_USERNAME`
+- `ADMIN_BOOTSTRAP_PASSWORD`
 
 Variaveis opcionais de storage:
 
@@ -237,6 +239,16 @@ Variaveis opcionais de storage:
 - `SFTP_PASSWORD`
 - `SFTP_REMOTE_DIR`
 - `SFTP_PUBLIC_BASE_URL`
+
+Variaveis opcionais para bootstrap do primeiro admin:
+
+- `ADMIN_BOOTSTRAP_EMAIL`
+- `ADMIN_BOOTSTRAP_FULL_NAME`
+
+Observacoes:
+
+- use `ADMIN_BOOTSTRAP_*` apenas em ambiente vazio para criar o primeiro admin com senha hasheada
+- depois do primeiro login, remova essas variaveis do ambiente
 
 Variavel opcional do frontend:
 

@@ -11,6 +11,7 @@ frontend/.env.*.local
 
 # Upload directory (local storage)
 backend/storage/
+backend/backups/
 frontend/public/img/
 
 # Build outputs

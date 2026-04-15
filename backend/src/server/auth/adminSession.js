@@ -18,11 +18,15 @@ const {
   createAdminUserSchema,
   updateAdminUserSchema
 } = require('../validation/adminUserSchemas');
+const {
+  hashAdminPassword,
+  safeEqual,
+  verifyAdminPassword
+} = require('./adminPassword');
 
 const ADMIN_SESSION_COOKIE = 'talmax-admin-session';
 const ADMIN_USER_FREE_FLAG_VALUE = 1;
 const ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE = 2;
-const ADMIN_AUTHORIZATION_SCHEME = 'bearer';
 
 if (!process.env.ADMIN_JWT_SECRET) {
   throw new Error('A variavel ADMIN_JWT_SECRET nao foi definida no ambiente.');
@@ -36,42 +40,6 @@ const ADMIN_COOKIE_SAME_SITE = String(process.env.ADMIN_COOKIE_SAME_SITE || (isP
 let usersTableHasBloqUserColumn = null;
 let usersTableHasEmailColumn = null;
 let usersTableHasRoleColumn = null;
-
-const safeEqual = (valueA, valueB) => {
-  const bufferA = Buffer.from(String(valueA));
-  const bufferB = Buffer.from(String(valueB));
-
-  if (bufferA.length !== bufferB.length) {
-    return false;
-  }
-
-  return crypto.timingSafeEqual(bufferA, bufferB);
-};
-
-const hashAdminPassword = (password) => {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.scryptSync(String(password), salt, 64).toString('hex');
-  return `scrypt$${salt}$${hash}`;
-};
-
-const verifyAdminPassword = (password, storedPassword) => {
-  if (!storedPassword) {
-    return false;
-  }
-
-  if (storedPassword.startsWith('scrypt$')) {
-    const [, salt, hash] = storedPassword.split('$');
-
-    if (!salt || !hash) {
-      return false;
-    }
-
-    const candidateHash = crypto.scryptSync(String(password), salt, 64).toString('hex');
-    return safeEqual(candidateHash, hash);
-  }
-
-  return safeEqual(password, storedPassword);
-};
 
 const normalizeAdminRole = (value) => {
   if (typeof value !== 'string') {
@@ -167,20 +135,6 @@ const verifyJwtToken = (token) => {
 };
 
 const getAdminSessionToken = (req) => {
-  const authorizationHeader = req.headers.authorization;
-
-  if (typeof authorizationHeader === 'string' && authorizationHeader.trim()) {
-    const [scheme, ...tokenParts] = authorizationHeader.trim().split(/\s+/);
-
-    if (scheme && scheme.toLowerCase() === ADMIN_AUTHORIZATION_SCHEME) {
-      const bearerToken = tokenParts.join(' ').trim();
-
-      if (bearerToken) {
-        return bearerToken;
-      }
-    }
-  }
-
   const cookies = parseCookies(req);
   return cookies[ADMIN_SESSION_COOKIE] || null;
 };
@@ -376,17 +330,6 @@ const clearRateLimitKeysForAdminUser = async (identifiers = []) => {
   await Promise.all(tasks);
 };
 
-const maybeUpgradeLegacyAdminPassword = async (adminUser, plainPassword) => {
-  if (!adminUser?.id || typeof adminUser.password !== 'string' || adminUser.password.startsWith('scrypt$')) {
-    return;
-  }
-
-  await db.query(
-    'UPDATE users SET password = ? WHERE id = ? LIMIT 1',
-    [hashAdminPassword(plainPassword), adminUser.id]
-  );
-};
-
 const getRateLimitResetTimeForAdminUser = async (adminUser, attemptedIdentifier) => {
   const identifiers = [attemptedIdentifier, adminUser?.username, adminUser?.email]
     .map((value) => normalizeAdminUsername(value))
@@ -513,8 +456,7 @@ const loginAdmin = async (req, res, next) => {
 
     await Promise.all([
       clearRateLimitKeysForAdminUser([username, adminUser.username, adminUser.email]),
-      setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE).catch(() => null),
-      maybeUpgradeLegacyAdminPassword(adminUser, password).catch(() => null)
+      setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE).catch(() => null)
     ]);
 
     const sessionPayload = {
@@ -526,8 +468,7 @@ const loginAdmin = async (req, res, next) => {
     res.cookie(ADMIN_SESSION_COOKIE, token, getAdminCookieOptions());
 
     return res.json({
-      user: sessionPayload,
-      session_token: token
+      user: sessionPayload
     });
   } catch (err) {
     return next(wrapError(err, { publicMessage: 'Erro ao processar login do admin.' }));

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LockKeyhole, User, ShieldCheck } from 'lucide-react';
 import { loginAdmin } from '../../services/adminAuth';
-import { clearStoredAdminSessionToken } from '../../services/adminSessionStorage';
 import { ADMIN_SESSION_EXPIRED_MESSAGE } from '../../services/adminSessionEvents';
 import './AdminLogin.css';
 
@@ -140,8 +139,6 @@ const AdminLogin = () => {
       setLockState(null);
       navigate('/admin/painel');
     } catch (loginError) {
-      clearStoredAdminSessionToken();
-
       if (loginError.retryAfterSeconds) {
         const attemptedIdentifier = normalizeAdminIdentifier(formData.username);
 
