@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import {
   Facebook,
@@ -8,7 +8,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  X,
   ChevronDown,
   Sun,
   Moon
@@ -18,12 +17,12 @@ import Home from './components/Home/Home';
 import AdminLogin from './components/AdminLogin/AdminLogin';
 import CookieBanner from './components/CookieBanner/CookieBanner';
 import PagePlaceholder from './components/PagePlaceholder/PagePlaceholder';
+import SearchBar from './components/SearchBar/SearchBar';
+import { useProductSearch } from './hooks/useProductSearch';
 import { validateAdminSession } from './services/adminAuth';
 import { readStoredAdminSessionToken } from './services/adminSessionStorage';
 import { subscribeToAdminSessionExpired } from './services/adminSessionEvents';
-import API_URL from './services/api';
-import { parseSafeExtraData } from './utils/contentSafety';
-import { apiAssetPath, assetPath } from './utils/assets';
+import { assetPath } from './utils/assets';
 import './App.css';
 
 const QuemSomos = lazy(() => import('./components/QuemSomos/QuemSomos'));
@@ -42,29 +41,6 @@ const Admin = lazy(() => import('./pages/Admin/AdminDashboard'));
 
 const THEME_STORAGE_KEY = 'talmax-theme';
 const LOADER_DELAY_MS = 1000;
-const MAX_SEARCH_SUGGESTIONS = 10;
-const MIN_SEARCH_TERM_LENGTH = 2;
-
-const truncateSearchText = (value = '', maxLength = 160) => {
-  const normalizedValue = String(value || '').replace(/\s+/g, ' ').trim();
-
-  if (!normalizedValue) {
-    return '';
-  }
-
-  if (normalizedValue.length <= maxLength) {
-    return normalizedValue;
-  }
-
-  return `${normalizedValue.slice(0, maxLength - 3).trim()}...`;
-};
-
-const normalizeSearchText = (value = '') =>
-  String(value || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim();
 
 const FullScreenLoader = ({ label = 'Carregando...' }) => (
   <div className="app-loader-overlay" role="status" aria-live="polite" aria-label={label}>
@@ -159,96 +135,6 @@ const ProtectedAdminRoute = ({ children }) => {
   return children;
 };
 
-const SearchSuggestionsDropdown = ({
-  searchTerm,
-  suggestions,
-  totalMatches,
-  previewProduct,
-  onPreviewChange,
-  onSelectProduct
-}) => {
-  const trimmedSearchTerm = searchTerm.trim();
-
-  if (!trimmedSearchTerm) {
-    return null;
-  }
-
-  if (suggestions.length === 0) {
-    return (
-      <div className="site-search-dropdown" role="presentation">
-        <div className="site-search-dropdown-empty">
-          <strong>Nenhum produto encontrado</strong>
-          <span>Continue digitando ou clique em Buscar para procurar no catalogo completo.</span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="site-search-dropdown" role="presentation">
-      <div className="site-search-dropdown-grid">
-        <div className="site-search-dropdown-results">
-          <div className="site-search-dropdown-heading">
-            <strong>Produtos</strong>
-            <span>
-              Mostrando {suggestions.length}
-              {totalMatches > suggestions.length ? ` de ${totalMatches}` : ''}
-            </span>
-          </div>
-
-          <div className="site-search-suggestion-list" role="listbox" aria-label="Sugestoes de produtos">
-            {suggestions.map((product) => {
-              const isActive = previewProduct?.id === product.id;
-
-              return (
-                <button
-                  key={product.id}
-                  type="button"
-                  className={`site-search-suggestion-item ${isActive ? 'is-active' : ''}`}
-                  onMouseEnter={() => onPreviewChange(product.id)}
-                  onFocus={() => onPreviewChange(product.id)}
-                  onClick={() => onSelectProduct(product)}
-                >
-                  <span className="site-search-suggestion-name">{product.name}</span>
-                  <span className="site-search-suggestion-meta">{product.categoryLabel || 'Produto Talmax'}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="site-search-preview-panel">
-          <div className="site-search-preview-media">
-            {previewProduct?.image ? (
-              <img src={previewProduct.image} alt={previewProduct.name} />
-            ) : (
-              <div className="site-search-preview-placeholder">
-                <span>{previewProduct?.name || 'Produto'}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="site-search-preview-body">
-            <span className="site-search-preview-eyebrow">Pre-visualizacao</span>
-            <h4>{previewProduct?.name}</h4>
-            <span className="site-search-preview-category">{previewProduct?.categoryLabel || 'Produto Talmax'}</span>
-            <p>
-              {truncateSearchText(previewProduct?.description, 180) || 'Passe o mouse sobre um nome da lista para visualizar o produto aqui.'}
-            </p>
-            <button
-              type="button"
-              className="site-search-preview-cta"
-              onClick={() => previewProduct && onSelectProduct(previewProduct)}
-            >
-              Ver produto
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [appReady, setAppReady] = useState(() => {
@@ -302,155 +188,43 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
   const navigate = useNavigate();
   const isAdmin = location.pathname.startsWith('/admin');
   const showGlobalLoader = !appReady && !isAdmin;
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchProducts, setSearchProducts] = useState([]);
-  const [searchProductsLoaded, setSearchProductsLoaded] = useState(false);
-  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
-  const [searchPreviewId, setSearchPreviewId] = useState(null);
   const [navVisible, setNavVisible] = useState(true);
-  const searchInputRef = useRef(null);
   const lastScrollYRef = useRef(0);
   const tickingScrollRef = useRef(false);
-  const searchRoutes = [
-    { path: '/', keywords: ['home', 'inicio', 'principal'] },
-    { path: '/quem-somos', keywords: ['quem somos', 'empresa', 'talmax'] },
-    { path: '/historia-diretoria', keywords: ['historia', 'diretoria', 'institucional'] },
-    { path: '/produtos', keywords: ['produtos', 'catalogo', 'produto'] },
-    { path: '/categoria/talmax-digital', keywords: ['talmax digital', 'digital', 'cad cam'] },
-    { path: '/upcera', keywords: ['upcera', 'zirconia'] },
-    { path: '/scanners', keywords: ['scanner', 'scanners'] },
-    { path: '/impressoras-3d', keywords: ['impressora 3d', 'impressoras 3d', '3d'] },
-    { path: '/suporte', keywords: ['suporte', 'ajuda'] },
-    { path: '/contato', keywords: ['contato', 'fale conosco', 'comercial'] },
-    { path: '/cursos', keywords: ['cursos', 'curso', 'treinamento'] },
-    { path: '/sac', keywords: ['sac', 'troca', 'politicas'] }
-  ];
+  const {
+    closeSearch,
+    handleProductSuggestionSelect,
+    handleSearchInputChange,
+    handleSearchInputFocus,
+    handleSearchInputKeyDown,
+    handleSearchSubmit,
+    previewProduct,
+    productSuggestions,
+    searchInputRef,
+    searchMatchesTotal,
+    searchOpen,
+    searchTerm,
+    setSearchPreviewId,
+    shouldShowSearchDropdown,
+    toggleSearch
+  } = useProductSearch({
+    isAdmin,
+    onNavigateComplete: () => setMenuOpen(false)
+  });
 
-  const normalizedSearchTerm = normalizeSearchText(searchTerm);
-  const shouldShowSearchDropdown = searchDropdownOpen && normalizedSearchTerm.length >= MIN_SEARCH_TERM_LENGTH;
-
-  const productSearchMatches = useMemo(() => {
-    if (isAdmin || normalizedSearchTerm.length < MIN_SEARCH_TERM_LENGTH) {
-      return [];
-    }
-
-    return searchProducts
-      .filter((product) => normalizeSearchText(product.name).includes(normalizedSearchTerm))
-      .sort((productA, productB) => {
-        const normalizedNameA = normalizeSearchText(productA.name);
-        const normalizedNameB = normalizeSearchText(productB.name);
-        const startsWithA = normalizedNameA.startsWith(normalizedSearchTerm);
-        const startsWithB = normalizedNameB.startsWith(normalizedSearchTerm);
-
-        if (startsWithA !== startsWithB) {
-          return startsWithA ? -1 : 1;
-        }
-
-        const positionA = normalizedNameA.indexOf(normalizedSearchTerm);
-        const positionB = normalizedNameB.indexOf(normalizedSearchTerm);
-
-        if (positionA !== positionB) {
-          return positionA - positionB;
-        }
-
-        return productA.name.localeCompare(productB.name, 'pt-BR');
-      });
-  }, [isAdmin, normalizedSearchTerm, searchProducts]);
-
-  const productSuggestions = useMemo(
-    () => productSearchMatches.slice(0, MAX_SEARCH_SUGGESTIONS),
-    [productSearchMatches]
-  );
-  const searchMatchesTotal = productSearchMatches.length;
-
-  const previewProduct = useMemo(
-    () => productSuggestions.find((product) => product.id === searchPreviewId) || productSuggestions[0] || null,
-    [productSuggestions, searchPreviewId]
-  );
-
-  useEffect(() => {
-    if (searchOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [searchOpen]);
-
-  useEffect(() => {
-    if (isAdmin) {
-      setSearchProducts([]);
-      setSearchProductsLoaded(false);
-      return undefined;
-    }
-
-    if (normalizedSearchTerm.length < MIN_SEARCH_TERM_LENGTH) {
-      return undefined;
-    }
-
-    if (searchProductsLoaded) {
-      return undefined;
-    }
-
-    const controller = new AbortController();
-    let active = true;
-
-    const fetchSearchProducts = async () => {
-      try {
-        const response = await fetch(`${API_URL}/products`, {
-          signal: controller.signal
-        });
-
-        if (!response.ok) {
-          throw new Error('Erro ao carregar produtos da busca');
-        }
-
-        const data = await response.json();
-
-        if (!active) {
-          return;
-        }
-
-        const items = Array.isArray(data) ? data : (data.items || []);
-
-        setSearchProducts(items.map((product) => {
-          const extra = parseSafeExtraData(product.extra_data);
-          const fallbackImage = Array.isArray(extra.images) ? extra.images[0] : '';
-          const categoryLabel = String(product.category_names || '')
-            .split(',')
-            .map((item) => item.trim())
-            .filter(Boolean)
-            .slice(0, 2)
-            .join(' • ');
-
-          return {
-            id: product.id,
-            name: product.name || '',
-            description: product.description || extra.features?.[0] || '',
-            categoryLabel,
-            image: product.main_image ? apiAssetPath(product.main_image) : (fallbackImage ? apiAssetPath(fallbackImage) : '')
-          };
-        }));
-        setSearchProductsLoaded(true);
-      } catch (error) {
-        if (error.name === 'AbortError') {
-          return;
-        }
-
-        if (active) {
-          console.error('Erro ao carregar produtos da busca:', error);
-          setSearchProducts([]);
-          setSearchProductsLoaded(false);
-        }
-      }
-    };
-
-    const timeoutId = window.setTimeout(fetchSearchProducts, 180);
-
-    return () => {
-      active = false;
-      window.clearTimeout(timeoutId);
-      controller.abort();
-    };
-  }, [isAdmin, normalizedSearchTerm, searchProductsLoaded]);
+  const sharedSearchBarProps = {
+    onInputChange: handleSearchInputChange,
+    onInputFocus: handleSearchInputFocus,
+    onInputKeyDown: handleSearchInputKeyDown,
+    onPreviewChange: setSearchPreviewId,
+    onSelectProduct: handleProductSuggestionSelect,
+    onSubmit: handleSearchSubmit,
+    previewProduct,
+    searchTerm,
+    shouldShowDropdown: shouldShowSearchDropdown,
+    suggestions: productSuggestions,
+    totalMatches: searchMatchesTotal
+  };
 
   useEffect(() => {
     const unsubscribe = subscribeToAdminSessionExpired(() => {
@@ -502,170 +276,6 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
     window.localStorage.setItem(THEME_STORAGE_KEY, appliedTheme);
   }, [isAdmin, theme]);
 
-  useEffect(() => {
-    if (!shouldShowSearchDropdown || productSuggestions.length === 0) {
-      setSearchPreviewId(null);
-      return;
-    }
-
-    setSearchPreviewId((currentPreviewId) => (
-      currentPreviewId && productSuggestions.some((product) => product.id === currentPreviewId)
-        ? currentPreviewId
-        : productSuggestions[0].id
-    ));
-  }, [productSuggestions, shouldShowSearchDropdown]);
-
-  useEffect(() => {
-    const handleDocumentPointerDown = (event) => {
-      if (event.target instanceof Element && event.target.closest('[data-site-search-root="true"]')) {
-        return;
-      }
-
-      setSearchDropdownOpen(false);
-    };
-
-    document.addEventListener('pointerdown', handleDocumentPointerDown);
-
-    return () => {
-      document.removeEventListener('pointerdown', handleDocumentPointerDown);
-    };
-  }, []);
-
-  useEffect(() => {
-    setSearchDropdownOpen(false);
-    setSearchPreviewId(null);
-    
-    // Sincroniza o input do Header com a busca da URL
-    const queryParams = new URLSearchParams(location.search);
-    const searchQuery = queryParams.get('busca') || '';
-    if (searchQuery !== searchTerm) {
-      setSearchTerm(searchQuery);
-    }
-  }, [location.pathname, location.search]);
-
-  const resetSearchState = () => {
-    setSearchTerm('');
-    setSearchDropdownOpen(false);
-    setSearchPreviewId(null);
-  };
-
-  const closeSearch = () => {
-    setSearchOpen(false);
-    resetSearchState();
-  };
-
-  const handleSearchInputChange = (value) => {
-    setSearchTerm(value);
-    setSearchDropdownOpen(normalizeSearchText(value).length >= MIN_SEARCH_TERM_LENGTH);
-
-    // BUSCA AO VIVO: Se estiver no catálogo, atualiza a URL enquanto digita
-    if (location.pathname === '/produtos' || location.pathname.startsWith('/categoria/')) {
-      const params = new URLSearchParams(location.search);
-      if (value.trim()) {
-        params.set('busca', value.trim());
-      } else {
-        params.delete('busca');
-      }
-      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
-    }
-  };
-
-  const handleSearchInputFocus = () => {
-    if (normalizedSearchTerm.length >= MIN_SEARCH_TERM_LENGTH) {
-      setSearchDropdownOpen(true);
-    }
-  };
-
-  const handleSearchInputKeyDown = (event) => {
-    if (event.key === 'Escape') {
-      setSearchDropdownOpen(false);
-
-      if (searchOpen) {
-        setSearchOpen(false);
-      }
-
-      return;
-    }
-
-    if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && productSuggestions.length > 0) {
-      event.preventDefault();
-      setSearchDropdownOpen(true);
-
-      const currentIndex = productSuggestions.findIndex((product) => product.id === (searchPreviewId || productSuggestions[0].id));
-      const direction = event.key === 'ArrowDown' ? 1 : -1;
-      const nextIndex = (currentIndex + direction + productSuggestions.length) % productSuggestions.length;
-
-      setSearchPreviewId(productSuggestions[nextIndex].id);
-    }
-  };
-
-  const handleProductSuggestionSelect = (product) => {
-    navigate(`/produto/${product.id}`);
-    setMenuOpen(false);
-    setSearchOpen(false);
-    resetSearchState();
-  };
-
-  const handleSearchSubmit = (event) => {
-    event.preventDefault();
-
-    const normalizedTerm = normalizeSearchText(searchTerm);
-    if (!normalizedTerm) return;
-
-    const productTerms = [
-      'produto',
-      'produtos',
-      'catalogo',
-      'catalog',
-      'upcera',
-      'scanner',
-      'scanners',
-      'impressora',
-      'impressoras',
-      'impressora 3d',
-      'impressoras 3d',
-      'resina',
-      'zirconia',
-      'cad cam',
-      'protese',
-      'odontologica',
-      'odontologico'
-    ];
-
-    const shouldGoToCatalog = productTerms.some((term) => {
-      const normalizedKeyword = normalizeSearchText(term);
-      return (
-        normalizedKeyword === normalizedTerm ||
-        normalizedKeyword.includes(normalizedTerm) ||
-        normalizedTerm.includes(normalizedKeyword)
-      );
-    });
-
-    if (shouldGoToCatalog) {
-      navigate(`/produtos?busca=${encodeURIComponent(searchTerm.trim())}`);
-      setSearchOpen(false);
-      resetSearchState();
-      setMenuOpen(false);
-      return;
-    }
-
-    const matchedRoute = searchRoutes.find((item) =>
-      item.keywords.some((keyword) => {
-        const normalizedKeyword = normalizeSearchText(keyword);
-        return (
-          normalizedKeyword === normalizedTerm ||
-          normalizedKeyword.includes(normalizedTerm) ||
-          normalizedTerm.includes(normalizedKeyword)
-        );
-      })
-    );
-
-    navigate(matchedRoute ? matchedRoute.path : `/produtos?busca=${encodeURIComponent(searchTerm.trim())}`);
-    setSearchOpen(false);
-    resetSearchState();
-    setMenuOpen(false);
-  };
-
   return (
     <div className="app">
       {showGlobalLoader && <DelayedFullScreenLoader label="Carregando site..." />}
@@ -692,33 +302,7 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
             </Link>
 
             <div className="header-search-desktop hide-mobile">
-              <div className="site-search-shell site-search-shell-desktop" data-site-search-root="true">
-                <form className="header-search-inline" onSubmit={handleSearchSubmit}>
-                  <Search size={18} />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(event) => handleSearchInputChange(event.target.value)}
-                    onFocus={handleSearchInputFocus}
-                    onKeyDown={handleSearchInputKeyDown}
-                    placeholder="Buscar produtos pelo nome..."
-                    aria-expanded={shouldShowSearchDropdown}
-                    aria-haspopup="listbox"
-                  />
-                  <button type="submit">Buscar</button>
-                </form>
-
-                {shouldShowSearchDropdown && (
-                  <SearchSuggestionsDropdown
-                    searchTerm={searchTerm}
-                    suggestions={productSuggestions}
-                    totalMatches={searchMatchesTotal}
-                    previewProduct={previewProduct}
-                    onPreviewChange={setSearchPreviewId}
-                    onSelectProduct={handleProductSuggestionSelect}
-                  />
-                )}
-              </div>
+              <SearchBar variant="desktop" {...sharedSearchBarProps} />
             </div>
 
             <div className="header-socials hide-mobile">
@@ -817,43 +401,12 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
           </div>
 
           {searchOpen && (
-            <div className="header-search-bar">
-              <div className="site-search-shell site-search-shell-mobile" data-site-search-root="true">
-                <form className="header-search-input-wrap" onSubmit={handleSearchSubmit}>
-                  <Search size={18} />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    value={searchTerm}
-                    onChange={(event) => handleSearchInputChange(event.target.value)}
-                    onFocus={handleSearchInputFocus}
-                    onKeyDown={handleSearchInputKeyDown}
-                    aria-expanded={shouldShowSearchDropdown}
-                    aria-haspopup="listbox"
-                    placeholder="Digite o nome do produto..."
-                  />
-                  <button
-                    type="button"
-                    className="header-search-close"
-                    onClick={closeSearch}
-                    aria-label="Fechar busca"
-                  >
-                    <X size={16} />
-                  </button>
-                </form>
-
-                {shouldShowSearchDropdown && (
-                  <SearchSuggestionsDropdown
-                    searchTerm={searchTerm}
-                    suggestions={productSuggestions}
-                    totalMatches={searchMatchesTotal}
-                    previewProduct={previewProduct}
-                    onPreviewChange={setSearchPreviewId}
-                    onSelectProduct={handleProductSuggestionSelect}
-                  />
-                )}
-              </div>
-            </div>
+            <SearchBar
+              {...sharedSearchBarProps}
+              variant="mobile"
+              inputRef={searchInputRef}
+              onClose={closeSearch}
+            />
           )}
 
           <nav className={`nav-mobile ${menuOpen ? 'active' : ''}`}>
@@ -861,9 +414,9 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
               className="search-trigger mobile-search-trigger"
               onClick={() => {
                 setMenuOpen(false);
-                setSearchOpen((current) => !current);
+                toggleSearch();
               }}
-              aria-label="Abrir busca"
+              aria-label={searchOpen ? 'Fechar busca' : 'Abrir busca'}
             >
               <Search size={18} />
               <span>Buscar no site</span>
