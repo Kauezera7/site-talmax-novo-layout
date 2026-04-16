@@ -166,9 +166,17 @@ const sanitizeProductTabs = (value) => (
       id: section?.id || `tab-${index}`,
       title: sanitizeTextInput(section?.title || '', { preserveNewlines: false, maxLength: 255 }),
       content: sanitizeTextInput(section?.content || '', { preserveNewlines: true, maxLength: 25000 }),
-      contentAsList: coerceBoolean(section?.contentAsList ?? section?.content_as_list, false)
+      contentAsList: coerceBoolean(section?.contentAsList ?? section?.content_as_list, false),
+      showContentWithVideo: coerceBoolean(
+        section?.showContentWithVideo ?? section?.show_content_with_video,
+        true
+      ),
+      videoUrl: sanitizeNavigationTarget(section?.videoUrl ?? section?.video_url ?? '', {
+        allowExternal: true,
+        allowRelative: false
+      })
     }))
-    .filter((section) => section.title && section.content)
+    .filter((section) => section.title && (section.content || section.videoUrl))
 );
 
 const sanitizeMergeRanges = (value, rowCount, columnCount) => (

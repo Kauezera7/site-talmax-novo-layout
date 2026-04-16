@@ -21,6 +21,12 @@ const parseErrorBody = async (response, fallbackMessage) => {
       return ADMIN_SESSION_EXPIRED_MESSAGE;
     }
 
+    if (Array.isArray(data.details) && data.details.length > 0) {
+      const firstDetail = data.details.find((detail) => detail?.message) || data.details[0];
+      const fieldLabel = firstDetail?.field ? `${firstDetail.field}: ` : '';
+      return `${fieldLabel}${firstDetail?.message || data.error || fallbackMessage}`;
+    }
+
     return data.error || fallbackMessage;
   } catch {
     return response.status === 401 ? ADMIN_SESSION_EXPIRED_MESSAGE : fallbackMessage;

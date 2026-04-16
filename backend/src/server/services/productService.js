@@ -27,6 +27,8 @@ const PRODUCT_TABS_TABLE_QUERY = `
     title VARCHAR(255) NOT NULL,
     content LONGTEXT DEFAULT NULL,
     content_as_list BOOLEAN DEFAULT FALSE,
+    video_url VARCHAR(2048) DEFAULT NULL,
+    show_content_with_video BOOLEAN DEFAULT TRUE,
     display_order INT DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
@@ -47,6 +49,8 @@ const normalizeProductTabRow = (row) => ({
   title: sanitizeTextInput(row.title || '', { preserveNewlines: false }),
   content: sanitizeTextInput(row.content || '', { preserveNewlines: true }),
   content_as_list: Number(row.content_as_list ?? 0) === 1 || row.content_as_list === true,
+  video_url: typeof row.video_url === 'string' ? row.video_url.trim() : '',
+  show_content_with_video: Number(row.show_content_with_video ?? 1) === 1 || row.show_content_with_video === true,
   display_order: Number(row.display_order || 0),
   is_active: Number(row.is_active ?? 1) === 1
 });
@@ -57,6 +61,19 @@ const ensureProductTabsTable = async (db) => {
   }
 
   await db.query(PRODUCT_TABS_TABLE_QUERY);
+
+  try {
+    await db.query('ALTER TABLE product_tabs ADD COLUMN video_url VARCHAR(2048) DEFAULT NULL AFTER content_as_list');
+  } catch {
+    // Column already exists
+  }
+
+  try {
+    await db.query('ALTER TABLE product_tabs ADD COLUMN show_content_with_video BOOLEAN DEFAULT TRUE AFTER video_url');
+  } catch {
+    // Column already exists
+  }
+
   productTabsTableReady = true;
 };
 
@@ -67,11 +84,15 @@ const normalizeIncomingTabs = (tabs = []) => (
         title: sanitizeTextInput(tab?.title || '', { preserveNewlines: false }),
         content: sanitizeTextInput(tab?.content || '', { preserveNewlines: true }),
         content_as_list: Boolean(tab?.contentAsList || tab?.content_as_list),
+        video_url: typeof (tab?.videoUrl || tab?.video_url) === 'string'
+          ? (tab.videoUrl || tab.video_url).trim().slice(0, 2048)
+          : '',
+        show_content_with_video: tab?.showContentWithVideo ?? tab?.show_content_with_video ?? true,
         display_order: Number.isFinite(Number(tab?.display_order))
           ? Number(tab.display_order)
           : index
       }))
-      .filter((tab) => tab.title && tab.content)
+      .filter((tab) => tab.title && (tab.content || tab.video_url))
     : []
 );
 
@@ -84,7 +105,8 @@ const listProductTabsByProductIds = async (db, productIds = []) => {
 
   const [rows] = await db.query(
     `
-      SELECT id, product_id, title, content, content_as_list, display_order, is_active
+      SELECT id, product_id, title, content, content_as_list, video_url, display_order, is_active
+           , show_content_with_video
       FROM product_tabs
       WHERE product_id IN (?) AND is_active = 1
       ORDER BY product_id ASC, display_order ASC, id ASC
@@ -320,13 +342,15 @@ const replaceProductTabs = async (connection, productId, tabs = []) => {
     tab.title,
     tab.content,
     tab.content_as_list ? 1 : 0,
+    tab.video_url || null,
+    tab.show_content_with_video ? 1 : 0,
     Number.isFinite(Number(tab.display_order)) ? Number(tab.display_order) : index,
     1
   ]);
 
   await connection.query(
     `
-      INSERT INTO product_tabs (product_id, title, content, content_as_list, display_order, is_active)
+      INSERT INTO product_tabs (product_id, title, content, content_as_list, video_url, show_content_with_video, display_order, is_active)
       VALUES ?
     `,
     [values]

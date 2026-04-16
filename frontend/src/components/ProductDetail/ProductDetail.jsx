@@ -147,10 +147,32 @@ const normalizeDynamicSections = (sections, legacySections = []) => {
         id: section?.id ? `dynamic-${section.id}` : `dynamic-${index}`,
         title: typeof section?.title === 'string' ? section.title.trim() : '',
         content: typeof section?.content === 'string' ? section.content : '',
-        contentAsList: Boolean(section?.contentAsList || section?.content_as_list)
+        contentAsList: Boolean(section?.contentAsList || section?.content_as_list),
+        showContentWithVideo: section?.showContentWithVideo ?? section?.show_content_with_video ?? true,
+        videoUrl: typeof (section?.videoUrl || section?.video_url) === 'string'
+          ? (section.videoUrl || section.video_url).trim()
+          : ''
       }))
-      .filter((section) => section.title && section.content.trim())
+      .filter((section) => section.title && (section.content.trim() || section.videoUrl))
     : [];
+};
+
+const getVideoEmbedUrl = (url) => {
+  if (!url) return null;
+
+  // YouTube: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
+  const ytMatch = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/
+  );
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+
+  // Vimeo: vimeo.com/ID, player.vimeo.com/video/ID
+  const vimeoMatch = url.match(
+    /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/
+  );
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+
+  return null;
 };
 
 const renderSectionContent = (content, asList = false) => {
@@ -569,7 +591,28 @@ const ProductDetail = () => {
               {dynamicSections.map((section) => (
                 activeTab === section.id && (
                   <div key={section.id} className="detailed-description-content">
-                    {renderSectionContent(section.content, section.contentAsList)}
+                    {(() => {
+                      const embedUrl = getVideoEmbedUrl(section.videoUrl);
+                      const shouldShowContent = section.content?.trim()
+                        && (!embedUrl || section.showContentWithVideo !== false);
+
+                      return (
+                        <>
+                          {shouldShowContent && renderSectionContent(section.content, section.contentAsList)}
+                          {embedUrl && (
+                            <div className="tab-video-embed">
+                              <iframe
+                                src={embedUrl}
+                                title={section.title}
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 )
               ))}

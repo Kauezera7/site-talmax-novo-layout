@@ -77,14 +77,20 @@ const productTabSchema = z.object({
     textValueSchema('O id da aba', 120)
   ]).optional(),
   title: stringField('O titulo da aba', { minLength: 1, maxLength: 255 }),
-  content: stringField('O conteudo da aba', { minLength: 1, maxLength: 25000, preserveNewlines: true }),
+  content: stringField('O conteudo da aba', { minLength: 0, maxLength: 25000, preserveNewlines: true, optional: true }),
   contentAsList: booleanLike('O indicador contentAsList', { optional: true }),
-  content_as_list: booleanLike('O indicador content_as_list', { optional: true })
-}).strict().transform((tab) => ({
+  content_as_list: booleanLike('O indicador content_as_list', { optional: true }),
+  showContentWithVideo: booleanLike('O indicador showContentWithVideo', { optional: true }),
+  show_content_with_video: booleanLike('O indicador show_content_with_video', { optional: true }),
+  videoUrl: z.preprocess((v) => (typeof v === 'string' ? v.trim() : ''), z.string().max(2048)).optional(),
+  video_url: z.preprocess((v) => (typeof v === 'string' ? v.trim() : ''), z.string().max(2048)).optional()
+}).transform((tab) => ({
   id: tab.id,
   title: tab.title,
-  content: tab.content,
-  contentAsList: Boolean(tab.contentAsList ?? tab.content_as_list ?? false)
+  content: tab.content || '',
+  contentAsList: Boolean(tab.contentAsList ?? tab.content_as_list ?? false),
+  showContentWithVideo: tab.showContentWithVideo ?? tab.show_content_with_video ?? true,
+  videoUrl: (tab.videoUrl || tab.video_url || '').trim()
 }));
 
 const productTabsSchema = z.array(productTabSchema)

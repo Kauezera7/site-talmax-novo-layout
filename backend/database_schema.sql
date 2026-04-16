@@ -96,6 +96,8 @@ CREATE TABLE IF NOT EXISTS product_tabs (
     title VARCHAR(255) NOT NULL,
     content LONGTEXT DEFAULT NULL,
     content_as_list BOOLEAN DEFAULT FALSE,
+    video_url VARCHAR(2048) DEFAULT NULL,
+    show_content_with_video BOOLEAN DEFAULT TRUE,
     display_order INT DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,

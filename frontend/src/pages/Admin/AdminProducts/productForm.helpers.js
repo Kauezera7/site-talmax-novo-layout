@@ -195,7 +195,9 @@ export const createDragSelectionState = () => ({
 export const createDynamicSection = () => ({
   title: '',
   content: '',
-  contentAsList: false
+  contentAsList: false,
+  videoUrl: '',
+  showContentWithVideo: true
 });
 
 export const normalizeModelTable = (modelTable) => {
@@ -257,7 +259,11 @@ export const normalizeDynamicSections = (sections) => (
     ? sections.map((section) => ({
       title: typeof section?.title === 'string' ? section.title : '',
       content: typeof section?.content === 'string' ? section.content : '',
-      contentAsList: Boolean(section?.contentAsList)
+      contentAsList: Boolean(section?.contentAsList),
+      videoUrl: typeof (section?.videoUrl || section?.video_url) === 'string'
+        ? (section.videoUrl || section.video_url).trim()
+        : '',
+      showContentWithVideo: section?.showContentWithVideo ?? section?.show_content_with_video ?? true
     }))
     : []
 );
@@ -268,7 +274,11 @@ export const normalizeProductTabs = (tabs, legacySections = []) => {
       id: tab?.id,
       title: typeof tab?.title === 'string' ? tab.title : '',
       content: typeof tab?.content === 'string' ? tab.content : '',
-      contentAsList: Boolean(tab?.contentAsList || tab?.content_as_list)
+      contentAsList: Boolean(tab?.contentAsList || tab?.content_as_list),
+      videoUrl: typeof (tab?.videoUrl || tab?.video_url) === 'string'
+        ? (tab.videoUrl || tab.video_url).trim()
+        : '',
+      showContentWithVideo: tab?.showContentWithVideo ?? tab?.show_content_with_video ?? true
     }));
   }
 

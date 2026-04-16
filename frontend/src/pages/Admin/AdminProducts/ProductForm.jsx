@@ -823,11 +823,13 @@ const ProductForm = ({
           id: section.id,
           title: section.title.trim(),
           content: section.content.trim(),
-          contentAsList: section.contentAsList
+          contentAsList: section.contentAsList,
+          videoUrl: (section.videoUrl || '').trim(),
+          showContentWithVideo: section.showContentWithVideo !== false
         }))
         .filter((section) => (
           section.title
-          || section.content
+          && (section.content || section.videoUrl)
         )),
       showFeatures: formData.showFeatures,
       hideModelData: false,

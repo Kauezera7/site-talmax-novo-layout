@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Video } from 'lucide-react';
 
 const ProductTabsSection = ({
   formData,
@@ -83,6 +83,31 @@ const ProductTabsSection = ({
               }
             />
           </div>
+
+          <div className="dynamic-section-card__field">
+            <label><Video size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />Link do video (opcional)</label>
+            <input
+              type="url"
+              value={section.videoUrl || ''}
+              onChange={(e) => updateDynamicSection(index, 'videoUrl', e.target.value)}
+              placeholder="Ex.: https://www.youtube.com/watch?v=... ou https://vimeo.com/..."
+            />
+            <p className="product-form-helper">
+              Cole o link do YouTube ou Vimeo. O video sera exibido dentro da aba junto com o conteudo.
+            </p>
+          </div>
+
+          <label className="product-form-option dynamic-section-card__toggle">
+            <input
+              type="checkbox"
+              checked={section.showContentWithVideo !== false}
+              onChange={(e) => updateDynamicSection(index, 'showContentWithVideo', e.target.checked)}
+            />
+            <div>
+              <strong>Exibir descrição junto do vídeo</strong>
+              <span>Se desativado, a aba mostra só o título e o vídeo.</span>
+            </div>
+          </label>
         </div>
       ))}
 
