@@ -182,8 +182,19 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
   const isAdmin = location.pathname.startsWith('/admin');
   const showGlobalLoader = !appReady && !isAdmin;
   const [navVisible, setNavVisible] = useState(true);
+  const [activeMobileSection, setActiveMobileSection] = useState(null);
   const lastScrollYRef = useRef(0);
   const tickingScrollRef = useRef(false);
+
+  const closeMobileMenu = () => {
+    setMenuOpen(false);
+    setActiveMobileSection(null);
+  };
+
+  const toggleMobileSection = (section) => {
+    setActiveMobileSection((current) => (current === section ? null : section));
+  };
+
   const {
     closeSearch,
     handleProductSuggestionSelect,
@@ -202,7 +213,7 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
     toggleSearch
   } = useProductSearch({
     isAdmin,
-    onNavigateComplete: () => setMenuOpen(false)
+    onNavigateComplete: closeMobileMenu
   });
 
   const sharedSearchBarProps = {
@@ -269,6 +280,12 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
     window.localStorage.setItem(THEME_STORAGE_KEY, appliedTheme);
   }, [isAdmin, theme]);
 
+  useEffect(() => {
+    if (!menuOpen) {
+      setActiveMobileSection(null);
+    }
+  }, [menuOpen]);
+
   return (
     <div className="app">
       {showGlobalLoader && <DelayedFullScreenLoader label="Carregando site..." />}
@@ -288,7 +305,7 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
       )}
 
       {!isAdmin && (
-        <header className={`header ${navVisible ? 'nav-expanded' : 'nav-collapsed'}`}>
+        <header className={`header ${navVisible ? 'nav-expanded' : 'nav-collapsed'} ${menuOpen ? 'menu-active' : ''}`}>
           <div className="header-top">
             <Link to="/" className="logo">
               <img src={assetPath('img/Talmaxlogo.webp')} alt="TALMAX" />
@@ -406,7 +423,7 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
             <button
               className="search-trigger mobile-search-trigger"
               onClick={() => {
-                setMenuOpen(false);
+                closeMobileMenu();
                 toggleSearch();
               }}
               aria-label={searchOpen ? 'Fechar busca' : 'Abrir busca'}
@@ -415,30 +432,82 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
               <span>Buscar no site</span>
             </button>
 
-            <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
+            <Link to="/" onClick={closeMobileMenu}>Home</Link>
 
             <div className="nav-mobile-item">
-              <span>Institucional</span>
-              <div className="nav-mobile-sub">
-                <Link to="/quem-somos" onClick={() => setMenuOpen(false)}>Quem Somos</Link>
-                <Link to="/historia-diretoria" onClick={() => setMenuOpen(false)}>História & Diretoria</Link>
+              <button
+                type="button"
+                className={`nav-mobile-trigger ${activeMobileSection === 'institucional' ? 'is-open' : ''}`}
+                onClick={() => toggleMobileSection('institucional')}
+                aria-expanded={activeMobileSection === 'institucional'}
+              >
+                <span>Institucional</span>
+                <ChevronDown size={18} />
+              </button>
+              <div className={`nav-mobile-sub ${activeMobileSection === 'institucional' ? 'is-open' : ''}`}>
+                <Link to="/quem-somos" onClick={closeMobileMenu}>Quem Somos</Link>
+                <Link to="/historia-diretoria" onClick={closeMobileMenu}>História & Diretoria</Link>
+                <Link to="/depoimentos" onClick={closeMobileMenu}>Depoimentos</Link>
               </div>
             </div>
 
             <div className="nav-mobile-item">
-              <span>Produtos</span>
-              <div className="nav-mobile-sub">
-                <Link to="/produtos" onClick={() => setMenuOpen(false)} style={{ fontWeight: 'bold', color: 'var(--primary)' }}>Ver Todos os Produtos</Link>
-                <hr style={{ border: '0', borderTop: '1px solid #eee', margin: '5px 0' }} />
-                <Link to="/categoria/talmax-digital" onClick={() => setMenuOpen(false)} style={{ fontWeight: '700' }}>Talmax Digital</Link>
-                <Link to="/categoria/protese-dentaria" onClick={() => setMenuOpen(false)} style={{ fontWeight: '700' }}>Prótese Dentária</Link>
-                <Link to="/categoria/nail-e-podologia" onClick={() => setMenuOpen(false)} style={{ fontWeight: '700' }}>Nail e Podologia</Link>
+              <button
+                type="button"
+                className={`nav-mobile-trigger ${activeMobileSection === 'produtos' ? 'is-open' : ''}`}
+                onClick={() => toggleMobileSection('produtos')}
+                aria-expanded={activeMobileSection === 'produtos'}
+              >
+                <span>Produtos</span>
+                <ChevronDown size={18} />
+              </button>
+              <div className={`nav-mobile-sub ${activeMobileSection === 'produtos' ? 'is-open' : ''}`}>
+                <Link to="/produtos" onClick={closeMobileMenu} style={{ fontWeight: 'bold', color: 'var(--primary)' }}>Ver Todos os Produtos</Link>
+                <hr style={{ border: '0', borderTop: '1px solid rgba(255, 255, 255, 0.2)', margin: '5px 0' }} />
+                <Link to="/categoria/talmax-digital" onClick={closeMobileMenu} style={{ fontWeight: '700' }}>Talmax Digital</Link>
+                <Link to="/categoria/protese-dentaria" onClick={closeMobileMenu} style={{ fontWeight: '700' }}>Prótese Dentária</Link>
+                <Link to="/categoria/nail-e-podologia" onClick={closeMobileMenu} style={{ fontWeight: '700' }}>Nail e Podologia</Link>
               </div>
             </div>
 
-            <a href="https://mobywork.com.br" target="_blank" rel="noopener noreferrer">Moby Work</a>
-            <Link to="/blog" onClick={() => setMenuOpen(false)}>Blog</Link>
-            <Link to="/contato" onClick={() => setMenuOpen(false)}>Contato</Link>
+            <a href="https://mobywork.com.br" target="_blank" rel="noopener noreferrer" onClick={closeMobileMenu}>Moby Work</a>
+            <Link to="/blog" onClick={closeMobileMenu}>Blog</Link>
+
+            <div className="nav-mobile-item">
+              <button
+                type="button"
+                className={`nav-mobile-trigger ${activeMobileSection === 'servicos' ? 'is-open' : ''}`}
+                onClick={() => toggleMobileSection('servicos')}
+                aria-expanded={activeMobileSection === 'servicos'}
+              >
+                <span>Serviços</span>
+                <ChevronDown size={18} />
+              </button>
+              <div className={`nav-mobile-sub ${activeMobileSection === 'servicos' ? 'is-open' : ''}`}>
+                <Link to="/suporte" onClick={closeMobileMenu}>Suporte</Link>
+                <Link to="/assistencia-tecnica" onClick={closeMobileMenu}>Assistência Técnica</Link>
+              </div>
+            </div>
+
+            <Link to="/contato" onClick={closeMobileMenu}>Contato</Link>
+            <Link to="/cursos" onClick={closeMobileMenu}>Cursos</Link>
+            <Link to="https://talmax.com.br/portalcliente/" target="_blank" rel="noopener noreferrer" onClick={closeMobileMenu}>Portal do Cliente</Link>
+
+            <div className="nav-mobile-item">
+              <button
+                type="button"
+                className={`nav-mobile-trigger ${activeMobileSection === 'sac' ? 'is-open' : ''}`}
+                onClick={() => toggleMobileSection('sac')}
+                aria-expanded={activeMobileSection === 'sac'}
+              >
+                <span>SAC</span>
+                <ChevronDown size={18} />
+              </button>
+              <div className={`nav-mobile-sub ${activeMobileSection === 'sac' ? 'is-open' : ''}`}>
+                <Link to="/sac" onClick={closeMobileMenu}>Fale Conosco</Link>
+                <Link to="/politicas-troca" onClick={closeMobileMenu}>Políticas de Troca</Link>
+              </div>
+            </div>
 
             <div className="social-links">
               <Facebook size={24} />
