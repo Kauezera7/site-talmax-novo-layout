@@ -308,7 +308,7 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
         <header className={`header ${navVisible ? 'nav-expanded' : 'nav-collapsed'} ${menuOpen ? 'menu-active' : ''}`}>
           <div className="header-top">
             <Link to="/" className="logo">
-              <img src={assetPath('img/Talmaxlogo.webp')} alt="TALMAX" />
+              <img src={assetPath('img/Talmaxlogo.logo.webp')} alt="TALMAX" />
             </Link>
 
             <div className="header-search-desktop hide-mobile">
@@ -566,7 +566,7 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
         <footer className="footer">
           <div className="footer-grid">
             <div className="footer-section">
-              <img src={assetPath('img/Talmaxlogo.webp')} alt="TALMAX" className="footer-logo" />
+              <img src={assetPath('img/Talmaxlogo.logo.webp')} alt="TALMAX" className="footer-logo" />
               <p>Inovação e qualidade em produtos odontológicos.</p>
               <div className="social-links">
                 <Facebook size={20} />

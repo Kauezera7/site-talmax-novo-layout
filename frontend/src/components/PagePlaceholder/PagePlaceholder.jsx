@@ -15,7 +15,7 @@ const PagePlaceholder = ({ title }) => {
         Esta página está em desenvolvimento e em breve estará disponível com todo o conteúdo da Talmax.
       </p>
       <div className="page-placeholder-logo">
-        <img src={assetPath('img/Talmaxlogo.webp')} alt="TALMAX" />
+        <img src={assetPath('img/Talmaxlogo.logo.webp')} alt="TALMAX" />
       </div>
     </div>
   );

@@ -70,13 +70,20 @@ Algumas rotas institucionais ainda usam `PagePlaceholder` enquanto o conteudo de
 
 ## Build e deploy
 
-O build usa hoje:
+O build usa hoje `VITE_PUBLIC_BASE_PATH` para definir a base publica.
+
+Sem essa variavel, o padrao e:
 
 ```js
-base: '/site-talmax/'
+base: '/'
 ```
 
-Se o deploy nao acontecer nesse subdiretorio, ajuste `vite.config.js` antes de rodar `npm run build`.
+Se o deploy acontecer em um subdiretorio, defina antes do build:
+
+```powershell
+$env:VITE_PUBLIC_BASE_PATH='/site-talmax/'
+npm run build
+```
 
 ## Scripts
 

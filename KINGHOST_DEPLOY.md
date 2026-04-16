@@ -88,13 +88,22 @@ Se a hospedagem nao tiver disco persistente, prefira Cloudinary ou SFTP.
 
 ## Ponto de atencao no build do frontend
 
-O `vite.config.js` esta com:
+O `vite.config.js` agora usa a variavel `VITE_PUBLIC_BASE_PATH`.
+
+Sem essa variavel, o build sai para raiz:
 
 ```js
-base: '/site-talmax/'
+base: '/'
 ```
 
-Se o deploy final nao usar esse subdiretorio, ajuste esse valor antes do build. Caso contrario, links e assets podem quebrar.
+Se o deploy final usar um subdiretorio, defina isso antes do build. Exemplo:
+
+```powershell
+$env:VITE_PUBLIC_BASE_PATH='/site-talmax/'
+npm run build
+```
+
+Se a base ficar errada, links e assets como `/img/Talmaxlogo.webp` podem quebrar em producao.
 
 ## URLs esperadas em producao
 
