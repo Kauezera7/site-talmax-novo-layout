@@ -50,6 +50,11 @@ const allowedOrigins = new Set([
   ...envAllowedOrigins
 ]);
 
+const allowedHeaders = [
+  'Content-Type',
+  'Authorization'
+];
+
 const corsMiddleware = cors({
   origin: (origin, callback) => {
     if (!origin) {
@@ -65,7 +70,7 @@ const corsMiddleware = cors({
     return callback(null, false);
   },
   credentials: true,
-  allowedHeaders: ['Content-Type'],
+  allowedHeaders,
   methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 });
 
