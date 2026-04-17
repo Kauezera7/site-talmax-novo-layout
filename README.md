@@ -98,7 +98,8 @@ Observacoes importantes:
 
 - o frontend usa `VITE_API_URL` quando definido
 - em desenvolvimento, o fallback da API usa a mesma maquina atual na porta `5000`
-- `frontend/vite.config.js` esta com `base: '/site-talmax/'`, entao o build espera deploy nesse subdiretorio
+- `frontend/vite.config.js` usa `VITE_PUBLIC_BASE_PATH`
+- neste repositorio, `frontend/.env.development` e `frontend/.env.production` fixam `/site-talmax/`, entao dev e build continuam usando esse prefixo
 
 ## Painel administrativo
 

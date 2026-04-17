@@ -670,12 +670,13 @@ Arquivo:
 Configuracao atual:
 
 ```js
-base: '/site-talmax/'
+base: normalizeBasePath(env.VITE_PUBLIC_BASE_PATH || '/')
 ```
 
 Importante:
 
-Se o deploy nao for feito nesse subdiretorio, essa base precisa ser alterada antes do `npm run build`.
+- sem `VITE_PUBLIC_BASE_PATH`, o padrao e `/`
+- neste repositorio, `frontend/.env.development` e `frontend/.env.production` fixam `/site-talmax/`
 
 ---
 
@@ -954,4 +955,3 @@ O melhor ponto de partida para qualquer alteracao costuma ser:
 2. `frontend/src/pages/Admin/AdminDashboard.jsx` se a mudanca for no painel
 3. `backend/src/server/app.js` se a mudanca for de rota/API
 4. `backend/database_schema.sql` se a mudanca for estrutural no banco
-

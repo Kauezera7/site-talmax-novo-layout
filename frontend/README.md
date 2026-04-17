@@ -85,6 +85,8 @@ $env:VITE_PUBLIC_BASE_PATH='/site-talmax/'
 npm run build
 ```
 
+Neste repositorio, os arquivos `.env.development` e `.env.production` ja deixam `VITE_PUBLIC_BASE_PATH=/site-talmax/`.
+
 ## Scripts
 
 - `npm run dev`

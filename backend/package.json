@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "node server.js",
-    "dev": "node setup-development.js && node server.js",
+    "dev": "node server.js",
     "dev:check": "node debug-storage.js"
   },
   "dependencies": {

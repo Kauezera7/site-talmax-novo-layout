@@ -19,8 +19,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
-  ShieldCheck,
-  UserCog
+  UserCog,
+  Wrench
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin, AdminProvider } from '../../context/AdminContext';
@@ -39,8 +39,8 @@ const AdminSegments = lazy(() => import('./AdminSegments/AdminSegments'));
 const AdminTalmaxDigital = lazy(() => import('./AdminTalmaxDigital/AdminTalmaxDigital'));
 const AdminDigitalGroups = lazy(() => import('./AdminTalmaxDigital/AdminDigitalGroups'));
 const AdminCustomPages = lazy(() => import('./AdminCustomPages/AdminCustomPages'));
-const AdminSecurity = lazy(() => import('./AdminSecurity/AdminSecurity'));
 const AdminUsers = lazy(() => import('./AdminUsers/AdminUsers'));
+const AdminTechnicalAssistance = lazy(() => import('./AdminTechnicalAssistance/AdminTechnicalAssistance'));
 
 const AdminLoadingScreen = ({ label = 'Carregando painel...' }) => (
   <div className="app-loader-overlay app-loader-overlay-admin" role="status" aria-live="polite" aria-label={label}>
@@ -136,8 +136,8 @@ const AdminDashboardContent = () => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { id: 'categories', label: 'Categorias', icon: <Layers size={20} /> },
-    ...(isMasterAdmin ? [{ id: 'users', label: 'Usuarios Admin', icon: <UserCog size={20} /> }] : []),
-    ...(isMasterAdmin ? [{ id: 'security', label: 'Seguranca do Login', icon: <ShieldCheck size={20} /> }] : [])
+    { id: 'technical-assistance', label: 'Assistencia Tecnica', icon: <Wrench size={20} /> },
+    ...(isMasterAdmin ? [{ id: 'users', label: 'Usuarios Admin', icon: <UserCog size={20} /> }] : [])
   ];
   const catalogItems = [
     { id: 'products', label: 'Cadastro de Produtos', icon: <Package size={18} /> },
@@ -193,8 +193,6 @@ const AdminDashboardContent = () => {
         return withAdminSectionLoader(<AdminCategories />, 'Carregando categorias...');
       case 'users':
         return withAdminSectionLoader(<AdminUsers />, 'Carregando usuarios do painel...');
-      case 'security':
-        return withAdminSectionLoader(<AdminSecurity />, 'Carregando seguranca do login...');
       case 'banners':
         return withAdminSectionLoader(<AdminBanners />, 'Carregando banners...');
       case 'featured':
@@ -213,6 +211,8 @@ const AdminDashboardContent = () => {
         return withAdminSectionLoader(<AdminScanners />, 'Carregando pagina Scanners...');
       case 'printers':
         return withAdminSectionLoader(<AdminPrinters />, 'Carregando pagina Impressoras 3D...');
+      case 'technical-assistance':
+        return withAdminSectionLoader(<AdminTechnicalAssistance />, 'Carregando assistencia tecnica...');
       default:
         return <DashboardHome onOpenTab={setActiveTab} />;
     }

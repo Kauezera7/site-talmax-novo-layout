@@ -105,6 +105,10 @@ npm run build
 
 Se a base ficar errada, links e assets como `/img/Talmaxlogo.webp` podem quebrar em producao.
 
+Observacao:
+
+- neste repositorio, `frontend/.env.production` ja fixa `VITE_PUBLIC_BASE_PATH=/site-talmax/`
+
 ## URLs esperadas em producao
 
 - frontend: servido pelo backend

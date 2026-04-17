@@ -36,6 +36,7 @@ const Upcera = lazy(() => import('./components/Upcera/Upcera'));
 const Scanners = lazy(() => import('./components/Scanners/Scanners'));
 const Impressoras3D = lazy(() => import('./components/Impressoras3D/Impressoras3D'));
 const CustomPage = lazy(() => import('./components/CustomPage/CustomPage'));
+const TechnicalAssistance = lazy(() => import('./components/TechnicalAssistance/TechnicalAssistance'));
 const Admin = lazy(() => import('./pages/Admin/AdminDashboard'));
 
 const THEME_STORAGE_KEY = 'talmax-theme';
@@ -550,7 +551,10 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
           <Route path="/blog" element={<PagePlaceholder title="Blog" />} />
 
           <Route path="/suporte" element={withRouteLoader(<Support />, 'Carregando suporte...')} />
-          <Route path="/assistencia-tecnica" element={<PagePlaceholder title="Assistência Técnica" />} />
+          <Route
+            path="/assistencia-tecnica"
+            element={withRouteLoader(<TechnicalAssistance />, 'Carregando assistencia tecnica...')}
+          />
 
           <Route path="/contato" element={<PagePlaceholder title="Formulário de Contato" />} />
           <Route path="/comercial-comex" element={<PagePlaceholder title="Comercial / Comex" />} />
