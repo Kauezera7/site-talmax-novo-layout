@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldCheck, UnlockKeyhole } from 'lucide-react';
-import { useAdmin } from '../../../context/AdminContext';
+import { useAdmin } from '../../../context/useAdmin';
 import { unlockAdminLoginByUser } from '../../../services/adminAuth';
 import './AdminSecurity.css';
 

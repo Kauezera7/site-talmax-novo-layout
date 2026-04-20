@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAdmin } from '../../../context/AdminContext';
+import { useAdmin } from '../../../context/useAdmin';
 import SpecialSectionManager from '../AdminUpcera/SpecialSectionManager';
 import SpecialPageSettingsForm from '../SpecialPageSettingsForm/SpecialPageSettingsForm';
 import './AdminScanners.css';

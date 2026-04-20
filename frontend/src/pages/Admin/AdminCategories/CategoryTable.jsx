@@ -1,29 +1,39 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Edit, Trash2, Eye, EyeOff, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { apiAssetPath } from '../../../utils/assets';
 
 const CategoryTable = ({ mainCategories, subCategories, products, searchTerm, filterStatus, onEdit, onDelete, onToggleVisibility }) => {
   const [expandedCategories, setExpandedCategories] = useState({});
 
-  // Auto-expand categories when searching
-  useEffect(() => {
-    if (searchTerm) {
-      const newExpanded = {};
-      mainCategories.forEach(cat => {
-        const hasMatchingSub = subCategories.some(sub => 
-          Number(sub.parent_id) === Number(cat.id) && 
-          sub.name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        if (hasMatchingSub || cat.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-          newExpanded[cat.id] = true;
-        }
-      });
-      setExpandedCategories(newExpanded);
+  const autoExpandedCategories = useMemo(() => {
+    if (!searchTerm) {
+      return {};
     }
+
+    const nextExpanded = {};
+    const normalizedSearchTerm = searchTerm.toLowerCase();
+
+    mainCategories.forEach((cat) => {
+      const hasMatchingSub = subCategories.some((sub) => (
+        Number(sub.parent_id) === Number(cat.id)
+        && sub.name.toLowerCase().includes(normalizedSearchTerm)
+      ));
+
+      if (hasMatchingSub || cat.name.toLowerCase().includes(normalizedSearchTerm)) {
+        nextExpanded[cat.id] = true;
+      }
+    });
+
+    return nextExpanded;
   }, [searchTerm, mainCategories, subCategories]);
 
+  const resolvedExpandedCategories = useMemo(
+    () => ({ ...autoExpandedCategories, ...expandedCategories }),
+    [autoExpandedCategories, expandedCategories]
+  );
+
   const toggleExpand = (id) => {
-    setExpandedCategories((prev) => ({ ...prev, [id]: !prev[id] }));
+    setExpandedCategories((prev) => ({ ...prev, [id]: !resolvedExpandedCategories[id] }));
   };
 
   const getProductCount = (categoryId) => {
@@ -54,7 +64,7 @@ const CategoryTable = ({ mainCategories, subCategories, products, searchTerm, fi
     }
 
     return result;
-  }, [mainCategories, subCategories, searchTerm, filterStatus, products]);
+  }, [mainCategories, subCategories, searchTerm, filterStatus]);
 
   const getFilteredSubcategories = (parentId) => {
     let subs = subCategories.filter((sub) => Number(sub.parent_id) === Number(parentId));
@@ -108,7 +118,7 @@ const CategoryTable = ({ mainCategories, subCategories, products, searchTerm, fi
                         <ChevronRight
                           size={16}
                           style={{
-                            transform: expandedCategories[cat.id] ? 'rotate(90deg)' : 'rotate(0deg)',
+                            transform: resolvedExpandedCategories[cat.id] ? 'rotate(90deg)' : 'rotate(0deg)',
                             transition: 'transform 0.2s'
                           }}
                         />
@@ -136,7 +146,7 @@ const CategoryTable = ({ mainCategories, subCategories, products, searchTerm, fi
                   </td>
                 </tr>
 
-                {expandedCategories[cat.id] && getFilteredSubcategories(cat.id).map((subCat) => (
+                {resolvedExpandedCategories[cat.id] && getFilteredSubcategories(cat.id).map((subCat) => (
                     <tr key={subCat.id} className="subcategory-row">
                       <td style={{ paddingLeft: '60px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { AlertCircle, ChevronDown, Copy, Eye, FolderPlus, Image as ImageIcon, Pencil, PlusCircle, Save, Trash2, UploadCloud, X } from 'lucide-react';
-import { useAdmin } from '../../../context/AdminContext';
+import { useAdmin } from '../../../context/useAdmin';
 import customPageService from '../../../services/customPageService';
 import digitalGroupService from '../../../services/digitalGroupService';
-import homeService from '../../../services/homeService';
 import { resolveStoredAssetPath } from '../../../utils/assets';
-import { buildTalmaxDigitalReferenceCards, DIGITAL_CARD_TEMPLATES, parseDigitalActionsPayload } from '../../../components/TalmaxDigital/digitalCardTemplates';
+import { DIGITAL_CARD_TEMPLATES } from '../../../components/TalmaxDigital/digitalCardTemplates';
 import pageSettingsService, { DEFAULT_SPECIAL_PAGE_SETTINGS, normalizeSpecialPageSettings } from '../../../services/pageSettingsService';
 import { motion, AnimatePresence } from 'framer-motion';
 import './AdminTalmaxDigital.css';
@@ -91,21 +90,6 @@ const ButtonSavingIndicator = () => (
   <span className="loader loader_bubble admin-button-loader" aria-hidden="true" />
 );
 
-const normalizeSegmentValue = (value) => String(value || '').trim().toLowerCase();
-
-const isTalmaxDigitalSegment = (service) => {
-  const normalizedName = normalizeSegmentValue(service?.name);
-  const normalizedLink = normalizeSegmentValue(service?.link_url);
-  const digitalCards = parseDigitalActionsPayload(service?.actions).digital_cards;
-
-  return (
-    normalizedName === 'talmax digital' ||
-    normalizedName.includes('talmax digital') ||
-    normalizedLink.includes('/categoria/talmax-digital') ||
-    (Array.isArray(digitalCards) && digitalCards.length > 0)
-  );
-};
-
 const applyHeroDefaultsToGroup = (group, heroDefaults = {}) => ({
   ...group,
   overline: group.overline || heroDefaults.overline || '',
@@ -124,33 +108,22 @@ const AdminDigitalGroups = ({
   const [savingKey, setSavingKey] = useState(null);
   const [collapsedCards, setCollapsedCards] = useState({});
   const [activeUrlPickerKey, setActiveUrlPickerKey] = useState(null);
-  const [heroDefaults, setHeroDefaults] = useState(DEFAULT_SPECIAL_PAGE_SETTINGS['talmax-digital']);
   const [activeEditorGroupId, setActiveEditorGroupId] = useState(null);
   const [customPageOptions, setCustomPageOptions] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [groupToDelete, setGroupToDelete] = useState(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [items, services, pageSettingsItems, customPages] = await Promise.all([
+      const [items, pageSettingsItems, customPages] = await Promise.all([
         digitalGroupService.getAll({ admin: true }),
-        homeService.getAll().catch(() => []),
         pageSettingsService.getAll().catch(() => []),
         customPageService.getAll().catch(() => [])
       ]);
-
-      const talmaxDigitalService = Array.isArray(services)
-        ? services.find(isTalmaxDigitalSegment)
-        : null;
-
-      const nextReferenceCards = talmaxDigitalService
-        ? buildTalmaxDigitalReferenceCards(parseDigitalActionsPayload(talmaxDigitalService.actions).digital_cards)
-        : buildTalmaxDigitalReferenceCards();
       const normalizedPageSettings = normalizeSpecialPageSettings(pageSettingsItems);
 
       const nextHeroDefaults = normalizedPageSettings['talmax-digital'] || DEFAULT_SPECIAL_PAGE_SETTINGS['talmax-digital'];
-      setHeroDefaults(nextHeroDefaults);
       setCustomPageOptions(
         Array.isArray(customPages)
           ? customPages
@@ -169,11 +142,11 @@ const AdminDigitalGroups = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [addToast]);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const updateGroup = (groupId, updater) => {
     setGroups((current) => current.map((group) => (group.id === groupId ? updater(group) : group)));
@@ -373,7 +346,7 @@ const AdminDigitalGroups = ({
     try {
       await navigator.clipboard.writeText(buildPublicGroupUrl(group.slug || group.id));
       addToast('Link do grupo copiado com sucesso!');
-    } catch (error) {
+    } catch {
       addToast('Não foi possível copiar o link do grupo.', 'error');
     }
   };
@@ -512,7 +485,7 @@ const AdminDigitalGroups = ({
                           <label>Logo</label>
                           <div className="admin-talmax-digital__logo-field">
                             <div className="file-upload-area admin-talmax-digital__upload-area admin-talmax-digital__logo-upload">
-                              <input type="file" accept="image/*" onChange={(event) => handleLogoChange(group.id, event.target.files?.[0])} />
+                              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => handleLogoChange(group.id, event.target.files?.[0])} />
                               <UploadCloud size={28} color="var(--admin-primary)" />
                               <p>Enviar logo da página</p>
                             </div>
@@ -670,7 +643,7 @@ const AdminDigitalGroups = ({
                                   <label>Frente</label>
                                   <div className="admin-talmax-digital__upload-row">
                                     <div className="file-upload-area admin-talmax-digital__upload-area">
-                                      <input type="file" accept="image/*" onChange={(event) => handleImageChange(group.id, card.id, 'front', event.target.files?.[0])} />
+                                      <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => handleImageChange(group.id, card.id, 'front', event.target.files?.[0])} />
                                       <UploadCloud size={28} color="var(--admin-primary)" />
                                       <p>Imagem da frente</p>
                                     </div>
@@ -689,7 +662,7 @@ const AdminDigitalGroups = ({
                                   <label>Verso</label>
                                   <div className="admin-talmax-digital__upload-row">
                                     <div className="file-upload-area admin-talmax-digital__upload-area">
-                                      <input type="file" accept="image/*" onChange={(event) => handleImageChange(group.id, card.id, 'back', event.target.files?.[0])} />
+                                      <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => handleImageChange(group.id, card.id, 'back', event.target.files?.[0])} />
                                       <UploadCloud size={28} color="var(--admin-primary)" />
                                       <p>Imagem do verso</p>
                                     </div>

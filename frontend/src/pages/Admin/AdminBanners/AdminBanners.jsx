@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Image as ImageIcon, AlertCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAdmin } from '../../../context/AdminContext';
+import { useAdmin } from '../../../context/useAdmin';
 import BannerTable from './BannerTable';
 import BannerForm from './BannerForm';
 import './AdminBanners.css';

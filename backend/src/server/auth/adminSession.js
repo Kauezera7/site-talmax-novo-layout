@@ -5,10 +5,12 @@
 const crypto = require('crypto');
 const db = require('../../config/database');
 const {
+  ADMIN_LOGIN_RATE_LIMIT_MESSAGE,
   clearAdminLoginRateLimitByUsername,
   getAdminLoginRateLimitStateByUsername,
   getRetryAfterSecondsFromResetTime,
-  normalizeAdminUsername
+  normalizeAdminUsername,
+  registerFailedAdminLoginAttemptByIdentifiers
 } = require('../seguranca/adminLoginRateLimit');
 const { createHttpError, wrapError } = require('../utils/errorHandling');
 const { validateWithSchema } = require('../validation/requestValidation');
@@ -27,6 +29,7 @@ const {
 const ADMIN_SESSION_COOKIE = 'talmax-admin-session';
 const ADMIN_USER_FREE_FLAG_VALUE = 1;
 const ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE = 2;
+const ADMIN_LOGIN_USER_NOT_FOUND_MESSAGE = 'Usuario nao encontrado ou sem acesso ao painel.';
 
 if (!process.env.ADMIN_JWT_SECRET) {
   throw new Error('A variavel ADMIN_JWT_SECRET nao foi definida no ambiente.');
@@ -40,14 +43,29 @@ const ADMIN_COOKIE_SAME_SITE = String(process.env.ADMIN_COOKIE_SAME_SITE || (isP
 let usersTableHasBloqUserColumn = null;
 let usersTableHasEmailColumn = null;
 let usersTableHasRoleColumn = null;
+let usersTableHasSessionVersionColumn = null;
 
 const normalizeAdminRole = (value) => {
   if (typeof value !== 'string') {
-    return ADMIN_ROLE_EDITOR;
+    return null;
   }
 
   const normalizedValue = value.trim().toLowerCase();
-  return normalizedValue === ADMIN_ROLE_MASTER ? ADMIN_ROLE_MASTER : ADMIN_ROLE_EDITOR;
+  if (normalizedValue === ADMIN_ROLE_MASTER) {
+    return ADMIN_ROLE_MASTER;
+  }
+
+  if (normalizedValue === ADMIN_ROLE_EDITOR) {
+    return ADMIN_ROLE_EDITOR;
+  }
+
+  return null;
+};
+
+const hasAdminPanelAccess = (adminUser) => Boolean(normalizeAdminRole(adminUser?.role));
+const normalizeAdminSessionVersion = (value) => {
+  const parsedValue = Number.parseInt(value, 10);
+  return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : 0;
 };
 
 const parseCookies = (req) => {
@@ -177,6 +195,16 @@ const usersTableSupportsRole = async () => {
   return usersTableHasRoleColumn;
 };
 
+const usersTableSupportsSessionVersion = async () => {
+  if (typeof usersTableHasSessionVersionColumn === 'boolean') {
+    return usersTableHasSessionVersionColumn;
+  }
+
+  const [columns] = await db.query("SHOW COLUMNS FROM users LIKE 'session_version'");
+  usersTableHasSessionVersionColumn = columns.length > 0;
+  return usersTableHasSessionVersionColumn;
+};
+
 const assertAdminUserManagementIsAvailable = async () => {
   const [supportsEmail, supportsRole] = await Promise.all([
     usersTableSupportsEmail(),
@@ -194,10 +222,11 @@ const assertAdminUserManagementIsAvailable = async () => {
 };
 
 const getAdminSelectClause = async ({ includePassword = false } = {}) => {
-  const [supportsBloqUser, supportsEmail, supportsRole] = await Promise.all([
+  const [supportsBloqUser, supportsEmail, supportsRole, supportsSessionVersion] = await Promise.all([
     usersTableSupportsBloqUser(),
     usersTableSupportsEmail(),
-    usersTableSupportsRole()
+    usersTableSupportsRole(),
+    usersTableSupportsSessionVersion()
   ]);
 
   const fields = [
@@ -212,8 +241,9 @@ const getAdminSelectClause = async ({ includePassword = false } = {}) => {
 
   fields.push(
     supportsEmail ? 'email' : 'NULL AS email',
-    supportsRole ? 'role' : `'${ADMIN_ROLE_MASTER}' AS role`,
+    supportsRole ? 'role' : 'NULL AS role',
     supportsBloqUser ? 'bloq_user' : `${ADMIN_USER_FREE_FLAG_VALUE} AS bloq_user`,
+    supportsSessionVersion ? 'session_version' : '0 AS session_version',
     'created_at'
   );
 
@@ -235,6 +265,16 @@ const serializeAdminUser = (adminUser) => {
     created_at: adminUser.created_at || null
   };
 };
+
+const buildAdminSessionPayload = (adminUser, overrides = {}) => ({
+  ...serializeAdminUser(adminUser),
+  session_version: normalizeAdminSessionVersion(adminUser?.session_version),
+  ...overrides
+});
+
+const adminSessionVersionMatches = (session, adminUser) => (
+  normalizeAdminSessionVersion(session?.session_version) === normalizeAdminSessionVersion(adminUser?.session_version)
+);
 
 const getAdminUserByIdentifier = async (identifier) => {
   const normalizedIdentifier = normalizeAdminUsername(identifier);
@@ -313,6 +353,19 @@ const setAdminBlockState = async (adminUserId, value) => {
   );
 };
 
+const incrementAdminSessionVersion = async (adminUserId) => {
+  if (!await usersTableSupportsSessionVersion()) {
+    return false;
+  }
+
+  await db.query(
+    'UPDATE users SET session_version = COALESCE(session_version, 0) + 1 WHERE id = ? LIMIT 1',
+    [adminUserId]
+  );
+
+  return true;
+};
+
 const clearRateLimitKeysForAdminUser = async (identifiers = []) => {
   const normalizedIdentifiers = [];
 
@@ -359,20 +412,28 @@ const getRateLimitResetTimeForAdminUser = async (adminUser, attemptedIdentifier)
 };
 
 const ensureAdminUserIsNotTemporarilyBlocked = async (adminUser, res, attemptedIdentifier) => {
-  if (!adminUser || Number(adminUser.bloq_user || ADMIN_USER_FREE_FLAG_VALUE) !== ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE) {
+  if (!adminUser) {
     return true;
   }
 
   const resetTime = await getRateLimitResetTimeForAdminUser(adminUser, attemptedIdentifier);
 
   if (!resetTime || resetTime.getTime() <= Date.now()) {
-    await setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE);
-    adminUser.bloq_user = ADMIN_USER_FREE_FLAG_VALUE;
+    if (Number(adminUser.bloq_user || ADMIN_USER_FREE_FLAG_VALUE) === ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE) {
+      await setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE).catch(() => null);
+      adminUser.bloq_user = ADMIN_USER_FREE_FLAG_VALUE;
+    }
+
     return true;
   }
 
+  if (Number(adminUser.bloq_user || ADMIN_USER_FREE_FLAG_VALUE) !== ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE) {
+    await setAdminBlockState(adminUser.id, ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE).catch(() => null);
+    adminUser.bloq_user = ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE;
+  }
+
   res.status(429).json({
-    error: 'Muitas tentativas de login. Aguarde alguns minutos antes de tentar novamente.',
+    error: ADMIN_LOGIN_RATE_LIMIT_MESSAGE,
     retry_after_seconds: getRetryAfterSecondsFromResetTime(resetTime)
   });
 
@@ -393,14 +454,39 @@ const getValidatedAdminSession = (req, res) => {
   return session;
 };
 
-const requireAdminSession = (req, res, next) => {
-  const session = getValidatedAdminSession(req, res);
+const rejectAdminSession = (res, statusCode = 403, message = 'Usuario sem acesso ao painel.') => {
+  res.clearCookie(ADMIN_SESSION_COOKIE, getAdminCookieOptions());
+  return res.status(statusCode).json({ error: message });
+};
 
-  if (!session) {
-    return undefined;
+const requireAdminSession = async (req, res, next) => {
+  try {
+    const session = getValidatedAdminSession(req, res);
+
+    if (!session) {
+      return undefined;
+    }
+
+    const currentAdminUser = await getAdminUserById(session.id);
+
+    if (!currentAdminUser || !hasAdminPanelAccess(currentAdminUser)) {
+      return rejectAdminSession(res);
+    }
+
+    if (!adminSessionVersionMatches(session, currentAdminUser)) {
+      return rejectAdminSession(res, 401, 'Sessao invalida ou expirada.');
+    }
+
+    req.adminSession = {
+      ...session,
+      ...serializeAdminUser(currentAdminUser),
+      role: normalizeAdminRole(currentAdminUser.role)
+    };
+
+    return next();
+  } catch (error) {
+    return next(wrapError(error, { publicMessage: 'Erro ao validar sessao do admin.' }));
   }
-
-  return next();
 };
 
 const requireMasterAdminSession = async (req, res, next) => {
@@ -412,10 +498,16 @@ const requireMasterAdminSession = async (req, res, next) => {
     }
 
     const currentAdminUser = await getAdminUserById(session.id);
-    const effectiveRole = normalizeAdminRole(currentAdminUser?.role || session.role);
+    const effectiveRole = hasAdminPanelAccess(currentAdminUser)
+      ? normalizeAdminRole(currentAdminUser.role)
+      : null;
+
+    if (!currentAdminUser || !adminSessionVersionMatches(session, currentAdminUser)) {
+      return rejectAdminSession(res, 401, 'Sessao invalida ou expirada.');
+    }
 
     if (effectiveRole !== ADMIN_ROLE_MASTER) {
-      return res.status(403).json({ error: 'Apenas o admin master pode gerenciar acessos do painel.' });
+      return rejectAdminSession(res, 403, 'Apenas o admin master pode gerenciar acessos do painel.');
     }
 
     req.adminSession = {
@@ -440,8 +532,17 @@ const loginAdmin = async (req, res, next) => {
 
     const adminUser = await getAdminUserByIdentifier(username);
 
-    if (!adminUser) {
-      return res.status(401).json({ error: 'Credenciais invalidas.' });
+    if (!adminUser || !hasAdminPanelAccess(adminUser)) {
+      const failedAttempt = await registerFailedAdminLoginAttemptByIdentifiers([username]);
+
+      if (failedAttempt.isBlocked && failedAttempt.resetTime) {
+        return res.status(429).json({
+          error: ADMIN_LOGIN_RATE_LIMIT_MESSAGE,
+          retry_after_seconds: getRetryAfterSecondsFromResetTime(failedAttempt.resetTime)
+        });
+      }
+
+      return res.status(401).json({ error: ADMIN_LOGIN_USER_NOT_FOUND_MESSAGE });
     }
 
     const canContinueLogin = await ensureAdminUserIsNotTemporarilyBlocked(adminUser, res, username);
@@ -451,6 +552,22 @@ const loginAdmin = async (req, res, next) => {
     }
 
     if (!verifyAdminPassword(password, adminUser.password)) {
+      const failedAttempt = await registerFailedAdminLoginAttemptByIdentifiers([
+        username,
+        adminUser.username,
+        adminUser.email
+      ]);
+
+      if (failedAttempt.isBlocked && failedAttempt.resetTime) {
+        await setAdminBlockState(adminUser.id, ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE).catch(() => null);
+        adminUser.bloq_user = ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE;
+
+        return res.status(429).json({
+          error: ADMIN_LOGIN_RATE_LIMIT_MESSAGE,
+          retry_after_seconds: getRetryAfterSecondsFromResetTime(failedAttempt.resetTime)
+        });
+      }
+
       return res.status(401).json({ error: 'Credenciais invalidas.' });
     }
 
@@ -459,16 +576,18 @@ const loginAdmin = async (req, res, next) => {
       setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE).catch(() => null)
     ]);
 
-    const sessionPayload = {
-      ...serializeAdminUser(adminUser),
+    const sessionPayload = buildAdminSessionPayload(adminUser, {
       created_at: new Date().toISOString()
-    };
+    });
     const token = createJwtToken(sessionPayload);
 
     res.cookie(ADMIN_SESSION_COOKIE, token, getAdminCookieOptions());
 
     return res.json({
-      user: sessionPayload
+      user: {
+        ...serializeAdminUser(adminUser),
+        created_at: sessionPayload.created_at
+      }
     });
   } catch (err) {
     return next(wrapError(err, { publicMessage: 'Erro ao processar login do admin.' }));
@@ -485,7 +604,7 @@ const unlockAdminLoginByUser = async (req, res, next) => {
 
     const adminUser = await getAdminUserByIdentifier(username);
 
-    if (!adminUser) {
+    if (!adminUser || !hasAdminPanelAccess(adminUser)) {
       return res.status(404).json({ error: 'Usuario admin nao encontrado.' });
     }
 
@@ -517,7 +636,11 @@ const getAdminSession = async (req, res, next) => {
     const currentAdminUser = await getAdminUserById(req.adminSession?.id);
 
     if (!currentAdminUser) {
-      return res.json({ user: req.adminSession });
+      return rejectAdminSession(res);
+    }
+
+    if (!hasAdminPanelAccess(currentAdminUser)) {
+      return rejectAdminSession(res);
     }
 
     return res.json({
@@ -673,6 +796,10 @@ const updateAdminUser = async (req, res, next) => {
       `UPDATE users SET ${updates.join(', ')} WHERE id = ? LIMIT 1`,
       [...params, adminUserId]
     );
+
+    if (payload.password !== undefined || payload.role !== undefined) {
+      await incrementAdminSessionVersion(adminUserId);
+    }
 
     const updatedAdminUser = await getAdminUserById(adminUserId);
 

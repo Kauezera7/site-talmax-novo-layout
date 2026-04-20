@@ -3,7 +3,7 @@
  * Rota: /produtos e /categoria/:slug
  * Responsabilidade: listar produtos e aplicar filtros por busca e categoria
  */
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Search,

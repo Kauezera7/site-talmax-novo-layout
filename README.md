@@ -218,6 +218,11 @@ Variaveis essenciais:
 - `DB_USER`
 - `DB_PASSWORD`
 - `DB_NAME`
+- `DB_SSL`
+- `DB_SSL_CA` ou `DB_SSL_CA_PATH`
+- `DB_SSL_CERT` ou `DB_SSL_CERT_PATH`
+- `DB_SSL_KEY` ou `DB_SSL_KEY_PATH`
+- `DB_SSL_SERVERNAME`
 - `PORT`
 - `NODE_ENV`
 - `ADMIN_JWT_SECRET`
@@ -238,6 +243,7 @@ Variaveis opcionais de storage:
 - `SFTP_PORT`
 - `SFTP_USER`
 - `SFTP_PASSWORD`
+- `SFTP_HOST_FINGERPRINT_SHA256` ou `SFTP_HOST_FINGERPRINT_MD5`
 - `SFTP_REMOTE_DIR`
 - `SFTP_PUBLIC_BASE_URL`
 
@@ -250,6 +256,8 @@ Observacoes:
 
 - use `ADMIN_BOOTSTRAP_*` apenas em ambiente vazio para criar o primeiro admin com senha hasheada
 - depois do primeiro login, remova essas variaveis do ambiente
+- quando `DB_SSL` estiver ativo, o backend valida o certificado TLS do MySQL; para CA privada, configure `DB_SSL_CA` ou `DB_SSL_CA_PATH`
+- quando o modo `SFTP_*` estiver ativo, configure tambem a fingerprint do host em `SFTP_HOST_FINGERPRINT_SHA256` ou `SFTP_HOST_FINGERPRINT_MD5`
 
 Variavel opcional do frontend:
 

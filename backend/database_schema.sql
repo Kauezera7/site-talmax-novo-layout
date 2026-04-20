@@ -128,10 +128,23 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(160) DEFAULT NULL,
     role VARCHAR(20) NOT NULL DEFAULT 'editor',
     bloq_user TINYINT NOT NULL DEFAULT 1,
+    session_version INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uk_users_username (username),
     UNIQUE KEY uk_users_email (email)
+);
+
+CREATE TABLE IF NOT EXISTS admin_login_rate_limits (
+    key_name VARCHAR(255) NOT NULL,
+    failed_attempts INT NOT NULL DEFAULT 0,
+    window_started_at BIGINT NOT NULL,
+    blocked_until BIGINT DEFAULT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (key_name),
+    KEY idx_admin_login_rate_limits_updated_at (updated_at),
+    KEY idx_admin_login_rate_limits_blocked_until (blocked_until)
 );
 
 CREATE TABLE IF NOT EXISTS page_settings (

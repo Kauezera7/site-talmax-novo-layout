@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Save, UploadCloud } from 'lucide-react';
 import { apiAssetPath } from '../../../utils/assets';
 
@@ -6,38 +6,33 @@ const ButtonSavingIndicator = () => (
   <span className="loader loader_bubble admin-button-loader" aria-hidden="true" />
 );
 
-const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel, isSubmitting = false }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    slug: '',
-    icon: null,
-    is_visible: true,
-    parent_id: null
-  });
-  const [preview, setPreview] = useState(null);
+const DEFAULT_CATEGORY_FORM_STATE = {
+  name: '',
+  slug: '',
+  icon: null,
+  is_visible: true,
+  parent_id: null
+};
 
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
+const buildCategoryFormState = (initialData) => (
+  initialData
+    ? {
         name: initialData.name || '',
         slug: initialData.slug || '',
         icon: null,
         is_visible: Boolean(initialData.is_visible),
         parent_id: initialData.parent_id || null
-      });
-      setPreview(initialData.icon_url ? apiAssetPath(initialData.icon_url) : null);
-      return;
-    }
+      }
+    : { ...DEFAULT_CATEGORY_FORM_STATE }
+);
 
-    setFormData({
-      name: '',
-      slug: '',
-      icon: null,
-      is_visible: true,
-      parent_id: null
-    });
-    setPreview(null);
-  }, [initialData]);
+const getCategoryPreview = (initialData) => (
+  initialData?.icon_url ? apiAssetPath(initialData.icon_url) : null
+);
+
+const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel, isSubmitting = false }) => {
+  const [formData, setFormData] = useState(() => buildCategoryFormState(initialData));
+  const [preview, setPreview] = useState(() => getCategoryPreview(initialData));
 
   const handleNameChange = (e) => {
     const name = e.target.value;
@@ -120,7 +115,7 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel, isSubmi
             <div className="file-upload-area" style={{ padding: '15px' }}>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif"
                 onChange={(e) => {
                   const file = e.target.files[0];
                   if (file) {

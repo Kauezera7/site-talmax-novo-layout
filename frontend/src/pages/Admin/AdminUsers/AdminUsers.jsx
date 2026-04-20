@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { KeyRound, Mail, PencilLine, RefreshCw, ShieldCheck, UserCog, Users } from 'lucide-react';
-import { useAdmin } from '../../../context/AdminContext';
+import { useAdmin } from '../../../context/useAdmin';
 import { createAdminUser, listAdminUsers, updateAdminUser } from '../../../services/adminUsers';
 import AdminSecurity from '../AdminSecurity/AdminSecurity';
 import './AdminUsers.css';

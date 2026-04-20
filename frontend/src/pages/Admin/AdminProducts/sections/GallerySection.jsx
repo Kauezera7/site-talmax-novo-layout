@@ -13,7 +13,7 @@ const GallerySection = ({
     <span className="section-label">3. Galeria de Fotos</span>
 
     <div className="file-upload-area">
-      <input type="file" multiple accept="image/*" onChange={handleFileChange} />
+      <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileChange} />
       <UploadCloud size={40} color="var(--admin-primary)" />
       <p>Clique ou arraste fotos para o produto</p>
     </div>

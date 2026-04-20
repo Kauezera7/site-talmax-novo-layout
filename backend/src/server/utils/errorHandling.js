@@ -6,6 +6,26 @@ const logger = require('./logger');
 const isProduction = process.env.NODE_ENV === 'production';
 const GENERIC_PRODUCTION_ERROR_MESSAGE = 'Ocorreu um erro interno. Tente novamente mais tarde.';
 const MAX_FILE_SIZE_MB = Number(process.env.UPLOAD_MAX_FILE_SIZE_MB || 15);
+const REDACTED_LOG_VALUE = '[REDACTED]';
+const SENSITIVE_LOG_KEY_PARTIALS = [
+  'password',
+  'senha',
+  'passwd',
+  'passphrase',
+  'secret',
+  'token',
+  'authorization',
+  'cookie',
+  'apikey',
+  'accesskey',
+  'privatekey',
+  'clientsecret',
+  'jwt',
+  'sessionid',
+  'sessiontoken',
+  'refreshtoken',
+  'accesstoken'
+];
 
 const normalizeStatusCode = (value) => {
   const parsed = Number(value);
@@ -166,6 +186,57 @@ const summarizeFiles = (files) => {
   }, {});
 };
 
+const normalizeSensitiveLogKey = (value) => (
+  typeof value === 'string'
+    ? value.replace(/[^a-z0-9]/gi, '').toLowerCase()
+    : ''
+);
+
+const isSensitiveLogKey = (key) => {
+  const normalizedKey = normalizeSensitiveLogKey(String(key || ''));
+
+  if (!normalizedKey) {
+    return false;
+  }
+
+  return SENSITIVE_LOG_KEY_PARTIALS.some((sensitivePart) => normalizedKey.includes(sensitivePart));
+};
+
+const redactSensitiveLogData = (value, visited = new WeakSet()) => {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  if (typeof value !== 'object') {
+    return value;
+  }
+
+  if (Buffer.isBuffer(value)) {
+    return `[Buffer ${value.length} bytes]`;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (visited.has(value)) {
+    return '[Circular]';
+  }
+
+  visited.add(value);
+
+  if (Array.isArray(value)) {
+    return value.map((item) => redactSensitiveLogData(item, visited));
+  }
+
+  return Object.entries(value).reduce((accumulator, [key, item]) => {
+    accumulator[key] = isSensitiveLogKey(key)
+      ? REDACTED_LOG_VALUE
+      : redactSensitiveLogData(item, visited);
+    return accumulator;
+  }, {});
+};
+
 const extractRequestContext = (req) => {
   const context = {
     id: req.requestId,
@@ -175,15 +246,15 @@ const extractRequestContext = (req) => {
   };
 
   if (req.params && Object.keys(req.params).length > 0) {
-    context.params = req.params;
+    context.params = redactSensitiveLogData(req.params);
   }
 
   if (req.query && Object.keys(req.query).length > 0) {
-    context.query = req.query;
+    context.query = redactSensitiveLogData(req.query);
   }
 
   if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
-    context.body = req.body;
+    context.body = redactSensitiveLogData(req.body);
   }
 
   if (req.file) {
@@ -231,8 +302,8 @@ const errorHandler = (error, req, res, next) => {
     err: originalError,
     statusCode: normalizedError.statusCode,
     code: normalizedError.code,
-    details: normalizedError.details,
-    meta: normalizedError.meta,
+    details: redactSensitiveLogData(normalizedError.details),
+    meta: redactSensitiveLogData(normalizedError.meta),
     request: extractRequestContext(req)
   }, normalizedError.message || normalizedError.publicMessage || 'Erro ao processar requisicao');
 
@@ -254,5 +325,6 @@ module.exports = {
   apiNotFoundHandler,
   createHttpError,
   errorHandler,
+  redactSensitiveLogData,
   wrapError
 };

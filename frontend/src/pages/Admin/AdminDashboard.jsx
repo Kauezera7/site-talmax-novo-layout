@@ -23,7 +23,8 @@ import {
   Wrench
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAdmin, AdminProvider } from '../../context/AdminContext';
+import { AdminProvider } from '../../context/AdminContext';
+import { useAdmin } from '../../context/useAdmin';
 import { logoutAdmin } from '../../services/adminAuth';
 import './AdminBase.css';
 

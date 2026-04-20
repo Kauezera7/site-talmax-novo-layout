@@ -58,7 +58,7 @@ const getApiOrigin = () => {
   try {
     const apiUrl = new URL(API_URL, window.location.origin);
     return apiUrl.origin;
-  } catch (error) {
+  } catch {
     return '';
   }
 };
@@ -71,7 +71,7 @@ const getApiBasePath = () => {
   try {
     const apiUrl = new URL(API_URL, window.location.origin);
     return apiUrl.pathname.replace(/\/api\/?$/, '').replace(/\/+$/, '');
-  } catch (error) {
+  } catch {
     return '';
   }
 };

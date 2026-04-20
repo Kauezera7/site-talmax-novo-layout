@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Package, Search, ExternalLink, Filter, Check, ChevronDown, Edit, Eye, EyeOff } from 'lucide-react';
-import { useAdmin } from '../../../context/AdminContext';
+import { useAdmin } from '../../../context/useAdmin';
 import { apiAssetPath } from '../../../utils/assets';
 import { parseSafeExtraData } from '../../../utils/contentSafety';
 import { normalizeSearchText } from '../../../utils/searchText';

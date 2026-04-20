@@ -3,7 +3,11 @@ import { assetPath } from '../../utils/assets';
 import './HistoriaDiretoria.css';
 
 const HistoriaDiretoria = () => {
-  const [isMobileCards, setIsMobileCards] = useState(false);
+  const [isMobileCards, setIsMobileCards] = useState(() => (
+    typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(max-width: 768px)').matches
+  ));
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const cardRefs = useRef([]);
   const activeCardIndexRef = useRef(0);
@@ -46,8 +50,6 @@ const HistoriaDiretoria = () => {
     const syncMobileState = (event) => {
       setIsMobileCards(event.matches);
     };
-
-    setIsMobileCards(mediaQuery.matches);
 
     if (typeof mediaQuery.addEventListener === 'function') {
       mediaQuery.addEventListener('change', syncMobileState);

@@ -35,7 +35,7 @@ const DigitalGroupPage = () => {
       try {
         const item = await digitalGroupService.getPublicBySlug(slug);
         setGroup(item);
-      } catch (error) {
+      } catch {
         setGroup(null);
       } finally {
         setIsLoading(false);

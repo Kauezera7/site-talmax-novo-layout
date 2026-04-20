@@ -3,7 +3,10 @@ const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
 const HTML_BREAK_PATTERN = /<\s*br\s*\/?>/gi;
 const HTML_BLOCK_CLOSE_PATTERN = /<\/\s*(p|div|section|article|aside|header|footer|main|li|ul|ol|h[1-6]|tr|table|thead|tbody)\s*>/gi;
 const HTML_TAG_PATTERN = /<\/?[^>]+>/g;
-const CONTROL_CHAR_PATTERN = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
+const CONTROL_CHAR_PATTERN = new RegExp(
+  `[${String.fromCharCode(0)}-${String.fromCharCode(8)}${String.fromCharCode(11)}${String.fromCharCode(12)}${String.fromCharCode(14)}-${String.fromCharCode(31)}${String.fromCharCode(127)}]`,
+  'g'
+);
 const UNSAFE_PROTOCOL_PATTERN = /^(?:javascript|data|vbscript|file):/i;
 const ABSOLUTE_URL_PATTERN = /^(?:[a-z][a-z0-9+.-]*:)?\/\//i;
 const CLOUDINARY_PATH_PATTERN = /^res\.cloudinary\.com\//i;
@@ -70,7 +73,7 @@ export const sanitizeNavigationTarget = (value, options = {}) => {
     try {
       const parsedUrl = new URL(sanitized);
       return ['http:', 'https:', 'mailto:', 'tel:'].includes(parsedUrl.protocol) ? sanitized : '';
-    } catch (error) {
+    } catch {
       return '';
     }
   }
@@ -112,7 +115,7 @@ export const sanitizeAssetReference = (value, options = {}) => {
     try {
       const parsedUrl = new URL(sanitized);
       return ['http:', 'https:', 'blob:'].includes(parsedUrl.protocol) ? sanitized : '';
-    } catch (error) {
+    } catch {
       return '';
     }
   }
@@ -270,7 +273,7 @@ export const parseSafeExtraData = (value) => {
   if (typeof value === 'string') {
     try {
       parsedValue = JSON.parse(value);
-    } catch (error) {
+    } catch {
       return {};
     }
   }

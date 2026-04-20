@@ -29,10 +29,10 @@ const readStoredLockState = () => {
       identifier,
       expiresAt
     };
-  } catch (error) {
+  } catch {
     try {
       window.localStorage.removeItem(ADMIN_LOGIN_LOCK_STORAGE_KEY);
-    } catch (storageError) {
+    } catch {
       // Ignora erros de storage.
     }
 
@@ -126,11 +126,6 @@ const AdminLogin = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (lockRemainingSeconds > 0) {
-      setError('Muitas tentativas de login.');
-      return;
-    }
-
     setError('');
     setIsLoading(true);
 
@@ -148,6 +143,8 @@ const AdminLogin = () => {
             expiresAt: Date.now() + (loginError.retryAfterSeconds * 1000)
           });
         }
+      } else if (loginError.statusCode && loginError.statusCode !== 429) {
+        setLockState(null);
       }
 
       setError(loginError.message);
@@ -157,7 +154,7 @@ const AdminLogin = () => {
   };
 
   const displayedError = isLocked
-    ? 'Muitas tentativas de login. Tente novamente mais tarde.'
+    ? error || 'Muitas tentativas de login. Tente novamente mais tarde.'
     : error;
 
   return (
@@ -213,8 +210,8 @@ const AdminLogin = () => {
 
           {displayedError && <div className="admin-login-error">{displayedError}</div>}
 
-          <button type="submit" className="admin-login-submit" disabled={isLoading || isLocked}>
-            {isLoading ? 'Entrando...' : isLocked ? `Aguarde ${formatCountdown(lockRemainingSeconds)}` : 'Acessar painel'}
+          <button type="submit" className="admin-login-submit" disabled={isLoading}>
+            {isLoading ? 'Entrando...' : isLocked ? `Tentar novamente (${formatCountdown(lockRemainingSeconds)})` : 'Acessar painel'}
           </button>
         </form>
       </div>

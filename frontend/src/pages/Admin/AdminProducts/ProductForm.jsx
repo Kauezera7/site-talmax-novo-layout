@@ -1,9 +1,8 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { Save } from 'lucide-react';
+import { useMemo } from 'react';
 import {
-  adjustMergeRangesForRemovedColumn,
   adjustMergeRangesForRemovedRow,
-  autoResizeTableTextarea,
   buildInitialPreviewList,
   clampTableDimension,
   createDragSelectionState,
@@ -30,6 +29,60 @@ const ButtonSavingIndicator = () => (
   <span className="loader loader_bubble admin-button-loader" aria-hidden="true" />
 );
 
+const buildProductEditorState = (initialData) => {
+  if (!initialData) {
+    return {
+      formData: createInitialFormState(),
+      existingImages: [],
+      newImagePreviews: [],
+      primaryPreview: '',
+      removedExistingImages: []
+    };
+  }
+
+  const extra = parseSafeExtraData(initialData.extra_data);
+  const initialPreviews = buildInitialPreviewList(initialData.main_image, extra.images);
+
+  return {
+    formData: {
+      name: initialData.name || '',
+      is_active: initialData.is_active !== false,
+      category_ids: initialData.category_ids || [],
+      sub_category_ids: initialData.sub_category_ids || [],
+      description: initialData.description || '',
+      descriptionTabLabel: extra.descriptionTabLabel || '',
+      descriptionAsList: extra.descriptionAsList || false,
+      technicalTabLabel: extra.technicalTabLabel || '',
+      productTabs: normalizeProductTabs(initialData.product_tabs, extra.dynamicSections),
+      showFeatures: extra.showFeatures !== false && Boolean(extra.features && extra.features.length > 0),
+      hideModelData: false,
+      showModelSection: extra.showModelSection !== false,
+      showQuoteButton: extra.showQuoteButton !== false,
+      images: [],
+      features: (extra.features && extra.features.length > 0) ? extra.features : [''],
+      techSpecs: (extra.techSpecs && extra.techSpecs.length > 0) ? extra.techSpecs : [{ label: '', value: '' }],
+      modelTitle: extra.modelTitle || '',
+      modelTable: extra.modelTable || { headers: ['Tipo / ReferÃªncia', 'CÃ³digo'], rows: [['', '']] },
+      modelTables: normalizeTechnicalTables(extra.modelTables, extra.modelTitle, extra.modelTable).map((table, index) => ({
+        ...table,
+        modelTable: normalizeModelTable(
+          index === 0 && extra.singleCellFirstRow
+            ? {
+                ...table.modelTable,
+                mergedHeader: true,
+                mergedHeaderEndColumn: table.modelTable.mergedHeaderEndColumn ?? (table.modelTable.headers.length - 1)
+              }
+            : table.modelTable
+        )
+      }))
+    },
+    existingImages: initialPreviews,
+    newImagePreviews: [],
+    primaryPreview: initialData.main_image || initialPreviews[0] || '',
+    removedExistingImages: []
+  };
+};
+
 const ProductForm = ({
   initialData,
   mainCategories,
@@ -39,11 +92,12 @@ const ProductForm = ({
   isSubmitting = false,
   onValidationError
 }) => {
-  const [formData, setFormData] = useState(createInitialFormState);
-  const [existingImages, setExistingImages] = useState([]);
-  const [newImagePreviews, setNewImagePreviews] = useState([]);
-  const [primaryPreview, setPrimaryPreview] = useState('');
-  const [removedExistingImages, setRemovedExistingImages] = useState([]);
+  const initialEditorState = useMemo(() => buildProductEditorState(initialData), [initialData]);
+  const [formData, setFormData] = useState(() => initialEditorState.formData);
+  const [existingImages, setExistingImages] = useState(() => initialEditorState.existingImages);
+  const [newImagePreviews, setNewImagePreviews] = useState(() => initialEditorState.newImagePreviews);
+  const [primaryPreview, setPrimaryPreview] = useState(() => initialEditorState.primaryPreview);
+  const [removedExistingImages, setRemovedExistingImages] = useState(() => initialEditorState.removedExistingImages);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isSubCategoryDropdownOpen, setIsSubCategoryDropdownOpen] = useState(false);
   const [isTableSizeOpen, setIsTableSizeOpen] = useState(false);
@@ -52,69 +106,6 @@ const ProductForm = ({
   const [activeSheetCell, setActiveSheetCell] = useState(null);
   const cellInputRefs = useRef({});
   const previews = [...existingImages, ...newImagePreviews];
-
-  useEffect(() => {
-    if (initialData) {
-      const extra = parseSafeExtraData(initialData.extra_data);
-
-      setFormData({
-        name: initialData.name || '',
-        is_active: initialData.is_active !== false,
-        category_ids: initialData.category_ids || [],
-        sub_category_ids: initialData.sub_category_ids || [],
-        description: initialData.description || '',
-        descriptionTabLabel: extra.descriptionTabLabel || '',
-        descriptionAsList: extra.descriptionAsList || false,
-        technicalTabLabel: extra.technicalTabLabel || '',
-        productTabs: normalizeProductTabs(initialData.product_tabs, extra.dynamicSections),
-        showFeatures: extra.showFeatures !== false && Boolean(extra.features && extra.features.length > 0),
-        hideModelData: false,
-        showModelSection: extra.showModelSection !== false,
-        showQuoteButton: extra.showQuoteButton !== false,
-        images: [],
-        features: (extra.features && extra.features.length > 0) ? extra.features : [''],
-        techSpecs: (extra.techSpecs && extra.techSpecs.length > 0) ? extra.techSpecs : [{ label: '', value: '' }],
-        modelTitle: extra.modelTitle || '',
-        modelTable: extra.modelTable || { headers: ['Tipo / ReferÃªncia', 'CÃ³digo'], rows: [['', '']] }
-      });
-
-      setFormData((current) => ({
-        ...current,
-        modelTables: normalizeTechnicalTables(extra.modelTables, extra.modelTitle, extra.modelTable).map((table, index) => ({
-          ...table,
-          modelTable: normalizeModelTable(
-            index === 0 && extra.singleCellFirstRow
-              ? {
-                ...table.modelTable,
-                mergedHeader: true,
-                mergedHeaderEndColumn: table.modelTable.mergedHeaderEndColumn ?? (table.modelTable.headers.length - 1)
-              }
-              : table.modelTable
-          )
-        }))
-      }));
-
-      const initialPreviews = buildInitialPreviewList(initialData.main_image, extra.images);
-
-      if (initialPreviews.length > 0) {
-        setExistingImages(initialPreviews);
-        setNewImagePreviews([]);
-        setPrimaryPreview(initialData.main_image || initialPreviews[0]);
-      } else {
-        setExistingImages([]);
-        setNewImagePreviews([]);
-        setPrimaryPreview('');
-      }
-      setRemovedExistingImages([]);
-      return;
-    }
-
-    setFormData(createInitialFormState());
-    setExistingImages([]);
-    setNewImagePreviews([]);
-    setPrimaryPreview('');
-    setRemovedExistingImages([]);
-  }, [initialData]);
 
   useEffect(() => {
     const handlePointerUp = () => {
@@ -223,31 +214,6 @@ const ProductForm = ({
         modelTable: { headers: newHeaders, rows: newRows }
       };
     });
-  };
-
-  const removeTableHeader = (tableIndex, headerIndex) => {
-    const currentTable = formData.modelTables[tableIndex];
-    if (!currentTable || currentTable.modelTable.headers.length <= 1) return;
-
-    updateTechnicalTable(tableIndex, (table) => ({
-      ...table,
-      modelTable: {
-        headers: table.modelTable.headers.filter((_, index) => index !== headerIndex),
-        rows: table.modelTable.rows.map((row) => row.filter((_, index) => index !== headerIndex)),
-        mergeRanges: adjustMergeRangesForRemovedColumn(
-          table.modelTable.mergeRanges,
-          headerIndex,
-          table.modelTable.rows.length + 1,
-          table.modelTable.headers.length - 1
-        )
-      }
-    }));
-  };
-
-  const removeLastTableHeader = (tableIndex) => {
-    const currentTable = formData.modelTables[tableIndex];
-    if (!currentTable || currentTable.modelTable.headers.length <= 1) return;
-    removeTableHeader(tableIndex, currentTable.modelTable.headers.length - 1);
   };
 
   const resizeTable = (tableIndex, nextRowCount, nextColumnCount) => {

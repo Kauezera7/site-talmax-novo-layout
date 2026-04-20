@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Search, Save, CheckCircle, ChevronRight } from 'lucide-react';
 import { apiAssetPath } from '../../../utils/assets';
 import { parseSafeExtraData } from '../../../utils/contentSafety';
@@ -32,6 +32,22 @@ const getInitialOrder = (product, sectionKey) => {
     : (sectionKey === 'scanners' ? product.scanner_order : product.printer_order)) || '';
 };
 
+const buildSelectedProductsFromScope = (products, sectionKey) => (
+  products
+    .filter((product) => {
+      if (sectionKey === 'featured') return product.is_featured;
+      if (sectionKey === 'upcera') return product.is_upcera;
+      if (sectionKey === 'scanners') return product.is_scanner;
+      if (sectionKey === 'printers') return product.is_3d_printer;
+      return false;
+    })
+    .map((product) => ({
+      id: product.id,
+      displayMode: getInitialDisplayMode(product, sectionKey),
+      order: getInitialOrder(product, sectionKey)
+    }))
+);
+
 const SpecialSectionManager = ({
   sectionTitle,
   sectionKey,
@@ -42,7 +58,6 @@ const SpecialSectionManager = ({
   supportsDisplayMode = true,
   onSave
 }) => {
-  const [selectedProducts, setSelectedProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCats, setSelectedCats] = useState([]);
   const [isCatDropdownOpen, setIsCatDropdownOpen] = useState(false);
@@ -85,23 +100,30 @@ const SpecialSectionManager = ({
     return mainCategories.filter((category) => mainCategoryIds.has(category.id));
   }, [scopedProducts, mainCategories, subCategories]);
 
-  useEffect(() => {
-    const initial = scopedProducts
-      .filter((product) => {
-        if (sectionKey === 'featured') return product.is_featured;
-        if (sectionKey === 'upcera') return product.is_upcera;
-        if (sectionKey === 'scanners') return product.is_scanner;
-        if (sectionKey === 'printers') return product.is_3d_printer;
-        return false;
-      })
-      .map((product) => ({
-        id: product.id,
-        displayMode: getInitialDisplayMode(product, sectionKey),
-        order: getInitialOrder(product, sectionKey)
-      }));
+  const initialSelectedProducts = useMemo(
+    () => buildSelectedProductsFromScope(scopedProducts, sectionKey),
+    [scopedProducts, sectionKey]
+  );
 
-    setSelectedProducts(initial);
-  }, [scopedProducts, sectionKey]);
+  const [selectedProductsState, setSelectedProductsState] = useState(() => ({
+    source: initialSelectedProducts,
+    items: initialSelectedProducts
+  }));
+
+  if (selectedProductsState.source !== initialSelectedProducts) {
+    setSelectedProductsState({
+      source: initialSelectedProducts,
+      items: initialSelectedProducts
+    });
+  }
+
+  const selectedProducts = selectedProductsState.items;
+  const setSelectedProducts = (updater) => {
+    setSelectedProductsState((current) => ({
+      ...current,
+      items: typeof updater === 'function' ? updater(current.items) : updater
+    }));
+  };
 
   const toggleProduct = (product) => {
     const isSelected = selectedProducts.find((item) => item.id === product.id);

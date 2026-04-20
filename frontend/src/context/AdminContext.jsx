@@ -12,14 +12,12 @@
  *
  * Todos eles podem consumir `useAdmin()` para acessar dados, loading, erros e funcoes auxiliares.
  */
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useProducts } from '../hooks/useProducts';
 import { useCategories } from '../hooks/useCategories';
 import { useBanners } from '../hooks/useBanners';
 import { validateAdminSession } from '../services/adminAuth';
-
-// Cria o contexto que sera compartilhado entre as telas do admin.
-const AdminContext = createContext();
+import AdminContext from './AdminContextValue';
 
 export const AdminProvider = ({ children }) => {
   // Cada hook encapsula a logica de uma area do painel.
@@ -46,7 +44,7 @@ export const AdminProvider = ({ children }) => {
         }
 
         setSessionUser(result.authenticated ? result.user || null : null);
-      } catch (error) {
+      } catch {
         if (isMounted) {
           setSessionUser(null);
         }
@@ -127,18 +125,4 @@ export const AdminProvider = ({ children }) => {
       {children}
     </AdminContext.Provider>
   );
-};
-
-export const useAdmin = () => {
-  // Hook auxiliar para facilitar o consumo do contexto.
-  // Em vez de usar useContext(AdminContext) em toda tela,
-  // as paginas do admin usam apenas `useAdmin()`.
-  const context = useContext(AdminContext);
-
-  // Protecao para evitar uso fora do provider.
-  if (!context) {
-    throw new Error('useAdmin deve ser usado dentro de um AdminProvider');
-  }
-
-  return context;
 };

@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Save, UploadCloud, Image as ImageIcon, RefreshCcw } from 'lucide-react';
-import { useAdmin } from '../../../context/AdminContext';
+import { useAdmin } from '../../../context/useAdmin';
 import homeService from '../../../services/homeService';
 import { apiAssetPath } from '../../../utils/assets';
 import { DIGITAL_CARD_TEMPLATES, parseDigitalActionsPayload } from '../../../components/TalmaxDigital/digitalCardTemplates';
@@ -56,7 +56,7 @@ const AdminTalmaxDigital = () => {
     [segment?.actions]
   );
 
-  const loadSegment = async () => {
+  const loadSegment = useCallback(async () => {
     setIsLoading(true);
 
     try {
@@ -78,11 +78,11 @@ const AdminTalmaxDigital = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [addToast]);
 
   useEffect(() => {
     loadSegment();
-  }, []);
+  }, [loadSegment]);
 
   const handleImageChange = (cardId, side, file) => {
     if (!file) return;
@@ -238,7 +238,7 @@ const AdminTalmaxDigital = () => {
                     <div className="file-upload-area admin-talmax-digital__upload-area">
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
                         onChange={(event) => handleImageChange(card.id, 'front', event.target.files?.[0])}
                       />
                       <UploadCloud size={28} color="var(--admin-primary)" />
@@ -260,7 +260,7 @@ const AdminTalmaxDigital = () => {
                     <div className="file-upload-area admin-talmax-digital__upload-area">
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
                         onChange={(event) => handleImageChange(card.id, 'back', event.target.files?.[0])}
                       />
                       <UploadCloud size={28} color="var(--admin-primary)" />

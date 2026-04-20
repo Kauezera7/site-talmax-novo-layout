@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Save, UploadCloud, FileText } from 'lucide-react';
-import { useAdmin } from '../../../context/AdminContext';
+import { useAdmin } from '../../../context/useAdmin';
 import pageSettingsService, { normalizeSpecialPageSettings } from '../../../services/pageSettingsService';
 import { apiAssetPath } from '../../../utils/assets';
 import './SpecialPageSettingsForm.css';
@@ -34,7 +34,7 @@ const SpecialPageSettingsForm = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     setIsLoading(true);
 
     try {
@@ -47,11 +47,11 @@ const SpecialPageSettingsForm = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [addToast, pageKey]);
 
   useEffect(() => {
     loadSettings();
-  }, [pageKey]);
+  }, [loadSettings]);
 
   const handleInputChange = (field, value) => {
     setForm((current) => ({
@@ -165,7 +165,7 @@ const SpecialPageSettingsForm = ({
               <div className="file-upload-area special-page-settings-form__upload-area">
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   onChange={(event) => handleLogoChange(event.target.files?.[0])}
                 />
                 <UploadCloud size={28} color="var(--admin-primary)" />

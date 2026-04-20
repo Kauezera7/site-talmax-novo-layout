@@ -3,19 +3,22 @@
  * Uso: componente global do site publico
  * Responsabilidade: exibir e registrar o consentimento de cookies
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './CookieBanner.css';
 
 const CookieBanner = () => {
-  const [showBanner, setShowBanner] = useState(false);
-
-  useEffect(() => {
-    const consent = localStorage.getItem('cookie-consent');
-    if (!consent) {
-      setShowBanner(true);
+  const [showBanner, setShowBanner] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
     }
-  }, []);
+
+    try {
+      return !window.localStorage.getItem('cookie-consent');
+    } catch {
+      return true;
+    }
+  });
 
   const handleConsent = (status) => {
     localStorage.setItem('cookie-consent', status);

@@ -3,6 +3,7 @@ const logger = require('../utils/logger');
 const { hashAdminPassword } = require('./adminPassword');
 
 const ADMIN_ROLE_MASTER = 'master';
+const ADMIN_ROLE_EDITOR = 'editor';
 const ADMIN_USER_FREE_FLAG_VALUE = 1;
 
 const normalizeEnvValue = (value) => (
@@ -43,7 +44,16 @@ const getUsersTableColumns = async () => {
 };
 
 const countAdminUsers = async () => {
-  const [rows] = await db.query('SELECT COUNT(*) AS total FROM users');
+  const columns = await getUsersTableColumns();
+
+  const query = columns.has('role')
+    ? 'SELECT COUNT(*) AS total FROM users WHERE LOWER(role) IN (?, ?)'
+    : 'SELECT COUNT(*) AS total FROM users';
+  const params = columns.has('role')
+    ? [ADMIN_ROLE_MASTER, ADMIN_ROLE_EDITOR]
+    : [];
+  const [rows] = await db.query(query, params);
+
   return Number(rows?.[0]?.total || 0);
 };
 
@@ -69,6 +79,11 @@ const buildBootstrapInsert = (columns, config) => {
   if (columns.has('bloq_user')) {
     fields.push('bloq_user');
     values.push(ADMIN_USER_FREE_FLAG_VALUE);
+  }
+
+  if (columns.has('session_version')) {
+    fields.push('session_version');
+    values.push(0);
   }
 
   return { fields, values };

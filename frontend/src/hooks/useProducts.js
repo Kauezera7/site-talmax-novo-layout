@@ -103,11 +103,10 @@ export const useProducts = () => {
 
   const updateSpecialSection = async (section, selectedProducts) => {
     try {
-      let res;
-      if (section === 'upcera') res = await productService.updateUpcera(selectedProducts);
-      else if (section === 'scanners') res = await productService.updateScanners(selectedProducts);
-      else if (section === 'printers') res = await productService.updatePrinters(selectedProducts);
-      else if (section === 'featured') res = await productService.updateFeatured(selectedProducts);
+      if (section === 'upcera') await productService.updateUpcera(selectedProducts);
+      else if (section === 'scanners') await productService.updateScanners(selectedProducts);
+      else if (section === 'printers') await productService.updatePrinters(selectedProducts);
+      else if (section === 'featured') await productService.updateFeatured(selectedProducts);
       
       await fetchProducts();
       return { success: true };

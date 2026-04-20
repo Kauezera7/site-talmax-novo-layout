@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Plus, Layout, AlertCircle, X, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAdmin } from '../../../context/AdminContext';
+import { useAdmin } from '../../../context/useAdmin';
 import homeService from '../../../services/homeService';
 import SegmentTable from './SegmentTable';
 import SegmentForm from './SegmentForm';
@@ -22,7 +22,7 @@ const AdminSegments = () => {
   const [orderDrafts, setOrderDrafts] = useState({});
   const [savingOrderId, setSavingOrderId] = useState(null);
 
-  const fetchSegments = async () => {
+  const fetchSegments = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await homeService.getAll();
@@ -33,11 +33,11 @@ const AdminSegments = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [addToast]);
 
   useEffect(() => {
     fetchSegments();
-  }, []);
+  }, [fetchSegments]);
 
   const handleCreate = () => {
     setEditingSegment(null);

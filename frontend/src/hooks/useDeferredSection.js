@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 
 const useDeferredSection = ({ rootMargin = '300px 0px', threshold = 0.01 } = {}) => {
   const sectionRef = useRef(null);
-  const [shouldLoad, setShouldLoad] = useState(false);
+  const [shouldLoad, setShouldLoad] = useState(() => (
+    typeof window !== 'undefined' && typeof IntersectionObserver === 'undefined'
+  ));
 
   useEffect(() => {
     if (shouldLoad) {
@@ -16,7 +18,6 @@ const useDeferredSection = ({ rootMargin = '300px 0px', threshold = 0.01 } = {})
     }
 
     if (typeof IntersectionObserver === 'undefined') {
-      setShouldLoad(true);
       return undefined;
     }
 

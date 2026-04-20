@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Save, UploadCloud } from 'lucide-react';
 import { apiAssetPath } from '../../../utils/assets';
 
@@ -14,26 +14,25 @@ const ButtonSavingIndicator = () => (
   <span className="loader loader_bubble admin-button-loader" aria-hidden="true" />
 );
 
-const BannerForm = ({ initialData, onSubmit, onCancel, isSubmitting = false }) => {
-  const [formData, setFormData] = useState(initialFormState);
-  const [preview, setPreview] = useState(null);
-
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
+const buildBannerFormState = (initialData) => (
+  initialData
+    ? {
         title: initialData.title || '',
         link_url: initialData.link_url || '',
         display_order: initialData.display_order ?? 0,
         active: Boolean(initialData.active),
         image: null
-      });
-      setPreview(initialData.image_url ? apiAssetPath(initialData.image_url) : null);
-      return;
-    }
+      }
+    : { ...initialFormState }
+);
 
-    setFormData(initialFormState);
-    setPreview(null);
-  }, [initialData]);
+const getBannerPreview = (initialData) => (
+  initialData?.image_url ? apiAssetPath(initialData.image_url) : null
+);
+
+const BannerForm = ({ initialData, onSubmit, onCancel, isSubmitting = false }) => {
+  const [formData, setFormData] = useState(() => buildBannerFormState(initialData));
+  const [preview, setPreview] = useState(() => getBannerPreview(initialData));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -57,7 +56,7 @@ const BannerForm = ({ initialData, onSubmit, onCancel, isSubmitting = false }) =
           <div className="file-upload-area banner-upload-area">
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={(e) => {
                 const file = e.target.files[0];
                 if (file) {

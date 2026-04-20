@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   Globe,
@@ -13,7 +13,7 @@ import {
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAdmin } from '../../../context/AdminContext';
+import { useAdmin } from '../../../context/useAdmin';
 import technicalAssistanceService from '../../../services/technicalAssistanceService';
 import './AdminTechnicalAssistance.css';
 
@@ -50,7 +50,7 @@ const AdminTechnicalAssistance = () => {
   const [form, setForm] = useState(buildEmptyForm());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loadItems = async () => {
+  const loadItems = useCallback(async () => {
     setIsLoading(true);
 
     try {
@@ -62,11 +62,11 @@ const AdminTechnicalAssistance = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [addToast]);
 
   useEffect(() => {
     loadItems();
-  }, []);
+  }, [loadItems]);
 
   const filteredItems = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();

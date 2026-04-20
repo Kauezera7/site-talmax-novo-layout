@@ -1,8 +1,11 @@
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { v2: cloudinary } = require('cloudinary');
 const SftpClient = require('ssh2-sftp-client');
+const { ensurePrimaryImageDir } = require('../config/imageStorage');
 const logger = require('../utils/logger');
+const { assertUploadedImageFile } = require('../utils/uploadedImageValidation');
 
 // As variaveis de ambiente sao carregadas pelo server.js no topo.
 
@@ -22,6 +25,88 @@ const hasSftpConfig = () => {
     process.env.SFTP_REMOTE_DIR &&
     process.env.SFTP_PUBLIC_BASE_URL
   );
+};
+
+const normalizeFingerprintValue = (value, options = {}) => {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  const normalizedValue = value.trim();
+
+  if (!normalizedValue) {
+    return '';
+  }
+
+  if (options.type === 'sha256') {
+    return normalizedValue.replace(/^SHA256:/i, '').replace(/\s+/g, '');
+  }
+
+  if (options.type === 'md5') {
+    return normalizedValue
+      .replace(/^MD5:/i, '')
+      .replace(/:/g, '')
+      .replace(/\s+/g, '')
+      .toLowerCase();
+  }
+
+  return normalizedValue;
+};
+
+const getConfiguredSftpHostFingerprints = () => ({
+  sha256: normalizeFingerprintValue(process.env.SFTP_HOST_FINGERPRINT_SHA256, { type: 'sha256' }),
+  md5: normalizeFingerprintValue(process.env.SFTP_HOST_FINGERPRINT_MD5, { type: 'md5' })
+});
+
+const assertSftpHostVerificationConfig = () => {
+  const fingerprints = getConfiguredSftpHostFingerprints();
+
+  if (fingerprints.sha256 || fingerprints.md5) {
+    return fingerprints;
+  }
+
+  throw new Error(
+    'Configure SFTP_HOST_FINGERPRINT_SHA256 ou SFTP_HOST_FINGERPRINT_MD5 para validar a identidade do servidor SFTP.'
+  );
+};
+
+const safeStringEquals = (valueA, valueB) => {
+  const bufferA = Buffer.from(String(valueA || ''), 'utf8');
+  const bufferB = Buffer.from(String(valueB || ''), 'utf8');
+
+  if (bufferA.length !== bufferB.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(bufferA, bufferB);
+};
+
+const buildSftpHostVerifier = () => {
+  const expectedFingerprints = assertSftpHostVerificationConfig();
+
+  return (hostKey) => {
+    const hostKeyBuffer = Buffer.isBuffer(hostKey)
+      ? hostKey
+      : Buffer.from(hostKey);
+    const providedSha256 = crypto.createHash('sha256').update(hostKeyBuffer).digest('base64');
+    const providedMd5 = crypto.createHash('md5').update(hostKeyBuffer).digest('hex');
+
+    if (expectedFingerprints.sha256 && safeStringEquals(providedSha256, expectedFingerprints.sha256)) {
+      return true;
+    }
+
+    if (expectedFingerprints.md5 && safeStringEquals(providedMd5, expectedFingerprints.md5)) {
+      return true;
+    }
+
+    logger.error({
+      sftpHost: process.env.SFTP_HOST || null,
+      providedSha256Fingerprint: `SHA256:${providedSha256}`,
+      providedMd5Fingerprint: providedMd5.match(/.{1,2}/g)?.join(':') || providedMd5
+    }, 'Fingerprint do servidor SFTP nao confere com o valor configurado.');
+
+    return false;
+  };
 };
 
 const buildLocalImageUrl = (file) => `/img/${file.filename}`;
@@ -94,6 +179,8 @@ const persistExistingLocalFile = async (filePath, options = {}) => {
     originalname: fileName
   };
 
+  await assertUploadedImageFile(file);
+
   if (useCloudinary) {
     return uploadFileToCloudinary(file, options);
   }
@@ -109,13 +196,15 @@ const uploadFileToSftp = async (file) => {
   const sftp = new SftpClient();
   const remoteDir = process.env.SFTP_REMOTE_DIR.replace(/\\/g, '/').replace(/\/+$/, '');
   const remoteFilePath = `${remoteDir}/${file.filename}`;
+  const hostVerifier = buildSftpHostVerifier();
 
   try {
     await sftp.connect({
       host: process.env.SFTP_HOST,
       port: Number(process.env.SFTP_PORT || 22),
       username: process.env.SFTP_USER,
-      password: process.env.SFTP_PASSWORD
+      password: process.env.SFTP_PASSWORD,
+      hostVerifier
     });
 
     await sftp.mkdir(remoteDir, true).catch(() => {});
@@ -139,6 +228,44 @@ const cleanupLocalTempFile = (file) => {
   });
 };
 
+const moveFileToPrimaryImageDir = async (file) => {
+  const primaryImageDir = ensurePrimaryImageDir();
+  const sourcePath = path.resolve(file.path);
+  const targetPath = path.resolve(path.join(primaryImageDir, file.filename));
+
+  if (sourcePath === targetPath) {
+    return {
+      ...file,
+      path: targetPath
+    };
+  }
+
+  try {
+    await fs.promises.rename(sourcePath, targetPath);
+  } catch (error) {
+    if (error.code !== 'EXDEV') {
+      throw error;
+    }
+
+    await fs.promises.copyFile(sourcePath, targetPath);
+    await fs.promises.unlink(sourcePath);
+  }
+
+  return {
+    ...file,
+    path: targetPath
+  };
+};
+
+const validateUploadedImageOrCleanup = async (file) => {
+  try {
+    await assertUploadedImageFile(file);
+  } catch (error) {
+    cleanupLocalTempFile(file);
+    throw error;
+  }
+};
+
 const persistUploadedFile = async (file, options = {}) => {
   if (!file) return null;
 
@@ -153,12 +280,15 @@ const persistUploadedFile = async (file, options = {}) => {
     resourceType: options.resourceType || 'geral'
   }, 'Iniciando persistencia de arquivo.');
 
+  await validateUploadedImageOrCleanup(file);
+
   if (useCloudinary) {
     try {
       const publicUrl = await uploadFileToCloudinary(file, options);
       cleanupLocalTempFile(file);
       return publicUrl;
     } catch (error) {
+      cleanupLocalTempFile(file);
       logger.error({
         err: error,
         fileName: file.filename,
@@ -175,6 +305,7 @@ const persistUploadedFile = async (file, options = {}) => {
       cleanupLocalTempFile(file);
       return publicUrl;
     } catch (error) {
+      cleanupLocalTempFile(file);
       logger.error({
         err: error,
         fileName: file.filename,
@@ -185,9 +316,10 @@ const persistUploadedFile = async (file, options = {}) => {
     }
   }
 
-  const localUrl = buildLocalImageUrl(file);
+  const storedFile = await moveFileToPrimaryImageDir(file);
+  const localUrl = buildLocalImageUrl(storedFile);
   logger.info({
-    fileName: file.filename,
+    fileName: storedFile.filename,
     localUrl
   }, 'Usando armazenamento local como fallback.');
   return localUrl;

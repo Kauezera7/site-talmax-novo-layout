@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Plus, Layers, AlertCircle, X, Search, Filter, Check, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAdmin } from '../../../context/AdminContext';
+import { useAdmin } from '../../../context/useAdmin';
 import CategoryTable from './CategoryTable';
 import CategoryForm from './CategoryForm';
 import './AdminCategories.css';

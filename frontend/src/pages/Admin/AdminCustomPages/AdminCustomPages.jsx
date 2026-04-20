@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle, Copy, Eye, LayoutTemplate, Pencil, PlusCircle, Save, Trash2, UploadCloud, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useAdmin } from '../../../context/AdminContext';
+import { useAdmin } from '../../../context/useAdmin';
 import customPageService from '../../../services/customPageService';
 import { apiAssetPath } from '../../../utils/assets';
 import './AdminCustomPages.css';
@@ -145,22 +145,22 @@ const AdminCustomPages = () => {
     });
   }, [items, savedPagesFilter]);
 
-  const loadItems = async () => {
+  const loadItems = useCallback(async () => {
     setIsLoading(true);
 
     try {
       const data = await customPageService.getAll();
       setItems(data);
-    } catch (error) {
-      addToast(error.message || 'Erro ao carregar páginas personalizadas', 'error');
+    } catch (loadError) {
+      addToast(loadError.message || 'Erro ao carregar páginas personalizadas', 'error');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [addToast]);
 
   useEffect(() => {
     loadItems();
-  }, []);
+  }, [loadItems]);
 
   const resetForm = () => {
     setForm(EMPTY_FORM);
@@ -229,7 +229,7 @@ const AdminCustomPages = () => {
     try {
       await navigator.clipboard.writeText(pageUrl);
       addToast('Link da página copiado com sucesso!');
-    } catch (error) {
+    } catch {
       addToast('Não foi possível copiar o link da página.', 'error');
     }
   };
@@ -407,7 +407,7 @@ const AdminCustomPages = () => {
                   <div className="file-upload-area">
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
                       onChange={(event) => handleFileChange('banner', event.target.files?.[0])}
                     />
                     <UploadCloud size={28} color="var(--admin-primary)" />
@@ -433,7 +433,7 @@ const AdminCustomPages = () => {
                   <div className="file-upload-area">
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
                       onChange={(event) => handleFileChange('logo', event.target.files?.[0])}
                     />
                     <UploadCloud size={28} color="var(--admin-primary)" />

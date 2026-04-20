@@ -20,6 +20,16 @@ const getPrimaryImageDir = () => {
   return path.resolve(__dirname, '../../../storage/img');
 };
 
+const getUploadTempDir = () => {
+  const configuredTempDir = process.env.UPLOAD_TMP_DIR && process.env.UPLOAD_TMP_DIR.trim();
+
+  if (configuredTempDir) {
+    return path.resolve(configuredTempDir);
+  }
+
+  return path.resolve(__dirname, '../../../storage/tmp-uploads');
+};
+
 // Mantemos a pasta legada do frontend apenas para continuar servindo
 // imagens antigas que ja foram publicadas/salvas antes da mudanca.
 const getLegacyFrontendImageDir = () => path.resolve(__dirname, '../../../../frontend/public/img');
@@ -31,6 +41,7 @@ const ensureDirectory = (directoryPath) => {
 };
 
 const ensurePrimaryImageDir = () => ensureDirectory(getPrimaryImageDir());
+const ensureUploadTempDir = () => ensureDirectory(getUploadTempDir());
 
 const getServedImageDirs = () => {
   // A API responde `/img/...` procurando primeiro nas imagens novas
@@ -118,7 +129,9 @@ const sanitizeServedImageUrl = (assetUrl) => {
 
 module.exports = {
   ensurePrimaryImageDir,
+  ensureUploadTempDir,
   getPrimaryImageDir,
+  getUploadTempDir,
   getServedImageDirs,
   hasServedImage,
   resolveServedImagePath,

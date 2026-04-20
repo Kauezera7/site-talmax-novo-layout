@@ -10,6 +10,20 @@ const privateNetworkHostnamePattern = /^(10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}
 
 const normalizeOrigin = (origin) => origin.trim().replace(/\/+$/, '');
 
+const isAllowedOrigin = (origin) => {
+  if (typeof origin !== 'string') {
+    return false;
+  }
+
+  const normalizedOrigin = normalizeOrigin(origin);
+
+  if (!normalizedOrigin) {
+    return false;
+  }
+
+  return allowedOrigins.has(normalizedOrigin) || isAllowedDevelopmentOrigin(normalizedOrigin);
+};
+
 const isAllowedDevelopmentOrigin = (origin) => {
   if (isProduction) {
     return false;
@@ -61,9 +75,7 @@ const corsMiddleware = cors({
       return callback(null, true);
     }
 
-    const normalizedOrigin = normalizeOrigin(origin);
-
-    if (allowedOrigins.has(normalizedOrigin) || isAllowedDevelopmentOrigin(normalizedOrigin)) {
+    if (isAllowedOrigin(origin)) {
       return callback(null, true);
     }
 
@@ -75,3 +87,6 @@ const corsMiddleware = cors({
 });
 
 module.exports = corsMiddleware;
+module.exports.allowedOrigins = allowedOrigins;
+module.exports.isAllowedOrigin = isAllowedOrigin;
+module.exports.normalizeOrigin = normalizeOrigin;

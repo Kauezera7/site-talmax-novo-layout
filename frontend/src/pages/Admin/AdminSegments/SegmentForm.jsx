@@ -8,24 +8,49 @@ const ButtonSavingIndicator = () => (
   <span className="loader loader_bubble admin-button-loader" aria-hidden="true" />
 );
 
-const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    link_url: '',
-    custom_page_id: null,
-    digital_group_id: null,
-    display_order: 0,
-    active: true
-  });
+const DEFAULT_SEGMENT_FORM_STATE = {
+  name: '',
+  description: '',
+  link_url: '',
+  custom_page_id: null,
+  digital_group_id: null,
+  display_order: 0,
+  active: true
+};
 
+const buildSegmentFormState = (initialData) => (
+  initialData
+    ? {
+        name: initialData.name || '',
+        description: initialData.description || '',
+        link_url: initialData.link_url || '',
+        custom_page_id: initialData.custom_page_id || null,
+        digital_group_id: initialData.digital_group_id || null,
+        display_order: initialData.display_order || 0,
+        active: Boolean(initialData.active)
+      }
+    : { ...DEFAULT_SEGMENT_FORM_STATE }
+);
+
+const getSegmentImagePreview = (initialData) => (
+  initialData?.image_url ? apiAssetPath(initialData.image_url) : null
+);
+
+const getInitialLinkTargetType = (initialData) => (
+  initialData?.link_target_type === 'digital-group' || String(initialData?.link_url || '').startsWith('/grupo-digital/')
+    ? 'digital-group'
+    : 'custom-page'
+);
+
+const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
+  const [formData, setFormData] = useState(() => buildSegmentFormState(initialData));
   const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [imagePreview, setImagePreview] = useState(() => getSegmentImagePreview(initialData));
   const [customPageOptions, setCustomPageOptions] = useState([]);
   const [digitalGroupOptions, setDigitalGroupOptions] = useState([]);
   const [isUrlPickerOpen, setIsUrlPickerOpen] = useState(false);
   const [isLinkTypePickerOpen, setIsLinkTypePickerOpen] = useState(false);
-  const [linkTargetType, setLinkTargetType] = useState('custom-page');
+  const [linkTargetType, setLinkTargetType] = useState(() => getInitialLinkTargetType(initialData));
 
   useEffect(() => {
     let isMounted = true;
@@ -58,7 +83,7 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
               }))
             : []
         );
-      } catch (error) {
+      } catch {
         if (isMounted) {
           setCustomPageOptions([]);
           setDigitalGroupOptions([]);
@@ -72,46 +97,6 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
       isMounted = false;
     };
   }, []);
-
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        name: initialData.name || '',
-        description: initialData.description || '',
-        link_url: initialData.link_url || '',
-        custom_page_id: initialData.custom_page_id || null,
-        digital_group_id: initialData.digital_group_id || null,
-        display_order: initialData.display_order || 0,
-        active: !!initialData.active
-      });
-
-      if (initialData.image_url) {
-        setImagePreview(apiAssetPath(initialData.image_url));
-      } else {
-        setImagePreview(null);
-      }
-      setImageFile(null);
-      setLinkTargetType(
-        initialData.link_target_type === 'digital-group' || String(initialData.link_url || '').startsWith('/grupo-digital/')
-          ? 'digital-group'
-          : 'custom-page'
-      );
-      return;
-    }
-
-    setFormData({
-      name: '',
-      description: '',
-      link_url: '',
-      custom_page_id: null,
-      digital_group_id: null,
-      display_order: 0,
-      active: true
-    });
-    setImageFile(null);
-    setImagePreview(null);
-    setLinkTargetType('custom-page');
-  }, [initialData]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -342,7 +327,7 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
           <div className="file-upload-area" style={{ padding: '15px' }}>
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={handleImageChange}
             />
             <UploadCloud size={32} color="var(--admin-primary)" style={{ marginBottom: '5px' }} />

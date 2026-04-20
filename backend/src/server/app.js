@@ -16,6 +16,7 @@ const {
 } = require('./config/performance');
 const applyTrustProxy = require('./seguranca/trustProxy');
 const applySecurityHeaders = require('./seguranca/helmet');
+const requireTrustedWriteOrigin = require('./seguranca/trustedWriteOrigin');
 const {
   attachRequestId,
   apiNotFoundHandler,
@@ -60,6 +61,7 @@ const createApp = () => {
   app.use(corsMiddleware);
   app.use(createCompressionMiddleware());
   app.use(express.json());
+  app.use('/api', requireTrustedWriteOrigin);
   imageDirectories.forEach((directoryPath) => {
     app.use('/img', express.static(directoryPath, buildImageStaticOptions({
       isPrimaryDirectory: directoryPath === primaryImageDir

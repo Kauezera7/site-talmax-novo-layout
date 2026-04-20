@@ -52,7 +52,7 @@ export const parseDigitalActionsPayload = (value) => {
   if (typeof value === 'string') {
     try {
       return parseDigitalActionsPayload(JSON.parse(value));
-    } catch (error) {
+    } catch {
       return { buttons: [], digital_cards: [] };
     }
   }

@@ -21,7 +21,7 @@ const parseApiResponse = async (response, fallbackMessage) => {
 
   try {
     return JSON.parse(responseText);
-  } catch (error) {
+  } catch {
     throw new Error(fallbackMessage);
   }
 };

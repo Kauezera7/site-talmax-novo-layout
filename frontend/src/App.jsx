@@ -192,6 +192,15 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
     setActiveMobileSection(null);
   };
 
+  const handleMenuToggle = () => {
+    if (menuOpen) {
+      closeMobileMenu();
+      return;
+    }
+
+    setMenuOpen(true);
+  };
+
   const toggleMobileSection = (section) => {
     setActiveMobileSection((current) => (current === section ? null : section));
   };
@@ -281,12 +290,6 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
     window.localStorage.setItem(THEME_STORAGE_KEY, appliedTheme);
   }, [isAdmin, theme]);
 
-  useEffect(() => {
-    if (!menuOpen) {
-      setActiveMobileSection(null);
-    }
-  }, [menuOpen]);
-
   return (
     <div className="app">
       {showGlobalLoader && <DelayedFullScreenLoader label="Carregando site..." />}
@@ -330,7 +333,7 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
 
             <button
               className={`menu-toggle ${menuOpen ? 'is-open' : ''}`}
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={handleMenuToggle}
               aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
               aria-expanded={menuOpen}
             >
