@@ -2,9 +2,18 @@ import API_URL from './api';
 import { createAdminRequestOptions, ensureAdminResponse } from './adminRequest';
 
 export const bannerService = {
-  getAll: async () => {
-    const res = await fetch(`${API_URL}/banners`, createAdminRequestOptions());
-    await ensureAdminResponse(res, 'Erro ao carregar banners');
+  getAll: async ({ admin = false } = {}) => {
+    const res = await fetch(
+      `${API_URL}/banners${admin ? '?admin=1' : ''}`,
+      admin ? createAdminRequestOptions() : undefined
+    );
+
+    if (admin) {
+      await ensureAdminResponse(res, 'Erro ao carregar banners');
+    } else if (!res.ok) {
+      throw new Error('Erro ao carregar banners');
+    }
+
     return res.json();
   },
 

@@ -5,11 +5,18 @@ import API_URL from './api';
 import { createAdminRequestOptions, ensureAdminResponse } from './adminRequest';
 
 const homeService = {
-  async getAll() {
-    const response = await fetch(`${API_URL}/home-services`);
-    if (!response.ok) {
+  async getAll({ admin = false } = {}) {
+    const response = await fetch(
+      `${API_URL}/home-services${admin ? '?admin=1' : ''}`,
+      admin ? createAdminRequestOptions() : undefined
+    );
+
+    if (admin) {
+      await ensureAdminResponse(response, 'Erro ao buscar servicos da home');
+    } else if (!response.ok) {
       throw new Error('Erro ao buscar servicos da home');
     }
+
     return response.json();
   },
 

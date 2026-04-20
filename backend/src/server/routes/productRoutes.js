@@ -6,7 +6,10 @@ const express = require('express');
 const db = require('../../config/database');
 const upload = require('../config/upload');
 const { safe } = require('../utils/common');
-const { requireAdminSession } = require('../auth/adminSession');
+const {
+  getAuthenticatedAdminSession,
+  requireAdminSession
+} = require('../auth/adminSession');
 const {
   parseInteger,
   parseBooleanFlag,
@@ -257,12 +260,34 @@ const paginateProducts = (products, options = {}) => {
   };
 };
 
-router.get('/', async (req, res, next) => {
+const resolveIncludeInactiveAccess = async (req, res) => {
   const includeInactive = parseBooleanFlag(req.query.include_inactive);
+
+  if (!includeInactive) {
+    return false;
+  }
+
+  const adminSession = await getAuthenticatedAdminSession(req);
+
+  if (!adminSession) {
+    res.status(401).json({ error: 'Sessao invalida ou expirada.' });
+    return null;
+  }
+
+  return true;
+};
+
+router.get('/', async (req, res, next) => {
   const shouldPaginate = shouldUseProductPagination(req.query);
   const publicPagination = buildPublicProductPagination(req.query);
 
   try {
+    const includeInactive = await resolveIncludeInactiveAccess(req, res);
+
+    if (includeInactive === null) {
+      return undefined;
+    }
+
     await ensureProductTabsTable(db);
     if (shouldPaginate) {
       const response = await listProductsPage(db, {
@@ -299,9 +324,13 @@ router.get('/', async (req, res, next) => {
 });
 
 router.get('/:id', async (req, res, next) => {
-  const includeInactive = parseBooleanFlag(req.query.include_inactive);
-
   try {
+    const includeInactive = await resolveIncludeInactiveAccess(req, res);
+
+    if (includeInactive === null) {
+      return undefined;
+    }
+
     await ensureProductTabsTable(db);
     const product = await findProductById(db, req.params.id, { includeInactive });
 

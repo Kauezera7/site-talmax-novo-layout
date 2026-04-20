@@ -3,7 +3,10 @@
  */
 const express = require('express');
 const db = require('../../config/database');
-const { requireAdminSession } = require('../auth/adminSession');
+const {
+  getAuthenticatedAdminSession,
+  requireAdminSession
+} = require('../auth/adminSession');
 const upload = require('../config/upload');
 const { safe } = require('../utils/common');
 const { parseBooleanFlag, parseInteger } = require('../utils/requestParsers');
@@ -412,16 +415,41 @@ const persistDigitalCardsConfig = async (files, incomingActions, previousActions
   };
 };
 
+const resolveAdminReadAccess = async (req, res) => {
+  const isAdminRequest = parseBooleanFlag(req.query.admin);
+
+  if (!isAdminRequest) {
+    return false;
+  }
+
+  const adminSession = await getAuthenticatedAdminSession(req);
+
+  if (!adminSession) {
+    res.status(401).json({ error: 'Sessao invalida ou expirada.' });
+    return null;
+  }
+
+  return true;
+};
+
 router.get('/', async (req, res) => {
   try {
+    const isAdminView = await resolveAdminReadAccess(req, res);
+
+    if (isAdminView === null) {
+      return;
+    }
+
     const schemaState = await getHomeServicesSchemaState();
     const [rows] = await db.query(buildHomeServicesQuery(schemaState));
     const services = rows.map(normalizeHomeServiceRow);
 
-    res.json(services);
+    res.json(isAdminView ? services : services.filter((service) => service.active));
   } catch (err) {
     logger.error({ err }, 'Erro ao buscar servicos da home.');
-    res.json(listBackupHomeServices().map(normalizeHomeServiceRow));
+    const services = listBackupHomeServices().map(normalizeHomeServiceRow);
+    const isAdminView = parseBooleanFlag(req.query.admin) && Boolean(req.adminSession);
+    res.json(isAdminView ? services : services.filter((service) => service.active));
   }
 });
 

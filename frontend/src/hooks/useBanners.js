@@ -9,7 +9,7 @@ export const useBanners = () => {
   const fetchBanners = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await bannerService.getAll();
+      const data = await bannerService.getAll({ admin: true });
       setBanners(data);
       setError(null);
     } catch (err) {

@@ -6,8 +6,11 @@ const express = require('express');
 const db = require('../../config/database');
 const upload = require('../config/upload');
 const { safe } = require('../utils/common');
-const { requireAdminSession } = require('../auth/adminSession');
-const { parseInteger } = require('../utils/requestParsers');
+const {
+  getAuthenticatedAdminSession,
+  requireAdminSession
+} = require('../auth/adminSession');
+const { parseBooleanFlag, parseInteger } = require('../utils/requestParsers');
 const { validateBannerWritePayload } = require('../validation/contentSchemas');
 const { persistUploadedFile } = require('../services/fileStorageService');
 const { listBackupBanners } = require('../services/backupContentService');
@@ -79,26 +82,54 @@ const buildBannerListQuery = (schemaState) => {
   `;
 };
 
+const resolveAdminReadAccess = async (req, res) => {
+  const isAdminRequest = parseBooleanFlag(req.query.admin);
+
+  if (!isAdminRequest) {
+    return false;
+  }
+
+  const adminSession = await getAuthenticatedAdminSession(req);
+
+  if (!adminSession) {
+    res.status(401).json({ error: 'Sessao invalida ou expirada.' });
+    return null;
+  }
+
+  return true;
+};
+
 router.get('/', async (req, res) => {
   try {
+    const isAdminView = await resolveAdminReadAccess(req, res);
+
+    if (isAdminView === null) {
+      return;
+    }
+
     const schemaState = await getBannerSchemaState();
     const [rows] = await db.query(buildBannerListQuery(schemaState));
-    res.json(rows.map((row) => ({
+    const normalizedRows = rows.map((row) => ({
       ...row,
       title: sanitizeTextInput(row.title || '', { preserveNewlines: false }),
       subtitle: sanitizeTextInput(row.subtitle || '', { preserveNewlines: true }),
       image_url: sanitizeAssetReference(sanitizeServedImageUrl(row.image_url) || ''),
       link_url: sanitizeNavigationTarget(row.link_url || '')
-    })));
+    }));
+
+    res.json(isAdminView ? normalizedRows : normalizedRows.filter((row) => row.active));
   } catch (err) {
     if (shouldUseBackupFallback) {
-      res.json(listBackupBanners().map((row) => ({
+      const normalizedRows = listBackupBanners().map((row) => ({
         ...row,
         title: sanitizeTextInput(row.title || '', { preserveNewlines: false }),
         subtitle: sanitizeTextInput(row.subtitle || '', { preserveNewlines: true }),
         image_url: sanitizeAssetReference(sanitizeServedImageUrl(row.image_url) || ''),
         link_url: sanitizeNavigationTarget(row.link_url || '')
-      })));
+      }));
+
+      const isAdminView = parseBooleanFlag(req.query.admin) && Boolean(req.adminSession);
+      res.json(isAdminView ? normalizedRows : normalizedRows.filter((row) => row.active !== false));
       return;
     }
 

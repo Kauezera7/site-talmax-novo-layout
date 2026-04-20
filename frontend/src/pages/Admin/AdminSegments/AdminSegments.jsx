@@ -25,7 +25,7 @@ const AdminSegments = () => {
   const fetchSegments = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await homeService.getAll();
+      const data = await homeService.getAll({ admin: true });
       setSegments(data);
     } catch (error) {
       console.error('Erro ao carregar segmentos:', error);

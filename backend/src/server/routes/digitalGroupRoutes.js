@@ -1,7 +1,10 @@
 const express = require('express');
 const db = require('../../config/database');
 const upload = require('../config/upload');
-const { requireAdminSession } = require('../auth/adminSession');
+const {
+  getAuthenticatedAdminSession,
+  requireAdminSession
+} = require('../auth/adminSession');
 const { parseBooleanFlag, parseInteger } = require('../utils/requestParsers');
 const { persistUploadedFile } = require('../services/fileStorageService');
 const { safe } = require('../utils/common');
@@ -330,9 +333,32 @@ const replaceGroupCards = async (connection, groupId, files, cards = []) => {
   }
 };
 
+const resolveAdminReadAccess = async (req, res) => {
+  const isAdminRequest = parseBooleanFlag(req.query.admin);
+
+  if (!isAdminRequest) {
+    return false;
+  }
+
+  const adminSession = await getAuthenticatedAdminSession(req);
+
+  if (!adminSession) {
+    res.status(401).json({ error: 'Sessao invalida ou expirada.' });
+    return null;
+  }
+
+  return true;
+};
+
 router.get('/', async (req, res, next) => {
   try {
-    const onlyActive = req.query.admin !== '1';
+    const isAdminView = await resolveAdminReadAccess(req, res);
+
+    if (isAdminView === null) {
+      return undefined;
+    }
+
+    const onlyActive = !isAdminView;
     const items = await listGroups({ onlyActive });
     res.json(items);
   } catch (error) {

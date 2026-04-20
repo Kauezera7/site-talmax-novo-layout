@@ -459,6 +459,34 @@ const rejectAdminSession = (res, statusCode = 403, message = 'Usuario sem acesso
   return res.status(statusCode).json({ error: message });
 };
 
+const getAuthenticatedAdminSession = async (req) => {
+  const token = getAdminSessionToken(req);
+  const session = verifyJwtToken(token);
+
+  if (!session) {
+    return null;
+  }
+
+  const currentAdminUser = await getAdminUserById(session.id);
+
+  if (!currentAdminUser || !hasAdminPanelAccess(currentAdminUser)) {
+    return null;
+  }
+
+  if (!adminSessionVersionMatches(session, currentAdminUser)) {
+    return null;
+  }
+
+  const authenticatedSession = {
+    ...session,
+    ...serializeAdminUser(currentAdminUser),
+    role: normalizeAdminRole(currentAdminUser.role)
+  };
+
+  req.adminSession = authenticatedSession;
+  return authenticatedSession;
+};
+
 const requireAdminSession = async (req, res, next) => {
   try {
     const session = getValidatedAdminSession(req, res);
@@ -824,6 +852,7 @@ const logoutAdmin = (req, res) => {
 module.exports = {
   ADMIN_ROLE_MASTER,
   ADMIN_ROLE_EDITOR,
+  getAuthenticatedAdminSession,
   requireAdminSession,
   requireMasterAdminSession,
   loginAdmin,

@@ -60,7 +60,7 @@ const AdminTalmaxDigital = () => {
     setIsLoading(true);
 
     try {
-      const services = await homeService.getAll();
+      const services = await homeService.getAll({ admin: true });
       const talmaxDigitalSegment = Array.isArray(services)
         ? services.find(isTalmaxDigitalSegment)
         : null;
