@@ -20,6 +20,11 @@ import PagePlaceholder from './components/PagePlaceholder/PagePlaceholder';
 import SearchBar from './components/SearchBar/SearchBar';
 import { useProductSearch } from './hooks/useProductSearch';
 import { validateAdminSession } from './services/adminAuth';
+import { syncAnalyticsWithConsent } from './services/analytics';
+import {
+  readCookieConsentStatus,
+  subscribeToCookieConsentStatus
+} from './services/cookieConsent';
 import { subscribeToAdminSessionExpired } from './services/adminSessionEvents';
 import { assetPath } from './utils/assets';
 import './App.css';
@@ -184,6 +189,7 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
   const showGlobalLoader = !appReady && !isAdmin;
   const [navVisible, setNavVisible] = useState(true);
   const [activeMobileSection, setActiveMobileSection] = useState(null);
+  const [cookieConsentStatus, setCookieConsentStatus] = useState(() => readCookieConsentStatus());
   const lastScrollYRef = useRef(0);
   const tickingScrollRef = useRef(false);
 
@@ -252,6 +258,21 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
 
     return unsubscribe;
   }, [location.pathname, navigate]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToCookieConsentStatus((nextStatus) => {
+      setCookieConsentStatus(nextStatus);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    syncAnalyticsWithConsent({
+      consentStatus: cookieConsentStatus,
+      enabled: !isAdmin
+    });
+  }, [cookieConsentStatus, isAdmin]);
 
   useEffect(() => {
     if (isAdmin) return undefined;

@@ -5,23 +5,17 @@
  */
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  hasCookieConsentStatus,
+  writeCookieConsentStatus
+} from '../../services/cookieConsent';
 import './CookieBanner.css';
 
 const CookieBanner = () => {
-  const [showBanner, setShowBanner] = useState(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-
-    try {
-      return !window.localStorage.getItem('cookie-consent');
-    } catch {
-      return true;
-    }
-  });
+  const [showBanner, setShowBanner] = useState(() => !hasCookieConsentStatus());
 
   const handleConsent = (status) => {
-    localStorage.setItem('cookie-consent', status);
+    writeCookieConsentStatus(status);
     setShowBanner(false);
   };
 
@@ -32,8 +26,8 @@ const CookieBanner = () => {
       <div className="cookie-banner-content">
         <h3>Privacidade e Cookies</h3>
         <p>
-          Este site utiliza cookies para melhorar sua experiência. Ao continuar navegando, 
-          você concorda com nossa <Link to="/privacidade">Política de Privacidade</Link>.
+          Usamos cookies essenciais para o funcionamento do site e so ativamos analytics apos o seu aceite.
+          Consulte nossa <Link to="/privacidade">Politica de Privacidade</Link>.
         </p>
       </div>
       <div className="cookie-banner-actions">

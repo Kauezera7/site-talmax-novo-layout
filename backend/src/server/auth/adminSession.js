@@ -27,9 +27,11 @@ const {
 } = require('./adminPassword');
 
 const ADMIN_SESSION_COOKIE = 'talmax-admin-session';
+const ADMIN_COOKIE_PATH = '/api';
+const LEGACY_ADMIN_COOKIE_PATH = '/';
 const ADMIN_USER_FREE_FLAG_VALUE = 1;
 const ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE = 2;
-const ADMIN_LOGIN_USER_NOT_FOUND_MESSAGE = 'Usuario nao encontrado ou sem acesso ao painel.';
+const ADMIN_LOGIN_INVALID_CREDENTIALS_MESSAGE = 'Credenciais invalidas.';
 
 if (!process.env.ADMIN_JWT_SECRET) {
   throw new Error('A variavel ADMIN_JWT_SECRET nao foi definida no ambiente.');
@@ -38,7 +40,17 @@ if (!process.env.ADMIN_JWT_SECRET) {
 const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 const ADMIN_JWT_EXPIRES_IN_SECONDS = Number(process.env.ADMIN_JWT_EXPIRES_IN_SECONDS || 60 * 60 * 8);
 const isProduction = process.env.NODE_ENV === 'production';
-const ADMIN_COOKIE_SAME_SITE = String(process.env.ADMIN_COOKIE_SAME_SITE || (isProduction ? 'none' : 'lax')).toLowerCase();
+const normalizeAdminCookieSameSite = (value) => {
+  const normalizedValue = typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+  if (['strict', 'lax', 'none'].includes(normalizedValue)) {
+    return normalizedValue;
+  }
+
+  return 'lax';
+};
+const ADMIN_COOKIE_SAME_SITE = normalizeAdminCookieSameSite(process.env.ADMIN_COOKIE_SAME_SITE);
+const DUMMY_ADMIN_PASSWORD_HASH = hashAdminPassword(`talmax-dummy-${crypto.randomUUID()}`);
 
 let usersTableHasBloqUserColumn = null;
 let usersTableHasEmailColumn = null;
@@ -157,13 +169,21 @@ const getAdminSessionToken = (req) => {
   return cookies[ADMIN_SESSION_COOKIE] || null;
 };
 
-const getAdminCookieOptions = () => ({
+const getAdminCookieOptions = (cookiePath = ADMIN_COOKIE_PATH) => ({
   httpOnly: true,
   sameSite: ADMIN_COOKIE_SAME_SITE,
   secure: isProduction || ADMIN_COOKIE_SAME_SITE === 'none',
-  path: '/',
+  path: cookiePath,
   maxAge: ADMIN_JWT_EXPIRES_IN_SECONDS * 1000
 });
+
+const clearAdminSessionCookies = (res) => {
+  res.clearCookie(ADMIN_SESSION_COOKIE, getAdminCookieOptions(ADMIN_COOKIE_PATH));
+
+  if (LEGACY_ADMIN_COOKIE_PATH !== ADMIN_COOKIE_PATH) {
+    res.clearCookie(ADMIN_SESSION_COOKIE, getAdminCookieOptions(LEGACY_ADMIN_COOKIE_PATH));
+  }
+};
 
 const usersTableSupportsBloqUser = async () => {
   if (typeof usersTableHasBloqUserColumn === 'boolean') {
@@ -445,7 +465,7 @@ const getValidatedAdminSession = (req, res) => {
   const session = verifyJwtToken(token);
 
   if (!session) {
-    res.clearCookie(ADMIN_SESSION_COOKIE, getAdminCookieOptions());
+    clearAdminSessionCookies(res);
     res.status(401).json({ error: 'Sessao invalida ou expirada.' });
     return null;
   }
@@ -455,7 +475,7 @@ const getValidatedAdminSession = (req, res) => {
 };
 
 const rejectAdminSession = (res, statusCode = 403, message = 'Usuario sem acesso ao painel.') => {
-  res.clearCookie(ADMIN_SESSION_COOKIE, getAdminCookieOptions());
+  clearAdminSessionCookies(res);
   return res.status(statusCode).json({ error: message });
 };
 
@@ -561,6 +581,7 @@ const loginAdmin = async (req, res, next) => {
     const adminUser = await getAdminUserByIdentifier(username);
 
     if (!adminUser || !hasAdminPanelAccess(adminUser)) {
+      verifyAdminPassword(password, DUMMY_ADMIN_PASSWORD_HASH);
       const failedAttempt = await registerFailedAdminLoginAttemptByIdentifiers([username]);
 
       if (failedAttempt.isBlocked && failedAttempt.resetTime) {
@@ -570,7 +591,7 @@ const loginAdmin = async (req, res, next) => {
         });
       }
 
-      return res.status(401).json({ error: ADMIN_LOGIN_USER_NOT_FOUND_MESSAGE });
+      return res.status(401).json({ error: ADMIN_LOGIN_INVALID_CREDENTIALS_MESSAGE });
     }
 
     const canContinueLogin = await ensureAdminUserIsNotTemporarilyBlocked(adminUser, res, username);
@@ -596,7 +617,7 @@ const loginAdmin = async (req, res, next) => {
         });
       }
 
-      return res.status(401).json({ error: 'Credenciais invalidas.' });
+      return res.status(401).json({ error: ADMIN_LOGIN_INVALID_CREDENTIALS_MESSAGE });
     }
 
     await Promise.all([
@@ -609,6 +630,7 @@ const loginAdmin = async (req, res, next) => {
     });
     const token = createJwtToken(sessionPayload);
 
+    clearAdminSessionCookies(res);
     res.cookie(ADMIN_SESSION_COOKIE, token, getAdminCookieOptions());
 
     return res.json({
@@ -844,9 +866,14 @@ const updateAdminUser = async (req, res, next) => {
   }
 };
 
-const logoutAdmin = (req, res) => {
-  res.clearCookie(ADMIN_SESSION_COOKIE, getAdminCookieOptions());
-  res.json({ message: 'Logout realizado com sucesso.' });
+const logoutAdmin = async (req, res, next) => {
+  try {
+    await incrementAdminSessionVersion(req.adminSession?.id);
+    clearAdminSessionCookies(res);
+    return res.json({ message: 'Logout realizado com sucesso.' });
+  } catch (error) {
+    return next(wrapError(error, { publicMessage: 'Erro ao encerrar sessao do admin.' }));
+  }
 };
 
 module.exports = {

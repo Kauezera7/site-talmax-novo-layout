@@ -40,7 +40,6 @@ const applySecurityHeaders = (app) => {
         objectSrc: ["'none'"],
         scriptSrc: [
           "'self'",
-          "'unsafe-inline'",
           'https://www.googletagmanager.com'
         ],
         styleSrc: [
