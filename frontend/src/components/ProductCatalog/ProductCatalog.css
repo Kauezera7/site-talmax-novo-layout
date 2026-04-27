@@ -16,10 +16,9 @@ body {
 }
 
 .catalog-container {
+  --product-card-cutout-bg: #f0f3f7;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top, rgba(0, 74, 153, 0.08), transparent 35%),
-    linear-gradient(180deg, #f8fbff 0%, #eef3f8 100%);
+  background: #f0f3f7;
 }
 
 /* --- HERO SECTION --- */
@@ -250,6 +249,7 @@ body {
   padding: 40px 2%;
   max-width: 1600px;
   margin: 0 auto;
+  background: #f0f3f7;
 }
 
 .catalog-grid-lux {

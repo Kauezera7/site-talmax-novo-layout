@@ -6,14 +6,12 @@
   --text: #333;
   --surface: #ffffff;
   --surface-soft: #f8fafc;
-  --surface-muted: #eef3f8;
+  --surface-muted: #f0f3f7;
   --border-soft: rgba(15, 23, 42, 0.08);
   --heading: #0f172a;
   --header-height: 70px;
   --header-height-mobile: 64px;
-  --site-bg:
-    radial-gradient(circle at top, rgba(0, 74, 153, 0.08), transparent 35%),
-    linear-gradient(180deg, #f8fbff 0%, #eef3f8 100%);
+  --site-bg: #f0f3f7;
   --transition: 0.3s ease;
 }
 
@@ -310,7 +308,7 @@ body[data-theme='dark'] .theme-toggle-button {
 .header-search-inline button {
   border: 0;
   border-radius: 999px;
-  background: var(--primary);
+  background: #3155a5;
   color: #ffffff;
   height: 24px;
   padding: 0 0.65rem;
@@ -319,6 +317,11 @@ body[data-theme='dark'] .theme-toggle-button {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+.header-search-inline button:hover {
+  background: #24458f;
 }
 
 .site-search-shell {
@@ -536,18 +539,25 @@ body[data-theme='dark'] .theme-toggle-button {
   justify-self: end;
 }
 
-.header-socials a {
-  width: 32px;
-  height: 32px;
+.header-portal-button {
+  min-width: 178px;
+  height: 38px;
+  padding: 0 1.15rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: #f8fbff;
-  border: 1px solid rgba(0, 74, 153, 0.12);
-  color: var(--primary);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-  transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease;
+  background: #3155a5;
+  border: 0;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-decoration: none;
+  box-shadow: none;
+  transition: background 0.25s ease, transform 0.25s ease;
 }
 
 .header.nav-collapsed .header-top {
@@ -575,15 +585,16 @@ body[data-theme='dark'] .theme-toggle-button {
   padding: 0 0.65rem;
 }
 
-.header.nav-collapsed .header-socials a {
-  width: 28px;
-  height: 28px;
+.header.nav-collapsed .header-portal-button {
+  min-width: 156px;
+  height: 32px;
+  font-size: 0.7rem;
+  padding: 0 0.95rem;
 }
 
-.header-socials a:hover {
+.header-portal-button:hover {
   transform: translateY(-2px);
-  background: var(--primary);
-  color: #ffffff;
+  background: #24458f;
 }
 
 .header-top-actions {
@@ -598,6 +609,7 @@ body[data-theme='dark'] .theme-toggle-button {
 
 /* Navegação Desktop Centralizada */
 .nav-desktop {
+  --header-blue: #3155a5;
   display: flex;
   gap: clamp(0.15rem, 0.6vw, 0.7rem);
   align-items: center;
@@ -618,7 +630,7 @@ body[data-theme='dark'] .theme-toggle-button {
 
 .nav-item > a, .nav-item > span {
   text-decoration: none;
-  color: #4b5563;         /* Cinza profissional (Slate 600) */
+  color: var(--header-blue);
   font-weight: 600;
   transition: all 0.3s ease;
   font-size: 0.68rem;
@@ -640,7 +652,7 @@ body[data-theme='dark'] .theme-toggle-button {
   left: 50%;
   width: 0;
   height: 3px;
-  background: var(--primary);
+  background: var(--header-blue);
   transition: all 0.3s ease;
   transform: translateX(-50%);
 }
@@ -649,8 +661,19 @@ body[data-theme='dark'] .theme-toggle-button {
   width: 80%;             /* Linha cresce no hover */
 }
 
-.nav-item:hover > a, .nav-item:hover > span {
-  color: var(--primary);
+.nav-item:hover > a, .nav-item:hover > span,
+.nav-item.is-active > a,
+.nav-item.is-active > span {
+  color: var(--header-blue);
+}
+
+.nav-item.is-active > a,
+.nav-item.is-active > span {
+  font-weight: 800;
+}
+
+.nav-item.is-active::after {
+  width: 80%;
 }
 
 /* Dropdown Menu Refinado */
@@ -669,7 +692,7 @@ body[data-theme='dark'] .theme-toggle-button {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1001;
   border: 1px solid #f3f4f6;
-  border-top: 3px solid var(--primary); /* Detalhe azul no topo do dropdown */
+  border-top: 3px solid #3155a5; /* Detalhe azul no topo do dropdown */
 }
 
 .nav-item:hover .dropdown {
@@ -690,7 +713,7 @@ body[data-theme='dark'] .theme-toggle-button {
 
 .dropdown a:hover {
   background: #f8fbff;
-  color: var(--primary);
+  color: #3155a5;
   padding-left: 1.8rem;   /* Efeito de recuo no hover */
 }
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { ChevronRight } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation } from 'swiper/modules';
 import { apiAssetPath } from '../../../utils/assets';
@@ -7,12 +8,30 @@ import { isExternalNavigationTarget, sanitizeNavigationTarget } from '../../../u
 import 'swiper/css';
 import 'swiper/css/navigation';
 
+const normalizeServiceText = (value) => (
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+);
+
+const getServiceBannerClassName = (service) => {
+  const serviceText = normalizeServiceText(`${service.name || ''} ${service.link_url || ''}`);
+
+  if (serviceText.includes('moby')) {
+    return 'service-banner service-banner-moby';
+  }
+
+  return 'service-banner';
+};
+
 const ServiceBanner = ({ service }) => {
   const imageSrc = service.image_url
     ? apiAssetPath(service.image_url)
     : '';
   const safeLinkUrl = sanitizeNavigationTarget(service.link_url, { allowExternal: true, allowRelative: true });
   const shouldUseExternalLink = Boolean(service.is_external || isExternalNavigationTarget(safeLinkUrl));
+  const bannerClassName = getServiceBannerClassName(service);
 
   const bannerContent = (
     <>
@@ -34,13 +53,20 @@ const ServiceBanner = ({ service }) => {
         <strong>{service.name}</strong>
         <p>{service.description}</p>
       </div>
+      {safeLinkUrl && (
+        <span className="service-banner-corner" aria-hidden="true">
+          <span className="service-banner-corner-icon">
+            <ChevronRight size={22} strokeWidth={2.15} />
+          </span>
+        </span>
+      )}
     </>
   );
 
   if (!safeLinkUrl) {
     return (
       <div
-        className="service-banner"
+        className={bannerClassName}
         aria-label={service.name}
       >
         {bannerContent}
@@ -54,7 +80,7 @@ const ServiceBanner = ({ service }) => {
         href={safeLinkUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="service-banner"
+        className={bannerClassName}
         aria-label={service.name}
       >
         {bannerContent}
@@ -65,7 +91,7 @@ const ServiceBanner = ({ service }) => {
   return (
     <Link
       to={safeLinkUrl}
-      className="service-banner"
+      className={bannerClassName}
       aria-label={service.name}
     >
       {bannerContent}

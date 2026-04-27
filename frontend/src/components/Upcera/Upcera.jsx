@@ -107,6 +107,8 @@ const Upcera = () => {
               id: p.id,
               name: p.name,
               description: p.description,
+              category_names: p.category_names || '',
+              is_upcera: p.is_upcera === true || Number(p.is_upcera) === 1,
               image: p.main_image ? apiAssetPath(p.main_image) : '',
               ...extra
             };

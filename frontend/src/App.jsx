@@ -311,6 +311,27 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
     window.localStorage.setItem(THEME_STORAGE_KEY, appliedTheme);
   }, [isAdmin, theme]);
 
+  const currentPath = location.pathname;
+  const isPathActive = (paths) => paths.some((path) => currentPath === path || currentPath.startsWith(`${path}/`));
+  const navItemClassName = (active) => `nav-item${active ? ' is-active' : ''}`;
+  const activeNavItems = {
+    home: currentPath === '/',
+    institucional: isPathActive(['/quem-somos', '/historia-diretoria', '/depoimentos']),
+    produtos: isPathActive([
+      '/produtos',
+      '/categoria',
+      '/produto',
+      '/grupo-digital',
+      '/upcera',
+      '/scanners',
+      '/impressoras-3d'
+    ]),
+    servicos: isPathActive(['/suporte', '/assistencia-tecnica']),
+    contato: isPathActive(['/contato', '/comercial-comex']),
+    cursos: isPathActive(['/cursos']),
+    sac: isPathActive(['/sac', '/politicas-troca'])
+  };
+
   return (
     <div className="app">
       {showGlobalLoader && <DelayedFullScreenLoader label="Carregando site..." />}
@@ -341,14 +362,13 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
             </div>
 
             <div className="header-socials hide-mobile">
-              <a href="https://www.instagram.com/talmaxprodutosodontologicos/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                <Instagram size={16} />
-              </a>
-              <a href="https://www.facebook.com/talmaxprodutosodontologicos" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-                <Facebook size={16} />
-              </a>
-              <a href="https://www.youtube.com/@talmaxdigital" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
-                <Youtube size={16} />
+              <a
+                href="https://talmax.com.br/portalcliente/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="header-portal-button"
+              >
+                Portal do Cliente
               </a>
             </div>
 
@@ -367,11 +387,11 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
           <div className={`sub-header hide-mobile ${navVisible ? 'is-visible' : 'is-hidden'}`}>
             <div className="sub-header-inner">
               <nav className="nav-desktop">
-                <div className="nav-item">
+                <div className={navItemClassName(activeNavItems.home)}>
                   <Link to="/">Home</Link>
                 </div>
 
-                <div className="nav-item">
+                <div className={navItemClassName(activeNavItems.institucional)}>
                   <span>Institucional <ChevronDown size={14} /></span>
                   <div className="dropdown">
                     <Link to="/quem-somos">Quem Somos</Link>
@@ -380,26 +400,18 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
                   </div>
                 </div>
 
-                <div className="nav-item">
+                <div className={navItemClassName(activeNavItems.produtos)}>
                   <span>Produtos <ChevronDown size={14} /></span>
                   <div className="dropdown">
                     <Link to="/produtos" className="highlight-link">Ver Todos os Produtos</Link>
                     <hr />
-                    <Link to="/categoria/talmax-digital" style={{ fontWeight: '700', color: 'var(--primary)' }}>Talmax Digital</Link>
-                    <Link to="/categoria/protese-dentaria" style={{ fontWeight: '700', color: 'var(--primary)' }}>Prótese Dentária</Link>
-                    <Link to="/categoria/nail-e-podologia" style={{ fontWeight: '700', color: 'var(--primary)' }}>Nail e Podologia</Link>
+                    <Link to="/categoria/talmax-digital" style={{ fontWeight: '700', color: '#3155a5' }}>Talmax Digital</Link>
+                    <Link to="/categoria/protese-dentaria" style={{ fontWeight: '700', color: '#3155a5' }}>Prótese Dentária</Link>
+                    <Link to="/categoria/nail-e-podologia" style={{ fontWeight: '700', color: '#3155a5' }}>Nail e Podologia</Link>
                   </div>
                 </div>
 
-                <div className="nav-item">
-                  <a href="https://mobywork.com.br" target="_blank" rel="noopener noreferrer">Moby Work</a>
-                </div>
-
-                <div className="nav-item">
-                  <Link to="/blog">Blog</Link>
-                </div>
-
-                <div className="nav-item">
+                <div className={navItemClassName(activeNavItems.servicos)}>
                   <span>Serviços <ChevronDown size={14} /></span>
                   <div className="dropdown">
                     <Link to="/suporte">Suporte</Link>
@@ -407,7 +419,7 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
                   </div>
                 </div>
 
-                <div className="nav-item">
+                <div className={navItemClassName(activeNavItems.contato)}>
                   <span>Contato <ChevronDown size={14} /></span>
                   <div className="dropdown">
                     <Link to="/contato">Formulário de Contato</Link>
@@ -416,15 +428,11 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
                   </div>
                 </div>
 
-                <div className="nav-item">
+                <div className={navItemClassName(activeNavItems.cursos)}>
                   <Link to="/cursos">Cursos</Link>
                 </div>
 
-                <div className="nav-item">
-                  <Link to="https://talmax.com.br/portalcliente/" target="_blank" rel="noopener noreferrer">Portal do Cliente</Link>
-                </div>
-
-                <div className="nav-item">
+                <div className={navItemClassName(activeNavItems.sac)}>
                   <span>SAC <ChevronDown size={14} /></span>
                   <div className="dropdown">
                     <Link to="/sac">Fale Conosco</Link>
@@ -487,16 +495,13 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
                 <ChevronDown size={18} />
               </button>
               <div className={`nav-mobile-sub ${activeMobileSection === 'produtos' ? 'is-open' : ''}`}>
-                <Link to="/produtos" onClick={closeMobileMenu} style={{ fontWeight: 'bold', color: 'var(--primary)' }}>Ver Todos os Produtos</Link>
+                <Link to="/produtos" onClick={closeMobileMenu} style={{ fontWeight: 'bold', color: '#3155a5' }}>Ver Todos os Produtos</Link>
                 <hr style={{ border: '0', borderTop: '1px solid rgba(255, 255, 255, 0.2)', margin: '5px 0' }} />
                 <Link to="/categoria/talmax-digital" onClick={closeMobileMenu} style={{ fontWeight: '700' }}>Talmax Digital</Link>
                 <Link to="/categoria/protese-dentaria" onClick={closeMobileMenu} style={{ fontWeight: '700' }}>Prótese Dentária</Link>
                 <Link to="/categoria/nail-e-podologia" onClick={closeMobileMenu} style={{ fontWeight: '700' }}>Nail e Podologia</Link>
               </div>
             </div>
-
-            <a href="https://mobywork.com.br" target="_blank" rel="noopener noreferrer" onClick={closeMobileMenu}>Moby Work</a>
-            <Link to="/blog" onClick={closeMobileMenu}>Blog</Link>
 
             <div className="nav-mobile-item">
               <button
@@ -516,7 +521,6 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
 
             <Link to="/contato" onClick={closeMobileMenu}>Contato</Link>
             <Link to="/cursos" onClick={closeMobileMenu}>Cursos</Link>
-            <Link to="https://talmax.com.br/portalcliente/" target="_blank" rel="noopener noreferrer" onClick={closeMobileMenu}>Portal do Cliente</Link>
 
             <div className="nav-mobile-item">
               <button

@@ -266,6 +266,8 @@ const ProductDetail = () => {
         const formattedProduct = {
           id: data.id,
           name: data.name,
+          category_names: data.category_names || data.category_name || '',
+          is_upcera: data.is_upcera === true || Number(data.is_upcera) === 1,
           category: getVisibleCategoryLabel(data.category_names || data.category_name || '', fixedSegmentNames),
           categoryIds: normalizeCategoryIds(data.category_ids),
           description: data.description,
@@ -284,6 +286,8 @@ const ProductDetail = () => {
         setAllProducts(others.map((currentProduct) => ({
           id: currentProduct.id,
           name: currentProduct.name,
+          category_names: currentProduct.category_names || currentProduct.category_name || '',
+          is_upcera: currentProduct.is_upcera === true || Number(currentProduct.is_upcera) === 1,
           category: getVisibleCategoryLabel(
             currentProduct.category_names || currentProduct.category_name || '',
             fixedSegmentNames

@@ -14,9 +14,8 @@ const HomeFeaturedProductsSection = ({ featuredProducts }) => {
     <section className="home-featured-products">
       <div className="home-featured-products__inner">
         <div className="home-featured-products__header">
-          <span className="home-featured-products__eyebrow">Seleção Talmax</span>
           <h2>Produtos em Destaque</h2>
-          <p>Escolhidos no painel administrativo para ganhar mais visibilidade na Home.</p>
+          <p>Produtos para Prótese Odontológica</p>
         </div>
 
         <div className="home-featured-products__carousel">
