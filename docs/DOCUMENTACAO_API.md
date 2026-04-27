@@ -1505,4 +1505,4 @@ Se quiser evoluir essa documentacao depois, os proximos formatos que mais valem 
 - transformar este arquivo em `Swagger/OpenAPI`
 - gerar uma colecao `Postman/Insomnia`
 - publicar uma pagina interna com exemplos reais de request/response
-teste1
+teste
