@@ -521,7 +521,7 @@
   grid-template-columns: repeat(4, 1fr);
   align-items: start;
   gap: 1rem;
-  min-height: 340px;
+  min-height: var(--service-card-height);
   width: 100%;
   max-width: 1600px;
   margin-top: 9rem;
@@ -539,28 +539,31 @@
 .service-banners--carousel {
   position: relative;
   display: block;
-  min-height: 470px;
+  min-height: var(--service-card-height);
 }
 
 .service-banners--carousel .swiper {
   overflow: hidden;
-  min-height: 470px;
+  min-height: var(--service-card-height);
 }
 
 .service-banners--carousel .swiper-wrapper {
   align-items: stretch;
-  min-height: 470px;
+  min-height: var(--service-card-height);
 }
 
 .service-banners--carousel .swiper-slide {
   display: flex;
-  height: auto;
-  min-height: 470px;
+  width: min(var(--service-card-width), calc(100vw - 2rem)) !important;
+  flex: 0 0 min(var(--service-card-width), calc(100vw - 2rem));
+  height: var(--service-card-height);
+  min-height: var(--service-card-height);
   justify-content: center;
 }
 
 .service-banners--carousel .service-banner {
-  width: min(100%, var(--service-card-width)) !important;
+  width: 100% !important;
+  max-width: var(--service-card-width);
   height: var(--service-card-height);
   min-height: var(--service-card-height);
   flex: 0 0 auto;
@@ -1078,8 +1081,8 @@ body[data-theme='dark'] .service-banner {
   }
 
   .service-banners {
-    --service-card-width: 330px;
-    --service-card-height: 420px;
+    --service-card-width: 352px;
+    --service-card-height: 470px;
     grid-template-columns: 1fr;
     min-height: auto;
     margin-top: 3rem;
