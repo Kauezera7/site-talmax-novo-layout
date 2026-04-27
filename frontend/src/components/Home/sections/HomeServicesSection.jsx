@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
+import { Autoplay, Navigation } from 'swiper/modules';
 import { apiAssetPath } from '../../../utils/assets';
 import { isExternalNavigationTarget, sanitizeNavigationTarget } from '../../../utils/contentSafety';
 import 'swiper/css';
@@ -119,14 +119,19 @@ const HomeServicesSection = ({ services }) => {
         />
 
         <Swiper
-          modules={[Navigation]}
+          modules={[Autoplay, Navigation]}
           spaceBetween={16}
-          slidesPerView="auto"
-          loop={false}
-          rewind={services.length > 4}
+          slidesPerView={1}
+          loop={services.length > 1}
           navigation={{
             prevEl: '.service-banners__nav-prev',
             nextEl: '.service-banners__nav-next'
+          }}
+          autoplay={{ delay: 3500, disableOnInteraction: false }}
+          breakpoints={{
+            640: { slidesPerView: 2 },
+            1024: { slidesPerView: 3 },
+            1400: { slidesPerView: 4 }
           }}
         >
           {services.map((service) => (
