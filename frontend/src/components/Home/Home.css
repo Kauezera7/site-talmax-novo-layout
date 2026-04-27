@@ -1081,8 +1081,8 @@ body[data-theme='dark'] .service-banner {
   }
 
   .service-banners {
-    --service-card-width: 352px;
-    --service-card-height: 470px;
+    --service-card-width: 330px;
+    --service-card-height: 420px;
     grid-template-columns: 1fr;
     min-height: auto;
     margin-top: 3rem;
