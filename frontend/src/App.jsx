@@ -4,11 +4,13 @@ import {
   Facebook,
   Youtube,
   Instagram,
+  Linkedin,
   Search,
   Mail,
   Phone,
   MapPin,
   ChevronDown,
+  ChevronRight,
   Sun,
   Moon
 } from 'lucide-react';
@@ -80,6 +82,21 @@ const RouteLoader = ({ children, label = 'Carregando pagina...' }) => (
   <Suspense fallback={<DelayedFullScreenLoader label={label} />}>
     {children}
   </Suspense>
+);
+
+const WhatsAppIcon = ({ size = 28 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path
+      fill="currentColor"
+      d="M12.04 2C6.58 2 2.13 6.37 2.13 11.74c0 1.71.46 3.38 1.33 4.85L2 22l5.55-1.43a10.1 10.1 0 0 0 4.49 1.05c5.46 0 9.91-4.37 9.91-9.74S17.5 2 12.04 2Zm0 17.92c-1.46 0-2.89-.39-4.14-1.12l-.3-.18-3.28.84.87-3.15-.2-.32a8.03 8.03 0 0 1-1.25-4.25c0-4.43 3.72-8.04 8.3-8.04s8.3 3.61 8.3 8.04-3.72 8.18-8.3 8.18Zm4.55-6.04c-.25-.12-1.47-.72-1.7-.8-.23-.09-.4-.13-.57.12-.17.25-.65.8-.8.96-.15.17-.29.19-.54.06-.25-.12-1.06-.38-2.01-1.21-.74-.66-1.24-1.47-1.39-1.72-.15-.25-.02-.38.11-.5.12-.12.25-.29.38-.43.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.43-.06-.12-.57-1.35-.78-1.85-.2-.48-.41-.42-.57-.43h-.49c-.17 0-.43.06-.66.31-.23.25-.87.84-.87 2.04s.89 2.36 1.02 2.53c.12.17 1.76 2.64 4.26 3.7.6.25 1.06.4 1.42.51.6.19 1.14.16 1.57.1.48-.07 1.47-.59 1.68-1.16.21-.58.21-1.07.15-1.17-.06-.1-.23-.16-.48-.28Z"
+    />
+  </svg>
 );
 
 const withRouteLoader = (element, label) => (
@@ -595,8 +612,76 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
       </main>
 
       {!isAdmin && (
-        <footer className="footer">
+        <>
+          <section className="moby-footer-strip" aria-label="Moby Work">
+            <div className="moby-footer-strip__inner">
+              <span className="moby-footer-strip__logo">moby</span>
+              <p>Conheça nossa linha de móveis para sua clínica ou laboratório</p>
+              <a
+                href="https://mobywork.com.br"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="moby-footer-strip__button"
+              >
+                Conheça a Moby
+                <ChevronRight size={20} strokeWidth={1.75} />
+              </a>
+            </div>
+          </section>
+
+          <footer className="footer">
           <div className="footer-grid">
+            <div className="footer-section footer-contact">
+              <h4>Contato</h4>
+              <p><Mail size={18} /> <span>contato@talmax.com.br</span></p>
+              <p><Phone size={18} /> <span>(41) 3012-3456</span></p>
+              <p>
+                <MapPin size={20} />
+                <span>Rua Benedito Carollo, 890<br />Cidade Industrial de Curitiba<br />Curitiba - PR, 81290-060</span>
+              </p>
+            </div>
+
+            <div className="footer-section footer-links">
+              <h4>Ajuda</h4>
+              <Link to="/sac">Dúvidas gerais</Link>
+              <Link to="/portal-cliente">Pedidos</Link>
+              <Link to="/produtos">Produtos</Link>
+              <Link to="/contato">Fale Conosco</Link>
+              <Link to="/contato">Talmax perto de você</Link>
+            </div>
+
+            <div className="footer-section footer-links">
+              <h4>Marcas</h4>
+              <Link to="/upcera">UPCERA</Link>
+              <Link to="/produtos">Shining 3D</Link>
+              <Link to="/produtos">Runyes</Link>
+              <Link to="/produtos">Ceramotion</Link>
+              <Link to="/produtos">Saeyang</Link>
+              <Link to="/produtos">EFF</Link>
+            </div>
+
+            <div className="footer-section footer-brand">
+              <img src={assetPath('img/Talmaxlogo.logo.webp')} alt="Talmax" className="footer-logo" />
+              <p>Inovação e qualidade em produtos odontológicos.</p>
+              <div className="footer-social-links" aria-label="Redes sociais">
+                <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                  <Instagram size={28} />
+                  </a>
+                  <a href="https://wa.me/554130123456" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+                    <WhatsAppIcon size={28} />
+                  </a>
+                <a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                  <Linkedin size={28} />
+                </a>
+                <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                  <Facebook size={28} />
+                </a>
+                <a href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+                  <Youtube size={28} />
+                </a>
+              </div>
+            </div>
+
             <div className="footer-section">
               <img src={assetPath('img/Talmaxlogo.logo.webp')} alt="TALMAX" className="footer-logo" />
               <p>Inovação e qualidade em produtos odontológicos.</p>
@@ -618,9 +703,18 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
             </div>
           </div>
           <div className="footer-bottom">
+            <div className="footer-bottom__inner">
+              <nav className="footer-legal-links" aria-label="Links legais">
+                <Link to="/privacidade">Política de privacidade</Link>
+                <Link to="/privacidade">Política de cookies</Link>
+                <Link to="/privacidade">Termos de uso</Link>
+              </nav>
+              <p>Copyright &copy; {new Date().getFullYear()} Talmax. Todos os direitos reservados. | Talmax - Produtos para Prótese Odontológica | CNPJ: 00.130.762/0001-02</p>
+            </div>
             <p>&copy; {new Date().getFullYear()} Talmax. Todos os direitos reservados. | <Link to="/privacidade">Política de Privacidade</Link></p>
           </div>
-        </footer>
+          </footer>
+        </>
       )}
 
       {!isAdmin && <CookieBanner />}

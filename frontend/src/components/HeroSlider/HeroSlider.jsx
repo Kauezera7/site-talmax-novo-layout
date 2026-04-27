@@ -161,7 +161,7 @@ const HeroSlider = () => {
         }}
         pagination={{
           clickable: true,
-          dynamicBullets: true,
+          dynamicBullets: false,
         }}
         navigation={banners.length > 1}
         modules={[Autoplay, EffectFade, Pagination, Navigation]}
