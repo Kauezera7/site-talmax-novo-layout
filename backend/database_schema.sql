@@ -332,5 +332,5 @@ ON DUPLICATE KEY UPDATE
 -- ou por um procedimento operacional controlado fora do repositorio.
 
 -- ======================================================
--- FIM DO SCRIPT
+-- FIM DO SCRIPTteste
 -- ======================================================
