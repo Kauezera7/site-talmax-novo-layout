@@ -207,6 +207,7 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
   const [navVisible, setNavVisible] = useState(true);
   const [activeMobileSection, setActiveMobileSection] = useState(null);
   const [cookieConsentStatus, setCookieConsentStatus] = useState(() => readCookieConsentStatus());
+  const headerRef = useRef(null);
   const lastScrollYRef = useRef(0);
   const tickingScrollRef = useRef(false);
 
@@ -323,6 +324,57 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
   }, [isAdmin]);
 
   useEffect(() => {
+    const rootElement = document.documentElement;
+
+    if (isAdmin) {
+      rootElement.style.setProperty('--site-header-current-height', '0px');
+      return undefined;
+    }
+
+    const headerElement = headerRef.current;
+
+    if (!headerElement) {
+      return undefined;
+    }
+
+    let animationFrameId = 0;
+
+    const updateHeaderHeight = () => {
+      const headerHeight = Math.ceil(headerElement.getBoundingClientRect().height);
+      rootElement.style.setProperty('--site-header-current-height', `${headerHeight}px`);
+    };
+
+    const requestHeaderHeightUpdate = () => {
+      if (animationFrameId) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+
+      animationFrameId = window.requestAnimationFrame(() => {
+        animationFrameId = 0;
+        updateHeaderHeight();
+      });
+    };
+
+    updateHeaderHeight();
+
+    const resizeObserver = typeof window.ResizeObserver === 'function'
+      ? new window.ResizeObserver(requestHeaderHeightUpdate)
+      : null;
+
+    resizeObserver?.observe(headerElement);
+    window.addEventListener('resize', requestHeaderHeightUpdate);
+
+    return () => {
+      if (animationFrameId) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', requestHeaderHeightUpdate);
+    };
+  }, [isAdmin, menuOpen, navVisible, searchOpen]);
+
+  useEffect(() => {
     const appliedTheme = isAdmin ? theme : 'light';
     document.body.dataset.theme = appliedTheme;
     window.localStorage.setItem(THEME_STORAGE_KEY, appliedTheme);
@@ -368,7 +420,10 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
       )}
 
       {!isAdmin && (
-        <header className={`header ${navVisible ? 'nav-expanded' : 'nav-collapsed'} ${menuOpen ? 'menu-active' : ''}`}>
+        <header
+          ref={headerRef}
+          className={`header ${navVisible ? 'nav-expanded' : 'nav-collapsed'} ${menuOpen ? 'menu-active' : ''}`}
+        >
           <div className="header-top">
             <Link to="/" className="logo">
               <img src={assetPath('img/Talmaxlogo.logo.webp')} alt="TALMAX" />
