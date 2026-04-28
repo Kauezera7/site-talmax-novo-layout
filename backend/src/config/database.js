@@ -4,7 +4,7 @@ const mysql = require('mysql2');
 require('dotenv').config();
 
 /**
- * Configura a conexao com o banco.
+ * Configura a conexao com o banco.teste
  * As credenciais sensiveis devem vir do .env para evitar segredos hardcoded.
  */
 if (!process.env.DB_PASSWORD) {
