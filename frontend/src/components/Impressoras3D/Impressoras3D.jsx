@@ -98,6 +98,8 @@ const Impressoras3D = () => {
               id: p.id,
               name: p.name,
               description: p.description,
+              category_names: p.category_names || '',
+              is_3d_printer: p.is_3d_printer === true || Number(p.is_3d_printer) === 1,
               image: p.main_image ? apiAssetPath(p.main_image) : '',
               ...extra
             };

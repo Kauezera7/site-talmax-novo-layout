@@ -108,7 +108,7 @@
     height: 450px;
     scroll-snap-align: center;
     text-align: center;
-    border-radius: 0;
+    border-radius: 24px;
     border-left: none;
     border-right: none;
     box-shadow: none;

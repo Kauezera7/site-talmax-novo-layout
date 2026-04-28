@@ -184,6 +184,8 @@ const ProductCatalog = () => {
             id: product.id,
             name: product.name,
             allCategoryNames: productCatNames,
+            category_names: product.category_names || '',
+            is_upcera: product.is_upcera === true || Number(product.is_upcera) === 1,
             category: getVisibleCategoryLabel(productCatNames, segmentNames),
             image: product.main_image ? apiAssetPath(product.main_image) : '',
             ...extra,

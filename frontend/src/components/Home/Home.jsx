@@ -170,6 +170,8 @@ const Home = () => {
         )}
       </div>
 
+      <div className="home-section-divider home-section-divider--before-featured" aria-hidden="true" />
+
       <div ref={featuredRef}>
         {shouldLoadFeatured && featuredProducts !== null ? (
           <Suspense fallback={<HomeSectionPlaceholder variant="featured" />}>
@@ -179,6 +181,8 @@ const Home = () => {
           <HomeSectionPlaceholder variant="featured" />
         )}
       </div>
+
+      <div className="home-section-divider home-section-divider--before-categories" aria-hidden="true" />
 
       <div ref={categoriesRef}>
         {shouldLoadCategories && categories !== null ? (

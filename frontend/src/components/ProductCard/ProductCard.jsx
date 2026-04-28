@@ -5,9 +5,10 @@
  */
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import './ProductCard.css';
+
+const FIXED_SEGMENT_NAMES = ['talmax digital', 'protese dentaria', 'nail e podologia'];
 
 const getAvailableImages = (product) => (
   [product.image, ...(Array.isArray(product.images) ? product.images : [])]
@@ -15,10 +16,53 @@ const getAvailableImages = (product) => (
     .filter((image, index, images) => images.indexOf(image) === index)
 );
 
-const ProductCard = ({ product, index, imageLoading = 'lazy', imageFetchPriority = 'auto' }) => {
+const normalizeLabel = (value) => (
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+);
+
+const getProductLabels = (product) => (
+  [product.category_names, product.category_name, product.category, product.subcategory, product.sub_category]
+    .flatMap((value) => {
+      if (Array.isArray(value)) return value;
+      return String(value || '').split(',');
+    })
+    .map((value) => String(value || '').trim())
+    .filter(Boolean)
+    .filter((value, index, labels) => labels.indexOf(value) === index)
+);
+
+const getProductBrand = (product) => {
+  const explicitBrand = product.brand || product.marca || product.fabricante || product.manufacturer;
+  if (explicitBrand) return explicitBrand;
+  if (product.is_upcera === true || Number(product.is_upcera) === 1) return 'UPCERA';
+
+  const labels = getProductLabels(product);
+  const knownBrand = labels.find((label) => ['upcera', 'talmax'].includes(normalizeLabel(label)));
+  return knownBrand || 'Talmax';
+};
+
+const getProductCategory = (product, brand) => {
+  const explicitCategory = product.product_type || product.tipo || product.type;
+  if (explicitCategory) return explicitCategory;
+
+  const normalizedBrand = normalizeLabel(brand);
+  const labels = getProductLabels(product);
+  return labels.find((label) => {
+    const normalizedLabel = normalizeLabel(label);
+    return normalizedLabel !== normalizedBrand && !FIXED_SEGMENT_NAMES.includes(normalizedLabel);
+  }) || 'Produto';
+};
+
+const ProductCard = ({ product, imageLoading = 'lazy', imageFetchPriority = 'auto' }) => {
   const availableImages = getAvailableImages(product);
   const [activeImage, setActiveImage] = React.useState(availableImages[0] || '');
   const navigate = useNavigate();
+  const productBrand = getProductBrand(product);
+  const productCategory = getProductCategory(product, productBrand);
 
   // Sincroniza a imagem ativa quando o produto muda
   React.useEffect(() => {
@@ -31,12 +75,7 @@ const ProductCard = ({ product, index, imageLoading = 'lazy', imageFetchPriority
   };
 
   return (
-    <motion.div 
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4, delay: (index % 4) * 0.1 }}
+    <div
       className="premium-product-card"
       onClick={handleCardClick}
       style={{ cursor: 'pointer' }}
@@ -77,21 +116,24 @@ const ProductCard = ({ product, index, imageLoading = 'lazy', imageFetchPriority
       </div>
       
       <div className="card-details">
-        <div className="card-brand">Talmax Soluções</div>
-        <h3 className="card-title">{product.name}</h3>
+        <div className="card-copy">
+          <h3 className="card-title">{product.name}</h3>
+          <div className="card-brand">{productBrand}</div>
+          <div className="card-category">{productCategory}</div>
+        </div>
 
         <div className="card-footer-lux">
           <Link 
             to={`/produto/${product.id}`}
             className="btn-quote-lux"
+            aria-label={`Ver detalhes de ${product.name}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <span>Ver Detalhes</span>
-            <ArrowRight size={16} />
+            <ChevronRight size={22} strokeWidth={2.15} />
           </Link>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

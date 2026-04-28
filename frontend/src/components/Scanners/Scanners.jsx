@@ -106,6 +106,8 @@ const Scanners = () => {
               id: p.id,
               name: p.name,
               description: p.description,
+              category_names: p.category_names || '',
+              is_scanner: p.is_scanner === true || Number(p.is_scanner) === 1,
               image: p.main_image ? apiAssetPath(p.main_image) : '',
               ...extra
             };
