@@ -16,9 +16,9 @@ body {
 }
 
 .catalog-container {
-  --product-card-cutout-bg: #f0f3f7;
+  --product-card-cutout-bg: #f1f4f9;
   min-height: 100vh;
-  background: #f0f3f7;
+  background: #f1f4f9;
 }
 
 /* --- HERO SECTION --- */
@@ -250,7 +250,7 @@ body {
   padding: 40px 2%;
   max-width: 1600px;
   margin: 0 auto;
-  background: #f0f3f7;
+  background: #f1f4f9;
 }
 
 .catalog-grid-lux {
@@ -573,7 +573,7 @@ body {
 .pagination-arrow:disabled {
   opacity: 0.3;
   cursor: not-allowed;
-  background: #f1f5f9;
+  background: #f1f4f9;
 }
 
 .pagination-dots {

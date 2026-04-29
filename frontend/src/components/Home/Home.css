@@ -39,7 +39,7 @@
 
 .home-featured-products {
   padding: 2.5rem 2rem 0;
-  background: #f0f3f7;
+  background: #f1f4f9;
 }
 
 .home-featured-products__inner {
@@ -168,7 +168,7 @@
 }
 
 .categories {
-  --category-section-bg: #f0f3f7;
+  --category-section-bg: #f1f4f9;
   --category-card-radius: 14px;
   --category-corner-size: 82px;
   --category-corner-radius: 16px;
@@ -304,10 +304,10 @@
   margin: 0;
   color: #f5f7ff;
   font-size: 1.12rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.12;
   letter-spacing: 0;
-  text-transform: uppercase;
+  text-transform: none;
   text-wrap: balance;
 }
 
@@ -434,8 +434,8 @@
 
 .categories-promo-card__content strong {
   color: #f8fafc;
-  font-size: clamp(1.9rem, 2.7vw, 2.3rem);
-  font-weight: 800;
+  font-size: clamp(1.95rem, 2.45vw, 2.15rem);
+  font-weight: 550;
   line-height: 1.05;
   letter-spacing: 0;
 }
@@ -443,6 +443,7 @@
 .categories-promo-card__content span {
   color: rgba(248, 250, 252, 0.86);
   font-size: 1rem;
+  font-weight: 400;
   line-height: 1.2;
 }
 
@@ -489,21 +490,23 @@
 .categories-promo-card__button {
   position: relative;
   z-index: 1;
-  min-width: 138px;
+  min-width: 142px;
   height: 34px;
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0 1.15rem;
+  padding: 0 1rem;
   border: 1.4px solid #17214a;
   border-radius: 999px;
-  background: #f0f3f7;
+  background: #f1f4f9;
   color: #17214a;
   font-size: 0.78rem;
   font-weight: 900;
   line-height: 1;
   text-transform: uppercase;
+  white-space: nowrap;
   transition: background-color 0.24s ease, border-color 0.24s ease, color 0.24s ease;
 }
 
@@ -612,13 +615,13 @@
   --service-banner-cutout-radius: 16px;
   --service-banner-cutout-outer-radius: 18px;
   --service-banner-arrow-size: 48px;
-  --service-banner-page-bg: #f0f3f7;
-  --service-banner-page-bg-gradient: #f0f3f7;
+  --service-banner-page-bg: #f1f4f9;
+  --service-banner-page-bg-gradient: #f1f4f9;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--white);
-  background-color: #f0f3f7;
+  background-color: #f1f4f9;
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -1285,7 +1288,7 @@ body[data-theme='dark'] .service-banner {
   }
 
   .categories-promo-card__button {
-    min-width: 128px;
+    min-width: 136px;
     height: 32px;
     font-size: 0.72rem;
   }

@@ -6,13 +6,14 @@
   --text: #333;
   --surface: #ffffff;
   --surface-soft: #f8fafc;
-  --surface-muted: #f0f3f7;
+  --surface-muted: #f1f4f9;
   --border-soft: rgba(15, 23, 42, 0.08);
   --heading: #0f172a;
   --header-height: 70px;
   --header-height-mobile: 64px;
   --site-header-current-height: 0px;
-  --site-bg: #f0f3f7;
+  --site-bg: #f1f4f9;
+  --font-family-base: 'Acumin', 'Acumin Pro', 'Acumin Variable Concept', Arial, sans-serif;
   --transition: 0.3s ease;
 }
 
@@ -40,7 +41,8 @@ body[data-theme='dark'] {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-base);
+  font-weight: 400;
   color: var(--text);
   line-height: 1.6;
   width: 100%;
@@ -1049,7 +1051,7 @@ body[data-theme='dark'] .theme-toggle-button {
   display: inline-flex;
   align-items: center;
   color: #ffffff;
-  font-family: 'Trebuchet MS', 'Inter', sans-serif;
+  font-family: var(--font-family-base);
   font-size: 2.45rem;
   font-weight: 300;
   line-height: 1;

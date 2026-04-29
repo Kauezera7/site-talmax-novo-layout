@@ -4,7 +4,7 @@
   --product-card-button-size: 48px;
   --product-card-cutout-radius: 16px;
   --product-card-cutout-outer-radius: 18px;
-  --product-card-page-bg: var(--product-card-cutout-bg, var(--surface-muted, #f0f3f7));
+  --product-card-page-bg: var(--product-card-cutout-bg, var(--surface-muted, #f1f4f9));
   --product-card-page-bg-gradient: var(--product-card-page-bg);
   --product-card-soft-bg: #ffffff;
   background: #ffffff;

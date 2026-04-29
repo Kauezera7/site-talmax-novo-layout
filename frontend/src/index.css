@@ -4,16 +4,34 @@
   box-sizing: border-box;
 }
 
+:root {
+  --font-family-base: 'Acumin', 'Acumin Pro', 'Acumin Variable Concept', Arial, sans-serif;
+  font-family: var(--font-family-base);
+  font-weight: 400;
+}
+
 body {
   margin: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-base);
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   width: 100%;
-  background: #f0f3f7;
+  background: #f1f4f9;
   color: #333;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+strong,
+b {
+  font-weight: 700;
 }
 
 #root {

@@ -142,7 +142,7 @@ const Upcera = () => {
     <div className="special-page-container" style={{
       backgroundColor: '#000000',
       minHeight: '100vh',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+      fontFamily: "'Acumin', 'Acumin Pro', 'Acumin Variable Concept', Arial, sans-serif",
       overflowX: 'hidden'
     }}>
       <section className="special-page-header" style={{ background: '#ffffff', padding: '140px 0 80px', position: 'relative', overflow: 'hidden' }}>
