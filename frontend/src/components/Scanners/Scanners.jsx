@@ -79,7 +79,7 @@ const Scanners = () => {
   const [pageSettings, setPageSettings] = useState(DEFAULT_SPECIAL_PAGE_SETTINGS.scanners);
   const navigate = useNavigate();
 
-  const accentColor = '#004a99';
+  const accentColor = '#374c92';
 
   useEffect(() => {
     const fetchProducts = async () => {

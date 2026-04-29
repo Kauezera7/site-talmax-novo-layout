@@ -1,8 +1,8 @@
 .technical-assistance-page {
-  --technical-accent: var(--primary, #004a99);
-  --technical-accent-deep: #0f3f7a;
-  --technical-accent-soft: rgba(0, 74, 153, 0.12);
-  --technical-accent-border: rgba(0, 74, 153, 0.18);
+  --technical-accent: var(--primary, #374c92);
+  --technical-accent-deep: #2d3f78;
+  --technical-accent-soft: rgba(55, 76, 146, 0.12);
+  --technical-accent-border: rgba(55, 76, 146, 0.18);
   --technical-accent-surface: rgba(219, 234, 254, 0.92);
   min-height: 100vh;
   background:
@@ -101,7 +101,7 @@
   width: min(100%, 460px);
   padding: 1rem;
   border-radius: 32px;
-  background: linear-gradient(160deg, rgba(15, 23, 42, 0.98), rgba(0, 74, 153, 0.92));
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.98), rgba(55, 76, 146, 0.92));
   box-shadow: 0 35px 80px -38px rgba(15, 23, 42, 0.7);
 }
 
@@ -152,7 +152,7 @@
   justify-content: center;
   gap: 0.85rem;
   padding: 2.5rem 1.5rem;
-  border: 1px dashed rgba(0, 74, 153, 0.2);
+  border: 1px dashed rgba(55, 76, 146, 0.2);
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.76);
   color: #475569;
@@ -187,7 +187,7 @@
 
 .technical-assistance-card:hover {
   transform: translateY(-6px);
-  border-color: rgba(0, 74, 153, 0.22);
+  border-color: rgba(55, 76, 146, 0.22);
   box-shadow: 0 32px 85px -42px rgba(15, 23, 42, 0.5);
 }
 
@@ -285,7 +285,7 @@
 
 .technical-assistance-card-action:hover {
   color: var(--technical-accent-deep);
-  border-color: rgba(0, 74, 153, 0.4);
+  border-color: rgba(55, 76, 146, 0.4);
   transform: translateX(2px);
 }
 

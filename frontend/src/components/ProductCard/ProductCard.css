@@ -89,7 +89,7 @@
 }
 
 .product-thumbnails img.active {
-  border-color: #3155a5;
+  border-color: #374c92;
   box-shadow: none;
 }
 
@@ -126,7 +126,7 @@
 
 .card-brand {
   margin-top: 0.15rem;
-  color: #3155a5;
+  color: #374c92;
   font-size: 0.88rem;
   font-weight: 500;
   line-height: 1.25;
@@ -196,18 +196,29 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  transition: transform 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
   pointer-events: auto;
   position: relative;
   z-index: 1;
 }
 
+.btn-quote-lux svg {
+  transition: transform 0.25s ease;
+}
+
 .premium-product-card:hover .btn-quote-lux,
 .premium-product-card:focus-within .btn-quote-lux,
 .btn-quote-lux:hover {
-  background: #3155a5;
-  border-color: #3155a5;
+  background: #374c92;
+  border-color: #374c92;
   color: #ffffff;
+  transform: scale(1.06);
+}
+
+.premium-product-card:hover .btn-quote-lux svg,
+.premium-product-card:focus-within .btn-quote-lux svg,
+.btn-quote-lux:hover svg {
+  transform: translateX(2px);
 }
 
 @media (max-width: 640px) {

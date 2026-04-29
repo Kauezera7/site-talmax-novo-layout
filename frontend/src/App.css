@@ -1,5 +1,5 @@
 :root {
-  --primary: #004a99;
+  --primary: #374c92;
   --secondary: #666;
   --bg-light: #f8f9fa;
   --white: #ffffff;
@@ -50,6 +50,59 @@ body {
   background: var(--site-bg);
 }
 
+:where(
+  a[class*='btn'],
+  button[class*='btn'],
+  a[class*='button'],
+  button[class*='button']
+):not(.menu-toggle):not(.theme-toggle-button):not(.nav-search-button):not(.home-featured-products__nav) {
+  transition:
+    transform 0.25s ease,
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+:where(
+  a[class*='btn'],
+  button[class*='btn'],
+  a[class*='button'],
+  button[class*='button']
+):not(.menu-toggle):not(.theme-toggle-button):not(.nav-search-button):not(.home-featured-products__nav) svg {
+  transition: transform 0.25s ease;
+}
+
+:where(
+  a[class*='btn'],
+  button[class*='btn'],
+  a[class*='button'],
+  button[class*='button']
+):not(.menu-toggle):not(.theme-toggle-button):not(.nav-search-button):not(.home-featured-products__nav):hover,
+:where(
+  a[class*='btn'],
+  button[class*='btn'],
+  a[class*='button'],
+  button[class*='button']
+):not(.menu-toggle):not(.theme-toggle-button):not(.nav-search-button):not(.home-featured-products__nav):focus-visible {
+  transform: scale(1.04);
+}
+
+:where(
+  a[class*='btn'],
+  button[class*='btn'],
+  a[class*='button'],
+  button[class*='button']
+):not(.menu-toggle):not(.theme-toggle-button):not(.nav-search-button):not(.home-featured-products__nav):hover svg,
+:where(
+  a[class*='btn'],
+  button[class*='btn'],
+  a[class*='button'],
+  button[class*='button']
+):not(.menu-toggle):not(.theme-toggle-button):not(.nav-search-button):not(.home-featured-products__nav):focus-visible svg {
+  transform: translateX(2px);
+}
+
 .app {
   width: 100%;
   min-height: 100vh;
@@ -89,7 +142,7 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(0, 74, 153, 0.12) 0%, rgba(96, 165, 250, 0.18) 100%);
+  background: linear-gradient(135deg, rgba(55, 76, 146, 0.12) 0%, rgba(96, 165, 250, 0.18) 100%);
   color: var(--primary);
   flex-shrink: 0;
 }
@@ -107,14 +160,14 @@ body[data-theme='dark'] .theme-toggle-button {
   justify-content: center;
   padding: 1.5rem;
   background:
-    radial-gradient(circle at top, rgba(0, 91, 228, 0.16), transparent 32%),
+    radial-gradient(circle at top, rgba(55, 76, 146, 0.16), transparent 32%),
     linear-gradient(180deg, rgba(248, 251, 255, 0.98) 0%, rgba(238, 243, 248, 0.98) 100%);
   backdrop-filter: blur(8px);
 }
 
 .app-loader-overlay-admin {
   background:
-    radial-gradient(circle at top, rgba(0, 91, 228, 0.12), transparent 28%),
+    radial-gradient(circle at top, rgba(55, 76, 146, 0.12), transparent 28%),
     linear-gradient(180deg, rgba(244, 247, 251, 0.98) 0%, rgba(233, 238, 245, 0.98) 100%);
 }
 
@@ -160,7 +213,7 @@ body[data-theme='dark'] .theme-toggle-button {
 }
 
 .loader_bubble {
-  background: linear-gradient(180deg, rgb(0, 91, 228) 10%, rgb(75, 127, 240) 100%);
+  background: linear-gradient(180deg, rgb(55, 76, 146) 10%, rgb(72, 97, 173) 100%);
   border-radius: 50%;
   transform-origin: 50% 50%;
   animation: bubble7234 1200ms cubic-bezier(0.645, 0.045, 0.355, 1) infinite;
@@ -180,7 +233,7 @@ body[data-theme='dark'] .theme-toggle-button {
   left: 4px;
   width: 4px;
   height: 4px;
-  background: rgba(0, 91, 228, 0.95);
+  background: rgba(55, 76, 146, 0.95);
 }
 
 @keyframes bubble7234 {
@@ -310,7 +363,7 @@ body[data-theme='dark'] .theme-toggle-button {
 .header-search-inline button {
   border: 0;
   border-radius: 999px;
-  background: #3155a5;
+  background: #374c92;
   color: #ffffff;
   height: 24px;
   padding: 0 0.65rem;
@@ -436,9 +489,9 @@ body[data-theme='dark'] .theme-toggle-button {
   border-radius: 18px;
   aspect-ratio: 1 / 1;
   background:
-    radial-gradient(circle at top, rgba(0, 74, 153, 0.14), transparent 55%),
+    radial-gradient(circle at top, rgba(55, 76, 146, 0.14), transparent 55%),
     linear-gradient(135deg, #ffffff 0%, #eaf3ff 100%);
-  border: 1px solid rgba(0, 74, 153, 0.08);
+  border: 1px solid rgba(55, 76, 146, 0.08);
 }
 
 .site-search-preview-media img {
@@ -513,7 +566,7 @@ body[data-theme='dark'] .theme-toggle-button {
 
 .site-search-preview-cta:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(0, 74, 153, 0.2);
+  box-shadow: 0 12px 24px rgba(55, 76, 146, 0.2);
 }
 
 .site-search-dropdown-empty {
@@ -549,7 +602,7 @@ body[data-theme='dark'] .theme-toggle-button {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: #3155a5;
+  background: #374c92;
   border: 0;
   color: #ffffff;
   font-size: 0.8rem;
@@ -611,7 +664,7 @@ body[data-theme='dark'] .theme-toggle-button {
 
 /* Navegação Desktop Centralizada */
 .nav-desktop {
-  --header-blue: #3155a5;
+  --header-blue: #374c92;
   display: flex;
   gap: clamp(0.15rem, 0.6vw, 0.7rem);
   align-items: center;
@@ -694,7 +747,7 @@ body[data-theme='dark'] .theme-toggle-button {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1001;
   border: 1px solid #f3f4f6;
-  border-top: 3px solid #3155a5; /* Detalhe azul no topo do dropdown */
+  border-top: 3px solid #374c92; /* Detalhe azul no topo do dropdown */
 }
 
 .nav-item:hover .dropdown {
@@ -715,7 +768,7 @@ body[data-theme='dark'] .theme-toggle-button {
 
 .dropdown a:hover {
   background: #F0F4F9;
-  color: #3155a5;
+  color: #374c92;
   padding-left: 1.8rem;   /* Efeito de recuo no hover */
 }
 
@@ -728,7 +781,7 @@ body[data-theme='dark'] .theme-toggle-button {
   width: 44px;
   height: 44px;
   background: #f8fbff;
-  border: 1px solid rgba(0, 74, 153, 0.12);
+  border: 1px solid rgba(55, 76, 146, 0.12);
   border-radius: 999px;
   cursor: pointer;
   color: var(--primary);
@@ -739,7 +792,7 @@ body[data-theme='dark'] .theme-toggle-button {
 
 .menu-toggle:hover {
   background: #eef6ff;
-  border-color: rgba(0, 74, 153, 0.2);
+  border-color: rgba(55, 76, 146, 0.2);
 }
 
 .menu-toggle-bar {
@@ -769,7 +822,7 @@ body[data-theme='dark'] .theme-toggle-button {
   justify-content: center;
   gap: 0.55rem;
   background: #ffffff;
-  border: 1px solid rgba(0, 74, 153, 0.12);
+  border: 1px solid rgba(55, 76, 146, 0.12);
   border-radius: 999px;
   color: var(--primary);
   cursor: pointer;
@@ -783,7 +836,7 @@ body[data-theme='dark'] .theme-toggle-button {
 .search-trigger:hover {
   transform: translateY(-1px);
   background: #f8fbff;
-  border-color: rgba(0, 74, 153, 0.24);
+  border-color: rgba(55, 76, 146, 0.24);
 }
 
 .nav-search-item::after {
@@ -817,8 +870,8 @@ body[data-theme='dark'] .theme-toggle-button {
 }
 
 .header-search-input-wrap:focus-within {
-  border-color: rgba(0, 74, 153, 0.22);
-  box-shadow: 0 14px 34px rgba(0, 74, 153, 0.1);
+  border-color: rgba(55, 76, 146, 0.22);
+  box-shadow: 0 14px 34px rgba(55, 76, 146, 0.1);
   transform: translateY(-1px);
 }
 
@@ -949,7 +1002,7 @@ body[data-theme='dark'] .theme-toggle-button {
 .menu-toggle {
   display: none;
   background: #f8fbff;
-  border: 1px solid rgba(0, 74, 153, 0.12);
+  border: 1px solid rgba(55, 76, 146, 0.12);
   border-radius: 999px;
   cursor: pointer;
   color: var(--primary);
@@ -970,7 +1023,7 @@ body[data-theme='dark'] .theme-toggle-button {
   gap: 0.85rem;
   z-index: 999;
   box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-  background: linear-gradient(180deg, #004a99 0%, #005db8 100%);
+  background: linear-gradient(180deg, #374c92 0%, #4861ad 100%);
   transform: translateX(-100%);
   opacity: 0;
   visibility: hidden;
@@ -1026,7 +1079,7 @@ body[data-theme='dark'] .theme-toggle-button {
 
 .nav-mobile .social-links svg:hover {
   background: #dbeafe;
-  color: #003b79;
+  color: #2d3f78;
 }
 
 .moby-footer-strip {
@@ -1077,7 +1130,7 @@ body[data-theme='dark'] .theme-toggle-button {
   gap: 0.65rem;
   padding: 0 1.35rem;
   border-radius: 999px;
-  background: #3155a5;
+  background: #374c92;
   color: #ffffff;
   text-decoration: none;
   font-size: 0.86rem;
@@ -1115,7 +1168,7 @@ body[data-theme='dark'] .theme-toggle-button {
   transform: translateX(-50%);
   width: min(92%, 1200px);
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(0, 74, 153, 0.2) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(55, 76, 146, 0.2) 50%, transparent 100%);
 }
 
 .footer-grid {
@@ -1281,7 +1334,7 @@ body[data-theme='dark'] .theme-toggle-button {
 .site-search-result:hover {
   background: #eff6ff;
   color: var(--primary);
-  border-color: rgba(0, 74, 153, 0.16);
+  border-color: rgba(55, 76, 146, 0.16);
 }
 
 .site-search-empty {
@@ -1308,7 +1361,7 @@ body[data-theme='dark'] .theme-toggle-button {
   transform: translateX(-50%);
   width: min(92%, 1200px);
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(0, 74, 153, 0.2) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(55, 76, 146, 0.2) 50%, transparent 100%);
 }
 
 .footer-grid {
@@ -1349,7 +1402,7 @@ body[data-theme='dark'] .theme-toggle-button {
 .social-links svg {
   color: #1f3f66;
   background: #ffffff;
-  border: 1px solid rgba(0, 74, 153, 0.14);
+  border: 1px solid rgba(55, 76, 146, 0.14);
   border-radius: 999px;
   padding: 0.7rem;
   width: 42px;
@@ -1442,7 +1495,7 @@ body[data-theme='dark'] .theme-toggle-button {
 
 .footer-links a:hover,
 .footer-links a:focus-visible {
-  color: #3155a5;
+  color: #374c92;
 }
 
 .footer-brand {
@@ -1478,7 +1531,7 @@ body[data-theme='dark'] .theme-toggle-button {
 
 .footer-social-links a:hover,
 .footer-social-links a:focus-visible {
-  color: #3155a5;
+  color: #374c92;
   transform: translateY(-2px);
 }
 
@@ -1532,7 +1585,7 @@ body[data-theme='dark'] .theme-toggle-button {
 
 .footer-bottom a:hover,
 .footer-bottom a:focus-visible {
-  color: #3155a5;
+  color: #374c92;
 }
 
 .footer-bottom__inner p {
@@ -1578,7 +1631,7 @@ body[data-theme='dark'] .theme-toggle-button {
   }
 
   .header.menu-active {
-    background: linear-gradient(135deg, #004a99 0%, #005db8 100%);
+    background: linear-gradient(135deg, #374c92 0%, #4861ad 100%);
     border-bottom-color: rgba(255, 255, 255, 0.14);
     box-shadow: 0 18px 42px rgba(0, 53, 110, 0.34);
   }

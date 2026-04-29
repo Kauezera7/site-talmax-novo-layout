@@ -444,7 +444,7 @@
 .admin-talmax-digital__preview--back img {
   object-fit: contain;
   padding: 12px;
-  background: linear-gradient(135deg, #0f3f7a 0%, #004a99 100%);
+  background: linear-gradient(135deg, #2d3f78 0%, #374c92 100%);
 }
 
 .admin-talmax-digital__remove-image {

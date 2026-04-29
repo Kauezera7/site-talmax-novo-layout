@@ -120,12 +120,12 @@
   justify-content: center;
   gap: 0.6rem;
   background-color: transparent;
-  color: var(--primary, #004a99);
+  color: var(--primary, #374c92);
   text-decoration: none;
   padding: 0.85rem 1.5rem;
   border-radius: 6px;
   font-weight: 600;
-  border: 2px solid var(--primary, #004a99);
+  border: 2px solid var(--primary, #374c92);
   transition: all 0.2s ease;
   width: 100%;
   text-transform: uppercase;
@@ -134,7 +134,7 @@
 }
 
 .support-button:hover {
-  background-color: var(--primary, #004a99);
+  background-color: var(--primary, #374c92);
   color: white;
 }
 
@@ -192,7 +192,7 @@
 
 .stat-number {
   font-size: 3.5rem;
-  color: var(--primary, #004a99);
+  color: var(--primary, #374c92);
   font-weight: 800;
   margin: 0;
   line-height: 1;

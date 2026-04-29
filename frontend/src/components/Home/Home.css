@@ -74,7 +74,7 @@
 .home-featured-products__header p {
   max-width: 720px;
   margin: 0.7rem 0 0;
-  color: #3155a5;
+  color: #374c92;
   font-size: clamp(1.05rem, 1.45vw, 1.55rem);
   line-height: 1.35;
 }
@@ -200,7 +200,7 @@
 
 .categories__header p {
   margin: 0.5rem 0 0;
-  color: #3155a5;
+  color: #374c92;
   font-size: clamp(1.15rem, 2vw, 1.62rem);
   font-weight: 400;
   line-height: 1.25;
@@ -254,14 +254,14 @@
 
 .category-card:hover,
 .category-card:focus-visible {
-  transform: translateY(-4px);
-  filter: saturate(1.04);
+  transform: none;
+  filter: none;
 }
 
 .category-card:hover .category-card-media,
 .category-card:focus-visible .category-card-media {
-  transform: scale(1.05);
-  opacity: 0.82;
+  transform: none;
+  opacity: 0.74;
 }
 
 .category-icon-wrapper {
@@ -292,7 +292,7 @@
 
 .category-card:hover .category-icon-wrapper,
 .category-card:focus-visible .category-icon-wrapper {
-  transform: translateY(-4px) scale(1.03);
+  transform: none;
 }
 
 .category-card h3 {
@@ -365,14 +365,24 @@
   border: 1.5px solid currentColor;
   border-radius: 999px;
   background: #ffffff;
-  transition: background-color 0.24s ease, color 0.24s ease, border-color 0.24s ease;
+  transition: transform 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.category-card-corner-icon svg {
+  transition: transform 0.25s ease;
 }
 
 .category-card:hover .category-card-corner-icon,
 .category-card:focus-visible .category-card-corner-icon {
-  background: #3155a5;
-  border-color: #3155a5;
+  background: #374c92;
+  border-color: #374c92;
   color: #ffffff;
+  transform: scale(1.06);
+}
+
+.category-card:hover .category-card-corner-icon svg,
+.category-card:focus-visible .category-card-corner-icon svg {
+  transform: translateX(2px);
 }
 
 .categories-promo {
@@ -507,14 +517,24 @@
   line-height: 1;
   text-transform: uppercase;
   white-space: nowrap;
-  transition: background-color 0.24s ease, border-color 0.24s ease, color 0.24s ease;
+  transition: transform 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.categories-promo-card__button svg {
+  transition: transform 0.25s ease;
 }
 
 .categories-promo-card:hover .categories-promo-card__button,
 .categories-promo-card:focus-visible .categories-promo-card__button {
-  background: #3155a5;
-  border-color: #3155a5;
+  background: #374c92;
+  border-color: #374c92;
   color: #ffffff;
+  transform: scale(1.04);
+}
+
+.categories-promo-card:hover .categories-promo-card__button svg,
+.categories-promo-card:focus-visible .categories-promo-card__button svg {
+  transform: translateX(2px);
 }
 
 .service-banners {
@@ -666,10 +686,6 @@
   z-index: 1;
 }
 
-.service-banner:hover::before {
-  opacity: 0.94;
-}
-
 .service-banner::after {
   content: '';
   position: absolute;
@@ -680,9 +696,9 @@
 }
 
 .service-banner:hover {
-  transform: translateY(-4px);
+  transform: none;
   box-shadow: none;
-  z-index: 5;
+  z-index: auto;
 }
 
 .service-banner-overlay {
@@ -695,9 +711,9 @@
   gap: 0.45rem;
   padding: 0.9rem calc(var(--service-banner-cutout-size) + 0.8rem) 0.9rem 0.9rem;
   background: linear-gradient(180deg, rgba(38, 48, 94, 0.08) 0%, rgba(18, 24, 63, 0.84) 100%);
-  opacity: 0;
-  transform: translateY(18px);
-  transition: opacity 0.35s ease, transform 0.35s ease;
+  opacity: 1;
+  transform: none;
+  transition: none;
 }
 
 .service-banner-corner {
@@ -755,7 +771,7 @@
   background: #ffffff;
   color: #17214a;
   box-shadow: none;
-  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  transition: transform 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
 body[data-theme='dark'] .service-banner {
@@ -766,19 +782,26 @@ body[data-theme='dark'] .service-banner {
 .service-banner-corner-icon svg {
   width: 21px;
   height: 21px;
+  transition: transform 0.25s ease;
 }
 
 .service-banner:hover .service-banner-overlay,
 .service-banner:focus-visible .service-banner-overlay {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }
 
 .service-banner:hover .service-banner-corner-icon,
 .service-banner:focus-visible .service-banner-corner-icon {
-  background: #3155a5;
-  border-color: #3155a5;
+  background: #374c92;
+  border-color: #374c92;
   color: #ffffff;
+  transform: scale(1.06);
+}
+
+.service-banner:hover .service-banner-corner-icon svg,
+.service-banner:focus-visible .service-banner-corner-icon svg {
+  transform: translateX(2px);
 }
 
 .service-banner-overlay strong {
@@ -816,10 +839,10 @@ body[data-theme='dark'] .service-banner {
   justify-content: center;
   width: fit-content;
   padding: 0.65rem 1rem;
-  border: 1px solid rgba(0, 74, 153, 0.22);
+  border: 1px solid rgba(55, 76, 146, 0.22);
   border-radius: 999px;
   background: rgba(248, 251, 255, 0.92);
-  color: #004a99;
+  color: #374c92;
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -831,10 +854,10 @@ body[data-theme='dark'] .service-banner {
 
 .service-banner:hover .service-banner-cta,
 .service-banner:focus-visible .service-banner-cta {
-  background: #004a99;
+  background: #374c92;
   color: #ffffff;
-  border-color: #004a99;
-  box-shadow: 0 14px 30px rgba(0, 74, 153, 0.22);
+  border-color: #374c92;
+  box-shadow: 0 14px 30px rgba(55, 76, 146, 0.22);
 }
 
 .service-banner-actions {
@@ -849,10 +872,10 @@ body[data-theme='dark'] .service-banner {
   justify-content: center;
   min-width: 170px;
   padding: 0.75rem 1rem;
-  border: 1px solid rgba(0, 74, 153, 0.22);
+  border: 1px solid rgba(55, 76, 146, 0.22);
   border-radius: 999px;
   background: rgba(248, 251, 255, 0.92);
-  color: #004a99;
+  color: #374c92;
   text-decoration: none;
   font-size: 0.78rem;
   font-weight: 700;
@@ -864,10 +887,10 @@ body[data-theme='dark'] .service-banner {
 }
 
 .service-banner-action:hover {
-  background: #004a99;
+  background: #374c92;
   color: #ffffff;
-  border-color: #004a99;
-  box-shadow: 0 14px 30px rgba(0, 74, 153, 0.22);
+  border-color: #374c92;
+  box-shadow: 0 14px 30px rgba(55, 76, 146, 0.22);
   transform: translateY(-1px);
 }
 

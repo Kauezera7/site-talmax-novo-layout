@@ -75,7 +75,7 @@ const Impressoras3D = () => {
   const [pageSettings, setPageSettings] = useState(DEFAULT_SPECIAL_PAGE_SETTINGS.printers);
   const navigate = useNavigate();
 
-  const accentColor = '#004a99';
+  const accentColor = '#374c92';
 
   const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
 

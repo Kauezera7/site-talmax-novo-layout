@@ -477,9 +477,9 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
                   <div className="dropdown">
                     <Link to="/produtos" className="highlight-link">Ver Todos os Produtos</Link>
                     <hr />
-                    <Link to="/categoria/talmax-digital" style={{ fontWeight: '700', color: '#3155a5' }}>Talmax Digital</Link>
-                    <Link to="/categoria/protese-dentaria" style={{ fontWeight: '700', color: '#3155a5' }}>Prótese Dentária</Link>
-                    <Link to="/categoria/nail-e-podologia" style={{ fontWeight: '700', color: '#3155a5' }}>Nail e Podologia</Link>
+                    <Link to="/categoria/talmax-digital" style={{ fontWeight: '700', color: '#374c92' }}>Talmax Digital</Link>
+                    <Link to="/categoria/protese-dentaria" style={{ fontWeight: '700', color: '#374c92' }}>Prótese Dentária</Link>
+                    <Link to="/categoria/nail-e-podologia" style={{ fontWeight: '700', color: '#374c92' }}>Nail e Podologia</Link>
                   </div>
                 </div>
 
@@ -567,7 +567,7 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
                 <ChevronDown size={18} />
               </button>
               <div className={`nav-mobile-sub ${activeMobileSection === 'produtos' ? 'is-open' : ''}`}>
-                <Link to="/produtos" onClick={closeMobileMenu} style={{ fontWeight: 'bold', color: '#3155a5' }}>Ver Todos os Produtos</Link>
+                <Link to="/produtos" onClick={closeMobileMenu} style={{ fontWeight: 'bold', color: '#374c92' }}>Ver Todos os Produtos</Link>
                 <hr style={{ border: '0', borderTop: '1px solid rgba(255, 255, 255, 0.2)', margin: '5px 0' }} />
                 <Link to="/categoria/talmax-digital" onClick={closeMobileMenu} style={{ fontWeight: '700' }}>Talmax Digital</Link>
                 <Link to="/categoria/protese-dentaria" onClick={closeMobileMenu} style={{ fontWeight: '700' }}>Prótese Dentária</Link>
