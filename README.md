@@ -144,7 +144,7 @@ Stack principal:
 Dominios principais da API:
 
 - `/api/admin`
-  login, sessao, logout e desbloqueio de tentativas
+  login, sessao, logout e gestao de usuarios do painel
 - `/api/categories`
   CRUD de categorias e subcategorias
 - `/api/banners`

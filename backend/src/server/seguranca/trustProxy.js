@@ -1,7 +1,7 @@
 /**
  * Permite configurar trust proxy por variavel de ambiente.
- * Isso ajuda middlewares baseados em IP, como rate limiting,
- * quando a aplicacao roda atras de proxy reverso.
+ * Isso ajuda leituras de IP e protocolo quando a aplicacao roda
+ * atras de proxy reverso.
  */
 const parseTrustProxySetting = (value) => {
   if (value == null) {

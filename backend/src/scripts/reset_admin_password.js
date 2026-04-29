@@ -6,7 +6,6 @@
  */
 const db = require('../config/database');
 const { hashAdminPassword } = require('../server/auth/adminPassword');
-const crypto = require('crypto');
 
 const ADMIN_USER_FREE_FLAG_VALUE = 1;
 const ADMIN_ROLE_MASTER = 'master';
@@ -20,48 +19,6 @@ const normalizeIdentifier = (value) => (
 const usersTableSupportsColumn = async (columnName) => {
   const [columns] = await db.query(`SHOW COLUMNS FROM users LIKE ?`, [columnName]);
   return columns.length > 0;
-};
-
-const rateLimitTableExists = async () => {
-  const [rows] = await db.query(`
-    SELECT COUNT(*) AS total
-    FROM information_schema.TABLES
-    WHERE TABLE_SCHEMA = DATABASE()
-      AND TABLE_NAME = 'admin_login_rate_limits'
-  `);
-
-  return Number(rows?.[0]?.total || 0) > 0;
-};
-
-const buildRateLimitHash = (value) => crypto
-  .createHash('sha256')
-  .update(String(value || ''))
-  .digest('hex');
-
-const getRateLimitKeyForIdentifier = (identifier) => {
-  const normalizedIdentifier = normalizeIdentifier(identifier);
-  return normalizedIdentifier
-    ? `admin-login:user:${buildRateLimitHash(normalizedIdentifier)}`
-    : '';
-};
-
-const clearRateLimitsForUser = async (identifiers) => {
-  if (!await rateLimitTableExists()) {
-    return;
-  }
-
-  const keys = identifiers
-    .map((value) => getRateLimitKeyForIdentifier(value))
-    .filter((value, index, values) => value && values.indexOf(value) === index);
-
-  if (keys.length === 0) {
-    return;
-  }
-
-  await db.query(
-    `DELETE FROM admin_login_rate_limits WHERE key_name IN (${keys.map(() => '?').join(', ')})`,
-    keys
-  );
 };
 
 const main = async () => {
@@ -111,8 +68,6 @@ const main = async () => {
     `UPDATE users SET ${updates.join(', ')} WHERE id = ? LIMIT 1`,
     params
   );
-
-  await clearRateLimitsForUser([identifier, user.username, user.email]);
 
   console.log(`Senha redefinida e usuario liberado: ${user.username || identifier}`);
 };

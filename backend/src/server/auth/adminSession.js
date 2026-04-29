@@ -4,10 +4,6 @@
  */
 const crypto = require('crypto');
 const db = require('../../config/database');
-const {
-  clearAdminLoginRateLimitByUsername,
-  normalizeAdminUsername
-} = require('../seguranca/adminLoginRateLimit');
 const { createHttpError, wrapError } = require('../utils/errorHandling');
 const { validateWithSchema } = require('../validation/requestValidation');
 const {
@@ -51,6 +47,12 @@ let usersTableHasBloqUserColumn = null;
 let usersTableHasEmailColumn = null;
 let usersTableHasRoleColumn = null;
 let usersTableHasSessionVersionColumn = null;
+
+const normalizeAdminUsername = (value) => (
+  typeof value === 'string'
+    ? value.trim().toLowerCase()
+    : ''
+);
 
 const normalizeAdminRole = (value) => {
   if (typeof value !== 'string') {
@@ -402,23 +404,6 @@ const incrementAdminSessionVersion = async (adminUserId) => {
   return true;
 };
 
-const clearRateLimitKeysForAdminUser = async (identifiers = []) => {
-  const normalizedIdentifiers = [];
-
-  identifiers.forEach((value) => {
-    const normalizedValue = normalizeAdminUsername(value);
-
-    if (normalizedValue && !normalizedIdentifiers.includes(normalizedValue)) {
-      normalizedIdentifiers.push(normalizedValue);
-    }
-  });
-
-  const tasks = normalizedIdentifiers
-    .map((value) => clearAdminLoginRateLimitByUsername(value).catch(() => false));
-
-  await Promise.all(tasks);
-};
-
 const getValidatedAdminSession = (req, res) => {
   const token = getAdminSessionToken(req);
   const session = verifyJwtToken(token);
@@ -586,10 +571,9 @@ const unlockAdminLoginByUser = async (req, res, next) => {
     }
 
     await setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE);
-    await clearRateLimitKeysForAdminUser([username, adminUser.username, adminUser.email]);
 
     return res.json({
-      message: 'Usuario desbloqueado com sucesso. Oriente a pessoa a recarregar a pagina e tentar de novo.',
+      message: 'Usuario liberado com sucesso. Oriente a pessoa a recarregar a pagina e fazer login.',
       user: serializeAdminUser({
         ...adminUser,
         bloq_user: ADMIN_USER_FREE_FLAG_VALUE

@@ -105,7 +105,8 @@ const main = async () => {
     printStatus('Senha informada confere', verifyAdminPassword(passwordToTest, user.password));
   }
 
-  printStatus('Tabela admin_login_rate_limits existe', await tableExists('admin_login_rate_limits'));
+  console.log('');
+  console.log('Obs.: o login admin nao usa mais tabela auxiliar de bloqueio.');
 };
 
 main()
