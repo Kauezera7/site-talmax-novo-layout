@@ -677,8 +677,24 @@ const loginAdmin = async (req, res, next) => {
     }
 
     await Promise.all([
-      clearRateLimitKeysForAdminUser([username, adminUser.username, adminUser.email]),
-      setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE).catch(() => null)
+      clearRateLimitKeysForAdminUser([username, adminUser.username, adminUser.email]).catch((rateLimitError) => {
+        logger.warn({
+          err: rateLimitError,
+          username: normalizeAdminUsername(username),
+          adminUserId: normalizeAdminUserId(adminUser.id)
+        }, 'Falha ao limpar rate limit apos login admin valido.');
+
+        return false;
+      }),
+      setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE).catch((blockStateError) => {
+        logger.warn({
+          err: blockStateError,
+          username: normalizeAdminUsername(username),
+          adminUserId: normalizeAdminUserId(adminUser.id)
+        }, 'Falha ao liberar flag de bloqueio apos login admin valido.');
+
+        return false;
+      })
     ]);
 
     const sessionPayload = buildAdminSessionPayload(adminUser, {
