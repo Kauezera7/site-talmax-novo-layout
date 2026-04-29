@@ -80,26 +80,29 @@ const normalizeAdminSessionVersion = (value) => {
   return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : 0;
 };
 
-const parseCookies = (req) => {
+const parseCookieValues = (req, cookieName) => {
   const cookieHeader = req.headers.cookie || '';
 
   return cookieHeader
     .split(';')
     .map((part) => part.trim())
     .filter(Boolean)
-    .reduce((cookies, part) => {
+    .reduce((values, part) => {
       const separatorIndex = part.indexOf('=');
 
       if (separatorIndex === -1) {
-        return cookies;
+        return values;
       }
 
       const name = part.slice(0, separatorIndex).trim();
-      const value = part.slice(separatorIndex + 1).trim();
 
-      cookies[name] = decodeURIComponent(value);
-      return cookies;
-    }, {});
+      if (name !== cookieName) {
+        return values;
+      }
+
+      values.push(decodeURIComponent(part.slice(separatorIndex + 1).trim()));
+      return values;
+    }, []);
 };
 
 const base64UrlEncode = (value) => Buffer.from(value).toString('base64url');
@@ -165,8 +168,13 @@ const verifyJwtToken = (token) => {
 };
 
 const getAdminSessionToken = (req) => {
-  const cookies = parseCookies(req);
-  return cookies[ADMIN_SESSION_COOKIE] || null;
+  const tokenCandidates = parseCookieValues(req, ADMIN_SESSION_COOKIE);
+
+  if (tokenCandidates.length === 0) {
+    return null;
+  }
+
+  return tokenCandidates.find((token) => verifyJwtToken(token)) || tokenCandidates[0] || null;
 };
 
 const getAdminCookieOptions = (cookiePath = ADMIN_COOKIE_PATH) => ({
