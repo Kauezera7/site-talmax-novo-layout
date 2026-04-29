@@ -755,21 +755,19 @@ const unlockAdminLoginByUser = async (req, res, next) => {
 
 const getAdminSession = async (req, res, next) => {
   try {
-    const currentAdminUser = await getAdminUserById(req.adminSession?.id);
+    const authenticatedSession = req.adminSession || await getAuthenticatedAdminSession(req);
 
-    if (!currentAdminUser) {
-      return rejectAdminSession(res);
-    }
-
-    if (!hasAdminPanelAccess(currentAdminUser)) {
-      return rejectAdminSession(res);
+    if (!authenticatedSession) {
+      clearAdminSessionCookies(res);
+      return res.json({
+        authenticated: false,
+        user: null
+      });
     }
 
     return res.json({
-      user: {
-        ...req.adminSession,
-        ...serializeAdminUser(currentAdminUser)
-      }
+      authenticated: true,
+      user: authenticatedSession
     });
   } catch (error) {
     return next(wrapError(error, { publicMessage: 'Erro ao consultar a sessao do admin.' }));

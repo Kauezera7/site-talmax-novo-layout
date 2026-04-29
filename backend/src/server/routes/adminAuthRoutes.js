@@ -20,7 +20,7 @@ const router = express.Router();
 
 router.post('/login', adminLoginRateLimit, loginAdmin);
 router.post('/login-unlock', requireMasterAdminSession, unlockAdminLoginByUser);
-router.get('/session', requireAdminSession, getAdminSession);
+router.get('/session', getAdminSession);
 router.get('/users', requireMasterAdminSession, listAdminUsers);
 router.post('/users', requireMasterAdminSession, createAdminUser);
 router.put('/users/:id', requireMasterAdminSession, updateAdminUser);
