@@ -5,12 +5,8 @@
 const crypto = require('crypto');
 const db = require('../../config/database');
 const {
-  ADMIN_LOGIN_RATE_LIMIT_MESSAGE,
   clearAdminLoginRateLimitByUsername,
-  getAdminLoginRateLimitStateByUsername,
-  getRetryAfterSecondsFromResetTime,
-  normalizeAdminUsername,
-  registerFailedAdminLoginAttemptByIdentifiers
+  normalizeAdminUsername
 } = require('../seguranca/adminLoginRateLimit');
 const { createHttpError, wrapError } = require('../utils/errorHandling');
 const { validateWithSchema } = require('../validation/requestValidation');
@@ -25,13 +21,11 @@ const {
   safeEqual,
   verifyAdminPassword
 } = require('./adminPassword');
-const logger = require('../utils/logger');
 
 const ADMIN_SESSION_COOKIE = 'talmax-admin-session';
 const ADMIN_COOKIE_PATH = '/api';
 const LEGACY_ADMIN_COOKIE_PATH = '/';
 const ADMIN_USER_FREE_FLAG_VALUE = 1;
-const ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE = 2;
 const ADMIN_LOGIN_INVALID_CREDENTIALS_MESSAGE = 'Credenciais invalidas.';
 
 if (!process.env.ADMIN_JWT_SECRET) {
@@ -425,63 +419,6 @@ const clearRateLimitKeysForAdminUser = async (identifiers = []) => {
   await Promise.all(tasks);
 };
 
-const getRateLimitResetTimeForAdminUser = async (adminUser, attemptedIdentifier) => {
-  const identifiers = [attemptedIdentifier, adminUser?.username, adminUser?.email]
-    .map((value) => normalizeAdminUsername(value))
-    .filter((value, index, values) => Boolean(value) && values.indexOf(value) === index);
-
-  if (identifiers.length === 0) {
-    return null;
-  }
-
-  const states = await Promise.all(
-    identifiers.map((identifier) => getAdminLoginRateLimitStateByUsername(identifier))
-  );
-
-  return states.reduce((latestResetTime, state) => {
-    const resetTime = state?.resetTime instanceof Date ? state.resetTime : null;
-
-    if (!resetTime || resetTime.getTime() <= Date.now()) {
-      return latestResetTime;
-    }
-
-    if (!latestResetTime || resetTime.getTime() > latestResetTime.getTime()) {
-      return resetTime;
-    }
-
-    return latestResetTime;
-  }, null);
-};
-
-const ensureAdminUserIsNotTemporarilyBlocked = async (adminUser, res, attemptedIdentifier) => {
-  if (!adminUser) {
-    return true;
-  }
-
-  const resetTime = await getRateLimitResetTimeForAdminUser(adminUser, attemptedIdentifier);
-
-  if (!resetTime || resetTime.getTime() <= Date.now()) {
-    if (Number(adminUser.bloq_user || ADMIN_USER_FREE_FLAG_VALUE) === ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE) {
-      await setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE).catch(() => null);
-      adminUser.bloq_user = ADMIN_USER_FREE_FLAG_VALUE;
-    }
-
-    return true;
-  }
-
-  if (Number(adminUser.bloq_user || ADMIN_USER_FREE_FLAG_VALUE) !== ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE) {
-    await setAdminBlockState(adminUser.id, ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE).catch(() => null);
-    adminUser.bloq_user = ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE;
-  }
-
-  res.status(429).json({
-    error: ADMIN_LOGIN_RATE_LIMIT_MESSAGE,
-    retry_after_seconds: getRetryAfterSecondsFromResetTime(resetTime)
-  });
-
-  return false;
-};
-
 const getValidatedAdminSession = (req, res) => {
   const token = getAdminSessionToken(req);
   const session = verifyJwtToken(token);
@@ -603,99 +540,16 @@ const loginAdmin = async (req, res, next) => {
     const adminUser = await getAdminUserByIdentifier(username);
 
     if (!adminUser || !hasAdminPanelAccess(adminUser)) {
-      verifyAdminPassword(password, DUMMY_ADMIN_PASSWORD_HASH);
-      let failedAttempt = {
-        isBlocked: false,
-        resetTime: null
-      };
-
-      try {
-        failedAttempt = await registerFailedAdminLoginAttemptByIdentifiers([username]);
-      } catch (rateLimitError) {
-        logger.warn({
-          err: rateLimitError,
-          username: normalizeAdminUsername(username)
-        }, 'Falha ao registrar tentativa invalida de login admin.');
-      }
-
-      if (failedAttempt.isBlocked && failedAttempt.resetTime) {
-        return res.status(429).json({
-          error: ADMIN_LOGIN_RATE_LIMIT_MESSAGE,
-          retry_after_seconds: getRetryAfterSecondsFromResetTime(failedAttempt.resetTime)
-        });
-      }
-
+      verifyAdminPassword(password, adminUser?.password || DUMMY_ADMIN_PASSWORD_HASH);
       return res.status(401).json({ error: ADMIN_LOGIN_INVALID_CREDENTIALS_MESSAGE });
-    }
-
-    let canContinueLogin = true;
-
-    try {
-      canContinueLogin = await ensureAdminUserIsNotTemporarilyBlocked(adminUser, res, username);
-    } catch (rateLimitError) {
-      logger.warn({
-        err: rateLimitError,
-        username: normalizeAdminUsername(username)
-      }, 'Falha ao consultar bloqueio temporario do login admin. Prosseguindo com validacao da senha.');
-    }
-
-    if (!canContinueLogin) {
-      return undefined;
     }
 
     if (!verifyAdminPassword(password, adminUser.password)) {
-      let failedAttempt = {
-        isBlocked: false,
-        resetTime: null
-      };
-
-      try {
-        failedAttempt = await registerFailedAdminLoginAttemptByIdentifiers([
-          username,
-          adminUser.username,
-          adminUser.email
-        ]);
-      } catch (rateLimitError) {
-        logger.warn({
-          err: rateLimitError,
-          username: normalizeAdminUsername(username),
-          adminUserId: normalizeAdminUserId(adminUser.id)
-        }, 'Falha ao registrar senha invalida de login admin.');
-      }
-
-      if (failedAttempt.isBlocked && failedAttempt.resetTime) {
-        await setAdminBlockState(adminUser.id, ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE).catch(() => null);
-        adminUser.bloq_user = ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE;
-
-        return res.status(429).json({
-          error: ADMIN_LOGIN_RATE_LIMIT_MESSAGE,
-          retry_after_seconds: getRetryAfterSecondsFromResetTime(failedAttempt.resetTime)
-        });
-      }
-
       return res.status(401).json({ error: ADMIN_LOGIN_INVALID_CREDENTIALS_MESSAGE });
     }
 
-    await Promise.all([
-      clearRateLimitKeysForAdminUser([username, adminUser.username, adminUser.email]).catch((rateLimitError) => {
-        logger.warn({
-          err: rateLimitError,
-          username: normalizeAdminUsername(username),
-          adminUserId: normalizeAdminUserId(adminUser.id)
-        }, 'Falha ao limpar rate limit apos login admin valido.');
-
-        return false;
-      }),
-      setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE).catch((blockStateError) => {
-        logger.warn({
-          err: blockStateError,
-          username: normalizeAdminUsername(username),
-          adminUserId: normalizeAdminUserId(adminUser.id)
-        }, 'Falha ao liberar flag de bloqueio apos login admin valido.');
-
-        return false;
-      })
-    ]);
+    await setAdminBlockState(adminUser.id, ADMIN_USER_FREE_FLAG_VALUE).catch(() => null);
+    adminUser.bloq_user = ADMIN_USER_FREE_FLAG_VALUE;
 
     const sessionPayload = buildAdminSessionPayload(adminUser, {
       created_at: new Date().toISOString()
@@ -706,6 +560,7 @@ const loginAdmin = async (req, res, next) => {
     res.cookie(ADMIN_SESSION_COOKIE, token, getAdminCookieOptions());
 
     return res.json({
+      authenticated: true,
       user: {
         ...serializeAdminUser(adminUser),
         created_at: sessionPayload.created_at

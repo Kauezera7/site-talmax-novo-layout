@@ -132,7 +132,7 @@ const AdminLogin = () => {
     try {
       await loginAdmin(formData);
       setLockState(null);
-      navigate('/admin/painel');
+      window.location.assign('/admin/painel');
     } catch (loginError) {
       if (loginError.retryAfterSeconds) {
         const attemptedIdentifier = normalizeAdminIdentifier(formData.username);
