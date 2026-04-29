@@ -25,6 +25,7 @@ const {
   safeEqual,
   verifyAdminPassword
 } = require('./adminPassword');
+const logger = require('../utils/logger');
 
 const ADMIN_SESSION_COOKIE = 'talmax-admin-session';
 const ADMIN_COOKIE_PATH = '/api';
@@ -78,6 +79,19 @@ const hasAdminPanelAccess = (adminUser) => Boolean(normalizeAdminRole(adminUser?
 const normalizeAdminSessionVersion = (value) => {
   const parsedValue = Number.parseInt(value, 10);
   return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : 0;
+};
+
+const normalizeAdminUserId = (value) => {
+  const parsedValue = Number.parseInt(value, 10);
+  return Number.isInteger(parsedValue) && parsedValue > 0 ? parsedValue : value;
+};
+
+const normalizeAdminDateValue = (value) => {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  return value || null;
 };
 
 const parseCookieValues = (req, cookieName) => {
@@ -284,13 +298,13 @@ const serializeAdminUser = (adminUser) => {
   }
 
   return {
-    id: adminUser.id,
+    id: normalizeAdminUserId(adminUser.id),
     username: adminUser.username,
     full_name: adminUser.full_name,
     email: adminUser.email || null,
     role: normalizeAdminRole(adminUser.role),
     bloq_user: Number(adminUser.bloq_user || ADMIN_USER_FREE_FLAG_VALUE),
-    created_at: adminUser.created_at || null
+    created_at: normalizeAdminDateValue(adminUser.created_at)
   };
 };
 
@@ -590,7 +604,19 @@ const loginAdmin = async (req, res, next) => {
 
     if (!adminUser || !hasAdminPanelAccess(adminUser)) {
       verifyAdminPassword(password, DUMMY_ADMIN_PASSWORD_HASH);
-      const failedAttempt = await registerFailedAdminLoginAttemptByIdentifiers([username]);
+      let failedAttempt = {
+        isBlocked: false,
+        resetTime: null
+      };
+
+      try {
+        failedAttempt = await registerFailedAdminLoginAttemptByIdentifiers([username]);
+      } catch (rateLimitError) {
+        logger.warn({
+          err: rateLimitError,
+          username: normalizeAdminUsername(username)
+        }, 'Falha ao registrar tentativa invalida de login admin.');
+      }
 
       if (failedAttempt.isBlocked && failedAttempt.resetTime) {
         return res.status(429).json({
@@ -602,18 +628,40 @@ const loginAdmin = async (req, res, next) => {
       return res.status(401).json({ error: ADMIN_LOGIN_INVALID_CREDENTIALS_MESSAGE });
     }
 
-    const canContinueLogin = await ensureAdminUserIsNotTemporarilyBlocked(adminUser, res, username);
+    let canContinueLogin = true;
+
+    try {
+      canContinueLogin = await ensureAdminUserIsNotTemporarilyBlocked(adminUser, res, username);
+    } catch (rateLimitError) {
+      logger.warn({
+        err: rateLimitError,
+        username: normalizeAdminUsername(username)
+      }, 'Falha ao consultar bloqueio temporario do login admin. Prosseguindo com validacao da senha.');
+    }
 
     if (!canContinueLogin) {
       return undefined;
     }
 
     if (!verifyAdminPassword(password, adminUser.password)) {
-      const failedAttempt = await registerFailedAdminLoginAttemptByIdentifiers([
-        username,
-        adminUser.username,
-        adminUser.email
-      ]);
+      let failedAttempt = {
+        isBlocked: false,
+        resetTime: null
+      };
+
+      try {
+        failedAttempt = await registerFailedAdminLoginAttemptByIdentifiers([
+          username,
+          adminUser.username,
+          adminUser.email
+        ]);
+      } catch (rateLimitError) {
+        logger.warn({
+          err: rateLimitError,
+          username: normalizeAdminUsername(username),
+          adminUserId: normalizeAdminUserId(adminUser.id)
+        }, 'Falha ao registrar senha invalida de login admin.');
+      }
 
       if (failedAttempt.isBlocked && failedAttempt.resetTime) {
         await setAdminBlockState(adminUser.id, ADMIN_USER_TEMP_BLOCKED_FLAG_VALUE).catch(() => null);

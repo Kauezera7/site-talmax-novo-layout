@@ -7,6 +7,7 @@
  */
 const crypto = require('crypto');
 const db = require('../../config/database');
+const logger = require('../utils/logger');
 
 const DEFAULT_LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const DEFAULT_LOGIN_MAX_ATTEMPTS = 5;
@@ -361,7 +362,13 @@ const adminLoginRateLimit = async (req, res, next) => {
 
     return next();
   } catch (error) {
-    return next(error);
+    logger.warn({
+      err: error,
+      ip: req.ip,
+      path: req.originalUrl
+    }, 'Falha ao consultar rate limit do login admin. Prosseguindo com a tentativa de login.');
+
+    return next();
   }
 };
 
