@@ -1,10 +1,11 @@
 /**
- * Libera a flag bloq_user do login admin quando ela existir no banco.
+ * Limpa o bloqueio de login admin persistido no banco.
  *
  * Uso:
  * node src/scripts/clear_admin_login_lock.js usuario-ou-email
  * node src/scripts/clear_admin_login_lock.js --all
  */
+const crypto = require('crypto');
 const db = require('../config/database');
 
 const ADMIN_USER_FREE_FLAG_VALUE = 1;
@@ -14,6 +15,21 @@ const normalizeAdminIdentifier = (value) => (
     ? value.trim().toLowerCase()
     : ''
 );
+
+const buildRateLimitHash = (value) => crypto
+  .createHash('sha256')
+  .update(String(value || ''))
+  .digest('hex');
+
+const getRateLimitKeyForIdentifier = (identifier) => {
+  const normalizedIdentifier = normalizeAdminIdentifier(identifier);
+
+  if (!normalizedIdentifier) {
+    return '';
+  }
+
+  return `admin-login:user:${buildRateLimitHash(normalizedIdentifier)}`;
+};
 
 const usersTableSupportsEmail = async () => {
   const [columns] = await db.query("SHOW COLUMNS FROM users LIKE 'email'");
@@ -25,14 +41,29 @@ const usersTableSupportsBloqUser = async () => {
   return columns.length > 0;
 };
 
+const rateLimitTableExists = async () => {
+  const [rows] = await db.query(`
+    SELECT COUNT(*) AS total
+    FROM information_schema.TABLES
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'admin_login_rate_limits'
+  `);
+
+  return Number(rows?.[0]?.total || 0) > 0;
+};
+
 const clearAllLocks = async () => {
-  if (await usersTableSupportsBloqUser()) {
-    await db.query('UPDATE users SET bloq_user = ?', [ADMIN_USER_FREE_FLAG_VALUE]);
-    console.log('Todos os usuarios admin foram liberados em bloq_user.');
-    return;
+  const hasRateLimitTable = await rateLimitTableExists();
+
+  if (hasRateLimitTable) {
+    await db.query('DELETE FROM admin_login_rate_limits');
   }
 
-  console.log('Coluna bloq_user nao existe. Nada para liberar.');
+  if (await usersTableSupportsBloqUser()) {
+    await db.query('UPDATE users SET bloq_user = ?', [ADMIN_USER_FREE_FLAG_VALUE]);
+  }
+
+  console.log('Todos os bloqueios de login admin foram limpos.');
 };
 
 const clearUserLock = async (identifier) => {
@@ -55,16 +86,32 @@ const clearUserLock = async (identifier) => {
   const user = users[0];
 
   if (!user) {
-    throw new Error(`Usuario admin nao encontrado para: ${identifier}`);
+    console.log('Usuario nao encontrado. Limpando apenas o identificador informado no rate limit.');
+  }
+
+  const identifiers = [
+    normalizedIdentifier,
+    user?.username,
+    user?.email
+  ]
+    .map((value) => normalizeAdminIdentifier(value))
+    .filter((value, index, values) => value && values.indexOf(value) === index);
+
+  if (await rateLimitTableExists()) {
+    const keys = identifiers
+      .map((value) => getRateLimitKeyForIdentifier(value))
+      .filter(Boolean);
+
+    if (keys.length > 0) {
+      await db.query(`DELETE FROM admin_login_rate_limits WHERE key_name IN (${keys.map(() => '?').join(', ')})`, keys);
+    }
   }
 
   if (user?.id && await usersTableSupportsBloqUser()) {
     await db.query('UPDATE users SET bloq_user = ? WHERE id = ? LIMIT 1', [ADMIN_USER_FREE_FLAG_VALUE, user.id]);
-    console.log(`Usuario liberado em bloq_user: ${user.username || identifier}`);
-    return;
   }
 
-  console.log('Coluna bloq_user nao existe. Nada para liberar.');
+  console.log(`Bloqueio limpo para: ${identifier}`);
 };
 
 const main = async () => {

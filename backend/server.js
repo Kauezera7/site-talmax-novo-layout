@@ -16,11 +16,8 @@ if (envFileLoaded) {
 dotenv.config();
 
 const logger = require('./src/server/utils/logger');
+const createApp = require('./src/server/app');
 const { ensureBootstrapAdmin } = require('./src/server/auth/adminBootstrap');
-const {
-  buildFrontendDist,
-  frontendDistIndex
-} = require('./src/scripts/build_frontend_dist');
 
 logger.info({
   cwd: process.cwd(),
@@ -28,14 +25,10 @@ logger.info({
   envFileLoaded
 }, 'Iniciando servidor');
 
+const app = createApp();
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
-  buildFrontendDist();
-
-  const createApp = require('./src/server/app');
-  const app = createApp();
-
   await ensureBootstrapAdmin();
 
   app.listen(PORT, '0.0.0.0', () => {
@@ -52,8 +45,7 @@ const startServer = async () => {
         apiKeyConfigured: !!apiKey,
         apiSecretConfigured: !!apiSecret,
         storageMode: cloudName && apiKey && apiSecret ? 'cloudinary' : 'local'
-      },
-      frontendDistIndex
+      }
     }, 'Servidor rodando');
   });
 };

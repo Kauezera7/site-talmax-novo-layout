@@ -5,8 +5,13 @@ const API_BASE_URL = `${API_URL}/admin`;
 
 const createAdminApiError = (response, data, fallbackMessage) => {
   const error = new Error(data.error || fallbackMessage);
+  const retryAfterSeconds = Number.parseInt(data.retry_after_seconds, 10);
 
   error.statusCode = response.status;
+
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+    error.retryAfterSeconds = retryAfterSeconds;
+  }
 
   return error;
 };
@@ -107,7 +112,7 @@ export const unlockAdminLoginByUser = async (username) => {
     throw normalizeAdminRequestError(error);
   }
 
-  await ensureAdminResponse(response, 'Nao foi possivel liberar o usuario do painel.');
+  await ensureAdminResponse(response, 'Nao foi possivel liberar uma nova tentativa de login.');
   return parseApiResponse(response);
 };
 

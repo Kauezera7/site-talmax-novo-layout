@@ -135,6 +135,18 @@ CREATE TABLE IF NOT EXISTS users (
     UNIQUE KEY uk_users_email (email)
 );
 
+CREATE TABLE IF NOT EXISTS admin_login_rate_limits (
+    key_name VARCHAR(255) NOT NULL,
+    failed_attempts INT NOT NULL DEFAULT 0,
+    window_started_at BIGINT NOT NULL,
+    blocked_until BIGINT DEFAULT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (key_name),
+    KEY idx_admin_login_rate_limits_updated_at (updated_at),
+    KEY idx_admin_login_rate_limits_blocked_until (blocked_until)
+);
+
 CREATE TABLE IF NOT EXISTS page_settings (
     id INT NOT NULL AUTO_INCREMENT,
     page_name VARCHAR(50) NOT NULL,
@@ -320,5 +332,5 @@ ON DUPLICATE KEY UPDATE
 -- ou por um procedimento operacional controlado fora do repositorio.
 
 -- ======================================================
--- FIM DO SCRIPTteste
+-- FIM DO SCRIPT
 -- ======================================================

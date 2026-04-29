@@ -115,6 +115,7 @@ Status mais comuns:
 | `403` | admin sem permissao master |
 | `404` | recurso nao encontrado |
 | `409` | conflito, como slug ou usuario duplicado |
+| `429` | excesso de tentativas de login |
 | `503` | tabela/migration ainda indisponivel em producao |
 
 ## 1. Admin
@@ -124,7 +125,7 @@ Prefixo: `/api/admin`
 | Metodo | Rota | Acesso | Content-Type | Descricao |
 | --- | --- | --- | --- | --- |
 | `POST` | `/login` | Publico | `application/json` | Faz login do admin |
-| `POST` | `/login-unlock` | Master | `application/json` | Libera a flag `bloq_user` de um admin |
+| `POST` | `/login-unlock` | Master | `application/json` | Desbloqueia login de um admin |
 | `GET` | `/session` | Admin | `application/json` | Retorna a sessao atual |
 | `GET` | `/users` | Master | `application/json` | Lista usuarios admin |
 | `POST` | `/users` | Master | `application/json` | Cria usuario admin |
@@ -160,6 +161,7 @@ Prefixo: `/api/admin`
 - Erros comuns:
   - `400`: faltou usuario/e-mail ou senha
   - `401`: credenciais invalidas
+  - `429`: usuario temporariamente bloqueado, com `retry_after_seconds`
 
 ### POST /api/admin/login-unlock
 
@@ -174,7 +176,7 @@ Prefixo: `/api/admin`
 
 ```json
 {
-  "message": "Usuario liberado com sucesso. Oriente a pessoa a recarregar a pagina e fazer login.",
+  "message": "Usuario desbloqueado com sucesso. Oriente a pessoa a recarregar a pagina e tentar de novo.",
   "user": {
     "id": 2,
     "username": "editor",

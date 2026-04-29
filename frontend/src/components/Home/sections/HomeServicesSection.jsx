@@ -29,9 +29,6 @@ const ServiceBanner = ({ service }) => {
   const imageSrc = service.image_url
     ? apiAssetPath(service.image_url)
     : '';
-  const logoSrc = service.logo_url
-    ? apiAssetPath(service.logo_url)
-    : '';
   const safeLinkUrl = sanitizeNavigationTarget(service.link_url, { allowExternal: true, allowRelative: true });
   const shouldUseExternalLink = Boolean(service.is_external || isExternalNavigationTarget(safeLinkUrl));
   const bannerClassName = getServiceBannerClassName(service);
@@ -52,20 +49,10 @@ const ServiceBanner = ({ service }) => {
           }}
         />
       )}
-      {logoSrc && (
-        <img
-          src={logoSrc}
-          alt=""
-          aria-hidden="true"
-          className="service-banner-logo"
-          loading="lazy"
-          fetchPriority="low"
-          decoding="async"
-          onError={(event) => {
-            event.currentTarget.style.display = 'none';
-          }}
-        />
-      )}
+      <div className="service-banner-overlay">
+        <strong>{service.name}</strong>
+        <p>{service.description}</p>
+      </div>
       {safeLinkUrl && (
         <span className="service-banner-corner" aria-hidden="true">
           <span className="service-banner-corner-icon">

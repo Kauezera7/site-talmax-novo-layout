@@ -5,6 +5,57 @@ import { loginAdmin } from '../../services/adminAuth';
 import { ADMIN_SESSION_EXPIRED_MESSAGE } from '../../services/adminSessionEvents';
 import './AdminLogin.css';
 
+const ADMIN_LOGIN_LOCK_STORAGE_KEY = 'talmax-admin-login-lock-expires-at';
+
+const normalizeAdminIdentifier = (value = '') => String(value || '').trim().toLowerCase();
+
+const readStoredLockState = () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(ADMIN_LOGIN_LOCK_STORAGE_KEY);
+    const parsedValue = JSON.parse(rawValue || 'null');
+    const expiresAt = Number(parsedValue?.expiresAt);
+    const identifier = normalizeAdminIdentifier(parsedValue?.identifier);
+
+    if (!identifier || !Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+      window.localStorage.removeItem(ADMIN_LOGIN_LOCK_STORAGE_KEY);
+      return null;
+    }
+
+    return {
+      identifier,
+      expiresAt
+    };
+  } catch {
+    try {
+      window.localStorage.removeItem(ADMIN_LOGIN_LOCK_STORAGE_KEY);
+    } catch {
+      // Ignora erros de storage.
+    }
+
+    return null;
+  }
+};
+
+const getRemainingLockSeconds = (lockExpiresAt) => {
+  if (!lockExpiresAt) {
+    return 0;
+  }
+
+  return Math.max(0, Math.ceil((lockExpiresAt - Date.now()) / 1000));
+};
+
+const formatCountdown = (totalSeconds) => {
+  const safeSeconds = Math.max(0, totalSeconds);
+  const minutes = Math.floor(safeSeconds / 60);
+  const seconds = safeSeconds % 60;
+
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
+
 const AdminLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,6 +65,47 @@ const AdminLogin = () => {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [lockState, setLockState] = useState(() => readStoredLockState());
+  const [lockRemainingSeconds, setLockRemainingSeconds] = useState(0);
+  const currentIdentifier = normalizeAdminIdentifier(formData.username);
+  const isLocked = Boolean(
+    lockState?.identifier &&
+    currentIdentifier &&
+    lockState.identifier === currentIdentifier &&
+    lockRemainingSeconds > 0
+  );
+
+  useEffect(() => {
+    if (!lockState?.identifier || !lockState?.expiresAt) {
+      setLockRemainingSeconds(0);
+
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(ADMIN_LOGIN_LOCK_STORAGE_KEY);
+      }
+
+      return undefined;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(ADMIN_LOGIN_LOCK_STORAGE_KEY, JSON.stringify(lockState));
+    }
+
+    const updateRemainingTime = () => {
+      const remainingSeconds = getRemainingLockSeconds(lockState.expiresAt);
+      setLockRemainingSeconds(remainingSeconds);
+
+      if (remainingSeconds <= 0) {
+        setLockState(null);
+      }
+    };
+
+    updateRemainingTime();
+    const intervalId = window.setInterval(updateRemainingTime, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [lockState]);
 
   useEffect(() => {
     if (location.state?.sessionExpired) {
@@ -39,13 +131,31 @@ const AdminLogin = () => {
 
     try {
       await loginAdmin(formData);
-      window.location.assign('/admin/painel');
+      setLockState(null);
+      navigate('/admin/painel');
     } catch (loginError) {
+      if (loginError.retryAfterSeconds) {
+        const attemptedIdentifier = normalizeAdminIdentifier(formData.username);
+
+        if (attemptedIdentifier) {
+          setLockState({
+            identifier: attemptedIdentifier,
+            expiresAt: Date.now() + (loginError.retryAfterSeconds * 1000)
+          });
+        }
+      } else if (loginError.statusCode && loginError.statusCode !== 429) {
+        setLockState(null);
+      }
+
       setError(loginError.message);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const displayedError = isLocked
+    ? error || 'Muitas tentativas de login. Tente novamente mais tarde.'
+    : error;
 
   return (
     <div className="admin-login-page">
@@ -98,10 +208,10 @@ const AdminLogin = () => {
             </div>
           </label>
 
-          {error && <div className="admin-login-error">{error}</div>}
+          {displayedError && <div className="admin-login-error">{displayedError}</div>}
 
           <button type="submit" className="admin-login-submit" disabled={isLoading}>
-            {isLoading ? 'Entrando...' : 'Acessar painel'}
+            {isLoading ? 'Entrando...' : isLocked ? `Tentar novamente (${formatCountdown(lockRemainingSeconds)})` : 'Acessar painel'}
           </button>
         </form>
       </div>

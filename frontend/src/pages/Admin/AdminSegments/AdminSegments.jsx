@@ -71,10 +71,6 @@ const AdminSegments = () => {
       data.append('image_url', nextSegment.image_url);
     }
 
-    if (nextSegment.logo_url) {
-      data.append('logo_url', nextSegment.logo_url);
-    }
-
     return data;
   };
 

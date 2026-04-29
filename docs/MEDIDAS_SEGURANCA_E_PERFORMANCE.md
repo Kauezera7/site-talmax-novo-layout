@@ -22,14 +22,14 @@ Frontend React
    |  -> validacao basica, sanitizacao, lazy loading, carregamento sob demanda
    v
 API Express
-   |  -> autenticacao, CORS, bloqueio de origem suspeita, upload seguro
+   |  -> autenticacao, rate limit, CORS, bloqueio de origem suspeita, upload seguro
    v
 Banco e storage
       -> SSL no banco, fingerprint no SFTP, cache de imagem, indices
 ```
 
 Resumo bem simples:
-- Seguranca = impedir acesso indevido, arquivos perigosos e links maliciosos.
+- Seguranca = impedir acesso indevido, arquivos perigosos, links maliciosos e abuso de login.
 - Performance = fazer o site abrir mais rapido, usar menos dados e evitar trabalho desnecessario no servidor e no navegador.
 
 ## 2. Mudancas Recentes Identificadas
@@ -55,6 +55,7 @@ Antes da lista completa, aqui vai um mini dicionario:
 - `CSP`: e uma lista de fontes permitidas para scripts, imagens, iframes e estilos.
 - `HTTP-only cookie`: cookie que o JavaScript da pagina nao consegue ler.
 - `SameSite`: regra que ajuda o navegador a nao mandar cookie em contexto indevido.
+- `Rate limit`: trava que limita repeticao de tentativas.
 - `Sanitizacao`: limpeza de texto, link ou caminho para remover partes perigosas.
 - `Cache`: guardar uma copia temporaria para nao baixar ou recalcular tudo de novo.
 - `Lazy loading`: carregar so quando for realmente precisar.
@@ -115,12 +116,15 @@ Explicacao leiga:
 | --- | --- | --- | --- |
 | 1 | Hash de senha com `scrypt` | A senha nao fica salva em texto puro | Mesmo com vazamento de banco, a senha nao sai pronta |
 | 2 | Salt aleatorio por senha | Senhas iguais geram hashes diferentes | Dificulta ataques em lote |
-| 3 | Mensagem generica para falha | Nao diferencia usuario inexistente de senha errada | Reduz enumeracao de contas |
-| 4 | Hash falso para usuario inexistente | Mantem tempo de resposta parecido | Dificulta ataque por medicao de tempo |
-| 5 | Reset de senha por script operacional | Permite recuperar acesso sem expor hash | Facilita suporte controlado |
+| 3 | Rate limit persistido no banco | O bloqueio continua mesmo apos reinicio | Mantem protecao firme em producao |
+| 4 | Controle por usuario, e-mail e IP | Fecha varias portas de ataque automatizado | Dificulta forca bruta |
+| 5 | Resposta `429` com `retry_after_seconds` | Informa o tempo de espera | Evita repeticao agressiva |
+| 6 | Bloqueio temporario do usuario | Painel e API ficam alinhados no estado do bloqueio | Facilita operacao e suporte |
+| 7 | Desbloqueio so por admin master | Nem todo mundo pode liberar conta travada | Mantem governanca do acesso |
+| 8 | Contador visual no login | Mostra o tempo restante de espera | Melhora usabilidade |
 
 Explicacao leiga:
-- A senha fica protegida no banco e o login evita entregar pistas sobre quais usuarios existem.
+- E como uma fechadura que trava por alguns minutos depois de varias tentativas erradas.
 
 ### 4.5 Validacao e limpeza de dados
 
@@ -253,7 +257,7 @@ Explicacao leiga:
 | 4 | Pool de conexao MySQL | Reaproveita conexoes com o banco | Menos custo por requisicao |
 | 5 | `keepAlive` no pool | Mantem conexoes prontas | Ajuda estabilidade e tempo de resposta |
 | 6 | Indices em tabelas de relacao e controle | Acelera campos usados com frequencia | Menos tempo para localizar dado |
-| 7 | Indice em `product_tabs` | Acelera leituras comuns desta area | Melhora consulta recorrente |
+| 7 | Indices em rate limit e `product_tabs` | Acelera leituras comuns dessas areas | Melhora consulta recorrente |
 
 Explicacao leiga:
 - Aqui a ideia e nao pedir para o banco procurar tudo "na unha" toda vez.
@@ -265,7 +269,7 @@ Explicacao leiga:
 | # | Grupo | Risco sem a medida |
 | --- | --- | --- |
 | 1 | Sessao e cookie | Roubo de sessao ficaria mais facil |
-| 2 | Hash e resposta generica no login | Vazamento ou enumeracao de usuarios ficaria mais facil |
+| 2 | Rate limit de login | Robo poderia tentar milhares de senhas |
 | 3 | Sanitizacao | Link malicioso ou conteudo quebrado poderia ir para o site |
 | 4 | Validacao de upload | Arquivo disfarcado poderia entrar no servidor |
 | 5 | CORS e origem confiavel | Outro site poderia tentar usar a API em nome da pessoa logada |
@@ -289,6 +293,7 @@ Se voce quiser mostrar de onde saiu cada explicacao, estes sao os arquivos princ
 - `backend/src/server/seguranca/helmet.js`
 - `backend/src/server/seguranca/trustProxy.js`
 - `backend/src/server/seguranca/trustedWriteOrigin.js`
+- `backend/src/server/seguranca/adminLoginRateLimit.js`
 - `backend/src/server/auth/adminSession.js`
 - `backend/src/server/auth/adminPassword.js`
 - `backend/src/server/config/cors.js`

@@ -15,14 +15,14 @@ const AdminSecurity = () => {
     event.preventDefault();
 
     if (!isMasterAdmin) {
-      setError('Somente o admin master pode liberar usuarios do painel.');
+      setError('Somente o admin master pode liberar logins bloqueados.');
       return;
     }
 
     const normalizedUsername = username.trim();
 
     if (!normalizedUsername) {
-      setError('Informe o usuario ou e-mail do admin que deve ser liberado.');
+      setError('Informe o usuario ou e-mail do admin que pediu desbloqueio.');
       return;
     }
 
@@ -33,7 +33,7 @@ const AdminSecurity = () => {
       const result = await unlockAdminLoginByUser(normalizedUsername);
       setLastUnlockedUser(result.user || null);
       setUsername('');
-      addToast(result.message || 'Usuario liberado para login.', 'success');
+      addToast(result.message || 'Usuario liberado para uma nova tentativa de login.', 'success');
     } catch (unlockError) {
       setError(unlockError.message);
       addToast(unlockError.message, 'error');
@@ -48,14 +48,14 @@ const AdminSecurity = () => {
         <div className="card-header admin-security__header">
           <div>
             <h2><ShieldCheck size={20} /> Segurança do Login</h2>
-            <p>Libere manualmente um usuario especifico do painel quando a flag de bloqueio estiver ativa.</p>
+            <p>Desbloqueie manualmente um usuario especifico do painel quando ele pedir nova tentativa.</p>
           </div>
         </div>
 
         <div className="card-body">
           {!isMasterAdmin && (
             <div className="admin-security__feedback is-error">
-              Somente o admin master pode liberar usuarios do painel.
+              Somente o admin master pode liberar novas tentativas de login.
             </div>
           )}
 
@@ -75,22 +75,23 @@ const AdminSecurity = () => {
               </div>
 
               <p className="admin-security__note">
-                Regra usada pelo sistema: <code>bloq_user = 1</code> significa acesso livre. Ao liberar por aqui, o
-                usuario volta para <code>1</code>.
+                Regra usada pelo sistema: <code>bloq_user = 1</code> significa acesso livre e <code>bloq_user = 2</code>
+                significa bloqueio temporario. Ao liberar por aqui, o usuario volta para <code>1</code> e o bloqueio
+                atual e limpo.
               </p>
 
               {error && <div className="admin-security__feedback is-error">{error}</div>}
 
               {lastUnlockedUser && (
                 <div className="admin-security__feedback is-success">
-                  <strong>{lastUnlockedUser.username}</strong> voltou para o estado livre e ja pode fazer login novamente.
+                  <strong>{lastUnlockedUser.username}</strong> voltou para o estado livre e ja pode tentar login novamente.
                 </div>
               )}
 
               <div className="admin-security__actions">
                 <button type="submit" className="btn-primary" disabled={isSubmitting || !isMasterAdmin}>
                   <UnlockKeyhole size={18} />
-                  {isSubmitting ? 'Liberando...' : 'Liberar usuario'}
+                  {isSubmitting ? 'Liberando...' : 'Liberar nova tentativa'}
                 </button>
               </div>
             </div>

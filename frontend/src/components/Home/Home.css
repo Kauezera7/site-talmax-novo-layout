@@ -629,7 +629,7 @@
   font-size: 1.35rem;
   font-weight: 800;
   text-decoration: none;
-  transition: none;
+  transition: transform 0.35s ease, box-shadow 0.35s ease, filter 0.35s ease;
   position: relative;
   overflow: hidden;
   text-transform: uppercase;
@@ -652,28 +652,6 @@
   z-index: 0;
 }
 
-.service-banner-logo {
-  position: relative;
-  z-index: 2;
-  display: block;
-  width: min(70%, 230px);
-  max-height: 140px;
-  object-fit: contain;
-  filter:
-    drop-shadow(0 18px 26px rgba(0, 0, 0, 0.34))
-    drop-shadow(0 2px 8px rgba(255, 255, 255, 0.2));
-  transform: scale(1);
-  transition: transform 0.28s ease, filter 0.28s ease;
-}
-
-.service-banner:hover .service-banner-logo,
-.service-banner:focus-visible .service-banner-logo {
-  filter:
-    drop-shadow(0 22px 30px rgba(0, 0, 0, 0.38))
-    drop-shadow(0 3px 10px rgba(255, 255, 255, 0.24));
-  transform: scale(1.045);
-}
-
 .service-banner::before {
   content: '';
   position: absolute;
@@ -681,8 +659,12 @@
   background:
     linear-gradient(180deg, rgba(48, 55, 96, 0.64) 0%, rgba(25, 31, 70, 0.82) 100%),
     linear-gradient(90deg, rgba(35, 50, 104, 0.46) 0%, rgba(19, 27, 70, 0.56) 100%);
-  transition: none;
+  transition: opacity 0.35s ease;
   z-index: 1;
+}
+
+.service-banner:hover::before {
+  opacity: 0.94;
 }
 
 .service-banner::after {
@@ -695,6 +677,7 @@
 }
 
 .service-banner:hover {
+  transform: translateY(-4px);
   box-shadow: none;
   z-index: 5;
 }
@@ -769,7 +752,7 @@
   background: #ffffff;
   color: #17214a;
   box-shadow: none;
-  transition: none;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
 body[data-theme='dark'] .service-banner {

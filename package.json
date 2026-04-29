@@ -1,8 +1,4 @@
 {
-  "scripts": {
-    "build": "npm install --prefix backend",
-    "start": "npm start --prefix backend"
-  },
   "dependencies": {
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.577.0"

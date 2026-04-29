@@ -40,17 +40,6 @@ const SegmentTable = ({
                 }}
               />
             )}
-            {segment.logo_url && (
-              <img
-                src={apiAssetPath(segment.logo_url)}
-                alt=""
-                aria-hidden="true"
-                className="admin-segments-card__logo"
-                onError={(event) => {
-                  event.currentTarget.style.display = 'none';
-                }}
-              />
-            )}
             {editingOrderId === segment.id ? (
               <div className="admin-segments-card__order-editor">
                 <input

@@ -1060,11 +1060,10 @@ body[data-theme='dark'] .theme-toggle-button {
 .moby-footer-strip p {
   margin: 0;
   color: #ffffff;
-  font-size: clamp(1rem, 1.38vw, 1.3rem);
+  font-size: clamp(1.15rem, 2vw, 1.65rem);
   font-weight: 400;
-  line-height: 1;
+  line-height: 1.2;
   letter-spacing: 0.02em;
-  white-space: nowrap;
 }
 
 .moby-footer-strip__button {
@@ -1384,7 +1383,7 @@ body[data-theme='dark'] .theme-toggle-button {
 .footer-grid {
   max-width: 1260px;
   display: grid;
-  grid-template-columns: 1.45fr 1.05fr 0.7fr 0.82fr;
+  grid-template-columns: 1.05fr 0.7fr 0.82fr 1.45fr;
   gap: clamp(2rem, 5vw, 4.8rem);
   margin: 0 auto;
   align-items: start;
@@ -1445,9 +1444,7 @@ body[data-theme='dark'] .theme-toggle-button {
 }
 
 .footer-brand {
-  align-items: flex-start;
-  order: -1;
-}
+  align-items: flex-start;}
 
 .footer-brand .footer-logo {
   height: 36px;
@@ -1636,10 +1633,6 @@ body[data-theme='dark'] .theme-toggle-button {
     font-size: 0.78rem;
   }
 
-  .moby-footer-strip p {
-    font-size: 1rem;
-  }
-
   .site-search-dropdown {
     width: min(100%, calc(100vw - 2rem));
   }
@@ -1687,8 +1680,6 @@ body[data-theme='dark'] .theme-toggle-button {
 
   .moby-footer-strip p {
     font-size: 1.05rem;
-    line-height: 1.2;
-    white-space: normal;
   }
 
   .moby-footer-strip__button {
@@ -1713,9 +1704,6 @@ body[data-theme='dark'] .theme-toggle-button {
 
   .footer-brand .footer-logo {
     height: 32px;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
   }
 
   .footer-social-links {
