@@ -13,6 +13,7 @@ const backendRoot = path.resolve(__dirname, '../..');
 const repoRoot = path.resolve(backendRoot, '..');
 const frontendRoot = path.join(repoRoot, 'frontend');
 const frontendPackageJson = path.join(frontendRoot, 'package.json');
+const frontendDistIndex = path.join(frontendRoot, 'dist', 'index.html');
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 const run = (command, args, options = {}) => {
@@ -26,7 +27,7 @@ const run = (command, args, options = {}) => {
   }
 };
 
-const main = () => {
+const buildFrontendDist = ({ force = false } = {}) => {
   if (process.env.SKIP_FRONTEND_BUILD === '1') {
     console.log('SKIP_FRONTEND_BUILD=1 definido. Build do frontend ignorado.');
     return;
@@ -37,6 +38,11 @@ const main = () => {
     return;
   }
 
+  if (!force && fs.existsSync(frontendDistIndex)) {
+    console.log('frontend/dist ja existe. Build do frontend ignorado.');
+    return;
+  }
+
   console.log('Instalando dependencias do frontend...');
   run(npmCommand, ['install', '--include=dev'], { cwd: frontendRoot });
 
@@ -44,9 +50,16 @@ const main = () => {
   run(npmCommand, ['run', 'build'], { cwd: frontendRoot });
 };
 
-try {
-  main();
-} catch (error) {
-  console.error(error.message || 'Erro ao gerar frontend/dist.');
-  process.exit(1);
+if (require.main === module) {
+  try {
+    buildFrontendDist({ force: true });
+  } catch (error) {
+    console.error(error.message || 'Erro ao gerar frontend/dist.');
+    process.exit(1);
+  }
 }
+
+module.exports = {
+  buildFrontendDist,
+  frontendDistIndex
+};
