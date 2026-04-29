@@ -18,6 +18,30 @@ const {
 
 const router = express.Router();
 
+// TEMPORARIO: endpoint de diagnostico para depurar cookies em producao.
+// REMOVA apos resolver o problema de login.
+router.get('/debug-session', (req, res) => {
+  const cookieHeader = req.headers.cookie || '';
+  const hasCookie = cookieHeader.includes('talmax-admin-session');
+  const cookieNames = cookieHeader
+    .split(';')
+    .map((c) => c.trim().split('=')[0])
+    .filter(Boolean);
+
+  res.json({
+    hasCookie,
+    cookieNames,
+    cookieHeaderLength: cookieHeader.length,
+    origin: req.headers.origin || null,
+    referer: req.headers.referer || null,
+    protocol: req.protocol,
+    secure: req.secure,
+    host: req.headers.host,
+    sameSiteConfig: process.env.ADMIN_COOKIE_SAME_SITE || '(nao definido, padrao lax)',
+    nodeEnv: process.env.NODE_ENV || '(nao definido)'
+  });
+});
+
 router.post('/login', adminLoginRateLimit, loginAdmin);
 router.post('/login-unlock', requireMasterAdminSession, unlockAdminLoginByUser);
 router.get('/session', requireAdminSession, getAdminSession);
