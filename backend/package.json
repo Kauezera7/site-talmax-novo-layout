@@ -1,5 +1,7 @@
 {
   "scripts": {
+    "postinstall": "node src/scripts/build_frontend_dist.js",
+    "build:frontend": "node src/scripts/build_frontend_dist.js",
     "start": "node server.js",
     "dev": "node server.js",
     "dev:check": "node debug-storage.js"
