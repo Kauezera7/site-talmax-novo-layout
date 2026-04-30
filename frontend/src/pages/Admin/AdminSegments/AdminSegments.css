@@ -55,6 +55,19 @@
   object-fit: cover;
 }
 
+.admin-segments .preview-thumb--logo {
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.82), rgba(30, 41, 59, 0.68)),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.08) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.08) 25%, transparent 25%);
+}
+
+.admin-segments .preview-thumb--logo img {
+  object-fit: contain;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
 .admin-segments .remove-preview {
   position: absolute;
   top: 4px;
@@ -122,6 +135,21 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.admin-segments-card__logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(52%, 150px);
+  max-height: 56px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 .admin-segments-card__order-badge {

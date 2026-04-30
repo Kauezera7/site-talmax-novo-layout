@@ -11,6 +11,7 @@ const ButtonSavingIndicator = () => (
 const DEFAULT_SEGMENT_FORM_STATE = {
   name: '',
   description: '',
+  logo_url: '',
   link_url: '',
   custom_page_id: null,
   digital_group_id: null,
@@ -23,6 +24,7 @@ const buildSegmentFormState = (initialData) => (
     ? {
         name: initialData.name || '',
         description: initialData.description || '',
+        logo_url: initialData.logo_url || '',
         link_url: initialData.link_url || '',
         custom_page_id: initialData.custom_page_id || null,
         digital_group_id: initialData.digital_group_id || null,
@@ -36,6 +38,10 @@ const getSegmentImagePreview = (initialData) => (
   initialData?.image_url ? apiAssetPath(initialData.image_url) : null
 );
 
+const getSegmentLogoPreview = (initialData) => (
+  initialData?.logo_url ? apiAssetPath(initialData.logo_url) : null
+);
+
 const getInitialLinkTargetType = (initialData) => (
   initialData?.link_target_type === 'digital-group' || String(initialData?.link_url || '').startsWith('/grupo-digital/')
     ? 'digital-group'
@@ -46,6 +52,8 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
   const [formData, setFormData] = useState(() => buildSegmentFormState(initialData));
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(() => getSegmentImagePreview(initialData));
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(() => getSegmentLogoPreview(initialData));
   const [customPageOptions, setCustomPageOptions] = useState([]);
   const [digitalGroupOptions, setDigitalGroupOptions] = useState([]);
   const [isUrlPickerOpen, setIsUrlPickerOpen] = useState(false);
@@ -127,6 +135,21 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
     reader.readAsDataURL(file);
   };
 
+  const handleLogoChange = (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLogoPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -142,11 +165,16 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
     data.append('display_order', String(formData.display_order));
     data.append('active', String(formData.active));
     data.append('actions', JSON.stringify(initialData?.actions || []));
+    data.append('logo_url', formData.logo_url || '');
 
     if (imageFile) {
       data.append('image', imageFile);
     } else if (initialData?.image_url) {
       data.append('image_url', initialData.image_url);
+    }
+
+    if (logoFile) {
+      data.append('logo', logoFile);
     }
 
     onSubmit(data);
@@ -343,6 +371,39 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
                 onClick={() => {
                   setImageFile(null);
                   setImagePreview(null);
+                }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="form-group">
+          <label>Logo do Card</label>
+          <div className="file-upload-area" style={{ padding: '15px' }}>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleLogoChange}
+            />
+            <UploadCloud size={32} color="var(--admin-primary)" style={{ marginBottom: '5px' }} />
+            <p style={{ fontSize: '0.85rem' }}>Clique para enviar o logo</p>
+          </div>
+
+          {logoPreview && (
+            <div className="preview-thumb preview-thumb--logo" style={{ marginTop: '10px', width: '120px', height: '60px' }}>
+              <img src={logoPreview} alt="Preview do logo" />
+              <button
+                type="button"
+                className="remove-preview"
+                onClick={() => {
+                  setLogoFile(null);
+                  setLogoPreview(null);
+                  setFormData((prev) => ({
+                    ...prev,
+                    logo_url: ''
+                  }));
                 }}
               >
                 <X size={14} />

@@ -675,6 +675,22 @@
   z-index: 0;
 }
 
+.service-banner-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(54%, 190px);
+  max-height: 78px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.28));
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
 .service-banner::before {
   content: '';
   position: absolute;
@@ -1152,6 +1168,11 @@ body[data-theme='dark'] .service-banner {
       linear-gradient(90deg, rgba(35, 50, 104, 0.5) 0%, rgba(19, 27, 70, 0.58) 100%);
   }
 
+  .service-banner-logo {
+    max-width: min(58%, 176px);
+    max-height: 72px;
+  }
+
   .service-banner-overlay {
     padding: 0.85rem calc(var(--service-banner-cutout-size) + 0.65rem) 0.85rem 0.85rem;
     opacity: 1;
@@ -1341,6 +1362,11 @@ body[data-theme='dark'] .service-banner {
     height: var(--service-card-height);
     min-height: var(--service-card-height);
     margin: 0 auto;
+  }
+
+  .service-banner-logo {
+    max-width: min(58%, 162px);
+    max-height: 64px;
   }
 
   .service-banner-overlay {

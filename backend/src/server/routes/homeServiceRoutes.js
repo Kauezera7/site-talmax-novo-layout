@@ -40,6 +40,8 @@ const getTableColumnSet = async (tableName) => {
 };
 
 const getHomeServicesSchemaState = async () => {
+  await ensureHomeServicesColumns();
+
   if (cachedHomeServicesSchemaState) {
     return cachedHomeServicesSchemaState;
   }
@@ -47,6 +49,7 @@ const getHomeServicesSchemaState = async () => {
   const columns = await getTableColumnSet('home_services');
 
   cachedHomeServicesSchemaState = {
+    hasLogoUrl: columns.has('logo_url'),
     hasLinkTargetType: columns.has('link_target_type'),
     hasCustomPageId: columns.has('custom_page_id'),
     hasDigitalGroupId: columns.has('digital_group_id'),
@@ -76,9 +79,11 @@ const ensureColumn = async (tableName, columnName, definition) => {
 
 const ensureHomeServicesColumns = async () => {
   if (homeServicesColumnsReady) return;
+  await ensureColumn('home_services', 'logo_url', 'VARCHAR(255) DEFAULT NULL AFTER image_url');
   await ensureColumn('home_services', 'link_target_type', "VARCHAR(40) DEFAULT NULL AFTER link_url");
   await ensureColumn('home_services', 'custom_page_id', 'INT DEFAULT NULL AFTER link_target_type');
   await ensureColumn('home_services', 'digital_group_id', 'INT DEFAULT NULL AFTER custom_page_id');
+  cachedHomeServicesSchemaState = null;
   homeServicesColumnsReady = true;
 };
 
@@ -229,6 +234,9 @@ const buildHomeServicesQuery = (schemaState) => {
   const actionsSelect = schemaState.hasActions
     ? 'home_services.actions'
     : 'NULL AS actions';
+  const logoUrlSelect = schemaState.hasLogoUrl
+    ? 'home_services.logo_url'
+    : 'NULL AS logo_url';
   const customPageTitleSelect = schemaState.hasCustomPageId
     ? 'custom_pages.title AS custom_page_title'
     : "'' AS custom_page_title";
@@ -254,6 +262,7 @@ const buildHomeServicesQuery = (schemaState) => {
       home_services.name,
       home_services.description,
       home_services.image_url,
+      ${logoUrlSelect},
       home_services.link_url,
       home_services.is_external,
       home_services.display_order,
@@ -278,6 +287,7 @@ const normalizeHomeServiceRow = (row) => ({
   name: sanitizeTextInput(row.name || '', { preserveNewlines: false }),
   description: sanitizeTextInput(row.description || '', { preserveNewlines: true }),
   image_url: sanitizeAssetReference(sanitizeServedImageUrl(row.image_url) || ''),
+  logo_url: sanitizeAssetReference(sanitizeServedImageUrl(row.logo_url) || ''),
   link_target_type: row.link_target_type || null,
   custom_page_id: row.custom_page_id ? Number(row.custom_page_id) : null,
   custom_page_title: sanitizeTextInput(row.custom_page_title || '', { preserveNewlines: false }),
@@ -466,6 +476,10 @@ router.post('/', requireAdminSession, upload.any(), async (req, res, next) => {
     const image_url = imageFile
       ? await persistUploadedFile(imageFile, { resourceType: 'segmentos' })
       : sanitizeAssetReference(req.body.image_url || '');
+    const logoFile = getUploadedFileByField(req.files, 'logo');
+    const logo_url = logoFile
+      ? await persistUploadedFile(logoFile, { resourceType: 'segmentos' })
+      : sanitizeAssetReference(req.body.logo_url || '');
     let resolvedLinkUrl = sanitizeNavigationTarget(link_url || '', {
       allowExternal: true,
       allowRelative: true
@@ -491,12 +505,13 @@ router.post('/', requireAdminSession, upload.any(), async (req, res, next) => {
 
     const [result] = await db.query(
       `INSERT INTO home_services
-      (name, description, image_url, link_url, link_target_type, custom_page_id, digital_group_id, is_external, display_order, active, actions)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (name, description, image_url, logo_url, link_url, link_target_type, custom_page_id, digital_group_id, is_external, display_order, active, actions)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         safe(sanitizeTextInput(name || '', { preserveNewlines: false })),
         safe(sanitizeTextInput(description || '', { preserveNewlines: true })),
         safe(image_url || null),
+        safe(logo_url || null),
         resolvedLinkUrl,
         linkTargetType,
         resolvedCustomPageId,
@@ -523,7 +538,7 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res, next) => 
     const linkTargetType = normalizeLinkTargetType(req.body.link_target_type);
     const customPageId = parseInteger(req.body.custom_page_id, 0);
     const digitalGroupId = parseInteger(req.body.digital_group_id, 0);
-    const [currentRows] = await db.query('SELECT image_url, actions FROM home_services WHERE id = ? LIMIT 1', [id]);
+    const [currentRows] = await db.query('SELECT image_url, logo_url, actions FROM home_services WHERE id = ? LIMIT 1', [id]);
 
     if (currentRows.length === 0) {
       return res.status(404).json({ error: 'Servico nao encontrado.' });
@@ -533,17 +548,28 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res, next) => 
     const incomingActions = parseActionsPayload(actions);
     const normalizedActions = await persistDigitalCardsConfig(req.files, incomingActions, previousActions);
     let image_url = req.body.image_url;
+    let logo_url = req.body.logo_url;
     const imageFile = getUploadedFileByField(req.files, 'image');
+    const logoFile = getUploadedFileByField(req.files, 'logo');
 
     if (imageFile) {
       image_url = await persistUploadedFile(imageFile, { resourceType: 'segmentos' });
+    }
+
+    if (logoFile) {
+      logo_url = await persistUploadedFile(logoFile, { resourceType: 'segmentos' });
     }
 
     if (image_url === undefined) {
       image_url = currentRows[0].image_url || null;
     }
 
+    if (logo_url === undefined) {
+      logo_url = currentRows[0].logo_url || null;
+    }
+
     image_url = sanitizeAssetReference(image_url || '');
+    logo_url = sanitizeAssetReference(logo_url || '');
     let resolvedLinkUrl = sanitizeNavigationTarget(link_url || '', {
       allowExternal: true,
       allowRelative: true
@@ -572,6 +598,7 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res, next) => 
         name = ?,
         description = ?,
         image_url = ?,
+        logo_url = ?,
         link_url = ?,
         link_target_type = ?,
         custom_page_id = ?,
@@ -585,6 +612,7 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res, next) => 
         safe(sanitizeTextInput(name || '', { preserveNewlines: false })),
         safe(sanitizeTextInput(description || '', { preserveNewlines: true })),
         safe(image_url || null),
+        safe(logo_url || null),
         resolvedLinkUrl,
         linkTargetType,
         resolvedCustomPageId,
