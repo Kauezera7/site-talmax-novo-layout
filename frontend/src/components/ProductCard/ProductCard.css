@@ -224,35 +224,30 @@
 @media (max-width: 640px) {
   .premium-product-card {
     --product-card-radius: 16px;
-    --product-card-cutout-size: 76px;
-    --product-card-button-size: 46px;
-    --product-card-cutout-radius: 14px;
-    --product-card-cutout-outer-radius: 16px;
-    min-height: 315px;
+    min-height: 250px;
   }
 
   .card-image-box {
-    height: 200px;
-    min-height: 200px;
-    padding: 18px 16px 16px;
+    height: clamp(142px, 38vw, 190px);
+    min-height: 142px;
+    padding: 14px 12px 12px;
   }
 
   .card-details {
-    min-height: 84px;
-    padding: 16px calc(var(--product-card-cutout-size) + 8px) 16px 20px;
+    min-height: 82px;
+    padding: 14px 14px 16px;
   }
 
   .card-title {
-    font-size: 1.18rem;
+    font-size: 0.92rem;
   }
 
   .card-brand,
   .card-category {
-    font-size: 0.92rem;
+    font-size: 0.74rem;
   }
 
-  .btn-quote-lux {
-    width: var(--product-card-button-size);
-    height: var(--product-card-button-size);
+  .card-footer-lux {
+    display: none;
   }
 }

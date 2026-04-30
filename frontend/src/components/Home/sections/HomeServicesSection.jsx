@@ -134,7 +134,7 @@ const HomeServicesSection = ({ services }) => {
         <Swiper
           modules={[Autoplay, Navigation]}
           spaceBetween={16}
-          slidesPerView={1}
+          slidesPerView={2}
           loop={services.length > 1}
           navigation={{
             prevEl: '.service-banners__nav-prev',

@@ -1757,8 +1757,15 @@ body[data-theme='dark'] .theme-toggle-button {
     align-items: center;
   }
 
+  .footer-brand {
+    order: -1;
+  }
+
   .footer-brand .footer-logo {
     height: 32px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .footer-social-links {

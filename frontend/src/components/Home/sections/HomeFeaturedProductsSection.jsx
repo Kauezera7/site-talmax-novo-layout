@@ -31,8 +31,8 @@ const HomeFeaturedProductsSection = ({ featuredProducts }) => {
           />
           <Swiper
             modules={[Autoplay, Navigation]}
-            spaceBetween={24}
-            slidesPerView={1}
+            spaceBetween={10}
+            slidesPerView={2}
             loop={featuredProducts.length > 1}
             navigation={{
               prevEl: '.home-featured-products__nav-prev',
@@ -40,9 +40,9 @@ const HomeFeaturedProductsSection = ({ featuredProducts }) => {
             }}
             autoplay={{ delay: 3500, disableOnInteraction: false }}
             breakpoints={{
-              640: { slidesPerView: 2 },
-              1024: { slidesPerView: 3 },
-              1400: { slidesPerView: 5 }
+              640: { slidesPerView: 2, spaceBetween: 16 },
+              1024: { slidesPerView: 3, spaceBetween: 24 },
+              1400: { slidesPerView: 5, spaceBetween: 24 }
             }}
           >
             {featuredProducts.map((product, index) => (
