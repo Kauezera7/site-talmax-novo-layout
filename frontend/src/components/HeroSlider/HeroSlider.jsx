@@ -5,6 +5,7 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronRight } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade, Pagination, Navigation } from 'swiper/modules';
 import { slides as staticSlides } from '../../data';
@@ -135,7 +136,7 @@ const HeroSlider = () => {
   return (
     <section
       ref={containerRef}
-      className="hero-slider-container"
+      className="hero-slider-container hero-slider-container--with-actions"
       style={sliderHeight ? { height: `${sliderHeight}px` } : undefined}
     >
       <Swiper
@@ -168,28 +169,38 @@ const HeroSlider = () => {
         className="hero-swiper"
         style={sliderHeight ? { height: `${sliderHeight}px` } : undefined}
       >
-        {banners.map((slide, index) => (
-          <SwiperSlide key={slide.id}>
-            <div
-              className="slide-content"
-              style={{ cursor: sanitizeNavigationTarget(slide.link_url) ? 'pointer' : 'default' }}
-              onClick={() => handleBannerClick(slide.link_url)}
-            >
-              <img
-                src={slide.image_url ? apiAssetPath(slide.image_url) : slide.image}
-                alt={slide.title}
-                className="banner-img"
-                loading={index === 0 ? 'eager' : 'lazy'}
-                fetchPriority={index === 0 ? 'high' : 'low'}
-                decoding="async"
-                onError={(event) => {
-                  event.currentTarget.style.display = 'none';
-                }}
-                onLoad={measureActiveBanner}
-              />
-            </div>
-          </SwiperSlide>
-        ))}
+        {banners.map((slide, index) => {
+          const safeLinkUrl = sanitizeNavigationTarget(slide.link_url, { allowExternal: true, allowRelative: true });
+
+          return (
+            <SwiperSlide key={slide.id}>
+              <div
+                className="slide-content"
+                style={{ cursor: safeLinkUrl ? 'pointer' : 'default' }}
+                onClick={() => handleBannerClick(slide.link_url)}
+              >
+                <img
+                  src={slide.image_url ? apiAssetPath(slide.image_url) : slide.image}
+                  alt={slide.title}
+                  className="banner-img"
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  fetchPriority={index === 0 ? 'high' : 'low'}
+                  decoding="async"
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none';
+                  }}
+                  onLoad={measureActiveBanner}
+                />
+                <span className="hero-slide-action-corner" aria-hidden="true">
+                  <span className="hero-slide-cta">
+                    Saiba Mais
+                    <ChevronRight size={30} strokeWidth={1.8} />
+                  </span>
+                </span>
+              </div>
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
     </section>
   );
