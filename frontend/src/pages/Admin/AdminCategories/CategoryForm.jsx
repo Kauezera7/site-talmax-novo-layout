@@ -10,6 +10,7 @@ const DEFAULT_CATEGORY_FORM_STATE = {
   name: '',
   slug: '',
   icon: null,
+  background: null,
   is_visible: true,
   parent_id: null
 };
@@ -20,19 +21,21 @@ const buildCategoryFormState = (initialData) => (
         name: initialData.name || '',
         slug: initialData.slug || '',
         icon: null,
+        background: null,
         is_visible: Boolean(initialData.is_visible),
         parent_id: initialData.parent_id || null
       }
     : { ...DEFAULT_CATEGORY_FORM_STATE }
 );
 
-const getCategoryPreview = (initialData) => (
-  initialData?.icon_url ? apiAssetPath(initialData.icon_url) : null
+const getImagePreview = (imageUrl) => (
+  imageUrl ? apiAssetPath(imageUrl) : null
 );
 
 const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel, isSubmitting = false }) => {
   const [formData, setFormData] = useState(() => buildCategoryFormState(initialData));
-  const [preview, setPreview] = useState(() => getCategoryPreview(initialData));
+  const [iconPreview, setIconPreview] = useState(() => getImagePreview(initialData?.icon_url));
+  const [backgroundPreview, setBackgroundPreview] = useState(() => getImagePreview(initialData?.background_url));
 
   const handleNameChange = (e) => {
     const name = e.target.value;
@@ -54,6 +57,7 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel, isSubmi
     data.append('is_visible', formData.is_visible);
     if (formData.parent_id) data.append('parent_id', formData.parent_id);
     if (formData.icon) data.append('icon', formData.icon);
+    if (formData.background) data.append('background', formData.background);
 
     onSubmit(data);
   };
@@ -110,29 +114,55 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel, isSubmi
         </div>
 
         {!formData.parent_id && (
-          <div className="form-group">
-            <label>Ícone da Categoria</label>
-            <div className="file-upload-area" style={{ padding: '15px' }}>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    setFormData({ ...formData, icon: file });
-                    setPreview(URL.createObjectURL(file));
-                  }
-                }}
-              />
-              <UploadCloud size={32} color="var(--admin-primary)" style={{ marginBottom: '5px' }} />
-              <p style={{ fontSize: '0.85rem' }}>Clique para enviar o ícone</p>
-            </div>
-            {preview && (
-              <div className="preview-thumb" style={{ marginTop: '10px', width: '60px', height: '60px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
-                <img src={preview} alt="Preview Icon" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <>
+            <div className="form-group">
+              <label>Logo da Categoria</label>
+              <div className="file-upload-area" style={{ padding: '15px' }}>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setFormData({ ...formData, icon: file });
+                      setIconPreview(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+                <UploadCloud size={32} color="var(--admin-primary)" style={{ marginBottom: '5px' }} />
+                <p style={{ fontSize: '0.85rem' }}>Clique para enviar a logo</p>
               </div>
-            )}
-          </div>
+              {iconPreview && (
+                <div className="preview-thumb" style={{ marginTop: '10px', width: '60px', height: '60px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
+                  <img src={iconPreview} alt="Preview da logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                </div>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label>Foto de fundo da Categoria</label>
+              <div className="file-upload-area" style={{ padding: '15px' }}>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setFormData({ ...formData, background: file });
+                      setBackgroundPreview(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+                <UploadCloud size={32} color="var(--admin-primary)" style={{ marginBottom: '5px' }} />
+                <p style={{ fontSize: '0.85rem' }}>Clique para enviar a foto de fundo</p>
+              </div>
+              {backgroundPreview && (
+                <div className="category-background-preview">
+                  <img src={backgroundPreview} alt="Preview da foto de fundo" />
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
       <div className="modal-footer">

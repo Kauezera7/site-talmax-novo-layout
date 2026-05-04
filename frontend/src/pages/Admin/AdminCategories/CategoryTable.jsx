@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Edit, Trash2, Eye, EyeOff, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { Edit, Trash2, Eye, EyeOff, ChevronRight, Image as ImageIcon, GalleryHorizontal } from 'lucide-react';
 import { apiAssetPath } from '../../../utils/assets';
 
 const CategoryTable = ({ mainCategories, subCategories, products, searchTerm, filterStatus, onEdit, onDelete, onToggleVisibility }) => {
@@ -91,7 +91,7 @@ const CategoryTable = ({ mainCategories, subCategories, products, searchTerm, fi
       <table className="admin-table">
         <thead>
           <tr>
-            <th>Ícone / Nome</th>
+            <th>Mídias / Nome</th>
             <th>Slug</th>
             <th>Status</th>
             <th>Produtos</th>
@@ -123,8 +123,13 @@ const CategoryTable = ({ mainCategories, subCategories, products, searchTerm, fi
                           }}
                         />
                       </button>
-                      <div className="category-icon-cell">
-                        {cat.icon_url ? <img src={apiAssetPath(cat.icon_url)} alt={cat.name} /> : <ImageIcon size={20} color="#94a3b8" />}
+                      <div className="category-media-cells">
+                        <div className="category-icon-cell" title="Logo da categoria">
+                          {cat.icon_url ? <img src={apiAssetPath(cat.icon_url)} alt={cat.name} /> : <ImageIcon size={20} color="#94a3b8" />}
+                        </div>
+                        <div className="category-background-cell" title="Foto de fundo da categoria">
+                          {cat.background_url ? <img src={apiAssetPath(cat.background_url)} alt="" /> : <GalleryHorizontal size={18} color="#94a3b8" />}
+                        </div>
                       </div>
                       <strong>{cat.name}</strong>
                     </div>

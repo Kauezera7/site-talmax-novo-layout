@@ -79,6 +79,7 @@ const listBackupCategories = () => {
     name: category.name,
     slug: category.slug,
     icon_url: category.icon_url || null,
+    background_url: category.background_url || null,
     display_order: Number(category.display_order || 0),
     is_visible: Number(category.is_visible ?? 1),
     parent_id: null
@@ -89,6 +90,7 @@ const listBackupCategories = () => {
     name: subCategory.name,
     slug: subCategory.slug,
     icon_url: null,
+    background_url: null,
     display_order: Number(subCategory.display_order || 0),
     is_visible: Number(subCategory.is_visible ?? 1),
     parent_id: subCategory.category_id

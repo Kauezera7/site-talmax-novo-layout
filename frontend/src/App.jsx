@@ -475,11 +475,11 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
                 <div className={navItemClassName(activeNavItems.produtos)}>
                   <span>Produtos <ChevronDown size={14} /></span>
                   <div className="dropdown">
-                    <Link to="/produtos" className="highlight-link">Ver Todos os Produtos</Link>
+                    <Link to="/produtos" className="highlight-link">Todos os produtos</Link>
                     <hr />
-                    <Link to="/categoria/talmax-digital" style={{ fontWeight: '700', color: '#374c92' }}>Talmax Digital</Link>
-                    <Link to="/categoria/protese-dentaria" style={{ fontWeight: '700', color: '#374c92' }}>Prótese Dentária</Link>
-                    <Link to="/categoria/nail-e-podologia" style={{ fontWeight: '700', color: '#374c92' }}>Nail e Podologia</Link>
+                    <Link to="/categoria/talmax-digital">Talmax Digital</Link>
+                    <Link to="/categoria/protese-dentaria">Prótese Dentária</Link>
+                    <Link to="/categoria/nail-e-podologia">Nail e Podologia</Link>
                   </div>
                 </div>
 

@@ -684,6 +684,7 @@ body[data-theme='dark'] .theme-toggle-button {
 }
 
 .nav-item > a, .nav-item > span {
+  position: relative;
   text-decoration: none;
   color: var(--header-blue);
   font-weight: 600;
@@ -700,20 +701,27 @@ body[data-theme='dark'] .theme-toggle-button {
 }
 
 /* Efeito de Linha Azul no Hover (Estilo Premium) */
-.nav-item::after {
+.nav-item > a::after,
+.nav-item > span::after {
   content: '';
   position: absolute;
   bottom: 0;
-  left: 50%;
-  width: 0;
+  left: 0.55rem;
+  right: 0.55rem;
   height: 3px;
   background: var(--header-blue);
-  transition: all 0.3s ease;
-  transform: translateX(-50%);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.3s ease;
 }
 
-.nav-item:hover::after {
-  width: 80%;             /* Linha cresce no hover */
+.nav-item > span::after {
+  right: calc(0.55rem + 19px);
+}
+
+.nav-item:hover > a::after,
+.nav-item:hover > span::after {
+  transform: scaleX(1);
 }
 
 .nav-item:hover > a, .nav-item:hover > span,
@@ -727,8 +735,9 @@ body[data-theme='dark'] .theme-toggle-button {
   font-weight: 800;
 }
 
-.nav-item.is-active::after {
-  width: 80%;
+.nav-item.is-active > a::after,
+.nav-item.is-active > span::after {
+  transform: scaleX(1);
 }
 
 /* Dropdown Menu Refinado */
@@ -736,18 +745,19 @@ body[data-theme='dark'] .theme-toggle-button {
   position: absolute;
   top: 100%;              /* Gruda exatamente embaixo do header */
   left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background: #F0F4F9;
-  min-width: 220px;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+  transform: translateX(-50%) translateY(8px);
+  background: #eef2f8;
+  min-width: 230px;
+  max-width: min(280px, calc(100vw - 2rem));
+  box-shadow: 0 18px 34px rgba(20, 31, 60, 0.14);
   border-radius: 0 0 12px 12px; /* Arredondado só embaixo */
-  padding: 1rem 0;
+  padding: 0.35rem 0 0.45rem;
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1001;
-  border: 1px solid #f3f4f6;
-  border-top: 3px solid #374c92; /* Detalhe azul no topo do dropdown */
+  border: 0;
+  overflow: hidden;
 }
 
 .nav-item:hover .dropdown {
@@ -758,18 +768,37 @@ body[data-theme='dark'] .theme-toggle-button {
 
 .dropdown a {
   display: block;
-  padding: 0.8rem 1.5rem;
+  min-height: 38px;
+  padding: 0.52rem 1.15rem;
   text-decoration: none;
-  color: #4b5563;
-  font-size: 0.8rem;
+  color: #324f9a;
+  font-size: 1rem;
   font-weight: 500;
-  transition: 0.2s;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
-.dropdown a:hover {
-  background: #F0F4F9;
-  color: #374c92;
-  padding-left: 1.8rem;   /* Efeito de recuo no hover */
+.dropdown a.highlight-link {
+  background: #9fb0d8;
+  color: #324f9a;
+  font-weight: 500;
+}
+
+.dropdown hr {
+  border: 0;
+  height: 1px;
+  margin: 0;
+  background: rgba(55, 76, 146, 0.12);
+}
+
+.dropdown a:hover,
+.dropdown a:focus-visible,
+.dropdown a.is-current {
+  background: #374c92;
+  color: #ffffff;
+  outline: none;
 }
 
 .menu-toggle {

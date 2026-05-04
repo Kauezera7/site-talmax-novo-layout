@@ -22,7 +22,9 @@ const AdminCategories = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isApplyingBulkBackground, setIsApplyingBulkBackground] = useState(false);
   const statusDropdownRef = useRef(null);
+  const bulkBackgroundInputRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -99,6 +101,50 @@ const AdminCategories = () => {
     }
   };
 
+  const handleBulkBackgroundClick = () => {
+    if (isApplyingBulkBackground) return;
+
+    if (mainCategories.length === 0) {
+      addToast('Nenhuma categoria principal encontrada para atualizar.', 'error');
+      return;
+    }
+
+    bulkBackgroundInputRef.current?.click();
+  };
+
+  const handleBulkBackgroundChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file || isApplyingBulkBackground) return;
+
+    setIsApplyingBulkBackground(true);
+
+    const failures = [];
+
+    for (const category of mainCategories) {
+      const data = new FormData();
+      data.append('name', category.name || '');
+      data.append('slug', category.slug || '');
+      data.append('is_visible', Boolean(category.is_visible));
+      data.append('background', file);
+
+      const result = await categoriesHook.updateCategory(category.id, data);
+      if (!result.success) {
+        failures.push(category.name || category.slug || category.id);
+      }
+    }
+
+    setIsApplyingBulkBackground(false);
+
+    if (failures.length > 0) {
+      addToast(`Foto aplicada com falha em: ${failures.join(', ')}`, 'error');
+      return;
+    }
+
+    addToast(`Foto de fundo aplicada em ${mainCategories.length} categorias!`);
+  };
+
   return (
     <div className="admin-categories">
       <div className="admin-card">
@@ -164,7 +210,22 @@ const AdminCategories = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <input
+              ref={bulkBackgroundInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="bulk-background-input"
+              onChange={handleBulkBackgroundChange}
+            />
+            <button
+              className="btn-secondary"
+              onClick={handleBulkBackgroundClick}
+              disabled={isApplyingBulkBackground}
+            >
+              <Plus size={18} />
+              {isApplyingBulkBackground ? 'Aplicando fundo...' : 'Aplicar fundo em todas'}
+            </button>
             <button className="btn-secondary" onClick={() => handleCreate(false)}>
               <Plus size={18} /> Nova Categoria
             </button>

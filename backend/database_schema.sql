@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS categorias (
     name VARCHAR(100) NOT NULL,
     slug VARCHAR(100) NOT NULL,
     icon_url VARCHAR(255) DEFAULT NULL,
+    background_url VARCHAR(500) DEFAULT NULL,
     display_order INT DEFAULT 0,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     is_visible BOOLEAN DEFAULT TRUE,

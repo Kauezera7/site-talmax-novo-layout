@@ -22,6 +22,17 @@ const router = express.Router();
 let cachedCategorySchemaState = null;
 
 const shouldUseBackupFallback = process.env.NODE_ENV !== 'production';
+const CATEGORY_ICON_FILE_FIELDS = ['icon', 'logo', 'icon_url'];
+const CATEGORY_BACKGROUND_FILE_FIELDS = [
+  'background',
+  'background_url',
+  'backgroundImage',
+  'background_image',
+  'categoryBackground',
+  'category_background'
+];
+
+const categoryUpload = upload.any();
 
 const getTableColumnSet = async (tableName) => {
   const [rows] = await db.query(
@@ -47,8 +58,18 @@ const getCategorySchemaState = async () => {
     getTableColumnSet('sub_categorias')
   ]);
 
+  if (!categoryColumns.has('background_url')) {
+    try {
+      await db.query('ALTER TABLE categorias ADD COLUMN background_url VARCHAR(500) DEFAULT NULL AFTER icon_url');
+      categoryColumns.add('background_url');
+    } catch (err) {
+      logger.warn({ err }, 'Nao foi possivel garantir a coluna background_url em categorias.');
+    }
+  }
+
   cachedCategorySchemaState = {
     categoryHasIconUrl: categoryColumns.has('icon_url'),
+    categoryHasBackgroundUrl: categoryColumns.has('background_url'),
     categoryHasDisplayOrder: categoryColumns.has('display_order'),
     categoryHasIsVisible: categoryColumns.has('is_visible'),
     subCategoryHasDisplayOrder: subCategoryColumns.has('display_order'),
@@ -60,19 +81,36 @@ const getCategorySchemaState = async () => {
 
 const buildCategoryListQuery = (schemaState) => {
   const categoryIconSelect = schemaState.categoryHasIconUrl ? 'icon_url' : 'NULL AS icon_url';
+  const categoryBackgroundSelect = schemaState.categoryHasBackgroundUrl ? 'background_url' : 'NULL AS background_url';
   const categoryDisplayOrderSelect = schemaState.categoryHasDisplayOrder ? 'display_order' : '0 AS display_order';
   const categoryVisibleSelect = schemaState.categoryHasIsVisible ? 'is_visible' : '1 AS is_visible';
   const subCategoryDisplayOrderSelect = schemaState.subCategoryHasDisplayOrder ? 'display_order' : '0 AS display_order';
   const subCategoryVisibleSelect = schemaState.subCategoryHasIsVisible ? 'IFNULL(is_visible, 1)' : '1';
 
   return `
-    SELECT id, name, slug, ${categoryIconSelect}, ${categoryDisplayOrderSelect}, ${categoryVisibleSelect}, NULL as parent_id
+    SELECT id, name, slug, ${categoryIconSelect}, ${categoryBackgroundSelect}, ${categoryDisplayOrderSelect}, ${categoryVisibleSelect}, NULL as parent_id
     FROM categorias
     UNION ALL
-    SELECT id, name, slug, NULL as icon_url, ${subCategoryDisplayOrderSelect}, ${subCategoryVisibleSelect} as is_visible, category_id as parent_id
+    SELECT id, name, slug, NULL as icon_url, NULL as background_url, ${subCategoryDisplayOrderSelect}, ${subCategoryVisibleSelect} as is_visible, category_id as parent_id
     FROM sub_categorias
     ORDER BY display_order, id
   `;
+};
+
+const getUploadedFieldFile = (files, fieldNames) => {
+  const normalizedFieldNames = Array.isArray(fieldNames) ? fieldNames : [fieldNames];
+
+  if (Array.isArray(files)) {
+    return files.find((file) => normalizedFieldNames.includes(file.fieldname)) || null;
+  }
+
+  for (const fieldName of normalizedFieldNames) {
+    if (Array.isArray(files?.[fieldName]) && files[fieldName][0]) {
+      return files[fieldName][0];
+    }
+  }
+
+  return null;
 };
 
 router.get('/', async (req, res) => {
@@ -84,7 +122,8 @@ router.get('/', async (req, res) => {
       ...row,
       name: sanitizeTextInput(row.name || '', { preserveNewlines: false }),
       slug: sanitizeTextInput(row.slug || '', { preserveNewlines: false }),
-      icon_url: sanitizeAssetReference(sanitizeServedImageUrl(row.icon_url) || '')
+      icon_url: sanitizeAssetReference(sanitizeServedImageUrl(row.icon_url) || ''),
+      background_url: sanitizeAssetReference(sanitizeServedImageUrl(row.background_url) || '')
     })));
   } catch (err) {
     if (shouldUseBackupFallback) {
@@ -92,7 +131,8 @@ router.get('/', async (req, res) => {
         ...category,
         name: sanitizeTextInput(category.name || '', { preserveNewlines: false }),
         slug: sanitizeTextInput(category.slug || '', { preserveNewlines: false }),
-        icon_url: sanitizeAssetReference(sanitizeServedImageUrl(category.icon_url) || '')
+        icon_url: sanitizeAssetReference(sanitizeServedImageUrl(category.icon_url) || ''),
+        background_url: sanitizeAssetReference(sanitizeServedImageUrl(category.background_url) || '')
       })));
       return;
     }
@@ -102,17 +142,15 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/', requireAdminSession, upload.single('icon'), async (req, res, next) => {
+router.post('/', requireAdminSession, categoryUpload, async (req, res, next) => {
   try {
+    const schemaState = await getCategorySchemaState();
     const payload = validateCategoryWritePayload({
       name: req.body.name,
       slug: req.body.slug,
       is_visible: req.body.is_visible,
       parent_id: req.body.parent_id === 'null' || req.body.parent_id === '' ? undefined : req.body.parent_id
     });
-    const icon_url = req.file
-      ? await persistUploadedFile(req.file, { resourceType: 'categorias' })
-      : null;
     const visible = payload.is_visible === false ? 0 : 1;
 
     if (payload.parent_id) {
@@ -123,9 +161,33 @@ router.post('/', requireAdminSession, upload.single('icon'), async (req, res, ne
       return res.status(201).json({ message: 'Subcategoria criada!' });
     }
 
+    const iconFile = getUploadedFieldFile(req.files, CATEGORY_ICON_FILE_FIELDS);
+    const backgroundFile = getUploadedFieldFile(req.files, CATEGORY_BACKGROUND_FILE_FIELDS);
+    const icon_url = iconFile
+      ? await persistUploadedFile(iconFile, { resourceType: 'categorias' })
+      : null;
+    const background_url = schemaState.categoryHasBackgroundUrl && backgroundFile
+      ? await persistUploadedFile(backgroundFile, { resourceType: 'categorias' })
+      : null;
+
+    const fields = ['name', 'slug', 'icon_url'];
+    const values = [
+      safe(payload.name) || '',
+      safe(payload.slug) || '',
+      safe(sanitizeAssetReference(icon_url || '') || null)
+    ];
+
+    if (schemaState.categoryHasBackgroundUrl) {
+      fields.push('background_url');
+      values.push(safe(sanitizeAssetReference(background_url || '') || null));
+    }
+
+    fields.push('display_order', 'is_visible');
+    values.push(0, visible);
+
     await db.query(
-      'INSERT INTO categorias (name, slug, icon_url, display_order, is_visible) VALUES (?, ?, ?, ?, ?)',
-      [safe(payload.name) || '', safe(payload.slug) || '', safe(sanitizeAssetReference(icon_url || '') || null), 0, visible]
+      `INSERT INTO categorias (${fields.join(', ')}) VALUES (${fields.map(() => '?').join(', ')})`,
+      values
     );
     return res.status(201).json({ message: 'Categoria criada!' });
   } catch (err) {
@@ -133,8 +195,9 @@ router.post('/', requireAdminSession, upload.single('icon'), async (req, res, ne
   }
 });
 
-router.put('/:id', requireAdminSession, upload.single('icon'), async (req, res, next) => {
+router.put('/:id', requireAdminSession, categoryUpload, async (req, res, next) => {
   try {
+    const schemaState = await getCategorySchemaState();
     const payload = validateCategoryWritePayload({
       name: req.body.name,
       slug: req.body.slug,
@@ -154,10 +217,17 @@ router.put('/:id', requireAdminSession, upload.single('icon'), async (req, res, 
 
     let query = 'UPDATE categorias SET name = ?, slug = ?, is_visible = ?';
     const params = [safe(payload.name) || '', safe(payload.slug) || '', visible];
+    const iconFile = getUploadedFieldFile(req.files, CATEGORY_ICON_FILE_FIELDS);
+    const backgroundFile = getUploadedFieldFile(req.files, CATEGORY_BACKGROUND_FILE_FIELDS);
 
-    if (req.file) {
+    if (iconFile) {
       query += ', icon_url = ?';
-      params.push(sanitizeAssetReference(await persistUploadedFile(req.file, { resourceType: 'categorias' })) || null);
+      params.push(sanitizeAssetReference(await persistUploadedFile(iconFile, { resourceType: 'categorias' })) || null);
+    }
+
+    if (schemaState.categoryHasBackgroundUrl && backgroundFile) {
+      query += ', background_url = ?';
+      params.push(sanitizeAssetReference(await persistUploadedFile(backgroundFile, { resourceType: 'categorias' })) || null);
     }
 
     query += ' WHERE id = ?';

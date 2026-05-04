@@ -32,6 +32,10 @@ const normalizeCategoryText = (value = '') => (
 );
 
 const getCategoryBackground = (category) => {
+  if (category.background_url) {
+    return apiAssetPath(category.background_url);
+  }
+
   const categoryText = normalizeCategoryText(`${category.name || ''} ${category.slug || ''}`);
   const background = CATEGORY_BACKGROUND.find(({ match }) => (
     match.some((keyword) => categoryText.includes(keyword))
@@ -69,6 +73,10 @@ const HomeCategoriesSection = ({ categories }) => {
                 loading="lazy"
                 fetchPriority="low"
                 decoding="async"
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = assetPath(DEFAULT_CATEGORY_BACKGROUND);
+                }}
               />
               {cat.icon_url && (
                 <span className="category-icon-wrapper" aria-hidden="true">
