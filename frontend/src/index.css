@@ -1,3 +1,27 @@
+@font-face {
+  font-family: 'Acumin Site';
+  src:
+    local('Acumin Pro Regular'),
+    local('AcuminPro-Regular'),
+    local('Acumin Regular'),
+    local('Acumin Variable Concept');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Acumin Site';
+  src:
+    local('Acumin Pro Bold'),
+    local('AcuminPro-Bold'),
+    local('Acumin Bold'),
+    local('Acumin Variable Concept Bold');
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -5,15 +29,20 @@
 }
 
 :root {
-  --font-family-base: 'Acumin', 'Acumin Pro', 'Acumin Variable Concept', Arial, sans-serif;
+  --font-family-acumin: 'Acumin Site', 'Acumin', 'Acumin Pro', 'Acumin Variable Concept', Arial, sans-serif;
+  --font-family-base: var(--font-family-acumin);
+  --font-family-text: var(--font-family-acumin);
+  --font-family-heading: var(--font-family-acumin);
+  --font-weight-text: 400;
+  --font-weight-heading: 700;
   font-family: var(--font-family-base);
-  font-weight: 400;
+  font-weight: var(--font-weight-text);
 }
 
 body {
   margin: 0;
-  font-family: var(--font-family-base);
-  font-weight: 400;
+  font-family: var(--font-family-text);
+  font-weight: var(--font-weight-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -31,7 +60,32 @@ h5,
 h6,
 strong,
 b {
-  font-weight: 700;
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-heading);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+:where(
+  .section-title,
+  .section-label,
+  .card-title,
+  .nav-link,
+  .dropdown-link,
+  .btn-primary,
+  .btn-secondary,
+  .status-badge,
+  .highlight,
+  [class*='title'],
+  [class*='heading'],
+  [class*='badge']
+) {
+  font-family: var(--font-family-heading);
 }
 
 #root {

@@ -4,11 +4,10 @@
  * Responsabilidade: exibir detalhes do produto, galeria, modelos e relacionados
  */
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation } from 'swiper/modules';
 import {
-  ArrowLeft,
   CheckCircle2,
   MessageCircle,
   Info,
@@ -274,6 +273,7 @@ const ProductDetail = () => {
           image: data.main_image ? apiAssetPath(data.main_image) : '',
           product_tabs: Array.isArray(data.product_tabs) ? data.product_tabs : [],
           ...extra,
+          productBannerUrl: extra.productBannerUrl ? apiAssetPath(extra.productBannerUrl) : '',
           images: Array.isArray(extra.images) ? extra.images.map((image) => apiAssetPath(image)).filter(Boolean) : extra.images,
           modelTable: finalTable,
           modelTables: normalizeTechnicalTables(extra.modelTables, extra.modelTitle, finalTable)
@@ -440,6 +440,21 @@ const ProductDetail = () => {
 
   const whatsappMessage = encodeURIComponent(`Ola! Gostaria de mais informacoes sobre o produto: ${product.name}`);
   const whatsappUrl = `https://wa.me/554130123456?text=${whatsappMessage}`;
+  const descriptionLines = String(product.description || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const shouldShowDescriptionAsTopics = product.descriptionAsList || descriptionLines.length > 1;
+  const hasDescriptionContent = Boolean(String(product.description || '').trim());
+  const productFeatures = Array.isArray(product.features)
+    ? product.features.map((feature) => String(feature || '').trim()).filter(Boolean)
+    : [];
+  const hasFeatureContent = productFeatures.length > 0;
+  const productName = String(product.name || '').trim();
+  const heroNameParts = productName.match(/^([A-Za-zÀ-ÿ]+)\s+(.+)$/);
+  const shouldSplitHeroName = Boolean(heroNameParts && /[\d-]/.test(heroNameParts[2]));
+  const heroOverline = shouldSplitHeroName ? heroNameParts[1] : product.category;
+  const heroTitle = shouldSplitHeroName ? heroNameParts[2] : productName;
   const renderMergedRowCells = (values, mergeRanges, rowIndex, cellTag = 'td') => {
     const CellTag = cellTag;
 
@@ -464,18 +479,73 @@ const ProductDetail = () => {
   return (
     <div className="product-detail-container">
       <div className="container-inner">
-        <nav className="breadcrumb">
-          <Link to="/produtos">Produtos</Link>
-          <ChevronRight size={14} />
-          <span>{product.category}</span>
-          <ChevronRight size={14} />
-          <span className="current">{product.name}</span>
-        </nav>
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`product-hero-banner${product.productBannerUrl ? ' has-custom-banner' : ''}`}
+          style={product.productBannerUrl ? { '--product-banner-image': `url("${product.productBannerUrl}")` } : undefined}
+        >
+          <div className={`product-hero-media${activeImage ? '' : ' is-empty'}`}>
+            {activeImage && <img src={activeImage} alt={product.name} />}
+            {galleryImages.length > 1 && (
+              <>
+                <button className="img-nav-btn prev" onClick={handlePrevImage} aria-label="Imagem anterior"><ChevronLeft size={24} /></button>
+                <button className="img-nav-btn next" onClick={handleNextImage} aria-label="Proxima imagem"><ChevronRight size={24} /></button>
+              </>
+            )}
+          </div>
 
-        <button onClick={() => navigate(-1)} className="btn-back">
-          <ArrowLeft size={20} />
-          <span>Voltar</span>
-        </button>
+          <div className="product-hero-copy">
+            {heroOverline && <span className="product-hero-overline">{heroOverline}</span>}
+            <h1>{heroTitle}</h1>
+            {product.is_upcera && <span className="product-hero-brand">UPCERA</span>}
+
+            {shouldShowQuoteButton(product.showQuoteButton) && (
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp-quote">
+                <MessageCircle size={20} /> Solicitar Orçamento
+              </a>
+            )}
+          </div>
+
+          {galleryImages.length > 1 && (
+            <div className="product-hero-dots" aria-label="Imagens do produto">
+              {galleryImages.map((img, idx) => (
+                <button
+                  key={img}
+                  type="button"
+                  className={`product-hero-dot ${activeImage === img ? 'is-active' : ''}`}
+                  onClick={() => setActiveImage(img)}
+                  aria-label={`Mostrar imagem ${idx + 1}`}
+                  aria-pressed={activeImage === img}
+                />
+              ))}
+            </div>
+          )}
+        </motion.section>
+
+        {(hasDescriptionContent || hasFeatureContent) && (
+          <section className="product-description-panel" aria-label="Descricao do produto">
+            {hasDescriptionContent && (
+              shouldShowDescriptionAsTopics ? (
+                <ul className="product-description-list">
+                  {descriptionLines.map((line, idx) => (
+                    <li key={`description-${idx}`}>{line}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="product-description-text">{product.description}</p>
+              )
+            )}
+
+            {hasFeatureContent && (
+              <ul className="product-description-list product-feature-list">
+                {productFeatures.map((feature, idx) => (
+                  <li key={`feature-${idx}`}>{feature}</li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
 
         <div className="product-detail-grid">
           <motion.div
@@ -574,7 +644,8 @@ const ProductDetail = () => {
                   className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
                   onClick={() => setActiveTab(tab.id)}
                 >
-                  {tab.label}
+                  <span>{tab.label}</span>
+                  <ChevronRight size={28} strokeWidth={1.7} />
                 </button>
               ))}
             </div>

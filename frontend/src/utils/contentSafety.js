@@ -314,6 +314,7 @@ export const parseSafeExtraData = (value) => {
     modelTables,
     modelTitle: primaryModelTitle,
     modelTable: primaryModelTable,
+    productBannerUrl: sanitizeAssetReference(parsedValue.productBannerUrl || ''),
     images: sanitizeStringList(parsedValue.images, { preserveNewlines: false, maxLength: 1000 }).map((item) => sanitizeAssetReference(item)).filter(Boolean),
     removedImages: sanitizeStringList(parsedValue.removedImages, { preserveNewlines: false, maxLength: 1000 }).map((item) => sanitizeAssetReference(item)).filter(Boolean),
     specialSectionDisplay,

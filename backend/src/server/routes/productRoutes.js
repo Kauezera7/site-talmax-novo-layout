@@ -42,6 +42,11 @@ const router = express.Router();
 const MAX_PRODUCT_IMAGES = 50;
 const DEFAULT_PUBLIC_PRODUCT_PAGE_SIZE = 12;
 const MAX_PUBLIC_PRODUCT_PAGE_SIZE = 60;
+const PRODUCT_BANNER_UPLOAD_FIELDS = ['product_banner', 'productBanner', 'banner', 'banner_image', 'bannerImage'];
+const productUpload = upload.fields([
+  { name: 'images', maxCount: 20 },
+  ...PRODUCT_BANNER_UPLOAD_FIELDS.map((name) => ({ name, maxCount: 1 }))
+]);
 
 const normalizeProductText = (value) => safe(value || '').trim();
 const normalizeSearchableText = (value = '') => (
@@ -55,6 +60,43 @@ const normalizeImageList = (value) => (
     ? value.map((imagePath) => safe(imagePath)).filter(Boolean)
     : []
 );
+
+const normalizeUploadedFilesByField = (files) => {
+  if (!files) {
+    return {};
+  }
+
+  if (Array.isArray(files)) {
+    return files.reduce((map, file) => {
+      const fieldName = file?.fieldname || 'images';
+      map[fieldName] = [...(map[fieldName] || []), file];
+      return map;
+    }, {});
+  }
+
+  return files;
+};
+
+const getUploadedProductImageFiles = (files) => normalizeUploadedFilesByField(files).images || [];
+
+const getUploadedProductBannerFiles = (files) => {
+  const filesByField = normalizeUploadedFilesByField(files);
+
+  return PRODUCT_BANNER_UPLOAD_FIELDS
+    .flatMap((fieldName) => filesByField[fieldName] || [])
+    .slice(0, 1);
+};
+
+const applyProductBannerToExtraData = (extra, uploadedBannerPaths = []) => {
+  const productBannerUrl = safe(uploadedBannerPaths[0] || extra.productBannerUrl || '');
+
+  if (productBannerUrl) {
+    extra.productBannerUrl = productBannerUrl;
+    return;
+  }
+
+  delete extra.productBannerUrl;
+};
 
 const buildStoredImageList = (mainImage, extraImages) => {
   const normalizedMainImage = safe(mainImage);
@@ -357,7 +399,7 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-router.post('/', requireAdminSession, upload.array('images', 20), async (req, res, next) => {
+router.post('/', requireAdminSession, productUpload, async (req, res, next) => {
   const connection = await db.getConnection();
 
   try {
@@ -369,7 +411,8 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
     const parsedCategoryIds = payload.category_ids;
     const parsedSubCategoryIds = payload.sub_category_ids;
     const primaryImageIndex = parseInteger(payload.primary_image_index, 0);
-    const uploadedImagePaths = await persistUploadedFilesByType(req.files || [], { resourceType: 'produtos' });
+    const uploadedImagePaths = await persistUploadedFilesByType(getUploadedProductImageFiles(req.files), { resourceType: 'produtos' });
+    const uploadedBannerPaths = await persistUploadedFilesByType(getUploadedProductBannerFiles(req.files), { resourceType: 'produtos/banners' });
     const extra = normalizeProductExtraDataForStorage(payload.extra_data);
     const productTabs = Array.isArray(extra.product_tabs) ? extra.product_tabs : [];
     const retainedImagePaths = normalizeImageList(extra.images);
@@ -405,6 +448,7 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
     }
 
     extra.images = mergedImagePaths;
+    applyProductBannerToExtraData(extra, uploadedBannerPaths);
     const isActive = payload.is_active === false ? 0 : 1;
 
     const [result] = await connection.query(
@@ -426,7 +470,7 @@ router.post('/', requireAdminSession, upload.array('images', 20), async (req, re
   }
 });
 
-router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, res, next) => {
+router.put('/:id', requireAdminSession, productUpload, async (req, res, next) => {
   const connection = await db.getConnection();
   const productId = Number(req.params.id);
 
@@ -444,7 +488,8 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     const parsedSubCategoryIds = payload.sub_category_ids;
     const primaryImageIndex = parseInteger(payload.primary_image_index, 0);
     const isActive = payload.is_active === false ? 0 : 1;
-    const newImagePaths = await persistUploadedFilesByType(req.files || [], { resourceType: 'produtos' });
+    const newImagePaths = await persistUploadedFilesByType(getUploadedProductImageFiles(req.files), { resourceType: 'produtos' });
+    const newBannerPaths = await persistUploadedFilesByType(getUploadedProductBannerFiles(req.files), { resourceType: 'produtos/banners' });
     const requestedExtraData = payload.extra_data;
     const extra = normalizeProductExtraDataForStorage(requestedExtraData);
     const productTabs = Array.isArray(extra.product_tabs) ? extra.product_tabs : [];
@@ -496,6 +541,7 @@ router.put('/:id', requireAdminSession, upload.array('images', 20), async (req, 
     }
 
     extra.images = mergedImagePaths;
+    applyProductBannerToExtraData(extra, newBannerPaths);
 
     let query = 'UPDATE products SET name=?, description=?, extra_data=?, main_image=?, is_active=?';
     const params = [name, description, JSON.stringify(extra), safe(mergedImagePaths[0]), isActive];

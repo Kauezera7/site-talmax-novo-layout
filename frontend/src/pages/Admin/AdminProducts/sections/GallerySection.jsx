@@ -6,11 +6,39 @@ const GallerySection = ({
   previews,
   primaryPreview,
   setPrimaryPreview,
+  productBannerPreview,
+  handleProductBannerChange,
+  removeProductBanner,
   handleFileChange,
   removeImage
 }) => (
   <div className="admin-section-group">
-    <span className="section-label">3. Galeria de Fotos</span>
+    <span className="section-label">3. Banner e Galeria de Fotos</span>
+
+    <div className="product-banner-manager">
+      <div className="product-banner-copy">
+        <strong>Fundo do banner do produto</strong>
+        <span>Essa imagem aparece no topo da pagina do produto, atras da foto e do nome.</span>
+      </div>
+
+      <label className="product-banner-upload">
+        <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleProductBannerChange} />
+        <UploadCloud size={26} color="var(--admin-primary)" />
+        <span>{productBannerPreview ? 'Trocar fundo do banner' : 'Adicionar fundo do banner'}</span>
+      </label>
+
+      {productBannerPreview && (
+        <div className="product-banner-preview">
+          <img
+            src={productBannerPreview.startsWith('blob:') ? productBannerPreview : apiAssetPath(productBannerPreview)}
+            alt="Preview do banner do produto"
+          />
+          <button type="button" className="remove-preview" onClick={removeProductBanner}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
+    </div>
 
     <div className="file-upload-area">
       <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileChange} />

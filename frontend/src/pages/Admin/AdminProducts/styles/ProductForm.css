@@ -126,6 +126,70 @@
   line-height: 1.55;
 }
 
+.product-banner-manager {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 18px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+}
+
+.product-banner-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.product-banner-copy strong {
+  color: var(--admin-text);
+  font-size: 0.95rem;
+}
+
+.product-banner-copy span {
+  color: var(--admin-text-light);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.product-banner-upload {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px dashed var(--admin-primary);
+  border-radius: 999px;
+  color: var(--admin-primary);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #eff6ff;
+}
+
+.product-banner-upload input {
+  display: none;
+}
+
+.product-banner-preview {
+  grid-column: 1 / -1;
+  position: relative;
+  overflow: hidden;
+  min-height: 140px;
+  border-radius: 14px;
+  background: #0f172a;
+}
+
+.product-banner-preview img {
+  display: block;
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
 .product-form-toggle-bar {
   display: flex;
   align-items: center;

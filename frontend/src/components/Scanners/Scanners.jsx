@@ -130,7 +130,7 @@ const Scanners = () => {
     <div className="special-page-container" style={{
       backgroundColor: '#000000',
       minHeight: '100vh',
-      fontFamily: "'Acumin', 'Acumin Pro', 'Acumin Variable Concept', Arial, sans-serif",
+      fontFamily: 'var(--font-family-base)',
       overflowX: 'hidden'
     }}>
       <section className="special-page-header" style={{ background: '#ffffff', padding: '140px 0 80px', position: 'relative', overflow: 'hidden' }}>

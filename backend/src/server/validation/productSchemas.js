@@ -53,6 +53,7 @@ const imagePathSchema = assetReferenceField('Cada imagem', { minLength: 1, maxLe
 const imagePathListSchema = z.array(imagePathSchema)
   .max(50, 'extra_data.images deve ter no maximo 50 itens.')
   .transform((items) => Array.from(new Set(items)));
+const optionalImagePathSchema = assetReferenceField('A imagem do banner do produto', { maxLength: 1000 }).optional().default('');
 
 const productFeatureSchema = optionalTextValueSchema('Cada destaque', 500);
 const productFeaturesSchema = z.array(productFeatureSchema)
@@ -194,6 +195,7 @@ const productExtraDataInputSchema = z.object({
   modelTables: modelTablesSchema.optional().default([]),
   modelTitle: optionalTextValueSchema('extra_data.modelTitle', 255).default(''),
   modelTable: modelTableSchema.nullable().optional(),
+  productBannerUrl: optionalImagePathSchema,
   images: imagePathListSchema.optional().default([]),
   removedImages: imagePathListSchema.optional().default([]),
   specialSectionDisplay: specialSectionDisplaySchema.optional(),
@@ -340,6 +342,7 @@ const normalizeProductExtraDataForStorage = (input = {}) => {
     features: Boolean(input.showFeatures) ? features : [],
     techSpecs,
     modelTables,
+    productBannerUrl: input.productBannerUrl || '',
     images: Array.isArray(input.images) ? Array.from(new Set(input.images)) : []
   };
 
@@ -409,6 +412,7 @@ const normalizeStoredProductExtraData = (value) => {
   delete normalized.modelTables;
   delete normalized.modelTitle;
   delete normalized.modelTable;
+  delete normalized.productBannerUrl;
   delete normalized.images;
   delete normalized.removedImages;
   delete normalized.specialSectionDisplay;
@@ -439,6 +443,7 @@ const normalizeStoredProductExtraData = (value) => {
   normalized.features = features;
   normalized.techSpecs = techSpecs;
   normalized.modelTables = normalizedModelTables;
+  normalized.productBannerUrl = safeText(optionalImagePathSchema, parsed.productBannerUrl, '');
   normalized.images = safeArray(imagePathListSchema, parsed.images, []);
 
   if (firstModelTable) {

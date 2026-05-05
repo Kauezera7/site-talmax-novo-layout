@@ -12,6 +12,8 @@ export const createInitialFormState = () => ({
   hideModelData: false,
   showModelSection: true,
   showQuoteButton: true,
+  productBanner: null,
+  productBannerUrl: '',
   images: [],
   features: [''],
   techSpecs: [{ label: '', value: '' }],

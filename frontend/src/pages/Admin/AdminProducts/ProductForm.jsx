@@ -58,6 +58,8 @@ const buildProductEditorState = (initialData) => {
       hideModelData: false,
       showModelSection: extra.showModelSection !== false,
       showQuoteButton: extra.showQuoteButton !== false,
+      productBanner: null,
+      productBannerUrl: extra.productBannerUrl || '',
       images: [],
       features: (extra.features && extra.features.length > 0) ? extra.features : [''],
       techSpecs: (extra.techSpecs && extra.techSpecs.length > 0) ? extra.techSpecs : [{ label: '', value: '' }],
@@ -79,6 +81,7 @@ const buildProductEditorState = (initialData) => {
     existingImages: initialPreviews,
     newImagePreviews: [],
     primaryPreview: initialData.main_image || initialPreviews[0] || '',
+    productBannerPreview: extra.productBannerUrl || '',
     removedExistingImages: []
   };
 };
@@ -97,6 +100,7 @@ const ProductForm = ({
   const [existingImages, setExistingImages] = useState(() => initialEditorState.existingImages);
   const [newImagePreviews, setNewImagePreviews] = useState(() => initialEditorState.newImagePreviews);
   const [primaryPreview, setPrimaryPreview] = useState(() => initialEditorState.primaryPreview);
+  const [productBannerPreview, setProductBannerPreview] = useState(() => initialEditorState.productBannerPreview || '');
   const [removedExistingImages, setRemovedExistingImages] = useState(() => initialEditorState.removedExistingImages);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isSubCategoryDropdownOpen, setIsSubCategoryDropdownOpen] = useState(false);
@@ -141,6 +145,35 @@ const ProductForm = ({
     if (!primaryPreview && previews.length === 0) {
       setPrimaryPreview(addedPreviews[0]);
     }
+  };
+
+  const handleProductBannerChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (productBannerPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(productBannerPreview);
+    }
+
+    setProductBannerPreview(URL.createObjectURL(file));
+    setFormData((current) => ({
+      ...current,
+      productBanner: file,
+      productBannerUrl: ''
+    }));
+  };
+
+  const removeProductBanner = () => {
+    if (productBannerPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(productBannerPreview);
+    }
+
+    setProductBannerPreview('');
+    setFormData((current) => ({
+      ...current,
+      productBanner: null,
+      productBannerUrl: ''
+    }));
   };
 
   const removeImage = (index) => {
@@ -801,6 +834,7 @@ const ProductForm = ({
       hideModelData: false,
       showModelSection: formData.showModelSection,
       showQuoteButton: formData.showQuoteButton,
+      productBannerUrl: formData.productBannerUrl || '',
       features: formData.showFeatures ? formData.features.filter((f) => f.trim() !== '') : [],
       techSpecs: formData.techSpecs.filter((s) => s.label.trim() !== '' || s.value.trim() !== ''),
       modelTables: formData.modelTables.map((table) => ({
@@ -820,6 +854,10 @@ const ProductForm = ({
     formData.images.forEach((img) => {
       data.append('images', img);
     });
+
+    if (formData.productBanner) {
+      data.append('product_banner', formData.productBanner);
+    }
 
     onSubmit(data);
   };
@@ -849,6 +887,9 @@ const ProductForm = ({
         previews={previews}
         primaryPreview={primaryPreview}
         setPrimaryPreview={setPrimaryPreview}
+        productBannerPreview={productBannerPreview}
+        handleProductBannerChange={handleProductBannerChange}
+        removeProductBanner={removeProductBanner}
         handleFileChange={handleFileChange}
         removeImage={removeImage}
       />
