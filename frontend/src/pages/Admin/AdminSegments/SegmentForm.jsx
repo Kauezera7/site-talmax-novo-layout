@@ -15,6 +15,7 @@ const DEFAULT_SEGMENT_FORM_STATE = {
   link_url: '',
   custom_page_id: null,
   digital_group_id: null,
+  logo_size: 72,
   display_order: 0,
   active: true
 };
@@ -28,6 +29,7 @@ const buildSegmentFormState = (initialData) => (
         link_url: initialData.link_url || '',
         custom_page_id: initialData.custom_page_id || null,
         digital_group_id: initialData.digital_group_id || null,
+        logo_size: Number.isFinite(Number(initialData.logo_size)) ? Number(initialData.logo_size) : 72,
         display_order: initialData.display_order || 0,
         active: Boolean(initialData.active)
       }
@@ -162,6 +164,7 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
     data.append('custom_page_id', String(formData.custom_page_id || ''));
     data.append('digital_group_id', String(formData.digital_group_id || ''));
     data.append('is_external', 'false');
+    data.append('logo_size', String(formData.logo_size || 72));
     data.append('display_order', String(formData.display_order));
     data.append('active', String(formData.active));
     data.append('actions', JSON.stringify(initialData?.actions || []));
@@ -392,7 +395,15 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
           </div>
 
           {logoPreview && (
-            <div className="preview-thumb preview-thumb--logo" style={{ marginTop: '10px', width: '120px', height: '60px' }}>
+            <div
+              className="preview-thumb preview-thumb--logo"
+              style={{
+                marginTop: '10px',
+                width: '160px',
+                height: '90px',
+                '--segment-logo-preview-size': `${Math.min(Math.max(Number(formData.logo_size) || 72, 30), 95)}%`
+              }}
+            >
               <img src={logoPreview} alt="Preview do logo" />
               <button
                 type="button"
@@ -410,6 +421,31 @@ const SegmentForm = ({ initialData, onSubmit, onCancel, isSubmitting }) => {
               </button>
             </div>
           )}
+        </div>
+
+        <div className="form-group admin-segments__logo-size-field">
+          <label>Tamanho da logo no card</label>
+          <div className="admin-segments__logo-size-control">
+            <input
+              type="range"
+              name="logo_size"
+              min="30"
+              max="95"
+              step="1"
+              value={formData.logo_size}
+              onChange={handleInputChange}
+            />
+            <input
+              type="number"
+              name="logo_size"
+              min="30"
+              max="95"
+              step="1"
+              value={formData.logo_size}
+              onChange={handleInputChange}
+            />
+            <span>%</span>
+          </div>
         </div>
       </div>
 

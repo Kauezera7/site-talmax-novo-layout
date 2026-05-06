@@ -16,6 +16,11 @@ const SegmentTable = ({
   onOrderSave,
   onOrderEditCancel
 }) => {
+  const getLogoSize = (value) => {
+    const parsedValue = Number.parseInt(value, 10);
+    return Number.isInteger(parsedValue) ? Math.min(Math.max(parsedValue, 30), 95) : 72;
+  };
+
   if (segments.length === 0) {
     return (
       <div className="empty-state">
@@ -46,6 +51,10 @@ const SegmentTable = ({
                 alt=""
                 aria-hidden="true"
                 className="admin-segments-card__logo"
+                style={{
+                  '--admin-segment-logo-size': `${getLogoSize(segment.logo_size)}%`,
+                  '--admin-segment-logo-height': `${Math.round(getLogoSize(segment.logo_size) * 1.15)}px`
+                }}
                 onError={(event) => {
                   event.currentTarget.style.display = 'none';
                 }}

@@ -56,6 +56,9 @@
 }
 
 .admin-segments .preview-thumb--logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background:
     linear-gradient(135deg, rgba(15, 23, 42, 0.82), rgba(30, 41, 59, 0.68)),
     linear-gradient(45deg, rgba(255, 255, 255, 0.08) 25%, transparent 25%),
@@ -63,9 +66,39 @@
 }
 
 .admin-segments .preview-thumb--logo img {
+  width: var(--segment-logo-preview-size, 72%);
+  height: var(--segment-logo-preview-size, 72%);
   object-fit: contain;
   padding: 8px;
   box-sizing: border-box;
+}
+
+.admin-segments__logo-size-field {
+  padding: 14px 16px;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: var(--admin-card-bg);
+}
+
+.admin-segments__logo-size-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-segments__logo-size-control input[type='range'] {
+  width: 100%;
+  padding: 0;
+}
+
+.admin-segments__logo-size-control input[type='number'] {
+  min-width: 0;
+}
+
+.admin-segments__logo-size-control span {
+  color: var(--admin-text-light);
+  font-weight: 700;
 }
 
 .admin-segments .remove-preview {
@@ -142,10 +175,10 @@
   top: 50%;
   left: 50%;
   display: block;
-  width: auto;
+  width: min(var(--admin-segment-logo-size, 68%), 230px);
   height: auto;
-  max-width: min(52%, 150px);
-  max-height: 56px;
+  max-width: calc(100% - 2rem);
+  max-height: var(--admin-segment-logo-height, 82px);
   object-fit: contain;
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
   transform: translate(-50%, -50%);

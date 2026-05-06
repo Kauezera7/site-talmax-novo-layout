@@ -208,13 +208,16 @@
 }
 
 .category-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: clamp(0.9rem, 1.8vw, 1.5rem);
+  --category-grid-gap: clamp(0.9rem, 1.8vw, 1.5rem);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--category-grid-gap);
 }
 
 .category-card {
   position: relative;
+  flex: 0 1 calc((100% - var(--category-grid-gap) - var(--category-grid-gap) - var(--category-grid-gap) - var(--category-grid-gap)) / 5);
   min-height: 250px;
   padding: 2rem 1.95rem calc(var(--category-corner-size) - 8px);
   display: block;
@@ -698,10 +701,10 @@
   left: 50%;
   z-index: 2;
   display: block;
-  width: auto;
+  width: min(var(--service-banner-logo-width, 72%), 260px);
   height: auto;
-  max-width: min(54%, 190px);
-  max-height: 78px;
+  max-width: calc(100% - 2rem);
+  max-height: var(--service-banner-logo-height, 112px);
   object-fit: contain;
   filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.28));
   transform: translate(-50%, -50%);
@@ -999,7 +1002,7 @@ body[data-theme='dark'] .service-banner {
   }
 
   .category-grid {
-    gap: 1rem;
+    --category-grid-gap: 1rem;
   }
 
   .category-card {
@@ -1113,10 +1116,11 @@ body[data-theme='dark'] .service-banner {
   }
 
   .category-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    --category-grid-gap: 1rem;
   }
 
   .category-card {
+    flex-basis: calc((100% - var(--category-grid-gap)) / 2);
     min-height: 250px;
   }
 
@@ -1211,8 +1215,9 @@ body[data-theme='dark'] .service-banner {
   }
 
   .service-banner-logo {
-    max-width: min(58%, 176px);
-    max-height: 72px;
+    width: min(var(--service-banner-logo-width, 72%), 220px);
+    max-width: calc(100% - 1.5rem);
+    max-height: var(--service-banner-logo-tablet-height, 96px);
   }
 
   .service-banner-overlay {
@@ -1308,11 +1313,11 @@ body[data-theme='dark'] .service-banner {
   }
 
   .category-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.55rem;
+    --category-grid-gap: 0.55rem;
   }
 
   .category-card {
+    flex-basis: calc((100% - var(--category-grid-gap)) / 2);
     min-height: 190px;
     padding: 1.2rem 0.9rem 1rem;
   }
@@ -1393,8 +1398,9 @@ body[data-theme='dark'] .service-banner {
   }
 
   .service-banner-logo {
-    max-width: min(58%, 162px);
-    max-height: 64px;
+    width: min(var(--service-banner-logo-width, 74%), 180px);
+    max-width: calc(100% - 1rem);
+    max-height: var(--service-banner-logo-mobile-height, 82px);
   }
 
   .service-banner-overlay {

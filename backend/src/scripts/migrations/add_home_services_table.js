@@ -14,6 +14,7 @@ async function createTable() {
                 description TEXT,
                 image_url VARCHAR(255) DEFAULT NULL,
                 logo_url VARCHAR(255) DEFAULT NULL,
+                logo_size INT DEFAULT 72,
                 link_url VARCHAR(255) DEFAULT NULL,
                 is_external BOOLEAN DEFAULT FALSE,
                 display_order INT DEFAULT 0,

@@ -63,6 +63,7 @@ const AdminSegments = () => {
     data.append('custom_page_id', String(nextSegment.custom_page_id || ''));
     data.append('digital_group_id', String(nextSegment.digital_group_id || ''));
     data.append('is_external', String(Boolean(nextSegment.is_external)));
+    data.append('logo_size', String(Number(nextSegment.logo_size) || 72));
     data.append('display_order', String(Number(nextSegment.display_order) || 0));
     data.append('active', String(Boolean(nextSegment.active)));
     data.append('actions', JSON.stringify(nextSegment.actions || []));

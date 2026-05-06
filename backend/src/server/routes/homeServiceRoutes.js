@@ -53,7 +53,8 @@ const getHomeServicesSchemaState = async () => {
     hasLinkTargetType: columns.has('link_target_type'),
     hasCustomPageId: columns.has('custom_page_id'),
     hasDigitalGroupId: columns.has('digital_group_id'),
-    hasActions: columns.has('actions')
+    hasActions: columns.has('actions'),
+    hasLogoSize: columns.has('logo_size')
   };
 
   return cachedHomeServicesSchemaState;
@@ -83,6 +84,11 @@ const ensureHomeServicesColumns = async () => {
   await ensureColumn('home_services', 'link_target_type', "VARCHAR(40) DEFAULT NULL AFTER link_url");
   await ensureColumn('home_services', 'custom_page_id', 'INT DEFAULT NULL AFTER link_target_type');
   await ensureColumn('home_services', 'digital_group_id', 'INT DEFAULT NULL AFTER custom_page_id');
+  try {
+    await ensureColumn('home_services', 'logo_size', 'INT DEFAULT 72 AFTER logo_url');
+  } catch (err) {
+    logger.warn({ err }, 'Nao foi possivel garantir a coluna logo_size em home_services; salvando segmentos sem esse campo.');
+  }
   cachedHomeServicesSchemaState = null;
   homeServicesColumnsReady = true;
 };
@@ -96,6 +102,95 @@ const isExternalNavigationTarget = (value = '') => /^(?:https?:|mailto:|tel:)/i.
 const normalizeLinkTargetType = (value) => {
   const normalizedValue = sanitizeTextInput(value || '', { preserveNewlines: false }).toLowerCase();
   return VALID_LINK_TARGET_TYPES.has(normalizedValue) ? normalizedValue : null;
+};
+
+const normalizeLogoSize = (value) => {
+  const parsedValue = parseInteger(value, 72);
+  return Math.min(Math.max(parsedValue, 30), 95);
+};
+
+const buildHomeServiceInsertPayload = (values, schemaState) => {
+  const columns = [
+    'name',
+    'description',
+    'image_url',
+    'logo_url',
+    'link_url',
+    'link_target_type',
+    'custom_page_id',
+    'digital_group_id',
+    'is_external',
+    'display_order',
+    'active',
+    'actions'
+  ];
+  const params = [
+    values.name,
+    values.description,
+    values.image_url,
+    values.logo_url,
+    values.link_url,
+    values.link_target_type,
+    values.custom_page_id,
+    values.digital_group_id,
+    values.is_external,
+    values.display_order,
+    values.active,
+    values.actions
+  ];
+
+  if (schemaState.hasLogoSize) {
+    columns.splice(4, 0, 'logo_size');
+    params.splice(4, 0, values.logo_size);
+  }
+
+  return {
+    query: `INSERT INTO home_services (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`,
+    params
+  };
+};
+
+const buildHomeServiceUpdatePayload = (values, schemaState) => {
+  const fields = [
+    'name = ?',
+    'description = ?',
+    'image_url = ?',
+    'logo_url = ?',
+    'link_url = ?',
+    'link_target_type = ?',
+    'custom_page_id = ?',
+    'digital_group_id = ?',
+    'is_external = ?',
+    'display_order = ?',
+    'active = ?',
+    'actions = ?'
+  ];
+  const params = [
+    values.name,
+    values.description,
+    values.image_url,
+    values.logo_url,
+    values.link_url,
+    values.link_target_type,
+    values.custom_page_id,
+    values.digital_group_id,
+    values.is_external,
+    values.display_order,
+    values.active,
+    values.actions
+  ];
+
+  if (schemaState.hasLogoSize) {
+    fields.splice(4, 0, 'logo_size = ?');
+    params.splice(4, 0, values.logo_size);
+  }
+
+  params.push(values.id);
+
+  return {
+    query: `UPDATE home_services SET ${fields.join(', ')} WHERE id = ?`,
+    params
+  };
 };
 
 const parseActionsPayload = (value) => {
@@ -237,6 +332,9 @@ const buildHomeServicesQuery = (schemaState) => {
   const logoUrlSelect = schemaState.hasLogoUrl
     ? 'home_services.logo_url'
     : 'NULL AS logo_url';
+  const logoSizeSelect = schemaState.hasLogoSize
+    ? 'home_services.logo_size'
+    : '72 AS logo_size';
   const customPageTitleSelect = schemaState.hasCustomPageId
     ? 'custom_pages.title AS custom_page_title'
     : "'' AS custom_page_title";
@@ -263,6 +361,7 @@ const buildHomeServicesQuery = (schemaState) => {
       home_services.description,
       home_services.image_url,
       ${logoUrlSelect},
+      ${logoSizeSelect},
       home_services.link_url,
       home_services.is_external,
       home_services.display_order,
@@ -288,6 +387,7 @@ const normalizeHomeServiceRow = (row) => ({
   description: sanitizeTextInput(row.description || '', { preserveNewlines: true }),
   image_url: sanitizeAssetReference(sanitizeServedImageUrl(row.image_url) || ''),
   logo_url: sanitizeAssetReference(sanitizeServedImageUrl(row.logo_url) || ''),
+  logo_size: normalizeLogoSize(row.logo_size),
   link_target_type: row.link_target_type || null,
   custom_page_id: row.custom_page_id ? Number(row.custom_page_id) : null,
   custom_page_title: sanitizeTextInput(row.custom_page_title || '', { preserveNewlines: false }),
@@ -465,8 +565,9 @@ router.get('/', async (req, res) => {
 
 router.post('/', requireAdminSession, upload.any(), async (req, res, next) => {
   try {
-    await ensureHomeServicesColumns();
+    const schemaState = await getHomeServicesSchemaState();
     const { name, description, link_url, is_external, display_order, active, actions } = req.body;
+    const logoSize = normalizeLogoSize(req.body.logo_size);
     const linkTargetType = normalizeLinkTargetType(req.body.link_target_type);
     const customPageId = parseInteger(req.body.custom_page_id, 0);
     const digitalGroupId = parseInteger(req.body.digital_group_id, 0);
@@ -503,25 +604,23 @@ router.post('/', requireAdminSession, upload.any(), async (req, res, next) => {
       }
     }
 
-    const [result] = await db.query(
-      `INSERT INTO home_services
-      (name, description, image_url, logo_url, link_url, link_target_type, custom_page_id, digital_group_id, is_external, display_order, active, actions)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        safe(sanitizeTextInput(name || '', { preserveNewlines: false })),
-        safe(sanitizeTextInput(description || '', { preserveNewlines: true })),
-        safe(image_url || null),
-        safe(logo_url || null),
-        resolvedLinkUrl,
-        linkTargetType,
-        resolvedCustomPageId,
-        resolvedDigitalGroupId,
-        parseBooleanFlag(is_external) ? 1 : 0,
-        parseInteger(display_order, 0),
-        active === 'false' || active === false ? 0 : 1,
-        JSON.stringify(normalizedActions)
-      ]
-    );
+    const insertPayload = buildHomeServiceInsertPayload({
+      name: safe(sanitizeTextInput(name || '', { preserveNewlines: false })),
+      description: safe(sanitizeTextInput(description || '', { preserveNewlines: true })),
+      image_url: safe(image_url || null),
+      logo_url: safe(logo_url || null),
+      logo_size: logoSize,
+      link_url: resolvedLinkUrl,
+      link_target_type: linkTargetType,
+      custom_page_id: resolvedCustomPageId,
+      digital_group_id: resolvedDigitalGroupId,
+      is_external: parseBooleanFlag(is_external) ? 1 : 0,
+      display_order: parseInteger(display_order, 0),
+      active: active === 'false' || active === false ? 0 : 1,
+      actions: JSON.stringify(normalizedActions)
+    }, schemaState);
+
+    const [result] = await db.query(insertPayload.query, insertPayload.params);
 
     res.status(201).json({ id: result.insertId, message: 'Servico criado com sucesso' });
   } catch (err) {
@@ -533,8 +632,9 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res, next) => 
   const { id } = req.params;
 
   try {
-    await ensureHomeServicesColumns();
+    const schemaState = await getHomeServicesSchemaState();
     const { name, description, link_url, is_external, display_order, active, actions } = req.body;
+    const logoSize = normalizeLogoSize(req.body.logo_size);
     const linkTargetType = normalizeLinkTargetType(req.body.link_target_type);
     const customPageId = parseInteger(req.body.custom_page_id, 0);
     const digitalGroupId = parseInteger(req.body.digital_group_id, 0);
@@ -593,37 +693,24 @@ router.put('/:id', requireAdminSession, upload.any(), async (req, res, next) => 
       }
     }
 
-    await db.query(
-      `UPDATE home_services SET
-        name = ?,
-        description = ?,
-        image_url = ?,
-        logo_url = ?,
-        link_url = ?,
-        link_target_type = ?,
-        custom_page_id = ?,
-        digital_group_id = ?,
-        is_external = ?,
-        display_order = ?,
-        active = ?,
-        actions = ?
-      WHERE id = ?`,
-      [
-        safe(sanitizeTextInput(name || '', { preserveNewlines: false })),
-        safe(sanitizeTextInput(description || '', { preserveNewlines: true })),
-        safe(image_url || null),
-        safe(logo_url || null),
-        resolvedLinkUrl,
-        linkTargetType,
-        resolvedCustomPageId,
-        resolvedDigitalGroupId,
-        parseBooleanFlag(is_external) ? 1 : 0,
-        parseInteger(display_order, 0),
-        active === 'false' || active === false ? 0 : 1,
-        JSON.stringify(normalizedActions),
-        id
-      ]
-    );
+    const updatePayload = buildHomeServiceUpdatePayload({
+      id,
+      name: safe(sanitizeTextInput(name || '', { preserveNewlines: false })),
+      description: safe(sanitizeTextInput(description || '', { preserveNewlines: true })),
+      image_url: safe(image_url || null),
+      logo_url: safe(logo_url || null),
+      logo_size: logoSize,
+      link_url: resolvedLinkUrl,
+      link_target_type: linkTargetType,
+      custom_page_id: resolvedCustomPageId,
+      digital_group_id: resolvedDigitalGroupId,
+      is_external: parseBooleanFlag(is_external) ? 1 : 0,
+      display_order: parseInteger(display_order, 0),
+      active: active === 'false' || active === false ? 0 : 1,
+      actions: JSON.stringify(normalizedActions)
+    }, schemaState);
+
+    await db.query(updatePayload.query, updatePayload.params);
 
     res.json({ message: 'Servico atualizado com sucesso' });
   } catch (err) {

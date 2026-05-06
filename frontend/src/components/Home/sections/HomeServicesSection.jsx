@@ -25,6 +25,11 @@ const getServiceBannerClassName = (service) => {
   return 'service-banner';
 };
 
+const normalizeLogoSize = (value) => {
+  const parsedValue = Number.parseInt(value, 10);
+  return Number.isInteger(parsedValue) ? Math.min(Math.max(parsedValue, 30), 95) : 72;
+};
+
 const ServiceBanner = ({ service }) => {
   const imageSrc = service.image_url
     ? apiAssetPath(service.image_url)
@@ -35,6 +40,13 @@ const ServiceBanner = ({ service }) => {
   const safeLinkUrl = sanitizeNavigationTarget(service.link_url, { allowExternal: true, allowRelative: true });
   const shouldUseExternalLink = Boolean(service.is_external || isExternalNavigationTarget(safeLinkUrl));
   const bannerClassName = getServiceBannerClassName(service);
+  const logoSize = normalizeLogoSize(service.logo_size);
+  const bannerStyle = {
+    '--service-banner-logo-width': `${logoSize}%`,
+    '--service-banner-logo-height': `${Math.round(logoSize * 1.55)}px`,
+    '--service-banner-logo-tablet-height': `${Math.round(logoSize * 1.33)}px`,
+    '--service-banner-logo-mobile-height': `${Math.round(logoSize * 1.14)}px`
+  };
 
   const bannerContent = (
     <>
@@ -80,6 +92,7 @@ const ServiceBanner = ({ service }) => {
     return (
       <div
         className={bannerClassName}
+        style={bannerStyle}
         aria-label={service.name}
       >
         {bannerContent}
@@ -94,6 +107,7 @@ const ServiceBanner = ({ service }) => {
         target="_blank"
         rel="noopener noreferrer"
         className={bannerClassName}
+        style={bannerStyle}
         aria-label={service.name}
       >
         {bannerContent}
@@ -105,6 +119,7 @@ const ServiceBanner = ({ service }) => {
     <Link
       to={safeLinkUrl}
       className={bannerClassName}
+      style={bannerStyle}
       aria-label={service.name}
     >
       {bannerContent}
