@@ -14,6 +14,56 @@ const technicalAssistanceService = {
     return response.json();
   },
 
+  async getContentCards({ includeInactive = false } = {}) {
+    const response = await fetch(
+      `${TECHNICAL_ASSISTANCE_API_URL}/content-cards${includeInactive ? '/admin' : ''}`,
+      includeInactive ? createAdminRequestOptions() : undefined
+    );
+
+    if (includeInactive) {
+      await ensureAdminResponse(response, 'Erro ao buscar cards de conteudo da assistencia tecnica');
+    } else if (!response.ok) {
+      throw new Error('Erro ao buscar cards de conteudo da assistencia tecnica');
+    }
+
+    return response.json();
+  },
+
+  async createContentCard(payload) {
+    const response = await fetch(`${TECHNICAL_ASSISTANCE_API_URL}/content-cards`, createAdminRequestOptions({
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    }));
+
+    await ensureAdminResponse(response, 'Erro ao criar card de conteudo da assistencia tecnica');
+    return response.json();
+  },
+
+  async updateContentCard(id, payload) {
+    const response = await fetch(`${TECHNICAL_ASSISTANCE_API_URL}/content-cards/${id}`, createAdminRequestOptions({
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    }));
+
+    await ensureAdminResponse(response, 'Erro ao atualizar card de conteudo da assistencia tecnica');
+    return response.json();
+  },
+
+  async removeContentCard(id) {
+    const response = await fetch(`${TECHNICAL_ASSISTANCE_API_URL}/content-cards/${id}`, createAdminRequestOptions({
+      method: 'DELETE'
+    }));
+
+    await ensureAdminResponse(response, 'Erro ao remover card de conteudo da assistencia tecnica');
+    return response.json();
+  },
+
   async create(payload) {
     const response = await fetch(TECHNICAL_ASSISTANCE_API_URL, createAdminRequestOptions({
       method: 'POST',

@@ -13,6 +13,7 @@ const { safe } = require('../utils/common');
 const { wrapError } = require('../utils/errorHandling');
 const {
   sanitizeAssetReference,
+  sanitizeNavigationTarget,
   sanitizeTextInput
 } = require('../utils/inputSanitization');
 
@@ -62,6 +63,21 @@ const DEFAULT_PAGE_SETTINGS = {
     title: 'High Precision Printing',
     description: 'A revolucao da manufatura aditiva com precisao industrial para o fluxo digital odontologico.',
     logo_url: '/img/impressoras3d.png'
+  },
+  'assistencia-tecnica': {
+    page_name: 'assistencia-tecnica',
+    label: 'Assistencia Tecnica',
+    overline: '',
+    title: 'Assistencia Tecnica',
+    description: 'Assistencia tecnica autorizada',
+    logo_url: '',
+    banner_url: '/img/assistenciatecnica-2.jpg.webp',
+    hero_tagline: 'Confianca em cada servico, com pecas originais e alto padrao de qualidade.',
+    card_title: 'Assistencia Tecnica',
+    card_description: 'Um time altamente especializado em qualidade, pronto para entregar rapidez, precisao e seguranca na manutencao dos seus equipamentos.',
+    card_description_secondary: 'Trabalhamos para reduzir o tempo de parada e garantir o maximo desempenho, levando mais confianca e excelencia a cada atendimento.',
+    card_button_label: 'Abrir chamado',
+    card_url: 'https://talmax.tomticket.com/'
   }
 };
 
@@ -122,8 +138,25 @@ const normalizePageSetting = (pageName, content = {}, explicitLogoUrl = null) =>
     overline: sanitizeTextInput(content.overline ?? defaults.overline, { preserveNewlines: false }),
     title: sanitizeTextInput(content.title ?? defaults.title, { preserveNewlines: false }),
     description: sanitizeTextInput(content.description ?? defaults.description, { preserveNewlines: true }),
-    logo_url: sanitizeAssetReference(explicitLogoUrl ?? content.logo_url ?? defaults.logo_url)
+    logo_url: sanitizeAssetReference(explicitLogoUrl ?? content.logo_url ?? defaults.logo_url),
+    banner_url: sanitizeAssetReference(content.banner_url ?? defaults.banner_url ?? ''),
+    hero_tagline: sanitizeTextInput(content.hero_tagline ?? defaults.hero_tagline ?? '', { preserveNewlines: false, maxLength: 240 }),
+    card_title: sanitizeTextInput(content.card_title ?? defaults.card_title ?? '', { preserveNewlines: false, maxLength: 120 }),
+    card_description: sanitizeTextInput(content.card_description ?? defaults.card_description ?? '', { preserveNewlines: true, maxLength: 700 }),
+    card_description_secondary: sanitizeTextInput(content.card_description_secondary ?? defaults.card_description_secondary ?? '', { preserveNewlines: true, maxLength: 700 }),
+    card_button_label: sanitizeTextInput(content.card_button_label ?? defaults.card_button_label ?? '', { preserveNewlines: false, maxLength: 80 }),
+    card_url: sanitizeNavigationTarget(content.card_url ?? defaults.card_url ?? '', { allowExternal: true, allowRelative: true })
   };
+};
+
+const buildStoredContent = (setting) => {
+  const {
+    logo_url: _logoUrl,
+    updated_at: _updatedAt,
+    ...content
+  } = setting;
+
+  return content;
 };
 
 const ensureDefaultRows = async () => {
@@ -136,13 +169,7 @@ const ensureDefaultRows = async () => {
         VALUES (?, ?, ?)
         ON DUPLICATE KEY UPDATE page_name = VALUES(page_name)
       `,
-      [pageName, defaults.logo_url, JSON.stringify({
-        page_name: defaults.page_name,
-        label: defaults.label,
-        overline: defaults.overline,
-        title: defaults.title,
-        description: defaults.description
-      })]
+      [pageName, defaults.logo_url, JSON.stringify(buildStoredContent(defaults))]
     );
   }
 };
@@ -194,9 +221,13 @@ router.put('/:pageName', requireAdminSession, upload.any(), async (req, res, nex
 
     const currentContent = normalizePageSetting(pageName, parseContent(rows[0]?.content), rows[0]?.logo_url);
     const logoFile = Array.isArray(req.files) ? req.files.find((file) => file.fieldname === 'logo') : null;
+    const bannerFile = Array.isArray(req.files) ? req.files.find((file) => file.fieldname === 'banner') : null;
     let nextLogoUrl = logoFile
       ? await persistUploadedFile(logoFile, { resourceType: 'page-settings' })
       : sanitizeAssetReference(req.body.logo_url ?? currentContent.logo_url ?? '');
+    let nextBannerUrl = bannerFile
+      ? await persistUploadedFile(bannerFile, { resourceType: 'page-settings' })
+      : sanitizeAssetReference(req.body.banner_url ?? currentContent.banner_url ?? '');
 
     if (!logoFile && hasCloudinaryConfig() && typeof nextLogoUrl === 'string' && nextLogoUrl.startsWith('/img/')) {
       const existingAssetPath = resolveLegacyImagePath(nextLogoUrl);
@@ -206,24 +237,33 @@ router.put('/:pageName', requireAdminSession, upload.any(), async (req, res, nex
       }
     }
 
+    if (!bannerFile && hasCloudinaryConfig() && typeof nextBannerUrl === 'string' && nextBannerUrl.startsWith('/img/')) {
+      const existingAssetPath = resolveLegacyImagePath(nextBannerUrl);
+
+      if (existingAssetPath) {
+        nextBannerUrl = await persistExistingLocalFile(existingAssetPath, { resourceType: 'page-settings' });
+      }
+    }
+
     const updatedContent = normalizePageSetting(pageName, {
       ...currentContent,
       overline: req.body.overline,
       title: req.body.title,
-      description: req.body.description
-    });
+      description: req.body.description,
+      banner_url: nextBannerUrl,
+      hero_tagline: req.body.hero_tagline,
+      card_title: req.body.card_title,
+      card_description: req.body.card_description,
+      card_description_secondary: req.body.card_description_secondary,
+      card_button_label: req.body.card_button_label,
+      card_url: req.body.card_url
+    }, nextLogoUrl);
 
     await db.query(
       'UPDATE page_settings SET logo_url = ?, content = ? WHERE page_name = ?',
       [
         safe(nextLogoUrl || null),
-        JSON.stringify({
-          page_name: updatedContent.page_name,
-          label: updatedContent.label,
-          overline: updatedContent.overline,
-          title: updatedContent.title,
-          description: updatedContent.description
-        }),
+        JSON.stringify(buildStoredContent(updatedContent)),
         pageName
       ]
     );

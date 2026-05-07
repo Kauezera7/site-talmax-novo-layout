@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Globe,
   Mail,
   MapPin,
@@ -9,7 +11,8 @@ import {
   ShieldCheck,
   Wrench
 } from 'lucide-react';
-import { assetPath } from '../../utils/assets';
+import { apiAssetPath, assetPath } from '../../utils/assets';
+import pageSettingsService, { DEFAULT_SPECIAL_PAGE_SETTINGS, normalizeSpecialPageSettings } from '../../services/pageSettingsService';
 import technicalAssistanceService from '../../services/technicalAssistanceService';
 import './TechnicalAssistance.css';
 
@@ -19,7 +22,72 @@ const detailIcons = {
   email: Mail
 };
 
-const TECHNICAL_TICKET_URL = 'https://talmax.tomticket.com/';
+const DEFAULT_TECHNICAL_PAGE_SETTINGS = DEFAULT_SPECIAL_PAGE_SETTINGS['assistencia-tecnica'];
+const ITEMS_PER_PAGE = 10;
+
+const CustomPagination = ({ total, current, onChange }) => {
+  const pages = [];
+
+  for (let i = 1; i <= total; i += 1) {
+    pages.push(i);
+  }
+
+  const visiblePages = pages.filter((page) => (
+    page === 1 || page === total || (page >= current - 2 && page <= current + 2)
+  ));
+  const renderPages = [];
+  let lastPage = 0;
+
+  visiblePages.forEach((page) => {
+    if (lastPage !== 0 && page - lastPage > 1) {
+      renderPages.push(
+        <span key={`dots-${page}`} className="technical-assistance-pagination__dots">...</span>
+      );
+    }
+
+    renderPages.push(
+      <button
+        key={page}
+        type="button"
+        className={`technical-assistance-pagination__button${current === page ? ' is-active' : ''}`}
+        onClick={() => onChange(page)}
+        aria-current={current === page ? 'page' : undefined}
+      >
+        {page}
+      </button>
+    );
+
+    lastPage = page;
+  });
+
+  return (
+    <div className="technical-assistance-pagination__nav">
+      <button
+        type="button"
+        className="technical-assistance-pagination__arrow"
+        disabled={current === 1}
+        onClick={() => onChange(current - 1)}
+        aria-label="Pagina anterior"
+      >
+        <ChevronLeft size={18} />
+      </button>
+
+      <div className="technical-assistance-pagination__numbers">
+        {renderPages}
+      </div>
+
+      <button
+        type="button"
+        className="technical-assistance-pagination__arrow"
+        disabled={current === total}
+        onClick={() => onChange(current + 1)}
+        aria-label="Proxima pagina"
+      >
+        <ChevronRight size={18} />
+      </button>
+    </div>
+  );
+};
 
 const buildTelHref = (value = '') => {
   const digits = String(value || '').replace(/[^\d+]/g, '');
@@ -32,6 +100,34 @@ const buildAddressLine = (item) => {
 
   return addressParts.join(', ');
 };
+
+const resolvePageImage = (value, fallbackValue) => {
+  const imageValue = String(value || '').trim();
+
+  if (!imageValue) {
+    return fallbackValue ? assetPath(fallbackValue.replace(/^\/+/, '')) : '';
+  }
+
+  return apiAssetPath(imageValue);
+};
+
+const splitSettingText = (value = '') => (
+  String(value || '')
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+);
+
+const mapContentCardToServiceCard = (card) => ({
+  id: `content-card-${card.id}`,
+  href: String(card.link_url || '').trim(),
+  title: card.title || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_title,
+  buttonLabel: card.button_label || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_button_label,
+  descriptionLines: [
+    ...splitSettingText(card.description),
+    ...splitSettingText(card.description_secondary)
+  ]
+});
 
 const mapTechnicalAssistanceItemToCard = (item) => {
   const details = [];
@@ -152,27 +248,40 @@ const renderDetail = (detail, index) => {
 
 const TechnicalAssistance = () => {
   const [items, setItems] = useState([]);
+  const [contentCards, setContentCards] = useState([]);
   const [status, setStatus] = useState('loading');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSettings, setPageSettings] = useState(DEFAULT_TECHNICAL_PAGE_SETTINGS);
 
   useEffect(() => {
     let active = true;
 
     const loadItems = async () => {
       try {
-        const data = await technicalAssistanceService.getAll();
+        const [data, pageSettingsItems, contentCardsData] = await Promise.all([
+          technicalAssistanceService.getAll(),
+          pageSettingsService.getAll().catch(() => []),
+          technicalAssistanceService.getContentCards().catch(() => [])
+        ]);
 
         if (!active) {
           return;
         }
 
         setItems(Array.isArray(data) ? data : []);
+        setContentCards(Array.isArray(contentCardsData) ? contentCardsData : []);
+        setPageSettings(
+          normalizeSpecialPageSettings(pageSettingsItems)['assistencia-tecnica']
+          || DEFAULT_TECHNICAL_PAGE_SETTINGS
+        );
         setStatus('ready');
       } catch (error) {
         console.error('Erro ao carregar cards da assistencia tecnica:', error);
 
         if (active) {
           setItems([]);
+          setContentCards([]);
           setStatus('error');
         }
       }
@@ -202,54 +311,113 @@ const TechnicalAssistance = () => {
     ));
   }, [cards, searchTerm]);
 
+  const totalPages = Math.ceil(visibleCards.length / ITEMS_PER_PAGE);
+  const currentSafePage = Math.min(currentPage, Math.max(totalPages, 1));
+  const paginatedCards = useMemo(() => {
+    const startIndex = (currentSafePage - 1) * ITEMS_PER_PAGE;
+    return visibleCards.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [currentSafePage, visibleCards]);
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const heroImage = resolvePageImage(pageSettings.banner_url, DEFAULT_TECHNICAL_PAGE_SETTINGS.banner_url);
+  const logoImage = pageSettings.logo_url ? resolvePageImage(pageSettings.logo_url) : '';
+  const heroDescription = pageSettings.description || DEFAULT_TECHNICAL_PAGE_SETTINGS.description;
+  const serviceCards = useMemo(() => {
+    const mappedContentCards = contentCards
+      .map(mapContentCardToServiceCard)
+      .filter((card) => card.title || card.descriptionLines.length > 0);
+
+    if (mappedContentCards.length > 0) {
+      return mappedContentCards;
+    }
+
+    return [{
+      id: 'default-service-card',
+      href: pageSettings.card_url || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_url,
+      title: pageSettings.card_title || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_title,
+      buttonLabel: pageSettings.card_button_label || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_button_label,
+      descriptionLines: [
+        ...splitSettingText(pageSettings.card_description || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_description),
+        ...splitSettingText(pageSettings.card_description_secondary || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_description_secondary)
+      ]
+    }];
+  }, [contentCards, pageSettings]);
+
   return (
-    <div
-      className="technical-assistance-page"
-      style={{ '--technical-hero-image': `url("${assetPath('img/assistenciatecnica-2.jpg.webp')}")` }}
-    >
+    <div className="technical-assistance-page">
       <section className="technical-assistance-hero">
+        <img
+          src={heroImage}
+          alt=""
+          className="technical-assistance-hero-media"
+          aria-hidden="true"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+        />
+
         <div className="technical-assistance-hero-inner">
           <div className="technical-assistance-brand" aria-label="Logo Assistencia Talmax">
-            <div className="technical-assistance-brand-mark" aria-hidden="true">
-              <ShieldCheck size={38} strokeWidth={1.7} />
-              <span>Assist&ecirc;ncia</span>
-              <strong>Talmax</strong>
+            <div className="technical-assistance-brand-content">
+              {logoImage ? (
+                <img
+                  src={logoImage}
+                  alt={pageSettings.title || 'Assistencia Tecnica'}
+                  className="technical-assistance-brand-logo"
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="technical-assistance-brand-mark" aria-hidden="true">
+                  <ShieldCheck size={38} strokeWidth={1.7} />
+                  <span>Assist&ecirc;ncia</span>
+                  <strong>Talmax</strong>
+                </div>
+              )}
+              {heroDescription && <p className="technical-assistance-brand-description">{heroDescription}</p>}
             </div>
-            <p>Assist&ecirc;ncia t&eacute;cnica autorizada</p>
           </div>
-
-          <p className="technical-assistance-hero-tagline">
-            Confian&ccedil;a em cada servi&ccedil;o, com pe&ccedil;as originais e alto padr&atilde;o de qualidade.
-          </p>
         </div>
       </section>
 
       <section className="technical-assistance-service-banner">
-        <a
-          href={TECHNICAL_TICKET_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="technical-assistance-info-card"
-        >
-          <span className="technical-assistance-info-card__content">
-            <strong>Assist&ecirc;ncia T&eacute;cnica</strong>
-            <span>
-              Um time altamente especializado em qualidade, pronto para entregar rapidez,
-              precis&atilde;o e seguran&ccedil;a na manuten&ccedil;&atilde;o dos seus equipamentos.
-            </span>
-            <span>
-              Trabalhamos para reduzir o tempo de parada e garantir o m&aacute;ximo desempenho,
-              levando mais confian&ccedil;a e excel&ecirc;ncia a cada atendimento.
-            </span>
-          </span>
+        <div className="technical-assistance-service-cards">
+          {serviceCards.map((serviceCard) => {
+            const CardTag = serviceCard.href ? 'a' : 'article';
+            const cardProps = serviceCard.href
+              ? { href: serviceCard.href, target: '_blank', rel: 'noopener noreferrer' }
+              : {};
 
-          <span className="technical-assistance-info-card__corner" aria-hidden="true">
-            <span className="technical-assistance-info-card__button">
-              Abrir chamado
-              <ArrowRight size={18} strokeWidth={1.8} />
-            </span>
-          </span>
-        </a>
+            return (
+              <CardTag
+                key={serviceCard.id}
+                {...cardProps}
+                className={`technical-assistance-info-card${serviceCard.href ? '' : ' technical-assistance-info-card--static'}`}
+              >
+                <span className="technical-assistance-info-card__content">
+                  <strong>{serviceCard.title}</strong>
+                  {serviceCard.descriptionLines.map((line, index) => (
+                    <span key={`${serviceCard.id}-line-${index}`}>{line}</span>
+                  ))}
+                </span>
+
+                {serviceCard.href && (
+                  <span className="technical-assistance-info-card__corner" aria-hidden="true">
+                    <span className="technical-assistance-info-card__button">
+                      {serviceCard.buttonLabel}
+                      <ArrowRight size={18} strokeWidth={1.8} />
+                    </span>
+                  </span>
+                )}
+              </CardTag>
+            );
+          })}
+        </div>
       </section>
 
       <section className="technical-assistance-directory">
@@ -271,7 +439,7 @@ const TechnicalAssistance = () => {
             <input
               type="search"
               value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
+              onChange={handleSearchChange}
               placeholder="Rua Benedito Carollo, 890, Cidade Industrial Curitiba - Paran&aacute;"
               aria-label="Buscar assistencia tecnica autorizada"
             />
@@ -293,37 +461,49 @@ const TechnicalAssistance = () => {
             </p>
           </div>
         ) : (
-          <div className="technical-assistance-card-grid">
-            {visibleCards.length === 0 ? (
-              <div className="technical-assistance-empty-state technical-assistance-empty-state-wide">
-                <Search size={28} />
-                <p>Nenhuma assist&ecirc;ncia autorizada encontrada para a busca informada.</p>
-              </div>
-            ) : visibleCards.map((card) => (
-              <article key={card.id} className="technical-assistance-card">
-                <span className="technical-assistance-card-eyebrow">
-                  {card.eyebrowPrefix} <strong>{card.eyebrowHighlight}</strong>
-                </span>
-                <h3>{card.title}</h3>
-
-                <div className="technical-assistance-card-details">
-                  {card.details.map(renderDetail)}
+          <>
+            <div className="technical-assistance-card-grid">
+              {visibleCards.length === 0 ? (
+                <div className="technical-assistance-empty-state technical-assistance-empty-state-wide">
+                  <Search size={28} />
+                  <p>Nenhuma assist&ecirc;ncia autorizada encontrada para a busca informada.</p>
                 </div>
+              ) : paginatedCards.map((card) => (
+                <article key={card.id} className="technical-assistance-card">
+                  <span className="technical-assistance-card-eyebrow">
+                    {card.eyebrowPrefix} <strong>{card.eyebrowHighlight}</strong>
+                  </span>
+                  <h3>{card.title}</h3>
 
-                {card.primaryActionHref && (
-                  <a
-                    href={card.primaryActionHref}
-                    className="technical-assistance-card-primary"
-                    aria-label={`Fale com a assistencia ${card.title}`}
-                    target={/^(?:https?:)?\/\//i.test(card.primaryActionHref) ? '_blank' : undefined}
-                    rel={/^(?:https?:)?\/\//i.test(card.primaryActionHref) ? 'noopener noreferrer' : undefined}
-                  >
-                    <ArrowRight size={16} />
-                  </a>
-                )}
-              </article>
-            ))}
-          </div>
+                  <div className="technical-assistance-card-details">
+                    {card.details.map(renderDetail)}
+                  </div>
+
+                  {card.primaryActionHref && (
+                    <a
+                      href={card.primaryActionHref}
+                      className="technical-assistance-card-primary"
+                      aria-label={`Fale com a assistencia ${card.title}`}
+                      target={/^(?:https?:)?\/\//i.test(card.primaryActionHref) ? '_blank' : undefined}
+                      rel={/^(?:https?:)?\/\//i.test(card.primaryActionHref) ? 'noopener noreferrer' : undefined}
+                    >
+                      <ArrowRight size={16} />
+                    </a>
+                  )}
+                </article>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="technical-assistance-pagination">
+                <CustomPagination
+                  total={totalPages}
+                  current={currentSafePage}
+                  onChange={setCurrentPage}
+                />
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

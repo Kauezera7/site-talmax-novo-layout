@@ -2,18 +2,23 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   Globe,
+  Image as ImageIcon,
   Mail,
   MapPin,
   Pencil,
   Phone,
   Plus,
+  Save,
   Search,
   Trash2,
+  UploadCloud,
   Wrench,
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../../../context/useAdmin';
+import { apiAssetPath } from '../../../utils/assets';
+import pageSettingsService, { DEFAULT_SPECIAL_PAGE_SETTINGS, normalizeSpecialPageSettings } from '../../../services/pageSettingsService';
 import technicalAssistanceService from '../../../services/technicalAssistanceService';
 import './AdminTechnicalAssistance.css';
 
@@ -28,6 +33,27 @@ const buildEmptyForm = () => ({
   email: '',
   map_url: '',
   site_url: ''
+});
+
+const buildEmptyContentCardForm = () => ({
+  title: '',
+  description: '',
+  description_secondary: '',
+  button_label: 'Abrir chamado',
+  link_url: '',
+  display_order: 0,
+  is_active: true
+});
+
+const DEFAULT_PAGE_SETTINGS = DEFAULT_SPECIAL_PAGE_SETTINGS['assistencia-tecnica'];
+
+const buildPageSettingsForm = (setting = DEFAULT_PAGE_SETTINGS) => ({
+  ...DEFAULT_PAGE_SETTINGS,
+  ...setting,
+  logoFile: null,
+  logoPreview: setting.logo_url ? apiAssetPath(setting.logo_url) : null,
+  bannerFile: null,
+  bannerPreview: setting.banner_url ? apiAssetPath(setting.banner_url) : null
 });
 
 const normalizeFormValue = (field, value) => {
@@ -49,6 +75,17 @@ const AdminTechnicalAssistance = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [form, setForm] = useState(buildEmptyForm());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pageSettingsForm, setPageSettingsForm] = useState(buildPageSettingsForm());
+  const [isPageSettingsLoading, setIsPageSettingsLoading] = useState(true);
+  const [isPageSettingsSaving, setIsPageSettingsSaving] = useState(false);
+  const [contentCards, setContentCards] = useState([]);
+  const [isContentCardsLoading, setIsContentCardsLoading] = useState(true);
+  const [showContentCardModal, setShowContentCardModal] = useState(false);
+  const [showContentCardDeleteModal, setShowContentCardDeleteModal] = useState(false);
+  const [contentCardToDelete, setContentCardToDelete] = useState(null);
+  const [editingContentCard, setEditingContentCard] = useState(null);
+  const [contentCardForm, setContentCardForm] = useState(buildEmptyContentCardForm());
+  const [isContentCardSubmitting, setIsContentCardSubmitting] = useState(false);
 
   const loadItems = useCallback(async () => {
     setIsLoading(true);
@@ -67,6 +104,43 @@ const AdminTechnicalAssistance = () => {
   useEffect(() => {
     loadItems();
   }, [loadItems]);
+
+  const loadPageSettings = useCallback(async () => {
+    setIsPageSettingsLoading(true);
+
+    try {
+      const items = await pageSettingsService.getAll();
+      const normalizedMap = normalizeSpecialPageSettings(items);
+      setPageSettingsForm(buildPageSettingsForm(normalizedMap['assistencia-tecnica']));
+    } catch (error) {
+      console.error('Erro ao carregar conteudo da pagina de assistencia tecnica:', error);
+      addToast(error.message || 'Erro ao carregar conteudo da pagina de assistencia tecnica', 'error');
+    } finally {
+      setIsPageSettingsLoading(false);
+    }
+  }, [addToast]);
+
+  useEffect(() => {
+    loadPageSettings();
+  }, [loadPageSettings]);
+
+  const loadContentCards = useCallback(async () => {
+    setIsContentCardsLoading(true);
+
+    try {
+      const data = await technicalAssistanceService.getContentCards({ includeInactive: true });
+      setContentCards(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Erro ao carregar cards de conteudo da assistencia tecnica:', error);
+      addToast(error.message || 'Erro ao carregar cards de conteudo da assistencia tecnica', 'error');
+    } finally {
+      setIsContentCardsLoading(false);
+    }
+  }, [addToast]);
+
+  useEffect(() => {
+    loadContentCards();
+  }, [loadContentCards]);
 
   const filteredItems = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -132,6 +206,171 @@ const AdminTechnicalAssistance = () => {
     }));
   };
 
+  const handlePageSettingsInputChange = (field, value) => {
+    setPageSettingsForm((current) => ({
+      ...current,
+      [field]: value
+    }));
+  };
+
+  const handlePageSettingsImageChange = (field, file) => {
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPageSettingsForm((current) => ({
+        ...current,
+        [`${field}File`]: file,
+        [`${field}Preview`]: reader.result
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePageLogo = () => {
+    setPageSettingsForm((current) => ({
+      ...current,
+      logo_url: '',
+      logoFile: null,
+      logoPreview: null
+    }));
+  };
+
+  const handleResetBanner = () => {
+    setPageSettingsForm((current) => ({
+      ...current,
+      banner_url: '',
+      bannerFile: null,
+      bannerPreview: null
+    }));
+  };
+
+  const resetContentCardForm = () => {
+    setContentCardForm(buildEmptyContentCardForm());
+    setEditingContentCard(null);
+  };
+
+  const handleCreateContentCard = () => {
+    resetContentCardForm();
+    setShowContentCardModal(true);
+  };
+
+  const handleEditContentCard = (card) => {
+    setEditingContentCard(card);
+    setContentCardForm({
+      title: card.title || '',
+      description: card.description || '',
+      description_secondary: card.description_secondary || '',
+      button_label: card.button_label || 'Abrir chamado',
+      link_url: card.link_url || '',
+      display_order: Number(card.display_order) || 0,
+      is_active: card.is_active !== false
+    });
+    setShowContentCardModal(true);
+  };
+
+  const handleContentCardDeleteClick = (card) => {
+    setContentCardToDelete(card);
+    setShowContentCardDeleteModal(true);
+  };
+
+  const handleContentCardInputChange = (field, value) => {
+    setContentCardForm((current) => ({
+      ...current,
+      [field]: field === 'is_active' ? Boolean(value) : value
+    }));
+  };
+
+  const handleSavePageSettings = async () => {
+    if (isPageSettingsSaving) return;
+
+    setIsPageSettingsSaving(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('overline', pageSettingsForm.overline || '');
+      formData.append('title', pageSettingsForm.title || '');
+      formData.append('description', pageSettingsForm.description || '');
+      formData.append('logo_url', pageSettingsForm.logo_url || '');
+      formData.append('banner_url', pageSettingsForm.banner_url || '');
+      formData.append('hero_tagline', '');
+      formData.append('card_title', pageSettingsForm.card_title || '');
+      formData.append('card_description', pageSettingsForm.card_description || '');
+      formData.append('card_description_secondary', pageSettingsForm.card_description_secondary || '');
+      formData.append('card_button_label', pageSettingsForm.card_button_label || '');
+      formData.append('card_url', pageSettingsForm.card_url || '');
+
+      if (pageSettingsForm.logoFile) {
+        formData.append('logo', pageSettingsForm.logoFile);
+      }
+
+      if (pageSettingsForm.bannerFile) {
+        formData.append('banner', pageSettingsForm.bannerFile);
+      }
+
+      await pageSettingsService.update('assistencia-tecnica', formData);
+      addToast('Conteudo da pagina de assistencia tecnica atualizado com sucesso!');
+      await loadPageSettings();
+    } catch (error) {
+      console.error('Erro ao salvar conteudo da pagina de assistencia tecnica:', error);
+      addToast(error.message || 'Erro ao salvar conteudo da pagina de assistencia tecnica', 'error');
+    } finally {
+      setIsPageSettingsSaving(false);
+    }
+  };
+
+  const handleContentCardSubmit = async (event) => {
+    event.preventDefault();
+
+    if (isContentCardSubmitting) {
+      return;
+    }
+
+    const payload = {
+      ...contentCardForm,
+      display_order: Number(contentCardForm.display_order) || 0,
+      is_active: Boolean(contentCardForm.is_active)
+    };
+
+    try {
+      setIsContentCardSubmitting(true);
+
+      if (editingContentCard?.id) {
+        await technicalAssistanceService.updateContentCard(editingContentCard.id, payload);
+        addToast('Card de conteudo atualizado com sucesso!');
+      } else {
+        await technicalAssistanceService.createContentCard(payload);
+        addToast('Card de conteudo criado com sucesso!');
+      }
+
+      setShowContentCardModal(false);
+      resetContentCardForm();
+      await loadContentCards();
+    } catch (error) {
+      console.error('Erro ao salvar card de conteudo da assistencia tecnica:', error);
+      addToast(error.message || 'Erro ao salvar card de conteudo da assistencia tecnica', 'error');
+    } finally {
+      setIsContentCardSubmitting(false);
+    }
+  };
+
+  const confirmContentCardDelete = async () => {
+    if (!contentCardToDelete?.id) {
+      return;
+    }
+
+    try {
+      await technicalAssistanceService.removeContentCard(contentCardToDelete.id);
+      addToast('Card de conteudo removido com sucesso!');
+      setShowContentCardDeleteModal(false);
+      setContentCardToDelete(null);
+      await loadContentCards();
+    } catch (error) {
+      console.error('Erro ao excluir card de conteudo da assistencia tecnica:', error);
+      addToast(error.message || 'Erro ao excluir card de conteudo da assistencia tecnica', 'error');
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -180,6 +419,159 @@ const AdminTechnicalAssistance = () => {
 
   return (
     <div className="admin-technical-assistance">
+      <div className="admin-card admin-technical-assistance__page-settings">
+        <div className="card-header admin-technical-assistance__header">
+          <div className="admin-technical-assistance__header-copy">
+            <h2><ImageIcon size={20} /> Conteudo da pagina</h2>
+            <p>Edite o banner, logo e texto abaixo do logo da pagina publica.</p>
+          </div>
+        </div>
+
+        <div className="card-body">
+          {isPageSettingsLoading ? (
+            <div className="loading-container">Carregando conteudo da pagina...</div>
+          ) : (
+            <article className="admin-technical-assistance__settings-panel">
+              <div className="admin-technical-assistance__settings-grid">
+                <div className="form-group admin-technical-assistance__form-group--full">
+                  <label>Banner da assistencia</label>
+                  <div className="file-upload-area admin-technical-assistance__upload-area admin-technical-assistance__upload-area--banner">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={(event) => handlePageSettingsImageChange('banner', event.target.files?.[0])}
+                    />
+                    <UploadCloud size={28} color="var(--admin-primary)" />
+                    <p>Enviar imagem do banner</p>
+                  </div>
+
+                  {pageSettingsForm.bannerPreview && (
+                    <div className="admin-technical-assistance__preview admin-technical-assistance__preview--banner">
+                      <img src={pageSettingsForm.bannerPreview} alt="Preview do banner da assistencia tecnica" />
+                      <button type="button" className="btn-secondary" onClick={handleResetBanner}>
+                        Usar banner padrao
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>Logo do banner</label>
+                  <div className="file-upload-area admin-technical-assistance__upload-area">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={(event) => handlePageSettingsImageChange('logo', event.target.files?.[0])}
+                    />
+                    <UploadCloud size={28} color="var(--admin-primary)" />
+                    <p>Enviar logo</p>
+                  </div>
+
+                  {pageSettingsForm.logoPreview && (
+                    <div className="admin-technical-assistance__preview">
+                      <img src={pageSettingsForm.logoPreview} alt="Preview do logo da assistencia tecnica" />
+                      <button type="button" className="btn-secondary" onClick={handleRemovePageLogo}>
+                        Remover logo
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="admin-technical-assistance__settings-fields">
+                  <div className="form-group">
+                    <label>Texto abaixo do logo</label>
+                    <input
+                      type="text"
+                      value={pageSettingsForm.description || ''}
+                      onChange={(event) => handlePageSettingsInputChange('description', event.target.value)}
+                      placeholder="Assistencia tecnica autorizada"
+                    />
+                  </div>
+
+                </div>
+              </div>
+
+              <div className="admin-technical-assistance__settings-actions">
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleSavePageSettings}
+                  disabled={isPageSettingsSaving}
+                >
+                  <Save size={18} />
+                  {isPageSettingsSaving ? 'Salvando...' : 'Salvar conteudo da pagina'}
+                </button>
+              </div>
+            </article>
+          )}
+        </div>
+      </div>
+
+      <div className="admin-card admin-technical-assistance__content-section">
+        <div className="card-header admin-technical-assistance__header">
+          <div className="admin-technical-assistance__header-copy">
+            <h2><Wrench size={20} /> Cards Assistencia Tecnica</h2>
+            <p>Cadastre quantos cards quiser para o bloco grande exibido abaixo do banner.</p>
+          </div>
+
+          <button type="button" className="btn-secondary" onClick={handleCreateContentCard}>
+            <Plus size={18} />
+            Novo card
+          </button>
+        </div>
+
+        <div className="card-body">
+          {isContentCardsLoading ? (
+            <div className="loading-container">Carregando cards de conteudo...</div>
+          ) : contentCards.length === 0 ? (
+            <div className="empty-state">
+              <Wrench size={32} />
+              <p>Nenhum card de conteudo cadastrado para a assistencia tecnica.</p>
+            </div>
+          ) : (
+            <div className="admin-technical-assistance__content-grid">
+              {contentCards.map((card) => (
+                <article key={card.id} className="admin-technical-assistance__content-card">
+                  <div className="admin-technical-assistance__content-card-head">
+                    <span className={`admin-technical-assistance__content-status${card.is_active ? ' is-active' : ''}`}>
+                      {card.is_active ? 'Ativo' : 'Inativo'}
+                    </span>
+                    <span className="admin-technical-assistance__content-order">Ordem {Number(card.display_order) || 0}</span>
+                  </div>
+
+                  <h3 title={card.title}>{card.title}</h3>
+
+                  {card.description && <p>{card.description}</p>}
+                  {card.description_secondary && <p>{card.description_secondary}</p>}
+
+                  {card.link_url && (
+                    <span className="admin-technical-assistance__content-link" title={card.link_url}>
+                      <Globe size={15} />
+                      <span>{card.link_url}</span>
+                    </span>
+                  )}
+
+                  <div className="admin-technical-assistance__actions">
+                    <button type="button" className="btn-secondary" onClick={() => handleEditContentCard(card)}>
+                      <Pencil size={16} />
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary admin-technical-assistance__danger-button"
+                      onClick={() => handleContentCardDeleteClick(card)}
+                    >
+                      <Trash2 size={16} />
+                      Excluir
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="admin-card">
         <div className="card-header admin-technical-assistance__header">
           <div className="admin-technical-assistance__header-copy">
@@ -290,6 +682,146 @@ const AdminTechnicalAssistance = () => {
           )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {showContentCardModal && (
+          <div className="modal-overlay">
+            <motion.div
+              className="modal-content admin-technical-assistance__modal"
+              initial={{ scale: 0.94, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.94, opacity: 0 }}
+            >
+              <div className="modal-header">
+                <h3>{editingContentCard?.id ? 'Editar card de conteudo' : 'Novo card de conteudo'}</h3>
+                <button type="button" className="btn-icon" onClick={() => setShowContentCardModal(false)}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleContentCardSubmit}>
+                <div className="modal-body admin-technical-assistance__modal-body">
+                  <div className="admin-technical-assistance__form-grid">
+                    <div className="form-group admin-technical-assistance__form-group--full">
+                      <label>Titulo do card</label>
+                      <input
+                        type="text"
+                        value={contentCardForm.title}
+                        onChange={(event) => handleContentCardInputChange('title', event.target.value)}
+                        placeholder="Assistencia Tecnica"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Texto do botao</label>
+                      <input
+                        type="text"
+                        value={contentCardForm.button_label}
+                        onChange={(event) => handleContentCardInputChange('button_label', event.target.value)}
+                        placeholder="Abrir chamado"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Ordem</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={contentCardForm.display_order}
+                        onChange={(event) => handleContentCardInputChange('display_order', event.target.value)}
+                        placeholder="0"
+                      />
+                    </div>
+
+                    <div className="form-group admin-technical-assistance__form-group--full">
+                      <label>Primeiro texto do card</label>
+                      <textarea
+                        rows="4"
+                        value={contentCardForm.description}
+                        onChange={(event) => handleContentCardInputChange('description', event.target.value)}
+                        placeholder="Texto principal do card"
+                      />
+                    </div>
+
+                    <div className="form-group admin-technical-assistance__form-group--full">
+                      <label>Segundo texto do card</label>
+                      <textarea
+                        rows="4"
+                        value={contentCardForm.description_secondary}
+                        onChange={(event) => handleContentCardInputChange('description_secondary', event.target.value)}
+                        placeholder="Texto complementar do card"
+                      />
+                    </div>
+
+                    <div className="form-group admin-technical-assistance__form-group--full">
+                      <label>Link do card</label>
+                      <input
+                        type="url"
+                        value={contentCardForm.link_url}
+                        onChange={(event) => handleContentCardInputChange('link_url', event.target.value)}
+                        placeholder="https://talmax.tomticket.com/"
+                      />
+                    </div>
+
+                    <label className="admin-technical-assistance__checkbox admin-technical-assistance__form-group--full">
+                      <input
+                        type="checkbox"
+                        checked={contentCardForm.is_active}
+                        onChange={(event) => handleContentCardInputChange('is_active', event.target.checked)}
+                      />
+                      Exibir card na pagina publica
+                    </label>
+                  </div>
+                </div>
+
+                <div className="modal-footer">
+                  <button type="button" className="btn-secondary" onClick={() => setShowContentCardModal(false)}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn-primary" disabled={isContentCardSubmitting}>
+                    {isContentCardSubmitting ? 'Salvando...' : 'Salvar card'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showContentCardDeleteModal && (
+          <div className="modal-overlay">
+            <motion.div
+              className="modal-content"
+              initial={{ scale: 0.94, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.94, opacity: 0 }}
+            >
+              <div className="modal-body">
+                <div className="modal-icon">
+                  <AlertCircle size={32} />
+                </div>
+                <h3>Excluir card de conteudo?</h3>
+                <p>Deseja remover o card <strong>{contentCardToDelete?.title}</strong>?</p>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={() => setShowContentCardDeleteModal(false)}>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary admin-technical-assistance__danger-button"
+                  onClick={confirmContentCardDelete}
+                >
+                  Sim, excluir
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showModal && (

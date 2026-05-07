@@ -33,6 +33,21 @@ export const DEFAULT_SPECIAL_PAGE_SETTINGS = {
     title: 'High Precision Printing',
     description: 'A revolucao da manufatura aditiva com precisao industrial para o fluxo digital odontologico.',
     logo_url: '/img/impressoras3d.png'
+  },
+  'assistencia-tecnica': {
+    page_name: 'assistencia-tecnica',
+    label: 'Assistencia Tecnica',
+    overline: '',
+    title: 'Assistencia Tecnica',
+    description: 'Confianca em cada servico,\ncom pecas originais e\nalto padrao de qualidade.',
+    logo_url: '',
+    banner_url: '/img/assistenciatecnica-2.jpg.webp',
+    hero_tagline: 'Confianca em cada servico, com pecas originais e alto padrao de qualidade.',
+    card_title: 'Assistencia Tecnica',
+    card_description: 'Um time altamente especializado em qualidade, pronto para entregar rapidez, precisao e seguranca na manutencao dos seus equipamentos.',
+    card_description_secondary: 'Trabalhamos para reduzir o tempo de parada e garantir o maximo desempenho, levando mais confianca e excelencia a cada atendimento.',
+    card_button_label: 'Abrir chamado',
+    card_url: 'https://talmax.tomticket.com/'
   }
 };
 

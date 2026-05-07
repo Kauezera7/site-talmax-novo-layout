@@ -12,17 +12,24 @@
 
 .technical-assistance-hero {
   position: relative;
-  min-height: 560px;
-  display: flex;
-  align-items: center;
+  display: block;
   overflow: hidden;
-  background:
-    linear-gradient(90deg, rgba(239, 244, 250, 0.12) 0%, rgba(24, 39, 85, 0.58) 45%, rgba(3, 8, 22, 0.94) 100%),
-    var(--technical-hero-image);
-  background-position: center;
-  background-size: cover;
+  background-color: #070e22;
   border-bottom-right-radius: 76px;
   border-bottom-left-radius: 76px;
+}
+
+.technical-assistance-hero::before {
+  content: none;
+}
+
+.technical-assistance-hero-media {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  border-radius: inherit;
 }
 
 .technical-assistance-hero-inner,
@@ -33,15 +40,17 @@
 }
 
 .technical-assistance-hero-inner {
-  position: relative;
-  z-index: 1;
+  width: 100%;
+  max-width: 100%;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   justify-content: center;
-  min-height: inherit;
-  padding: 4.5rem clamp(2rem, 6vw, 5rem) 4.5rem 0;
-  text-align: center;
+  padding: 4.5rem 7.5rem 4.5rem 0;
+  text-align: right;
 }
 
 .technical-assistance-hero-copy {
@@ -99,80 +108,38 @@
 .technical-assistance-brand {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1.1rem;
-  text-align: center;
+  align-items: flex-end;
   color: #ffffff;
 }
 
-.technical-assistance-brand-mark {
-  position: relative;
-  width: 238px;
-  aspect-ratio: 0.92;
+.technical-assistance-brand-content {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 2.1rem 1.2rem 2.35rem;
-  color: #ffffff;
-  background: linear-gradient(180deg, #374c92 0%, #172657 100%);
-  clip-path: polygon(50% 0, 92% 12%, 88% 66%, 50% 100%, 12% 66%, 8% 12%);
-  filter: drop-shadow(0 24px 36px rgba(3, 8, 22, 0.42));
+  align-items: flex-end;
+  text-align: right;
+  gap: 0.75rem;
 }
 
-.technical-assistance-brand-mark::before {
-  content: '';
-  position: absolute;
-  inset: 12px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(226, 235, 249, 0.96));
-  clip-path: polygon(50% 0, 90% 12%, 84% 62%, 50% 92%, 16% 62%, 10% 12%);
-  opacity: 0.92;
+.technical-assistance-brand-logo {
+  display: block;
+  width: auto;
+  max-width: 300px;
+  max-height: 200px;
+  object-fit: contain;
+  margin: 0;
+  filter: drop-shadow(0 24px 36px rgba(3, 8, 22, 0.36));
 }
 
-.technical-assistance-brand-mark::after {
-  content: '';
-  position: absolute;
-  inset: 26px;
-  background: linear-gradient(180deg, #334990 0%, #122049 100%);
-  clip-path: polygon(50% 0, 88% 14%, 80% 58%, 50% 84%, 20% 58%, 12% 14%);
-}
-
-.technical-assistance-brand-mark svg,
-.technical-assistance-brand-mark span,
-.technical-assistance-brand-mark strong {
-  position: relative;
-  z-index: 1;
-}
-
-.technical-assistance-brand-mark span {
-  font-size: 1.35rem;
-  font-weight: 900;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.technical-assistance-brand-mark strong {
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.technical-assistance-brand p {
-  max-width: 18ch;
+.technical-assistance-brand-description {
+  width: 100%;
+  max-width: 180px;
   margin: 0;
   color: rgba(255, 255, 255, 0.86);
   font-size: 1.15rem;
-  line-height: 1.35;
-}
-
-.technical-assistance-hero-tagline {
-  max-width: 16ch;
-  margin: 1.8rem 0 0;
-  color: #ffffff;
-  font-size: 1.55rem;
-  font-weight: 500;
-  line-height: 1.18;
-  text-shadow: 0 10px 28px rgba(0, 0, 0, 0.42);
+  line-height: 1.4;
+  text-align: right;
+  white-space: pre-line;
+  word-break: break-word;
 }
 
 .technical-assistance-service-banner {
@@ -182,18 +149,24 @@
   overflow: visible;
 }
 
+.technical-assistance-service-cards {
+  display: grid;
+  gap: 1.5rem;
+}
+
 .technical-assistance-info-card {
   --technical-info-card-bg: #111630;
-  --technical-info-card-color: #f8fafc;
+  --technical-info-card-color: #f5f7ff;
   --technical-info-button-bg: #374c92;
   --technical-info-button-color: #ffffff;
-  --technical-info-corner-width: 198px;
-  --technical-info-corner-height: 56px;
-  --technical-info-corner-radius: 14px;
-  --technical-info-corner-outer-radius: 14px;
+  --technical-info-surface: #eef3f8;
+  --technical-info-corner-width: 214px;
+  --technical-info-corner-height: 52px;
+  --technical-info-corner-radius: 16px;
+  --technical-info-corner-outer-radius: 16px;
   --technical-info-corner-bleed: 12px;
   position: relative;
-  min-height: 235px;
+  min-height: 195px;
   display: flex;
   align-items: center;
   overflow: visible;
@@ -204,9 +177,9 @@
   background:
     linear-gradient(180deg, rgba(16, 20, 48, 0.9), rgba(16, 20, 48, 0.94)),
     linear-gradient(180deg, var(--technical-info-card-bg), var(--technical-info-card-bg)),
-    var(--technical-hero-image);
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='260' viewBox='0 0 900 260'%3E%3Cpath d='M105 112c47-49 96-74 148-73 55 1 88 33 139 42 82 15 116-42 192-20 45 13 59 45 102 45 41 0 75-29 115-7 29 16 40 45 66 48' fill='none' stroke='%23ffffff' stroke-opacity='.13' stroke-width='2'/%3E%3Cpath d='M34 175c93-52 175-60 245-23 40 21 77 57 140 48 54-8 74-43 128-36 60 8 88 58 154 50 48-6 81-40 141-24' fill='none' stroke='%23ffffff' stroke-opacity='.11' stroke-width='2'/%3E%3Cpath d='M147 62c-24 14-37 34-29 49 10 19 55 17 88 4 34-13 52-34 44-51-9-19-66-24-103-2Zm388-17c-24 9-38 25-32 38 8 17 53 18 84 8 28-9 43-27 35-41-9-16-56-16-87-5Zm170 70c-18 7-28 21-22 31 7 13 42 13 63 3 19-9 28-23 21-33-9-13-40-13-62-1Z' fill='%23ffffff' fill-opacity='.08'/%3E%3C/svg%3E");
   background-size: cover;
-  background-position: center 55%;
+  background-position: center;
   isolation: isolate;
   transition: transform 0.24s ease, filter 0.24s ease;
 }
@@ -228,27 +201,32 @@
   transform: translateY(-3px);
 }
 
+.technical-assistance-info-card--static:hover {
+  filter: none;
+  transform: none;
+}
+
 .technical-assistance-info-card__content {
   position: relative;
   z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  max-width: 78%;
+  max-width: 74%;
 }
 
 .technical-assistance-info-card__content strong {
   color: var(--technical-info-card-color);
-  font-size: 2.35rem;
-  font-weight: 700;
+  font-size: clamp(1.95rem, 2.45vw, 2.15rem);
+  font-weight: 550;
   line-height: 1.05;
   letter-spacing: 0;
 }
 
 .technical-assistance-info-card__content span {
-  color: color-mix(in srgb, var(--technical-info-card-color) 88%, transparent);
+  color: color-mix(in srgb, var(--technical-info-card-color) 86%, transparent);
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.2;
 }
 
@@ -261,15 +239,15 @@
   height: calc(var(--technical-info-corner-height) + var(--technical-info-corner-bleed));
   display: flex;
   align-items: flex-end;
-  justify-content: flex-end;
+  justify-content: center;
   padding:
-    0.42rem
-    calc(0.62rem + var(--technical-info-corner-bleed))
-    calc(0.42rem + var(--technical-info-corner-bleed))
-    0.62rem;
+    0.34rem
+    calc(0.5rem + var(--technical-info-corner-bleed))
+    calc(0.34rem + var(--technical-info-corner-bleed))
+    0.5rem;
   border-radius: var(--technical-info-corner-radius) 0 0 0;
-  background: #eef3f8;
-  box-shadow: 0 0 0 1px #eef3f8;
+  background: var(--technical-info-surface);
+  box-shadow: 0 0 0 1px var(--technical-info-surface);
   pointer-events: none;
 }
 
@@ -287,36 +265,39 @@
   top: calc(var(--technical-info-corner-outer-radius) * -1);
   right: var(--technical-info-corner-bleed);
   border-bottom-right-radius: 999px;
-  box-shadow: 7px 7px 0 7px #eef3f8;
+  box-shadow: 7px 7px 0 7px var(--technical-info-surface);
 }
 
 .technical-assistance-info-card__corner::after {
   bottom: var(--technical-info-corner-bleed);
   left: calc(var(--technical-info-corner-outer-radius) * -1);
   border-bottom-right-radius: 999px;
-  box-shadow: 7px 7px 0 7px #eef3f8;
+  box-shadow: 7px 7px 0 7px var(--technical-info-surface);
 }
 
 .technical-assistance-info-card__button {
   position: relative;
   z-index: 1;
-  min-width: 162px;
-  height: 38px;
+  min-width: 168px;
+  max-width: calc(var(--technical-info-corner-width) - 1.25rem);
+  height: 36px;
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   padding: 0 1rem;
-  border: 1.4px solid #17214a;
+  border: 1.4px solid var(--technical-info-button-bg);
   border-radius: 999px;
-  background: #f1f4f9;
-  color: #17214a;
+  background: var(--technical-info-button-bg);
+  color: var(--technical-info-button-color);
   font-size: 0.78rem;
   font-weight: 900;
   line-height: 1;
   text-transform: uppercase;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: transform 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
   transform-origin: center;
 }
@@ -340,6 +321,7 @@
 
 .technical-assistance-directory {
   position: relative;
+  width: min(1600px, calc(100% - 2rem));
   padding-bottom: 5.2rem;
 }
 
@@ -420,12 +402,78 @@
 }
 
 .technical-assistance-card-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1.45rem;
+  --technical-card-grid-gap: 1.45rem;
+  --technical-card-width: calc((1260px - 1rem - (var(--technical-card-grid-gap) * 3)) / 4);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--technical-card-grid-gap);
   align-items: stretch;
   width: calc(100% - 1rem);
   margin: 0 auto;
+}
+
+.technical-assistance-pagination {
+  margin-top: 3.75rem;
+  display: flex;
+  justify-content: center;
+}
+
+.technical-assistance-pagination__nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.technical-assistance-pagination__numbers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.technical-assistance-pagination__button,
+.technical-assistance-pagination__arrow {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--technical-ink);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.technical-assistance-pagination__button:hover:not(.is-active),
+.technical-assistance-pagination__arrow:hover:not(:disabled) {
+  border-color: var(--technical-blue);
+  color: var(--technical-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(55, 76, 146, 0.1);
+}
+
+.technical-assistance-pagination__button.is-active {
+  border-color: var(--technical-blue);
+  background: var(--technical-blue);
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(55, 76, 146, 0.2);
+}
+
+.technical-assistance-pagination__arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: #f1f4f9;
+}
+
+.technical-assistance-pagination__dots {
+  padding: 0 4px;
+  color: var(--technical-muted);
+  font-weight: 700;
 }
 
 .technical-assistance-empty-state {
@@ -444,7 +492,7 @@
 }
 
 .technical-assistance-empty-state-wide {
-  grid-column: 1 / -1;
+  flex: 0 0 100%;
 }
 
 .technical-assistance-empty-state p {
@@ -454,10 +502,13 @@
 }
 
 .technical-assistance-card {
-  --technical-card-corner-size: 78px;
+  --technical-card-corner-size: 82px;
+  --technical-card-button-size: 48px;
   --technical-card-corner-radius: 16px;
   --technical-card-corner-outer-radius: 18px;
   --technical-card-corner-bleed: 12px;
+  --technical-card-page-bg: #eef3f8;
+  flex: 0 1 min(100%, var(--technical-card-width));
   min-height: 100%;
   position: relative;
   display: flex;
@@ -465,7 +516,7 @@
   gap: 0.72rem;
   padding: 1rem calc(var(--technical-card-corner-size) + 0.35rem) 1.15rem 1.1rem;
   border: 0;
-  border-radius: 8px;
+  border-radius: 14px;
   background: #ffffff;
   box-shadow: none;
   transition: none;
@@ -565,15 +616,15 @@
   height: calc(var(--technical-card-corner-size) + var(--technical-card-corner-bleed));
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   padding:
     0
-    calc(0.6rem + var(--technical-card-corner-bleed))
-    calc(0.55rem + var(--technical-card-corner-bleed))
+    var(--technical-card-corner-bleed)
+    var(--technical-card-corner-bleed)
     0;
   border-radius: var(--technical-card-corner-radius) 0 0 0;
-  background: #eef3f8;
-  box-shadow: 0 0 0 1px #eef3f8;
+  background: var(--technical-card-page-bg);
+  box-shadow: 0 0 0 1px var(--technical-card-page-bg);
   color: #ffffff;
   text-decoration: none;
   font-size: 0;
@@ -594,23 +645,24 @@
   top: calc(var(--technical-card-corner-outer-radius) * -1);
   right: var(--technical-card-corner-bleed);
   border-bottom-right-radius: 999px;
-  box-shadow: 7px 7px 0 7px #eef3f8;
+  box-shadow: 7px 7px 0 7px var(--technical-card-page-bg);
 }
 
 .technical-assistance-card-primary::after {
   bottom: var(--technical-card-corner-bleed);
   left: calc(var(--technical-card-corner-outer-radius) * -1);
   border-bottom-right-radius: 999px;
-  box-shadow: 7px 7px 0 7px #eef3f8;
+  box-shadow: 7px 7px 0 7px var(--technical-card-page-bg);
 }
 
 .technical-assistance-card-primary svg {
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  padding: 0.5rem;
+  box-sizing: border-box;
+  width: var(--technical-card-button-size);
+  height: var(--technical-card-button-size);
+  padding: 12px;
   border: 1px solid #17214a;
   border-radius: 50%;
   background: #ffffff;
@@ -634,12 +686,13 @@
 }
 
 @media (max-width: 1180px) {
-  .technical-assistance-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .technical-assistance-card {
+    flex-basis: calc((100% - var(--technical-card-grid-gap)) / 2);
   }
 
   .technical-assistance-hero-inner {
-    padding-right: clamp(1.5rem, 4vw, 3rem);
+    padding-right: clamp(1rem, 4vw, 2rem);
+    padding-left: 0;
   }
 
   .technical-assistance-brand-mark {
@@ -649,13 +702,12 @@
 
 @media (max-width: 920px) {
   .technical-assistance-hero {
-    min-height: auto;
     border-bottom-right-radius: 44px;
     border-bottom-left-radius: 44px;
   }
 
   .technical-assistance-hero-inner {
-    padding: 3.5rem 0 5rem;
+    padding: 2rem 0 2.4rem;
     align-items: center;
   }
 
@@ -675,11 +727,6 @@
 
   .technical-assistance-brand-mark span {
     font-size: 1rem;
-  }
-
-  .technical-assistance-hero-tagline {
-    max-width: 24ch;
-    font-size: 1.35rem;
   }
 
   .technical-assistance-directory-header {
@@ -722,11 +769,6 @@
     font-size: 0.96rem;
   }
 
-  .technical-assistance-hero-tagline {
-    max-width: 18ch;
-    font-size: 1.16rem;
-  }
-
   .technical-assistance-service-banner {
     margin-top: 2.5rem;
     margin-bottom: 3rem;
@@ -763,6 +805,22 @@
   }
 
   .technical-assistance-card-grid {
-    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .technical-assistance-card {
+    flex-basis: 100%;
+  }
+
+  .technical-assistance-pagination__numbers {
+    gap: 4px;
+  }
+
+  .technical-assistance-pagination__button,
+  .technical-assistance-pagination__arrow {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    font-size: 0.9rem;
   }
 }

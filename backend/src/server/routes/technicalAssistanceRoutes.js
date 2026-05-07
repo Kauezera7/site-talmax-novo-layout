@@ -12,16 +12,24 @@ const router = express.Router();
 const TECHNICAL_ASSISTANCE_TABLE_QUERY = `
   CREATE TABLE IF NOT EXISTS technical_assistance_cards (
     id INT NOT NULL AUTO_INCREMENT,
-    company VARCHAR(255) NOT NULL,
-    address VARCHAR(255) NOT NULL,
-    city VARCHAR(120) NOT NULL,
-    state_code CHAR(2) NOT NULL,
+    card_type VARCHAR(40) NOT NULL DEFAULT 'directory',
+    company VARCHAR(255) DEFAULT NULL,
+    address VARCHAR(255) DEFAULT NULL,
+    city VARCHAR(120) DEFAULT NULL,
+    state_code CHAR(2) DEFAULT NULL,
     phone VARCHAR(40) DEFAULT NULL,
     phone_2 VARCHAR(40) DEFAULT NULL,
     phone_3 VARCHAR(40) DEFAULT NULL,
     email VARCHAR(160) DEFAULT NULL,
     map_url VARCHAR(1000) DEFAULT NULL,
     site_url VARCHAR(1000) DEFAULT NULL,
+    title VARCHAR(255) DEFAULT NULL,
+    description TEXT DEFAULT NULL,
+    description_secondary TEXT DEFAULT NULL,
+    button_label VARCHAR(80) DEFAULT NULL,
+    link_url VARCHAR(1000) DEFAULT NULL,
+    display_order INT NOT NULL DEFAULT 0,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
@@ -36,7 +44,20 @@ const ensureTechnicalAssistanceTable = async () => {
   }
 
   await db.query(TECHNICAL_ASSISTANCE_TABLE_QUERY);
+  await db.query('ALTER TABLE technical_assistance_cards ADD COLUMN IF NOT EXISTS card_type VARCHAR(40) NOT NULL DEFAULT \'directory\' AFTER id');
   await db.query('ALTER TABLE technical_assistance_cards ADD COLUMN IF NOT EXISTS phone_3 VARCHAR(40) DEFAULT NULL AFTER phone_2');
+  await db.query('ALTER TABLE technical_assistance_cards ADD COLUMN IF NOT EXISTS title VARCHAR(255) DEFAULT NULL AFTER site_url');
+  await db.query('ALTER TABLE technical_assistance_cards ADD COLUMN IF NOT EXISTS description TEXT DEFAULT NULL AFTER title');
+  await db.query('ALTER TABLE technical_assistance_cards ADD COLUMN IF NOT EXISTS description_secondary TEXT DEFAULT NULL AFTER description');
+  await db.query('ALTER TABLE technical_assistance_cards ADD COLUMN IF NOT EXISTS button_label VARCHAR(80) DEFAULT NULL AFTER description_secondary');
+  await db.query('ALTER TABLE technical_assistance_cards ADD COLUMN IF NOT EXISTS link_url VARCHAR(1000) DEFAULT NULL AFTER button_label');
+  await db.query('ALTER TABLE technical_assistance_cards ADD COLUMN IF NOT EXISTS display_order INT NOT NULL DEFAULT 0 AFTER link_url');
+  await db.query('ALTER TABLE technical_assistance_cards ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER display_order');
+  await db.query('ALTER TABLE technical_assistance_cards MODIFY company VARCHAR(255) DEFAULT NULL');
+  await db.query('ALTER TABLE technical_assistance_cards MODIFY address VARCHAR(255) DEFAULT NULL');
+  await db.query('ALTER TABLE technical_assistance_cards MODIFY city VARCHAR(120) DEFAULT NULL');
+  await db.query('ALTER TABLE technical_assistance_cards MODIFY state_code CHAR(2) DEFAULT NULL');
+  await db.query("UPDATE technical_assistance_cards SET card_type = 'directory' WHERE card_type IS NULL OR card_type = ''");
   technicalAssistanceTableReady = true;
 };
 
@@ -87,6 +108,20 @@ const normalizeTechnicalAssistancePayload = (input = {}) => ({
   site_url: normalizeHttpUrl(input.site_url)
 });
 
+const normalizeContentCardPayload = (input = {}) => ({
+  title: normalizeSimpleText(input.title, 255),
+  description: sanitizeTextInput(input.description || '', { preserveNewlines: true, maxLength: 1000 }),
+  description_secondary: sanitizeTextInput(input.description_secondary || input.descriptionSecondary || '', { preserveNewlines: true, maxLength: 1000 }),
+  button_label: normalizeSimpleText(input.button_label || input.buttonLabel || 'Abrir chamado', 80),
+  link_url: normalizeHttpUrl(input.link_url || input.linkUrl),
+  display_order: Number.isFinite(Number(input.display_order ?? input.displayOrder))
+    ? Math.max(0, Math.trunc(Number(input.display_order ?? input.displayOrder)))
+    : 0,
+  is_active: input.is_active === undefined && input.isActive === undefined
+    ? true
+    : ['true', '1', 'yes', 'on', true, 1].includes(input.is_active ?? input.isActive)
+});
+
 const buildValidationErrors = (payload, rawInput = {}) => {
   const details = [];
 
@@ -121,6 +156,20 @@ const buildValidationErrors = (payload, rawInput = {}) => {
   return details;
 };
 
+const buildContentCardValidationErrors = (payload, rawInput = {}) => {
+  const details = [];
+
+  if (!payload.title) {
+    details.push({ field: 'title', message: 'Informe o titulo do card.' });
+  }
+
+  if ((rawInput.link_url || rawInput.linkUrl) && !payload.link_url) {
+    details.push({ field: 'link_url', message: 'Informe uma URL valida para o link do card.' });
+  }
+
+  return details;
+};
+
 const normalizeTechnicalAssistanceRow = (row) => ({
   id: Number(row.id),
   company: normalizeSimpleText(row.company, 255),
@@ -136,6 +185,43 @@ const normalizeTechnicalAssistanceRow = (row) => ({
   created_at: row.created_at,
   updated_at: row.updated_at
 });
+
+const normalizeContentCardRow = (row) => ({
+  id: Number(row.id),
+  title: normalizeSimpleText(row.title, 255),
+  description: sanitizeTextInput(row.description || '', { preserveNewlines: true, maxLength: 1000 }),
+  description_secondary: sanitizeTextInput(row.description_secondary || '', { preserveNewlines: true, maxLength: 1000 }),
+  button_label: normalizeSimpleText(row.button_label || 'Abrir chamado', 80),
+  link_url: normalizeHttpUrl(row.link_url),
+  display_order: Number(row.display_order) || 0,
+  is_active: row.is_active === true || Number(row.is_active) === 1,
+  created_at: row.created_at,
+  updated_at: row.updated_at
+});
+
+const getContentCardRows = async ({ includeInactive = false } = {}) => {
+  const [rows] = await db.query(
+    `
+      SELECT
+        id,
+        title,
+        description,
+        description_secondary,
+        button_label,
+        link_url,
+        display_order,
+        is_active,
+        created_at,
+        updated_at
+      FROM technical_assistance_cards
+      WHERE card_type = 'content'
+        ${includeInactive ? '' : 'AND is_active = 1'}
+      ORDER BY display_order ASC, created_at ASC, id ASC
+    `
+  );
+
+  return rows.map(normalizeContentCardRow);
+};
 
 router.get('/', async (req, res, next) => {
   try {
@@ -157,12 +243,155 @@ router.get('/', async (req, res, next) => {
         created_at,
         updated_at
       FROM technical_assistance_cards
+      WHERE card_type = 'directory'
       ORDER BY created_at ASC, id ASC
     `);
 
     res.json(rows.map(normalizeTechnicalAssistanceRow));
   } catch (error) {
     return next(wrapError(error, { publicMessage: 'Erro ao carregar os cards da assistencia tecnica.' }));
+  }
+});
+
+router.get('/content-cards', async (req, res, next) => {
+  try {
+    await ensureTechnicalAssistanceTable();
+    res.json(await getContentCardRows());
+  } catch (error) {
+    return next(wrapError(error, { publicMessage: 'Erro ao carregar os cards de conteudo da assistencia tecnica.' }));
+  }
+});
+
+router.get('/content-cards/admin', requireAdminSession, async (req, res, next) => {
+  try {
+    await ensureTechnicalAssistanceTable();
+    res.json(await getContentCardRows({ includeInactive: true }));
+  } catch (error) {
+    return next(wrapError(error, { publicMessage: 'Erro ao carregar os cards de conteudo da assistencia tecnica.' }));
+  }
+});
+
+router.post('/content-cards', requireAdminSession, async (req, res, next) => {
+  try {
+    await ensureTechnicalAssistanceTable();
+
+    const payload = normalizeContentCardPayload(req.body);
+    const details = buildContentCardValidationErrors(payload, req.body);
+
+    if (details.length > 0) {
+      return res.status(400).json({
+        error: 'Dados invalidos para o card de conteudo da assistencia tecnica.',
+        details
+      });
+    }
+
+    const [result] = await db.query(
+      `
+        INSERT INTO technical_assistance_cards (
+          card_type,
+          title,
+          description,
+          description_secondary,
+          button_label,
+          link_url,
+          display_order,
+          is_active
+        )
+        VALUES ('content', ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        payload.title,
+        payload.description || null,
+        payload.description_secondary || null,
+        payload.button_label || null,
+        payload.link_url || null,
+        payload.display_order,
+        payload.is_active ? 1 : 0
+      ]
+    );
+
+    const [rows] = await db.query('SELECT * FROM technical_assistance_cards WHERE id = ? LIMIT 1', [result.insertId]);
+
+    res.status(201).json({
+      message: 'Card de conteudo da assistencia tecnica criado com sucesso.',
+      item: normalizeContentCardRow(rows[0])
+    });
+  } catch (error) {
+    return next(wrapError(error, { publicMessage: 'Erro ao criar o card de conteudo da assistencia tecnica.' }));
+  }
+});
+
+router.put('/content-cards/:id', requireAdminSession, async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    await ensureTechnicalAssistanceTable();
+
+    const [existingRows] = await db.query(
+      "SELECT id FROM technical_assistance_cards WHERE id = ? AND card_type = 'content' LIMIT 1",
+      [id]
+    );
+
+    if (existingRows.length === 0) {
+      return res.status(404).json({ error: 'Card de conteudo da assistencia tecnica nao encontrado.' });
+    }
+
+    const payload = normalizeContentCardPayload(req.body);
+    const details = buildContentCardValidationErrors(payload, req.body);
+
+    if (details.length > 0) {
+      return res.status(400).json({
+        error: 'Dados invalidos para o card de conteudo da assistencia tecnica.',
+        details
+      });
+    }
+
+    await db.query(
+      `
+        UPDATE technical_assistance_cards
+        SET
+          title = ?,
+          description = ?,
+          description_secondary = ?,
+          button_label = ?,
+          link_url = ?,
+          display_order = ?,
+          is_active = ?
+        WHERE id = ? AND card_type = 'content'
+      `,
+      [
+        payload.title,
+        payload.description || null,
+        payload.description_secondary || null,
+        payload.button_label || null,
+        payload.link_url || null,
+        payload.display_order,
+        payload.is_active ? 1 : 0,
+        id
+      ]
+    );
+
+    const [rows] = await db.query('SELECT * FROM technical_assistance_cards WHERE id = ? LIMIT 1', [id]);
+
+    res.json({
+      message: 'Card de conteudo da assistencia tecnica atualizado com sucesso.',
+      item: normalizeContentCardRow(rows[0])
+    });
+  } catch (error) {
+    return next(wrapError(error, { publicMessage: 'Erro ao atualizar o card de conteudo da assistencia tecnica.' }));
+  }
+});
+
+router.delete('/content-cards/:id', requireAdminSession, async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    await ensureTechnicalAssistanceTable();
+    await db.query("DELETE FROM technical_assistance_cards WHERE id = ? AND card_type = 'content'", [id]);
+
+    res.json({ message: 'Card de conteudo da assistencia tecnica removido com sucesso.' });
+  } catch (error) {
+    return next(wrapError(error, { publicMessage: 'Erro ao remover o card de conteudo da assistencia tecnica.' }));
   }
 });
 
@@ -227,7 +456,10 @@ router.put('/:id', requireAdminSession, async (req, res, next) => {
   try {
     await ensureTechnicalAssistanceTable();
 
-    const [existingRows] = await db.query('SELECT id FROM technical_assistance_cards WHERE id = ? LIMIT 1', [id]);
+    const [existingRows] = await db.query(
+      "SELECT id FROM technical_assistance_cards WHERE id = ? AND card_type = 'directory' LIMIT 1",
+      [id]
+    );
 
     if (existingRows.length === 0) {
       return res.status(404).json({ error: 'Card de assistencia tecnica nao encontrado.' });
@@ -257,7 +489,7 @@ router.put('/:id', requireAdminSession, async (req, res, next) => {
           email = ?,
           map_url = ?,
           site_url = ?
-        WHERE id = ?
+        WHERE id = ? AND card_type = 'directory'
       `,
       [
         payload.company,
@@ -290,7 +522,7 @@ router.delete('/:id', requireAdminSession, async (req, res, next) => {
 
   try {
     await ensureTechnicalAssistanceTable();
-    await db.query('DELETE FROM technical_assistance_cards WHERE id = ?', [id]);
+    await db.query("DELETE FROM technical_assistance_cards WHERE id = ? AND card_type = 'directory'", [id]);
 
     res.json({ message: 'Card de assistencia tecnica removido com sucesso.' });
   } catch (error) {
