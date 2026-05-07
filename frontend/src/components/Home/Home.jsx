@@ -6,6 +6,7 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import HeroSlider from '../HeroSlider/HeroSlider';
 import API_URL from '../../services/api';
+import homeContentBlockService from '../../services/homeContentBlockService';
 import { apiAssetPath } from '../../utils/assets';
 import { parseSafeExtraData } from '../../utils/contentSafety';
 import useDeferredSection from '../../hooks/useDeferredSection';
@@ -29,6 +30,7 @@ const Home = () => {
   const [categories, setCategories] = useState(null);
   const [featuredProducts, setFeaturedProducts] = useState(null);
   const [services, setServices] = useState(null);
+  const [homeContentBlocks, setHomeContentBlocks] = useState([]);
   const { sectionRef: servicesRef, shouldLoad: shouldLoadServices } = useDeferredSection({ rootMargin: '200px 0px' });
   const { sectionRef: featuredRef, shouldLoad: shouldLoadFeatured } = useDeferredSection({ rootMargin: '320px 0px' });
   const { sectionRef: categoriesRef, shouldLoad: shouldLoadCategories } = useDeferredSection({ rootMargin: '320px 0px' });
@@ -127,7 +129,13 @@ const Home = () => {
 
     const fetchCategories = async () => {
       try {
-        const categoriesResponse = await fetch(`${API_URL}/categories`, { signal: controller.signal });
+        const [categoriesResponse, contentBlocks] = await Promise.all([
+          fetch(`${API_URL}/categories`, { signal: controller.signal }),
+          homeContentBlockService.getAll().catch((contentError) => {
+            console.error('Erro ao carregar blocos editaveis da Home:', contentError);
+            return [];
+          })
+        ]);
 
         if (!categoriesResponse.ok) {
           throw new Error('Falha ao carregar categorias');
@@ -141,6 +149,7 @@ const Home = () => {
         );
 
         setCategories(visibleMainCategories);
+        setHomeContentBlocks(Array.isArray(contentBlocks) ? contentBlocks : []);
       } catch (err) {
         if (err.name === 'AbortError') {
           return;
@@ -148,6 +157,7 @@ const Home = () => {
 
         console.error('Erro ao carregar categorias na Home:', err);
         setCategories([]);
+        setHomeContentBlocks([]);
       }
     };
 
@@ -187,7 +197,10 @@ const Home = () => {
       <div ref={categoriesRef}>
         {shouldLoadCategories && categories !== null ? (
           <Suspense fallback={<HomeSectionPlaceholder variant="categories" />}>
-            <HomeCategoriesSection categories={categories} />
+            <HomeCategoriesSection
+              categories={categories}
+              promoCards={homeContentBlocks.filter((block) => block.section_type === 'info-card')}
+            />
           </Suspense>
         ) : (
           <HomeSectionPlaceholder variant="categories" />

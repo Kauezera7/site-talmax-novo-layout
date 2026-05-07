@@ -20,7 +20,8 @@ import {
   ChevronRight,
   Menu,
   UserCog,
-  Wrench
+  Wrench,
+  Megaphone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AdminProvider } from '../../context/AdminContext';
@@ -37,6 +38,7 @@ const AdminUpcera = lazy(() => import('./AdminUpcera/AdminUpcera'));
 const AdminScanners = lazy(() => import('./AdminScanners/AdminScanners'));
 const AdminPrinters = lazy(() => import('./AdminPrinters/AdminPrinters'));
 const AdminSegments = lazy(() => import('./AdminSegments/AdminSegments'));
+const AdminHomeContent = lazy(() => import('./AdminHomeContent/AdminHomeContent'));
 const AdminTalmaxDigital = lazy(() => import('./AdminTalmaxDigital/AdminTalmaxDigital'));
 const AdminDigitalGroups = lazy(() => import('./AdminTalmaxDigital/AdminDigitalGroups'));
 const AdminCustomPages = lazy(() => import('./AdminCustomPages/AdminCustomPages'));
@@ -146,7 +148,8 @@ const AdminDashboardContent = () => {
   ];
   const homeItems = [
     { id: 'banners', label: 'Banners', icon: <ImageIcon size={18} /> },
-    { id: 'featured', label: 'Home Destaques', icon: <CheckCircle size={18} /> }
+    { id: 'featured', label: 'Home Destaques', icon: <CheckCircle size={18} /> },
+    { id: 'home-content', label: 'Cards e Propagandas', icon: <Megaphone size={18} /> }
   ];
   const editPageItems = [
     { id: 'custom-pages', label: 'Paginas Personalizadas', icon: <LayoutDashboard size={18} /> },
@@ -198,6 +201,8 @@ const AdminDashboardContent = () => {
         return withAdminSectionLoader(<AdminBanners />, 'Carregando banners...');
       case 'featured':
         return withAdminSectionLoader(<AdminFeatured />, 'Carregando destaques da home...');
+      case 'home-content':
+        return withAdminSectionLoader(<AdminHomeContent />, 'Carregando conteudos da home...');
       case 'segments':
         return withAdminSectionLoader(<AdminSegments />, 'Carregando segmentos...');
       case 'custom-pages':

@@ -1,5 +1,7 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination } from 'swiper/modules';
 import {
   Facebook,
   Youtube,
@@ -23,12 +25,15 @@ import SearchBar from './components/SearchBar/SearchBar';
 import { useProductSearch } from './hooks/useProductSearch';
 import { validateAdminSession } from './services/adminAuth';
 import { syncAnalyticsWithConsent } from './services/analytics';
+import homeContentBlockService from './services/homeContentBlockService';
 import {
   readCookieConsentStatus,
   subscribeToCookieConsentStatus
 } from './services/cookieConsent';
 import { subscribeToAdminSessionExpired } from './services/adminSessionEvents';
-import { assetPath } from './utils/assets';
+import { apiAssetPath, assetPath } from './utils/assets';
+import 'swiper/css';
+import 'swiper/css/pagination';
 import './App.css';
 
 const QuemSomos = lazy(() => import('./components/QuemSomos/QuemSomos'));
@@ -104,6 +109,58 @@ const withRouteLoader = (element, label) => (
     {element}
   </RouteLoader>
 );
+
+const isExternalFooterAdTarget = (value = '') => /^(?:https?:|mailto:|tel:)/i.test(String(value || '').trim());
+
+const FooterAdStrip = ({ ad }) => {
+  const href = String(ad.link_url || '').trim();
+  const isExternal = Boolean(ad.is_external) || isExternalFooterAdTarget(href);
+  const hasLogo = Boolean(ad.logo_image_url || ad.logo_text);
+  const style = {
+    '--moby-strip-bg': ad.background_color || '#f06400',
+    '--moby-strip-text-color': ad.text_color || '#ffffff',
+    '--moby-strip-button-bg': ad.button_color || '#374c92',
+    '--moby-strip-button-text': ad.button_text_color || '#ffffff'
+  };
+  const buttonContent = (
+    <>
+      {ad.button_label || 'Conheca'}
+      <ChevronRight size={20} strokeWidth={1.75} />
+    </>
+  );
+
+  return (
+    <section className="moby-footer-strip" aria-label={ad.logo_text || ad.title || 'Propaganda'} style={style}>
+      <div className={`moby-footer-strip__inner ${hasLogo ? '' : 'moby-footer-strip__inner--no-logo'}`}>
+        {ad.logo_image_url ? (
+          <img
+            src={apiAssetPath(ad.logo_image_url)}
+            alt={ad.logo_text || 'Logo da propaganda'}
+            className="moby-footer-strip__logo-image"
+          />
+        ) : ad.logo_text ? (
+          <span className="moby-footer-strip__logo">{ad.logo_text}</span>
+        ) : null}
+        <p>{ad.title}</p>
+        {href && ad.button_label && isExternal && (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="moby-footer-strip__button"
+          >
+            {buttonContent}
+          </a>
+        )}
+        {href && ad.button_label && !isExternal && (
+          <Link to={href} className="moby-footer-strip__button">
+            {buttonContent}
+          </Link>
+        )}
+      </div>
+    </section>
+  );
+};
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -207,6 +264,7 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
   const [navVisible, setNavVisible] = useState(true);
   const [activeMobileSection, setActiveMobileSection] = useState(null);
   const [cookieConsentStatus, setCookieConsentStatus] = useState(() => readCookieConsentStatus());
+  const [footerAds, setFooterAds] = useState([]);
   const headerRef = useRef(null);
   const lastScrollYRef = useRef(0);
   const tickingScrollRef = useRef(false);
@@ -291,6 +349,38 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
       enabled: !isAdmin
     });
   }, [cookieConsentStatus, isAdmin]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      setFooterAds([]);
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    homeContentBlockService.getAll()
+      .then((items) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setFooterAds(
+          (Array.isArray(items) ? items : [])
+            .filter((item) => item.section_type === 'orange-ad' && item.active)
+        );
+      })
+      .catch((error) => {
+        console.error('Erro ao carregar propagandas do rodape:', error);
+
+        if (isMounted) {
+          setFooterAds([]);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAdmin]);
 
   useEffect(() => {
     if (isAdmin) return undefined;
@@ -668,6 +758,27 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
 
       {!isAdmin && (
         <>
+          {footerAds.length > 0 && (
+            <div className="moby-footer-strips">
+              <Swiper
+                modules={[Autoplay, Pagination]}
+                className="moby-footer-strips__swiper"
+                slidesPerView={1}
+                loop={footerAds.length > 1}
+                autoHeight
+                autoplay={footerAds.length > 1 ? { delay: 4200, disableOnInteraction: false } : false}
+                pagination={footerAds.length > 1 ? { clickable: true } : false}
+              >
+                {footerAds.map((ad, index) => (
+                  <SwiperSlide key={ad.id || `footer-ad-${index}`}>
+                    <FooterAdStrip ad={ad} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            </div>
+          )}
+
+          {false && (
           <section className="moby-footer-strip" aria-label="Moby Work">
             <div className="moby-footer-strip__inner">
               <span className="moby-footer-strip__logo">moby</span>
@@ -683,6 +794,7 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
               </a>
             </div>
           </section>
+          )}
 
           <footer className="footer">
           <div className="footer-grid">

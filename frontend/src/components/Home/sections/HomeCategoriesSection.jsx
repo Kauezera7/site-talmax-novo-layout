@@ -1,7 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Package } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination } from 'swiper/modules';
 import { apiAssetPath, assetPath } from '../../../utils/assets';
+import 'swiper/css';
+import 'swiper/css/pagination';
 
 const CATEGORY_BACKGROUND = [
   {
@@ -44,7 +48,85 @@ const getCategoryBackground = (category) => {
   return assetPath(background?.image || DEFAULT_CATEGORY_BACKGROUND);
 };
 
-const HomeCategoriesSection = ({ categories }) => {
+const isExternalTarget = (value = '') => /^(?:https?:|mailto:|tel:)/i.test(String(value || '').trim());
+
+const splitDescription = (description = '') => (
+  String(description || '')
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+);
+
+const renderPromoCard = (card, index) => {
+  const href = String(card.link_url || '').trim();
+  const isExternal = Boolean(card.is_external) || isExternalTarget(href);
+  const descriptionLines = splitDescription(card.description);
+  const buttonLabel = card.button_label || 'Saiba Mais';
+  const style = {
+    '--categories-promo-card-bg': card.background_color || '#111630',
+    '--categories-promo-card-color': card.text_color || '#f5f7ff',
+    '--categories-promo-button-bg': card.button_color || '#374c92',
+    '--categories-promo-button-color': card.button_text_color || '#ffffff'
+  };
+  const content = (
+    <>
+      <span className="categories-promo-card__content">
+        <strong>{card.title}</strong>
+        {descriptionLines.map((line) => (
+          <span key={line}>{line}</span>
+        ))}
+      </span>
+      {buttonLabel && (
+        <span className="categories-promo-card__corner">
+          <span className="categories-promo-card__button">
+            {buttonLabel}
+            <ChevronRight size={18} strokeWidth={1.8} />
+          </span>
+        </span>
+      )}
+    </>
+  );
+
+  if (href && isExternal) {
+    return (
+      <a
+        key={card.id || `promo-${index}`}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="categories-promo-card"
+        style={style}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  if (href) {
+    return (
+      <Link
+        key={card.id || `promo-${index}`}
+        to={href}
+        className="categories-promo-card"
+        style={style}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <article
+      key={card.id || `promo-${index}`}
+      className="categories-promo-card categories-promo-card--static"
+      style={style}
+    >
+      {content}
+    </article>
+  );
+};
+
+const HomeCategoriesSection = ({ categories, promoCards = [] }) => {
   if (!categories.length) {
     return null;
   }
@@ -54,7 +136,7 @@ const HomeCategoriesSection = ({ categories }) => {
       <div className="categories__inner">
         <div className="categories__header">
           <h2 id="home-categories-title">Categorias de Produtos</h2>
-          <p>Todas as categorias você encontra aqui</p>
+          <p>Todas as categorias voce encontra aqui</p>
         </div>
 
         <div className="category-grid">
@@ -108,39 +190,31 @@ const HomeCategoriesSection = ({ categories }) => {
           ))}
         </div>
 
-        <div className="categories-promo">
-          <Link to="/contato" className="categories-promo-card">
-            <span className="categories-promo-card__content">
-              <strong>Talmax perto de Você</strong>
-              <span>Trabalhamos com dentais selecionadas para garantir qualidade, procedência e suporte.</span>
-            </span>
-            <span className="categories-promo-card__corner">
-              <span className="categories-promo-card__button">
-                Saiba Mais
-                <ChevronRight size={18} strokeWidth={1.8} />
-              </span>
-            </span>
-          </Link>
-
-          <a
-            href="https://www.bne.com.br/talmax"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="categories-promo-card"
-          >
-            <span className="categories-promo-card__content">
-              <strong>Trabalhe Conosco</strong>
-              <span>Valorizamos ideias, incentivamos o desenvolvimento e acreditamos no trabalho em equipe para ir cada vez mais longe.</span>
-              <span>Venha fazer parte do nosso time.</span>
-            </span>
-            <span className="categories-promo-card__corner">
-              <span className="categories-promo-card__button">
-                Saiba Mais
-                <ChevronRight size={18} strokeWidth={1.8} />
-              </span>
-            </span>
-          </a>
-        </div>
+        {promoCards.length > 0 && (
+          <div className="categories-promo">
+            <Swiper
+              modules={[Autoplay, Pagination]}
+              className="categories-promo__swiper"
+              spaceBetween={24}
+              slidesPerView={1}
+              loop={promoCards.length > 1}
+              autoplay={promoCards.length > 1 ? { delay: 3600, disableOnInteraction: false } : false}
+              pagination={promoCards.length > 1 ? { clickable: true } : false}
+              breakpoints={{
+                980: {
+                  slidesPerView: Math.min(promoCards.length, 2),
+                  spaceBetween: 54
+                }
+              }}
+            >
+              {promoCards.map((card, index) => (
+                <SwiperSlide key={card.id || `promo-slide-${index}`}>
+                  {renderPromoCard(card, index)}
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        )}
       </div>
     </section>
   );

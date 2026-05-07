@@ -28,6 +28,7 @@ const bannerRoutes = require('./routes/bannerRoutes');
 const productRoutes = require('./routes/productRoutes');
 const specialSectionRoutes = require('./routes/specialSectionRoutes');
 const homeServiceRoutes = require('./routes/homeServiceRoutes');
+const homeContentBlockRoutes = require('./routes/homeContentBlockRoutes');
 const pageSettingsRoutes = require('./routes/pageSettingsRoutes');
 const customPageRoutes = require('./routes/customPageRoutes');
 const digitalGroupRoutes = require('./routes/digitalGroupRoutes');
@@ -79,6 +80,7 @@ const createApp = () => {
   app.use('/api/banners', bannerRoutes);
   app.use('/api/products', productRoutes);
   app.use('/api/home-services', homeServiceRoutes);
+  app.use('/api/home-content-blocks', homeContentBlockRoutes);
   app.use('/api/technical-assistance', technicalAssistanceRoutes);
   app.use('/api/page-settings', pageSettingsRoutes);
   app.use('/api/custom-pages', customPageRoutes);
