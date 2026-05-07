@@ -69,7 +69,7 @@ const DEFAULT_PAGE_SETTINGS = {
     label: 'Assistencia Tecnica',
     overline: '',
     title: 'Assistencia Tecnica',
-    description: 'Assistencia tecnica autorizada',
+    description: 'Confianca em cada servico, com\npecas originais e alto\npadrao de qualidade.',
     logo_url: '',
     banner_url: '/img/assistenciatecnica-2.jpg.webp',
     hero_tagline: 'Confianca em cada servico, com pecas originais e alto padrao de qualidade.',
