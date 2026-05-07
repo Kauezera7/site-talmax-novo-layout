@@ -133,7 +133,7 @@ const CategoryForm = ({ initialData, mainCategories, onSubmit, onCancel, isSubmi
                 <p style={{ fontSize: '0.85rem' }}>Clique para enviar a logo</p>
               </div>
               {iconPreview && (
-                <div className="preview-thumb" style={{ marginTop: '10px', width: '60px', height: '60px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
+                <div className="preview-thumb category-icon-preview-thumb" style={{ marginTop: '10px', width: '60px', height: '60px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
                   <img src={iconPreview} alt="Preview da logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
               )}

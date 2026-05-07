@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination } from 'swiper/modules';
+import { Autoplay } from 'swiper/modules';
 import {
   Facebook,
   Youtube,
@@ -761,13 +761,13 @@ const AppContent = ({ appReady, menuOpen, setMenuOpen, theme, onToggleTheme }) =
           {footerAds.length > 0 && (
             <div className="moby-footer-strips">
               <Swiper
-                modules={[Autoplay, Pagination]}
+                modules={[Autoplay]}
                 className="moby-footer-strips__swiper"
                 slidesPerView={1}
                 loop={footerAds.length > 1}
                 autoHeight
                 autoplay={footerAds.length > 1 ? { delay: 4200, disableOnInteraction: false } : false}
-                pagination={footerAds.length > 1 ? { clickable: true } : false}
+                pagination={false}
               >
                 {footerAds.map((ad, index) => (
                   <SwiperSlide key={ad.id || `footer-ad-${index}`}>

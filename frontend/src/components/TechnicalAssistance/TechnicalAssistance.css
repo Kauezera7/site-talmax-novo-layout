@@ -1,148 +1,431 @@
 .technical-assistance-page {
-  --technical-accent: var(--primary, #374c92);
-  --technical-accent-deep: #2d3f78;
-  --technical-accent-soft: rgba(55, 76, 146, 0.12);
-  --technical-accent-border: rgba(55, 76, 146, 0.18);
-  --technical-accent-surface: rgba(219, 234, 254, 0.92);
+  --technical-blue: #374c92;
+  --technical-blue-deep: #172657;
+  --technical-navy: #070e22;
+  --technical-ink: #071333;
+  --technical-muted: #596579;
+  --technical-border: rgba(55, 76, 146, 0.16);
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, var(--technical-accent-soft), transparent 28%),
-    linear-gradient(180deg, #f6fbff 0%, #f8fafc 42%, #ffffff 100%);
-  color: #0f172a;
+  background: #eef3f8;
+  color: var(--technical-ink);
 }
 
 .technical-assistance-hero {
-  width: min(1280px, calc(100% - 2rem));
-  margin: 0 auto;
-}
-
-.technical-assistance-directory {
-  width: min(1520px, calc(100% - 1rem));
-  margin: 0 auto;
-}
-
-.technical-assistance-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-  gap: 2rem;
+  position: relative;
+  min-height: 560px;
+  display: flex;
   align-items: center;
-  padding: 4.5rem 0 3rem;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(239, 244, 250, 0.12) 0%, rgba(24, 39, 85, 0.58) 45%, rgba(3, 8, 22, 0.94) 100%),
+    var(--technical-hero-image);
+  background-position: center;
+  background-size: cover;
+  border-bottom-right-radius: 76px;
+  border-bottom-left-radius: 76px;
+}
+
+.technical-assistance-hero-inner,
+.technical-assistance-service-banner,
+.technical-assistance-directory {
+  width: min(1260px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+.technical-assistance-hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: inherit;
+  padding: 4.5rem clamp(2rem, 6vw, 5rem) 4.5rem 0;
+  text-align: center;
 }
 
 .technical-assistance-hero-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+  max-width: 640px;
+  color: #ffffff;
 }
 
 .technical-assistance-eyebrow,
 .technical-assistance-section-label {
   display: inline-flex;
   align-items: center;
+  gap: 0.55rem;
   width: fit-content;
+  border: 1px solid rgba(255, 255, 255, 0.32);
   border-radius: 999px;
-  padding: 0.55rem 0.95rem;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid var(--technical-accent-border);
-  color: var(--technical-accent);
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  padding: 0.58rem 0.9rem;
+  color: #ffffff;
+  background: rgba(8, 17, 40, 0.32);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
   text-transform: uppercase;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(10px);
+}
+
+.technical-assistance-section-label {
+  border-color: var(--technical-border);
+  color: var(--technical-blue);
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .technical-assistance-hero h1,
-.technical-assistance-directory-copy h2 {
+.technical-assistance-directory-copy h2,
+.technical-assistance-card h3 {
   margin: 0;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 .technical-assistance-hero h1 {
-  max-width: 10ch;
-  font-size: clamp(2.4rem, 4vw, 4.7rem);
-  line-height: 0.94;
+  max-width: 12ch;
+  margin-top: 1.45rem;
+  font-size: 3.65rem;
+  line-height: 0.98;
+  font-weight: 800;
 }
 
-.technical-assistance-hero p,
-.technical-assistance-directory-copy p {
-  margin: 0;
-  max-width: 60ch;
-  color: #475569;
-  font-size: 1.02rem;
-  line-height: 1.8;
+.technical-assistance-hero p {
+  max-width: 48ch;
+  margin: 1.25rem 0 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.08rem;
+  line-height: 1.7;
 }
 
-.technical-assistance-hero-badges {
+.technical-assistance-brand {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.85rem;
-}
-
-.technical-assistance-hero-badges span {
-  display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.85rem 1rem;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #0f172a;
-  box-shadow: 0 20px 55px -32px rgba(15, 23, 42, 0.45);
-  font-weight: 600;
+  gap: 1.1rem;
+  text-align: center;
+  color: #ffffff;
 }
 
-.technical-assistance-hero-visual {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.technical-assistance-hero-photo-frame {
+.technical-assistance-brand-mark {
   position: relative;
-  width: min(100%, 460px);
-  padding: 1rem;
-  border-radius: 32px;
-  background: linear-gradient(160deg, rgba(15, 23, 42, 0.98), rgba(55, 76, 146, 0.92));
-  box-shadow: 0 35px 80px -38px rgba(15, 23, 42, 0.7);
+  width: 238px;
+  aspect-ratio: 0.92;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 2.1rem 1.2rem 2.35rem;
+  color: #ffffff;
+  background: linear-gradient(180deg, #374c92 0%, #172657 100%);
+  clip-path: polygon(50% 0, 92% 12%, 88% 66%, 50% 100%, 12% 66%, 8% 12%);
+  filter: drop-shadow(0 24px 36px rgba(3, 8, 22, 0.42));
 }
 
-.technical-assistance-hero-photo-frame::after {
+.technical-assistance-brand-mark::before {
   content: '';
   position: absolute;
-  inset: 14px;
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  inset: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(226, 235, 249, 0.96));
+  clip-path: polygon(50% 0, 90% 12%, 84% 62%, 50% 92%, 16% 62%, 10% 12%);
+  opacity: 0.92;
+}
+
+.technical-assistance-brand-mark::after {
+  content: '';
+  position: absolute;
+  inset: 26px;
+  background: linear-gradient(180deg, #334990 0%, #122049 100%);
+  clip-path: polygon(50% 0, 88% 14%, 80% 58%, 50% 84%, 20% 58%, 12% 14%);
+}
+
+.technical-assistance-brand-mark svg,
+.technical-assistance-brand-mark span,
+.technical-assistance-brand-mark strong {
+  position: relative;
+  z-index: 1;
+}
+
+.technical-assistance-brand-mark span {
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.technical-assistance-brand-mark strong {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.technical-assistance-brand p {
+  max-width: 18ch;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 1.15rem;
+  line-height: 1.35;
+}
+
+.technical-assistance-hero-tagline {
+  max-width: 16ch;
+  margin: 1.8rem 0 0;
+  color: #ffffff;
+  font-size: 1.55rem;
+  font-weight: 500;
+  line-height: 1.18;
+  text-shadow: 0 10px 28px rgba(0, 0, 0, 0.42);
+}
+
+.technical-assistance-service-banner {
+  display: block;
+  margin-top: 3.5rem;
+  margin-bottom: 4.2rem;
+  overflow: visible;
+}
+
+.technical-assistance-info-card {
+  --technical-info-card-bg: #111630;
+  --technical-info-card-color: #f8fafc;
+  --technical-info-button-bg: #374c92;
+  --technical-info-button-color: #ffffff;
+  --technical-info-corner-width: 198px;
+  --technical-info-corner-height: 56px;
+  --technical-info-corner-radius: 14px;
+  --technical-info-corner-outer-radius: 14px;
+  --technical-info-corner-bleed: 12px;
+  position: relative;
+  min-height: 235px;
+  display: flex;
+  align-items: center;
+  overflow: visible;
+  padding: 2rem 2.5rem 2.35rem;
+  border-radius: 12px;
+  color: var(--technical-info-card-color);
+  text-decoration: none;
+  background:
+    linear-gradient(180deg, rgba(16, 20, 48, 0.9), rgba(16, 20, 48, 0.94)),
+    linear-gradient(180deg, var(--technical-info-card-bg), var(--technical-info-card-bg)),
+    var(--technical-hero-image);
+  background-size: cover;
+  background-position: center 55%;
+  isolation: isolate;
+  transition: transform 0.24s ease, filter 0.24s ease;
+}
+
+.technical-assistance-info-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(13, 17, 45, 0.18) 0%, transparent 54%, rgba(255, 255, 255, 0.08) 100%);
   pointer-events: none;
 }
 
-.technical-assistance-hero-photo-frame img {
-  display: block;
-  width: 100%;
-  height: 430px;
-  object-fit: cover;
-  border-radius: 22px;
+.technical-assistance-info-card:hover,
+.technical-assistance-info-card:focus-visible {
+  outline: none;
+  filter: saturate(1.05);
+  transform: translateY(-3px);
+}
+
+.technical-assistance-info-card__content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-width: 78%;
+}
+
+.technical-assistance-info-card__content strong {
+  color: var(--technical-info-card-color);
+  font-size: 2.35rem;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.technical-assistance-info-card__content span {
+  color: color-mix(in srgb, var(--technical-info-card-color) 88%, transparent);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.technical-assistance-info-card__corner {
+  position: absolute;
+  right: calc(var(--technical-info-corner-bleed) * -1);
+  bottom: calc(var(--technical-info-corner-bleed) * -1);
+  z-index: 3;
+  width: calc(var(--technical-info-corner-width) + var(--technical-info-corner-bleed));
+  height: calc(var(--technical-info-corner-height) + var(--technical-info-corner-bleed));
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding:
+    0.42rem
+    calc(0.62rem + var(--technical-info-corner-bleed))
+    calc(0.42rem + var(--technical-info-corner-bleed))
+    0.62rem;
+  border-radius: var(--technical-info-corner-radius) 0 0 0;
+  background: #eef3f8;
+  box-shadow: 0 0 0 1px #eef3f8;
+  pointer-events: none;
+}
+
+.technical-assistance-info-card__corner::before,
+.technical-assistance-info-card__corner::after {
+  content: '';
+  position: absolute;
+  width: var(--technical-info-corner-outer-radius);
+  height: var(--technical-info-corner-outer-radius);
+  background: transparent;
+  pointer-events: none;
+}
+
+.technical-assistance-info-card__corner::before {
+  top: calc(var(--technical-info-corner-outer-radius) * -1);
+  right: var(--technical-info-corner-bleed);
+  border-bottom-right-radius: 999px;
+  box-shadow: 7px 7px 0 7px #eef3f8;
+}
+
+.technical-assistance-info-card__corner::after {
+  bottom: var(--technical-info-corner-bleed);
+  left: calc(var(--technical-info-corner-outer-radius) * -1);
+  border-bottom-right-radius: 999px;
+  box-shadow: 7px 7px 0 7px #eef3f8;
+}
+
+.technical-assistance-info-card__button {
+  position: relative;
+  z-index: 1;
+  min-width: 162px;
+  height: 38px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 1rem;
+  border: 1.4px solid #17214a;
+  border-radius: 999px;
+  background: #f1f4f9;
+  color: #17214a;
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: transform 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  transform-origin: center;
+}
+
+.technical-assistance-info-card__button svg {
+  transition: transform 0.25s ease;
+}
+
+.technical-assistance-info-card:hover .technical-assistance-info-card__button,
+.technical-assistance-info-card:focus-visible .technical-assistance-info-card__button {
+  background: var(--technical-info-button-bg);
+  border-color: var(--technical-info-button-bg);
+  color: var(--technical-info-button-color);
+  transform: scale(1.04);
+}
+
+.technical-assistance-info-card:hover .technical-assistance-info-card__button svg,
+.technical-assistance-info-card:focus-visible .technical-assistance-info-card__button svg {
+  transform: translateX(2px);
 }
 
 .technical-assistance-directory {
-  padding: 1rem 0 5rem;
+  position: relative;
+  padding-bottom: 5.2rem;
+}
+
+.technical-assistance-directory::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 5px;
+  margin-bottom: 1.6rem;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.technical-assistance-directory-header {
+  display: block;
+  margin-bottom: 1.65rem;
+  scroll-margin-top: calc(var(--site-header-current-height, 90px) + 1rem);
 }
 
 .technical-assistance-directory-copy {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
-  margin-bottom: 2.2rem;
+  gap: 0;
 }
 
 .technical-assistance-directory-copy h2 {
-  font-size: clamp(1.9rem, 3vw, 3rem);
+  color: var(--technical-ink);
+  font-size: 2.55rem;
+  line-height: 1.05;
+  font-weight: 400;
+  margin-bottom: 0.45rem;
+}
+
+.technical-assistance-directory-copy strong {
+  display: block;
+  color: var(--technical-blue);
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.25;
+  margin-bottom: 1.65rem;
+}
+
+.technical-assistance-directory-copy p {
+  max-width: 92ch;
+  margin: 0 0 1rem;
+  color: var(--technical-ink);
+  font-size: 1rem;
+  line-height: 1.18;
+  font-weight: 400;
+}
+
+.technical-assistance-search {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: min(90%, 1120px);
+  min-height: 32px;
+  margin: 1.15rem auto 0;
+  padding: 0 0.95rem;
+  border: 1px solid rgba(55, 76, 146, 0.42);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--technical-blue);
+}
+
+.technical-assistance-search input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--technical-ink);
+  font: inherit;
+  font-size: 0.86rem;
+}
+
+.technical-assistance-search input::placeholder {
+  color: var(--technical-blue);
+  opacity: 0.95;
 }
 
 .technical-assistance-card-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-rows: 1fr;
-  gap: 1.35rem;
+  gap: 1.45rem;
   align-items: stretch;
+  width: calc(100% - 1rem);
+  margin: 0 auto;
 }
 
 .technical-assistance-empty-state {
@@ -150,102 +433,93 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.85rem;
-  padding: 2.5rem 1.5rem;
-  border: 1px dashed rgba(55, 76, 146, 0.2);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.76);
-  color: #475569;
+  gap: 0.9rem;
+  min-height: 190px;
+  padding: 2rem;
+  border: 1px dashed rgba(55, 76, 146, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--technical-muted);
   text-align: center;
 }
 
+.technical-assistance-empty-state-wide {
+  grid-column: 1 / -1;
+}
+
 .technical-assistance-empty-state p {
+  max-width: 44ch;
   margin: 0;
-  max-width: 42ch;
-  line-height: 1.7;
+  line-height: 1.6;
 }
 
 .technical-assistance-card {
-  position: relative;
-  overflow: hidden;
+  --technical-card-corner-size: 78px;
+  --technical-card-corner-radius: 16px;
+  --technical-card-corner-outer-radius: 18px;
+  --technical-card-corner-bleed: 12px;
   min-height: 100%;
-  height: 100%;
-  padding: 2rem 2rem 1.8rem;
-  border-radius: 28px;
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 24px 65px -42px rgba(15, 23, 42, 0.45);
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 1.4rem;
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-}
-
-.technical-assistance-card-details {
-  flex: 1;
+  gap: 0.72rem;
+  padding: 1rem calc(var(--technical-card-corner-size) + 0.35rem) 1.15rem 1.1rem;
+  border: 0;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: none;
+  transition: none;
 }
 
 .technical-assistance-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(55, 76, 146, 0.22);
-  box-shadow: 0 32px 85px -42px rgba(15, 23, 42, 0.5);
-}
-
-.technical-assistance-card-glow {
-  position: absolute;
-  top: -80px;
-  right: -70px;
-  width: 210px;
-  height: 210px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(191, 219, 254, 0.8), rgba(191, 219, 254, 0));
-  pointer-events: none;
+  box-shadow: none;
+  transform: none;
 }
 
 .technical-assistance-card-eyebrow {
-  position: relative;
-  z-index: 1;
-  font-size: 0.92rem;
-  letter-spacing: 0.08em;
+  color: #7c8bb0;
+  font-size: 0.66rem;
+  font-weight: 800;
+  line-height: 1.2;
   text-transform: uppercase;
-  color: #64748b;
 }
 
 .technical-assistance-card-eyebrow strong {
-  color: var(--technical-accent);
-  font-weight: 800;
+  color: var(--technical-blue);
+  font-weight: 900;
 }
 
 .technical-assistance-card h3 {
-  position: relative;
-  z-index: 1;
-  margin: 0;
-  max-width: 14ch;
-  font-size: 2rem;
-  line-height: 1.06;
-  letter-spacing: -0.05em;
+  color: var(--technical-ink);
+  font-size: 1.08rem;
+  line-height: 1.05;
+  font-weight: 800;
+  max-width: 15ch;
 }
 
 .technical-assistance-card-details {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: 0.95rem;
+  gap: 0.52rem;
 }
 
 .technical-assistance-card-detail {
-  position: relative;
-  z-index: 1;
   display: flex;
   align-items: flex-start;
-  gap: 0.8rem;
-  color: #475569;
-  line-height: 1.75;
+  gap: 0.55rem;
+  color: #27344b;
+  font-size: 0.68rem;
+  line-height: 1.25;
   text-decoration: none;
+  overflow-wrap: anywhere;
   transition: color 0.2s ease;
 }
 
-.technical-assistance-card-detail:hover {
-  color: #0f172a;
+.technical-assistance-card-detail:hover,
+.technical-assistance-card-detail:focus-visible {
+  color: var(--technical-blue);
+  outline: none;
 }
 
 .technical-assistance-card-detail-icon {
@@ -253,93 +527,242 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  margin-top: 0.15rem;
-  border-radius: 999px;
-  background: var(--technical-accent-surface);
-  color: var(--technical-accent);
+  width: 16px;
+  height: 16px;
+  color: #7084ad;
 }
 
 .technical-assistance-card-actions {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem 1.6rem;
-  margin-top: auto;
-  padding-top: 1rem;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
 }
 
 .technical-assistance-card-action {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding-bottom: 0.6rem;
-  border-bottom: 1.5px solid rgba(15, 23, 42, 0.2);
-  color: var(--technical-accent);
+  gap: 0.35rem;
+  color: var(--technical-blue);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.2;
   text-decoration: none;
-  font-weight: 700;
-  transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
-.technical-assistance-card-action:hover {
-  color: var(--technical-accent-deep);
-  border-color: rgba(55, 76, 146, 0.4);
-  transform: translateX(2px);
+.technical-assistance-card-action:hover,
+.technical-assistance-card-action:focus-visible {
+  color: var(--technical-blue-deep);
+  outline: none;
+}
+
+.technical-assistance-card-primary {
+  position: absolute;
+  right: calc(var(--technical-card-corner-bleed) * -1);
+  bottom: calc(var(--technical-card-corner-bleed) * -1);
+  z-index: 2;
+  width: calc(var(--technical-card-corner-size) + var(--technical-card-corner-bleed));
+  height: calc(var(--technical-card-corner-size) + var(--technical-card-corner-bleed));
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding:
+    0
+    calc(0.6rem + var(--technical-card-corner-bleed))
+    calc(0.55rem + var(--technical-card-corner-bleed))
+    0;
+  border-radius: var(--technical-card-corner-radius) 0 0 0;
+  background: #eef3f8;
+  box-shadow: 0 0 0 1px #eef3f8;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0;
+  pointer-events: auto;
+}
+
+.technical-assistance-card-primary::before,
+.technical-assistance-card-primary::after {
+  content: '';
+  position: absolute;
+  width: var(--technical-card-corner-outer-radius);
+  height: var(--technical-card-corner-outer-radius);
+  background: transparent;
+  pointer-events: none;
+}
+
+.technical-assistance-card-primary::before {
+  top: calc(var(--technical-card-corner-outer-radius) * -1);
+  right: var(--technical-card-corner-bleed);
+  border-bottom-right-radius: 999px;
+  box-shadow: 7px 7px 0 7px #eef3f8;
+}
+
+.technical-assistance-card-primary::after {
+  bottom: var(--technical-card-corner-bleed);
+  left: calc(var(--technical-card-corner-outer-radius) * -1);
+  border-bottom-right-radius: 999px;
+  box-shadow: 7px 7px 0 7px #eef3f8;
+}
+
+.technical-assistance-card-primary svg {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  padding: 0.5rem;
+  border: 1px solid #17214a;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #17214a;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.technical-assistance-card-primary:hover,
+.technical-assistance-card-primary:focus-visible {
+  color: var(--technical-blue-deep);
+  outline: none;
+}
+
+.technical-assistance-card:hover .technical-assistance-card-primary svg,
+.technical-assistance-card:focus-within .technical-assistance-card-primary svg,
+.technical-assistance-card-primary:hover svg,
+.technical-assistance-card-primary:focus-visible svg {
+  background: #172657;
+  border-color: #172657;
+  color: #ffffff;
+}
+
+@media (max-width: 1180px) {
+  .technical-assistance-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .technical-assistance-hero-inner {
+    padding-right: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .technical-assistance-brand-mark {
+    width: 210px;
+  }
 }
 
 @media (max-width: 920px) {
   .technical-assistance-hero {
-    grid-template-columns: 1fr;
-    padding-top: 3rem;
+    min-height: auto;
+    border-bottom-right-radius: 44px;
+    border-bottom-left-radius: 44px;
+  }
+
+  .technical-assistance-hero-inner {
+    padding: 3.5rem 0 5rem;
+    align-items: center;
   }
 
   .technical-assistance-hero h1 {
+    max-width: 14ch;
+    font-size: 2.8rem;
+  }
+
+  .technical-assistance-brand {
+    flex-direction: row;
+    text-align: left;
+  }
+
+  .technical-assistance-brand-mark {
+    width: 170px;
+  }
+
+  .technical-assistance-brand-mark span {
+    font-size: 1rem;
+  }
+
+  .technical-assistance-hero-tagline {
+    max-width: 24ch;
+    font-size: 1.35rem;
+  }
+
+  .technical-assistance-directory-header {
+    grid-template-columns: 1fr;
+  }
+
+  .technical-assistance-info-card__content {
     max-width: 100%;
   }
-
-  .technical-assistance-hero-visual {
-    justify-content: flex-start;
-  }
 }
 
-@media (max-width: 1200px) {
-  .technical-assistance-card-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 900px) {
-  .technical-assistance-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .technical-assistance-hero,
+@media (max-width: 680px) {
+  .technical-assistance-hero-inner,
+  .technical-assistance-service-banner,
   .technical-assistance-directory {
-    width: min(100% - 1rem, 1200px);
+    width: min(100% - 1rem, 1260px);
+  }
+
+  .technical-assistance-hero-inner {
+    padding: 2.6rem 0 4.25rem;
+  }
+
+  .technical-assistance-hero h1 {
+    font-size: 2.24rem;
+  }
+
+  .technical-assistance-hero p {
+    font-size: 1rem;
+  }
+
+  .technical-assistance-brand {
+    align-items: center;
+  }
+
+  .technical-assistance-brand-mark {
+    width: 145px;
+  }
+
+  .technical-assistance-brand p {
+    font-size: 0.96rem;
+  }
+
+  .technical-assistance-hero-tagline {
+    max-width: 18ch;
+    font-size: 1.16rem;
+  }
+
+  .technical-assistance-service-banner {
+    margin-top: 2.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .technical-assistance-info-card {
+    min-height: 210px;
+    padding: 1.4rem 1.25rem;
+  }
+
+  .technical-assistance-info-card__content {
+    max-width: 100%;
+    gap: 0.65rem;
+  }
+
+  .technical-assistance-info-card__content strong {
+    font-size: 1.65rem;
+  }
+
+  .technical-assistance-info-card__content span {
+    font-size: 0.9rem;
+  }
+
+  .technical-assistance-info-card__corner {
+    display: none;
+  }
+
+  .technical-assistance-directory-copy h2 {
+    font-size: 2rem;
+  }
+
+  .technical-assistance-search {
+    border-radius: 8px;
   }
 
   .technical-assistance-card-grid {
     grid-template-columns: 1fr;
-  }
-
-  .technical-assistance-card {
-    padding: 1.5rem;
-    border-radius: 24px;
-  }
-
-  .technical-assistance-card h3 {
-    font-size: 1.65rem;
-  }
-
-  .technical-assistance-hero-photo-frame img {
-    height: 300px;
-  }
-
-  .technical-assistance-card-actions {
-    gap: 0.85rem 1.2rem;
   }
 }

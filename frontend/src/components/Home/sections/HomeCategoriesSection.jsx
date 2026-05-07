@@ -199,7 +199,7 @@ const HomeCategoriesSection = ({ categories, promoCards = [] }) => {
               slidesPerView={1}
               loop={promoCards.length > 1}
               autoplay={promoCards.length > 1 ? { delay: 3600, disableOnInteraction: false } : false}
-              pagination={promoCards.length > 1 ? { clickable: true } : false}
+              pagination={false}
               breakpoints={{
                 980: {
                   slidesPerView: Math.min(promoCards.length, 2),

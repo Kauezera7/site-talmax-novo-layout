@@ -59,7 +59,7 @@
   grid-template-columns: minmax(90px, 0.32fr) minmax(0, 1fr);
   align-items: center;
   gap: 1rem;
-  background: var(--admin-home-preview-bg, #f06400);
+  background: var(--admin-home-preview-bg, #ff6a00);
 }
 
 .admin-home-content__preview-head {

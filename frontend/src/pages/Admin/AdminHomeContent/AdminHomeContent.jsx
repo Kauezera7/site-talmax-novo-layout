@@ -19,7 +19,7 @@ import './AdminHomeContent.css';
 
 const SECTION_LABELS = {
   'info-card': 'Card informativo',
-  'orange-ad': 'Propaganda laranja'
+  'orange-ad': 'Propaganda'
 };
 
 const buildEmptyForm = (sectionType = 'info-card') => ({
@@ -404,7 +404,7 @@ const AdminHomeContent = () => {
           })}
 
           {renderSection({
-            title: 'Propagandas laranja',
+            title: 'Propagandas ',
             description: 'Faixas promocionais exibidas antes do rodape. Pode cadastrar quantas quiser.',
             icon: Megaphone,
             actionLabel: 'Nova propaganda',
@@ -440,7 +440,7 @@ const AdminHomeContent = () => {
                         onChange={(event) => handleInputChange('section_type', event.target.value)}
                       >
                         <option value="info-card">Card informativo</option>
-                        <option value="orange-ad">Propaganda laranja</option>
+                        <option value="orange-ad">Propaganda </option>
                       </select>
                     </div>
 
@@ -516,7 +516,7 @@ const AdminHomeContent = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>Texto do botao</label>
+                      <label>Texto do botão</label>
                       <input
                         type="text"
                         value={form.button_label}
@@ -526,7 +526,7 @@ const AdminHomeContent = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>Link do botao</label>
+                      <label>Link do botão</label>
                       <input
                         type="text"
                         value={form.link_url}
@@ -555,7 +555,7 @@ const AdminHomeContent = () => {
                       </div>
 
                       <div className="form-group">
-                        <label>Botao</label>
+                        <label>Botão</label>
                         <input
                           type="color"
                           value={form.button_color}
@@ -564,7 +564,7 @@ const AdminHomeContent = () => {
                       </div>
 
                       <div className="form-group">
-                        <label>Texto do botao</label>
+                        <label>Texto do botão</label>
                         <input
                           type="color"
                           value={form.button_text_color}

@@ -138,7 +138,6 @@ const AdminDashboardContent = () => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-    { id: 'categories', label: 'Categorias', icon: <Layers size={20} /> },
     { id: 'technical-assistance', label: 'Assistencia Tecnica', icon: <Wrench size={20} /> },
     ...(isMasterAdmin ? [{ id: 'users', label: 'Usuarios Admin', icon: <UserCog size={20} /> }] : [])
   ];
@@ -148,13 +147,14 @@ const AdminDashboardContent = () => {
   ];
   const homeItems = [
     { id: 'banners', label: 'Banners', icon: <ImageIcon size={18} /> },
+    { id: 'segments', label: 'Home Segmentos', icon: <Layers size={18} /> },
     { id: 'featured', label: 'Home Destaques', icon: <CheckCircle size={18} /> },
+    { id: 'categories', label: 'Categorias', icon: <Layers size={18} /> },
     { id: 'home-content', label: 'Cards e Propagandas', icon: <Megaphone size={18} /> }
   ];
   const editPageItems = [
     { id: 'custom-pages', label: 'Paginas Personalizadas', icon: <LayoutDashboard size={18} /> },
-    { id: 'digital-groups', label: 'Grupo de Segmentos', icon: <Layers size={18} /> },
-    { id: 'segments', label: 'Home Segmentos', icon: <Layers size={18} /> }
+    { id: 'digital-groups', label: 'Grupo de Segmentos', icon: <Layers size={18} /> }
   ];
   const pageItems = [
     { id: 'talmax-digital', label: 'Talmax Digital', icon: <ImageIcon size={18} /> },
