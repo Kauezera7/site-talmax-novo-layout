@@ -164,6 +164,7 @@
   --technical-info-card-bg: #111630;
   --technical-info-card-color: #f5f7ff;
   --technical-info-button-bg: #374c92;
+  --technical-info-button-hover-bg: #24458f;
   --technical-info-button-color: #ffffff;
   --technical-info-surface: #eef3f8;
   --technical-info-corner-width: 214px;
@@ -317,8 +318,8 @@
 
 .technical-assistance-info-card:hover .technical-assistance-info-card__button,
 .technical-assistance-info-card:focus-visible .technical-assistance-info-card__button {
-  background: var(--technical-info-button-bg);
-  border-color: var(--technical-info-button-bg);
+  background: var(--technical-info-button-hover-bg);
+  border-color: var(--technical-info-button-hover-bg);
   color: var(--technical-info-button-color);
   transform: scale(1.04);
 }
@@ -678,10 +679,10 @@
   width: var(--technical-card-button-size);
   height: var(--technical-card-button-size);
   padding: 12px;
-  border: 1px solid #17214a;
+  border: 1px solid #374c92;
   border-radius: 50%;
   background: #ffffff;
-  color: #17214a;
+  color: #374c92;
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
@@ -695,8 +696,8 @@
 .technical-assistance-card:focus-within .technical-assistance-card-primary svg,
 .technical-assistance-card-primary:hover svg,
 .technical-assistance-card-primary:focus-visible svg {
-  background: #172657;
-  border-color: #172657;
+  background: #24458f;
+  border-color: #24458f;
   color: #ffffff;
 }
 
