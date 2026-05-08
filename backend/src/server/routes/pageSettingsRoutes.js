@@ -19,6 +19,7 @@ const {
 
 const router = express.Router();
 const LEGACY_TECHNICAL_ASSISTANCE_DEFAULT_BANNER = '/img/assistenciatecnica-2.jpg.webp';
+const LEGACY_SUPPORT_DEFAULT_LOGO = '/img/logo-talmax-suporte.png.webp';
 
 const PAGE_SETTINGS_TABLE_QUERY = `
   CREATE TABLE IF NOT EXISTS page_settings (
@@ -82,6 +83,26 @@ const DEFAULT_PAGE_SETTINGS = {
     card_description_secondary: 'Trabalhamos para reduzir o tempo de parada e garantir o maximo desempenho, levando mais confianca e excelencia a cada atendimento.',
     card_button_label: 'Abrir chamado',
     card_url: 'https://talmax.tomticket.com/'
+  },
+  support: {
+    page_name: 'support',
+    label: 'Suporte',
+    overline: '',
+    title: 'Suporte Talmax',
+    description: 'Estamos com voc\u00ea todos os dias, investindo em solu\u00e7\u00f5es, tecnologias e pessoas.',
+    logo_url: '',
+    banner_url: '',
+    hero_content_x: 72,
+    hero_content_y: 48,
+    logo_width: 225,
+    hero_tagline: 'Estamos com voc\u00ea todos os dias, investindo em solu\u00e7\u00f5es, tecnologias e pessoas.',
+    info_title: 'Ao seu lado em cada resultado',
+    info_subtitle: 'Atendimento especializado, \u00e1gil e conectado para impulsionar seus resultados todos os dias',
+    info_body: [
+      'Na Talmax, suporte vai al\u00e9m do atendimento. \u00c9 parceria no seu dia a dia. Investimos continuamente em tecnologia, processos e pessoas para entregar uma experi\u00eancia \u00e1gil, pr\u00f3xima e realmente eficiente.',
+      'Nosso time est\u00e1 preparado para entender suas demandas e transformar desafios em solu\u00e7\u00f5es, trazendo mais dinamismo, seguran\u00e7a e excel\u00eancia para a rotina de t\u00e9cnicos e dentistas em laborat\u00f3rios, cl\u00ednicas e dentais em todo o Brasil.',
+      'Com uma plataforma digital completa, voc\u00ea tem acesso a abertura de chamados, atendimento via chat, hist\u00f3rico integrado e um portal de conhecimento sempre dispon\u00edvel para apoiar sua opera\u00e7\u00e3o.'
+    ].join('\n\n')
   }
 };
 
@@ -149,12 +170,16 @@ const normalizePageSetting = (pageName, content = {}, explicitLogoUrl = null) =>
 
   const bannerUrl = sanitizeAssetReference(content.banner_url ?? defaults.banner_url ?? '');
 
+  const logoUrl = sanitizeAssetReference(explicitLogoUrl ?? content.logo_url ?? defaults.logo_url);
+
   return {
     ...defaults,
     overline: sanitizeTextInput(content.overline ?? defaults.overline, { preserveNewlines: false }),
     title: sanitizeTextInput(content.title ?? defaults.title, { preserveNewlines: false }),
     description: sanitizeTextInput(content.description ?? defaults.description, { preserveNewlines: true }),
-    logo_url: sanitizeAssetReference(explicitLogoUrl ?? content.logo_url ?? defaults.logo_url),
+    logo_url: pageName === 'support' && logoUrl === LEGACY_SUPPORT_DEFAULT_LOGO
+      ? ''
+      : logoUrl,
     banner_url: pageName === 'assistencia-tecnica' && bannerUrl === LEGACY_TECHNICAL_ASSISTANCE_DEFAULT_BANNER
       ? ''
       : bannerUrl,
@@ -166,7 +191,10 @@ const normalizePageSetting = (pageName, content = {}, explicitLogoUrl = null) =>
     card_description: sanitizeTextInput(content.card_description ?? defaults.card_description ?? '', { preserveNewlines: true, maxLength: 700 }),
     card_description_secondary: sanitizeTextInput(content.card_description_secondary ?? defaults.card_description_secondary ?? '', { preserveNewlines: true, maxLength: 700 }),
     card_button_label: sanitizeTextInput(content.card_button_label ?? defaults.card_button_label ?? '', { preserveNewlines: false, maxLength: 80 }),
-    card_url: sanitizeNavigationTarget(content.card_url ?? defaults.card_url ?? '', { allowExternal: true, allowRelative: true })
+    card_url: sanitizeNavigationTarget(content.card_url ?? defaults.card_url ?? '', { allowExternal: true, allowRelative: true }),
+    info_title: sanitizeTextInput(content.info_title ?? defaults.info_title ?? '', { preserveNewlines: false, maxLength: 160 }),
+    info_subtitle: sanitizeTextInput(content.info_subtitle ?? defaults.info_subtitle ?? '', { preserveNewlines: false, maxLength: 240 }),
+    info_body: sanitizeTextInput(content.info_body ?? defaults.info_body ?? '', { preserveNewlines: true, maxLength: 2400 })
   };
 };
 
@@ -280,7 +308,10 @@ router.put('/:pageName', requireAdminSession, upload.any(), async (req, res, nex
       card_description: req.body.card_description,
       card_description_secondary: req.body.card_description_secondary,
       card_button_label: req.body.card_button_label,
-      card_url: req.body.card_url
+      card_url: req.body.card_url,
+      info_title: req.body.info_title,
+      info_subtitle: req.body.info_subtitle,
+      info_body: req.body.info_body
     }, nextLogoUrl);
 
     await db.query(

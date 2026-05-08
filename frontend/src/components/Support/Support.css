@@ -10,7 +10,6 @@
   color: var(--support-ink);
 }
 
-.support-hero,
 .support-service-section,
 .support-info {
   width: min(1260px, calc(100% - 2rem));
@@ -20,17 +19,19 @@
 .support-hero {
   position: relative;
   min-height: clamp(340px, 42vw, 520px);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  display: block;
   overflow: hidden;
-  padding: clamp(3rem, 6vw, 5.7rem);
   border-bottom-right-radius: 76px;
   border-bottom-left-radius: 76px;
   background:
     linear-gradient(115deg, rgba(226, 230, 236, 0.78) 0%, rgba(113, 121, 135, 0.82) 44%, rgba(10, 15, 35, 0.98) 100%),
     #10162f;
   isolation: isolate;
+}
+
+.support-hero--image {
+  min-height: 0;
+  background: #10162f;
 }
 
 .support-hero::before {
@@ -55,34 +56,66 @@
   pointer-events: none;
 }
 
+.support-hero--image::before {
+  opacity: 0;
+}
+
+.support-hero--image::after {
+  content: none;
+}
+
+.support-hero-media {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  border-radius: inherit;
+}
+
+.support-hero-inner {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  max-width: 100%;
+  pointer-events: none;
+}
+
 .support-hero-content {
-  position: relative;
+  position: absolute;
+  left: var(--support-hero-content-x, 72%);
+  top: var(--support-hero-content-y, 48%);
   z-index: 1;
-  width: min(430px, 100%);
+  width: max-content;
+  max-width: calc(100% - 2rem);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: clamp(1.8rem, 4vw, 3.3rem);
   text-align: center;
   color: #ffffff;
+  transform: translate(-50%, -50%);
 }
 
 .support-main-logo {
   display: block;
-  width: clamp(150px, 17vw, 225px);
+  width: min(var(--support-hero-logo-width, 225px), 100%);
   height: auto;
+  max-height: clamp(120px, 20vw, 230px);
   object-fit: contain;
   filter: drop-shadow(0 22px 32px rgba(4, 8, 22, 0.28));
 }
 
 .support-hero-content p {
-  max-width: 19ch;
+  max-width: 26ch;
   margin: 0;
   color: #ffffff;
   font-size: clamp(1.38rem, 2.1vw, 1.72rem);
   font-weight: 500;
   line-height: 1.14;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.42);
+  white-space: pre-line;
 }
 
 .support-service-section {
@@ -103,11 +136,11 @@
   --support-info-button-bg: #374c92;
   --support-info-button-color: #ffffff;
   --support-info-surface: #eef3f8;
-  --support-info-corner-width: 214px;
-  --support-info-corner-height: 58px;
-  --support-info-corner-radius: 16px;
-  --support-info-corner-outer-radius: 16px;
-  --support-info-corner-bleed: 12px;
+  --support-info-corner-width: 188px;
+  --support-info-corner-height: 50px;
+  --support-info-corner-radius: 14px;
+  --support-info-corner-outer-radius: 14px;
+  --support-info-corner-bleed: 8px;
   position: relative;
   min-height: 258px;
   display: flex;
@@ -117,38 +150,17 @@
   border-radius: 8px;
   color: var(--support-info-card-color);
   text-decoration: none;
-  background:
-    linear-gradient(180deg, rgba(17, 22, 48, 0.9), rgba(17, 22, 48, 0.96)),
-    linear-gradient(180deg, var(--support-card-bg), var(--support-card-bg));
+  background: var(--support-card-bg);
   isolation: isolate;
   transition: filter 0.24s ease, transform 0.24s ease;
 }
 
 .support-service-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  border-radius: inherit;
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent 55%),
-    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-  background-size: auto, 20px 20px, 20px 20px;
-  opacity: 0.62;
-  pointer-events: none;
+  content: none;
 }
 
 .support-service-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  border-radius: inherit;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0 12%, transparent 12% 100%),
-    linear-gradient(315deg, rgba(55, 76, 146, 0.22) 0 28%, transparent 28% 100%);
-  pointer-events: none;
+  content: none;
 }
 
 .support-service-card:hover,
@@ -156,6 +168,12 @@
   outline: none;
   filter: saturate(1.05);
   transform: translateY(-3px);
+}
+
+.support-service-card--static:hover,
+.support-service-card--static:focus-visible {
+  filter: none;
+  transform: none;
 }
 
 .support-service-card__content {
@@ -193,14 +211,17 @@
   align-items: flex-end;
   justify-content: center;
   padding:
-    0.36rem
-    calc(0.5rem + var(--support-info-corner-bleed))
+    0.28rem
     calc(0.36rem + var(--support-info-corner-bleed))
-    0.5rem;
+    calc(0.28rem + var(--support-info-corner-bleed))
+    0.36rem;
   border-radius: var(--support-info-corner-radius) 0 0 0;
   background: var(--support-info-surface);
   box-shadow: 0 0 0 1px var(--support-info-surface);
+  opacity: 0;
   pointer-events: none;
+  transform: translate(104%, 104%);
+  transition: opacity 0.28s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .support-service-card__corner::before,
@@ -230,9 +251,9 @@
 .support-service-card__button {
   position: relative;
   z-index: 1;
-  min-width: 168px;
-  max-width: calc(var(--support-info-corner-width) - 1.25rem);
-  height: 44px;
+  min-width: 152px;
+  max-width: calc(var(--support-info-corner-width) - 0.75rem);
+  height: 40px;
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
@@ -261,6 +282,12 @@
 .support-service-card:hover .support-service-card__button,
 .support-service-card:focus-visible .support-service-card__button {
   transform: scale(1.04);
+}
+
+.support-service-card:hover .support-service-card__corner,
+.support-service-card:focus-visible .support-service-card__corner {
+  opacity: 1;
+  transform: translate(0, 0);
 }
 
 .support-service-card__button svg {
@@ -384,11 +411,18 @@
 
 @media (max-width: 920px) {
   .support-hero {
-    justify-content: center;
     min-height: 360px;
-    padding: 3rem 1.5rem;
     border-bottom-right-radius: 44px;
     border-bottom-left-radius: 44px;
+  }
+
+  .support-hero--image {
+    min-height: 0;
+  }
+
+  .support-hero-content {
+    left: 50%;
+    top: 48%;
   }
 
   .support-service-grid {
@@ -407,7 +441,6 @@
 }
 
 @media (max-width: 680px) {
-  .support-hero,
   .support-service-section,
   .support-info {
     width: min(100% - 1rem, 1260px);
@@ -418,7 +451,8 @@
   }
 
   .support-main-logo {
-    width: 150px;
+    width: min(var(--support-hero-logo-width, 225px), 150px, 100%);
+    max-height: 130px;
   }
 
   .support-hero-content p {
@@ -458,6 +492,8 @@
     border-radius: 0;
     background: transparent;
     box-shadow: none;
+    opacity: 1;
+    transform: none;
   }
 
   .support-service-card__corner::before,

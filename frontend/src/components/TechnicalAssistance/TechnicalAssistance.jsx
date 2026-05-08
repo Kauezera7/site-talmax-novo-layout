@@ -23,7 +23,6 @@ const detailIcons = {
 
 const DEFAULT_TECHNICAL_PAGE_SETTINGS = DEFAULT_SPECIAL_PAGE_SETTINGS['assistencia-tecnica'];
 const ITEMS_PER_PAGE = 10;
-const DEFAULT_HERO_DESCRIPTION = 'Confian\u00e7a em cada servi\u00e7o,\ncom pe\u00e7as originais e alto\npadr\u00e3o de qualidade.';
 
 const CustomPagination = ({ total, current, onChange }) => {
   const pages = [];
@@ -120,10 +119,6 @@ const splitSettingText = (value = '') => (
 
 const formatHeroDescription = (value = '') => {
   const rawValue = String(value || '').trim();
-
-  if (!rawValue) {
-    return DEFAULT_HERO_DESCRIPTION;
-  }
 
   return rawValue;
 };
@@ -272,7 +267,7 @@ const TechnicalAssistance = () => {
   const [status, setStatus] = useState('loading');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSettings, setPageSettings] = useState(DEFAULT_TECHNICAL_PAGE_SETTINGS);
+  const [pageSettings, setPageSettings] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -343,12 +338,13 @@ const TechnicalAssistance = () => {
     setCurrentPage(1);
   };
 
-  const heroImage = resolvePageImage(pageSettings.banner_url);
-  const logoImage = pageSettings.logo_url ? resolvePageImage(pageSettings.logo_url) : '';
-  const heroDescription = formatHeroDescription(pageSettings.description || DEFAULT_TECHNICAL_PAGE_SETTINGS.description);
-  const heroContentX = clampNumber(pageSettings.hero_content_x, DEFAULT_TECHNICAL_PAGE_SETTINGS.hero_content_x, 0, 100);
-  const heroContentY = clampNumber(pageSettings.hero_content_y, DEFAULT_TECHNICAL_PAGE_SETTINGS.hero_content_y, 0, 100);
-  const logoWidth = clampNumber(pageSettings.logo_width, DEFAULT_TECHNICAL_PAGE_SETTINGS.logo_width, 80, 520);
+  const safePageSettings = pageSettings || DEFAULT_TECHNICAL_PAGE_SETTINGS;
+  const heroImage = pageSettings ? resolvePageImage(pageSettings.banner_url) : '';
+  const logoImage = pageSettings?.logo_url ? resolvePageImage(pageSettings.logo_url) : '';
+  const heroDescription = pageSettings ? formatHeroDescription(pageSettings.description || '') : '';
+  const heroContentX = clampNumber(safePageSettings.hero_content_x, DEFAULT_TECHNICAL_PAGE_SETTINGS.hero_content_x, 0, 100);
+  const heroContentY = clampNumber(safePageSettings.hero_content_y, DEFAULT_TECHNICAL_PAGE_SETTINGS.hero_content_y, 0, 100);
+  const logoWidth = clampNumber(safePageSettings.logo_width, DEFAULT_TECHNICAL_PAGE_SETTINGS.logo_width, 80, 520);
   const heroContentStyle = {
     left: `${heroContentX}%`,
     top: `${heroContentY}%`,
@@ -365,15 +361,15 @@ const TechnicalAssistance = () => {
 
     return [{
       id: 'default-service-card',
-      href: pageSettings.card_url || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_url,
-      title: pageSettings.card_title || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_title,
-      buttonLabel: pageSettings.card_button_label || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_button_label,
+      href: safePageSettings.card_url || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_url,
+      title: safePageSettings.card_title || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_title,
+      buttonLabel: safePageSettings.card_button_label || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_button_label,
       descriptionLines: [
-        ...splitSettingText(pageSettings.card_description || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_description),
-        ...splitSettingText(pageSettings.card_description_secondary || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_description_secondary)
+        ...splitSettingText(safePageSettings.card_description || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_description),
+        ...splitSettingText(safePageSettings.card_description_secondary || DEFAULT_TECHNICAL_PAGE_SETTINGS.card_description_secondary)
       ]
     }];
-  }, [contentCards, pageSettings]);
+  }, [contentCards, safePageSettings]);
 
   return (
     <div className="technical-assistance-page">

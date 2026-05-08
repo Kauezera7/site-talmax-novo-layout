@@ -254,7 +254,10 @@
   border-radius: var(--technical-info-corner-radius) 0 0 0;
   background: var(--technical-info-surface);
   box-shadow: 0 0 0 1px var(--technical-info-surface);
+  opacity: 0;
   pointer-events: none;
+  transform: translate(104%, 104%);
+  transition: opacity 0.28s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .technical-assistance-info-card__corner::before,
@@ -318,6 +321,12 @@
   border-color: var(--technical-info-button-bg);
   color: var(--technical-info-button-color);
   transform: scale(1.04);
+}
+
+.technical-assistance-info-card:hover .technical-assistance-info-card__corner,
+.technical-assistance-info-card:focus-visible .technical-assistance-info-card__corner {
+  opacity: 1;
+  transform: translate(0, 0);
 }
 
 .technical-assistance-info-card:hover .technical-assistance-info-card__button svg,
