@@ -45,12 +45,9 @@
   position: absolute;
   inset: 0;
   z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 4.5rem 7.5rem 4.5rem 0;
-  text-align: right;
+  padding: 0;
+  text-align: center;
+  pointer-events: none;
 }
 
 .technical-assistance-hero-copy {
@@ -106,40 +103,49 @@
 }
 
 .technical-assistance-brand {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: calc(100% - 2rem);
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   color: #ffffff;
 }
 
 .technical-assistance-brand-content {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  text-align: right;
-  gap: 0.75rem;
+  align-items: center;
+  width: max-content;
+  max-width: 100%;
+  text-align: center;
+  gap: clamp(2rem, 4vw, 3.1rem);
 }
 
 .technical-assistance-brand-logo {
   display: block;
-  width: auto;
-  max-width: 300px;
-  max-height: 200px;
+  width: min(var(--technical-hero-logo-width, 238px), 100%);
+  max-width: 100%;
+  max-height: clamp(120px, 22vw, 240px);
   object-fit: contain;
   margin: 0;
   filter: drop-shadow(0 24px 36px rgba(3, 8, 22, 0.36));
 }
 
-.technical-assistance-brand-description {
-  width: 100%;
-  max-width: 180px;
+.technical-assistance-hero .technical-assistance-brand-description {
+  width: max-content;
+  max-width: 100%;
   margin: 0;
-  color: rgba(255, 255, 255, 0.86);
-  font-size: 1.15rem;
-  line-height: 1.4;
-  text-align: right;
-  white-space: pre-line;
-  word-break: break-word;
+  color: #ffffff;
+  font-size: clamp(1.38rem, 2vw, 1.62rem);
+  font-weight: 500;
+  line-height: 1.12;
+  text-align: center;
+  text-shadow: 0 2px 9px rgba(0, 0, 0, 0.44);
+  white-space: pre;
 }
 
 .technical-assistance-service-banner {
@@ -529,7 +535,7 @@
 
 .technical-assistance-card-eyebrow {
   color: #7c8bb0;
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   font-weight: 800;
   line-height: 1.2;
   text-transform: uppercase;
@@ -542,7 +548,7 @@
 
 .technical-assistance-card h3 {
   color: var(--technical-ink);
-  font-size: 1.08rem;
+  font-size: 1.14rem;
   line-height: 1.05;
   font-weight: 800;
   max-width: 15ch;
@@ -560,7 +566,7 @@
   align-items: flex-start;
   gap: 0.55rem;
   color: #27344b;
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   line-height: 1.25;
   text-decoration: none;
   overflow-wrap: anywhere;
@@ -691,8 +697,7 @@
   }
 
   .technical-assistance-hero-inner {
-    padding-right: clamp(1rem, 4vw, 2rem);
-    padding-left: 0;
+    padding: 0;
   }
 
   .technical-assistance-brand-mark {
@@ -707,8 +712,7 @@
   }
 
   .technical-assistance-hero-inner {
-    padding: 2rem 0 2.4rem;
-    align-items: center;
+    padding: 0;
   }
 
   .technical-assistance-hero h1 {
@@ -717,8 +721,8 @@
   }
 
   .technical-assistance-brand {
-    flex-direction: row;
-    text-align: left;
+    flex-direction: column;
+    text-align: center;
   }
 
   .technical-assistance-brand-mark {
@@ -746,7 +750,8 @@
   }
 
   .technical-assistance-hero-inner {
-    padding: 2.6rem 0 4.25rem;
+    width: 100%;
+    padding: 0;
   }
 
   .technical-assistance-hero h1 {
@@ -767,6 +772,20 @@
 
   .technical-assistance-brand p {
     font-size: 0.96rem;
+  }
+
+  .technical-assistance-brand-content {
+    gap: 1.35rem;
+  }
+
+  .technical-assistance-brand-logo {
+    width: min(var(--technical-hero-logo-width, 238px), 150px, 100%);
+    max-height: 130px;
+  }
+
+  .technical-assistance-hero .technical-assistance-brand-description {
+    font-size: 1.05rem;
+    line-height: 1.15;
   }
 
   .technical-assistance-service-banner {

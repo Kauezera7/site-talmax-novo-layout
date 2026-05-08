@@ -47,13 +47,38 @@ const buildEmptyContentCardForm = () => ({
 
 const DEFAULT_PAGE_SETTINGS = DEFAULT_SPECIAL_PAGE_SETTINGS['assistencia-tecnica'];
 
-const buildPageSettingsForm = (setting = DEFAULT_PAGE_SETTINGS) => ({
-  ...DEFAULT_PAGE_SETTINGS,
-  ...setting,
-  logoFile: null,
-  logoPreview: setting.logo_url ? apiAssetPath(setting.logo_url) : null,
-  bannerFile: null,
-  bannerPreview: setting.banner_url ? apiAssetPath(setting.banner_url) : null
+const clampNumber = (value, fallback, min, max) => {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, numberValue));
+};
+
+const buildPageSettingsForm = (setting = DEFAULT_PAGE_SETTINGS) => {
+  const mergedSetting = {
+    ...DEFAULT_PAGE_SETTINGS,
+    ...setting
+  };
+
+  return {
+    ...mergedSetting,
+    hero_content_x: clampNumber(mergedSetting.hero_content_x, DEFAULT_PAGE_SETTINGS.hero_content_x, 0, 100),
+    hero_content_y: clampNumber(mergedSetting.hero_content_y, DEFAULT_PAGE_SETTINGS.hero_content_y, 0, 100),
+    logo_width: clampNumber(mergedSetting.logo_width, DEFAULT_PAGE_SETTINGS.logo_width, 80, 520),
+    logoFile: null,
+    logoPreview: mergedSetting.logo_url ? apiAssetPath(mergedSetting.logo_url) : null,
+    bannerFile: null,
+    bannerPreview: mergedSetting.banner_url ? apiAssetPath(mergedSetting.banner_url) : null
+  };
+};
+
+const buildHeroContentPreviewStyle = (form) => ({
+  left: `${clampNumber(form.hero_content_x, DEFAULT_PAGE_SETTINGS.hero_content_x, 0, 100)}%`,
+  top: `${clampNumber(form.hero_content_y, DEFAULT_PAGE_SETTINGS.hero_content_y, 0, 100)}%`,
+  '--admin-technical-assistance-preview-logo-width': `${clampNumber(form.logo_width, DEFAULT_PAGE_SETTINGS.logo_width, 80, 520)}px`
 });
 
 const normalizeFormValue = (field, value) => {
@@ -213,6 +238,13 @@ const AdminTechnicalAssistance = () => {
     }));
   };
 
+  const handlePageSettingsNumberChange = (field, value, min, max) => {
+    setPageSettingsForm((current) => ({
+      ...current,
+      [field]: clampNumber(value, current[field], min, max)
+    }));
+  };
+
   const handlePageSettingsImageChange = (field, file) => {
     if (!file) return;
 
@@ -293,6 +325,9 @@ const AdminTechnicalAssistance = () => {
       formData.append('description', pageSettingsForm.description || '');
       formData.append('logo_url', pageSettingsForm.logo_url || '');
       formData.append('banner_url', pageSettingsForm.banner_url || '');
+      formData.append('hero_content_x', pageSettingsForm.hero_content_x ?? DEFAULT_PAGE_SETTINGS.hero_content_x);
+      formData.append('hero_content_y', pageSettingsForm.hero_content_y ?? DEFAULT_PAGE_SETTINGS.hero_content_y);
+      formData.append('logo_width', pageSettingsForm.logo_width ?? DEFAULT_PAGE_SETTINGS.logo_width);
       formData.append('hero_tagline', '');
       formData.append('card_title', pageSettingsForm.card_title || '');
       formData.append('card_description', pageSettingsForm.card_description || '');
@@ -308,7 +343,10 @@ const AdminTechnicalAssistance = () => {
         formData.append('banner', pageSettingsForm.bannerFile);
       }
 
-      await pageSettingsService.update('assistencia-tecnica', formData);
+      const result = await pageSettingsService.update('assistencia-tecnica', formData);
+      if (result?.item) {
+        setPageSettingsForm(buildPageSettingsForm(result.item));
+      }
       addToast('Conteudo da pagina de assistencia tecnica atualizado com sucesso!');
       await loadPageSettings();
     } catch (error) {
@@ -449,10 +487,40 @@ const AdminTechnicalAssistance = () => {
                     <div className="admin-technical-assistance__preview admin-technical-assistance__preview--banner">
                       <img src={pageSettingsForm.bannerPreview} alt="Preview do banner da assistencia tecnica" />
                       <button type="button" className="btn-secondary" onClick={handleResetBanner}>
-                        Usar banner padrao
+                        Remover banner
                       </button>
                     </div>
                   )}
+                </div>
+
+                <div className="form-group admin-technical-assistance__form-group--full">
+                  <label>Previa da posicao no banner</label>
+                  <div className="admin-technical-assistance__hero-preview">
+                    {pageSettingsForm.bannerPreview ? (
+                      <img src={pageSettingsForm.bannerPreview} alt="" aria-hidden="true" />
+                    ) : (
+                      <div className="admin-technical-assistance__hero-preview-empty">
+                        Envie um banner para visualizar a posicao
+                      </div>
+                    )}
+
+                    <div
+                      className="admin-technical-assistance__hero-preview-content"
+                      style={buildHeroContentPreviewStyle(pageSettingsForm)}
+                    >
+                      {pageSettingsForm.logoPreview && (
+                        <img
+                          src={pageSettingsForm.logoPreview}
+                          alt=""
+                          aria-hidden="true"
+                          className="admin-technical-assistance__hero-preview-logo"
+                        />
+                      )}
+                      {pageSettingsForm.description && (
+                        <p>{pageSettingsForm.description}</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="form-group">
@@ -480,12 +548,51 @@ const AdminTechnicalAssistance = () => {
                 <div className="admin-technical-assistance__settings-fields">
                   <div className="form-group">
                     <label>Texto abaixo do logo</label>
-                    <input
-                      type="text"
+                    <textarea
+                      rows="3"
                       value={pageSettingsForm.description || ''}
                       onChange={(event) => handlePageSettingsInputChange('description', event.target.value)}
                       placeholder="Assistencia tecnica autorizada"
                     />
+                  </div>
+
+                  <div className="form-group admin-technical-assistance__form-group--full">
+                    <label>Posicao da logo e do texto</label>
+                    <div className="admin-technical-assistance__range-grid">
+                      <label className="admin-technical-assistance__range-control">
+                        <span>Horizontal <strong>{pageSettingsForm.hero_content_x}%</strong></span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={pageSettingsForm.hero_content_x}
+                          onChange={(event) => handlePageSettingsNumberChange('hero_content_x', event.target.value, 0, 100)}
+                        />
+                      </label>
+
+                      <label className="admin-technical-assistance__range-control">
+                        <span>Vertical <strong>{pageSettingsForm.hero_content_y}%</strong></span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={pageSettingsForm.hero_content_y}
+                          onChange={(event) => handlePageSettingsNumberChange('hero_content_y', event.target.value, 0, 100)}
+                        />
+                      </label>
+
+                      <label className="admin-technical-assistance__range-control">
+                        <span>Tamanho da logo <strong>{pageSettingsForm.logo_width}px</strong></span>
+                        <input
+                          type="range"
+                          min="80"
+                          max="520"
+                          step="5"
+                          value={pageSettingsForm.logo_width}
+                          onChange={(event) => handlePageSettingsNumberChange('logo_width', event.target.value, 80, 520)}
+                        />
+                      </label>
+                    </div>
                   </div>
 
                 </div>

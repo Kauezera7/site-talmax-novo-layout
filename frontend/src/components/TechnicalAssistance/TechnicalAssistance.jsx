@@ -8,7 +8,6 @@ import {
   MapPin,
   Phone,
   Search,
-  ShieldCheck,
   Wrench
 } from 'lucide-react';
 import { apiAssetPath, assetPath } from '../../utils/assets';
@@ -24,6 +23,7 @@ const detailIcons = {
 
 const DEFAULT_TECHNICAL_PAGE_SETTINGS = DEFAULT_SPECIAL_PAGE_SETTINGS['assistencia-tecnica'];
 const ITEMS_PER_PAGE = 10;
+const DEFAULT_HERO_DESCRIPTION = 'Confian\u00e7a em cada servi\u00e7o,\ncom pe\u00e7as originais e alto\npadr\u00e3o de qualidade.';
 
 const CustomPagination = ({ total, current, onChange }) => {
   const pages = [];
@@ -117,6 +117,26 @@ const splitSettingText = (value = '') => (
     .map((line) => line.trim())
     .filter(Boolean)
 );
+
+const formatHeroDescription = (value = '') => {
+  const rawValue = String(value || '').trim();
+
+  if (!rawValue) {
+    return DEFAULT_HERO_DESCRIPTION;
+  }
+
+  return rawValue;
+};
+
+const clampNumber = (value, fallback, min, max) => {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, numberValue));
+};
 
 const mapContentCardToServiceCard = (card) => ({
   id: `content-card-${card.id}`,
@@ -323,9 +343,17 @@ const TechnicalAssistance = () => {
     setCurrentPage(1);
   };
 
-  const heroImage = resolvePageImage(pageSettings.banner_url, DEFAULT_TECHNICAL_PAGE_SETTINGS.banner_url);
+  const heroImage = resolvePageImage(pageSettings.banner_url);
   const logoImage = pageSettings.logo_url ? resolvePageImage(pageSettings.logo_url) : '';
-  const heroDescription = pageSettings.description || DEFAULT_TECHNICAL_PAGE_SETTINGS.description;
+  const heroDescription = formatHeroDescription(pageSettings.description || DEFAULT_TECHNICAL_PAGE_SETTINGS.description);
+  const heroContentX = clampNumber(pageSettings.hero_content_x, DEFAULT_TECHNICAL_PAGE_SETTINGS.hero_content_x, 0, 100);
+  const heroContentY = clampNumber(pageSettings.hero_content_y, DEFAULT_TECHNICAL_PAGE_SETTINGS.hero_content_y, 0, 100);
+  const logoWidth = clampNumber(pageSettings.logo_width, DEFAULT_TECHNICAL_PAGE_SETTINGS.logo_width, 80, 520);
+  const heroContentStyle = {
+    left: `${heroContentX}%`,
+    top: `${heroContentY}%`,
+    '--technical-hero-logo-width': `${logoWidth}px`
+  };
   const serviceCards = useMemo(() => {
     const mappedContentCards = contentCards
       .map(mapContentCardToServiceCard)
@@ -349,41 +377,37 @@ const TechnicalAssistance = () => {
 
   return (
     <div className="technical-assistance-page">
-      <section className="technical-assistance-hero">
-        <img
-          src={heroImage}
-          alt=""
-          className="technical-assistance-hero-media"
-          aria-hidden="true"
-          loading="eager"
-          fetchPriority="high"
-          decoding="async"
-        />
+      {heroImage && (
+        <section className="technical-assistance-hero">
+          <img
+            src={heroImage}
+            alt=""
+            className="technical-assistance-hero-media"
+            aria-hidden="true"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+          />
 
-        <div className="technical-assistance-hero-inner">
-          <div className="technical-assistance-brand" aria-label="Logo Assistencia Talmax">
-            <div className="technical-assistance-brand-content">
-              {logoImage ? (
-                <img
-                  src={logoImage}
-                  alt={pageSettings.title || 'Assistencia Tecnica'}
-                  className="technical-assistance-brand-logo"
-                  onError={(event) => {
-                    event.currentTarget.style.display = 'none';
-                  }}
-                />
-              ) : (
-                <div className="technical-assistance-brand-mark" aria-hidden="true">
-                  <ShieldCheck size={38} strokeWidth={1.7} />
-                  <span>Assist&ecirc;ncia</span>
-                  <strong>Talmax</strong>
-                </div>
-              )}
-              {heroDescription && <p className="technical-assistance-brand-description">{heroDescription}</p>}
+          <div className="technical-assistance-hero-inner">
+            <div className="technical-assistance-brand" style={heroContentStyle} aria-label="Logo Assistencia Talmax">
+              <div className="technical-assistance-brand-content">
+                {logoImage && (
+                  <img
+                    src={logoImage}
+                    alt={pageSettings.title || 'Assistencia Tecnica'}
+                    className="technical-assistance-brand-logo"
+                    onError={(event) => {
+                      event.currentTarget.style.display = 'none';
+                    }}
+                  />
+                )}
+                {heroDescription && <p className="technical-assistance-brand-description">{heroDescription}</p>}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="technical-assistance-service-banner">
         <div className="technical-assistance-service-cards">

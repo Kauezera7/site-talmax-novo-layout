@@ -18,6 +18,7 @@ const {
 } = require('../utils/inputSanitization');
 
 const router = express.Router();
+const LEGACY_TECHNICAL_ASSISTANCE_DEFAULT_BANNER = '/img/assistenciatecnica-2.jpg.webp';
 
 const PAGE_SETTINGS_TABLE_QUERY = `
   CREATE TABLE IF NOT EXISTS page_settings (
@@ -71,7 +72,10 @@ const DEFAULT_PAGE_SETTINGS = {
     title: 'Assistencia Tecnica',
     description: 'Confianca em cada servico, com\npecas originais e alto\npadrao de qualidade.',
     logo_url: '',
-    banner_url: '/img/assistenciatecnica-2.jpg.webp',
+    banner_url: '',
+    hero_content_x: 50,
+    hero_content_y: 45,
+    logo_width: 238,
     hero_tagline: 'Confianca em cada servico, com pecas originais e alto padrao de qualidade.',
     card_title: 'Assistencia Tecnica',
     card_description: 'Um time altamente especializado em qualidade, pronto para entregar rapidez, precisao e seguranca na manutencao dos seus equipamentos.',
@@ -113,6 +117,16 @@ const parseContent = (value) => {
   return value && typeof value === 'object' ? value : {};
 };
 
+const clampNumber = (value, fallback, min, max) => {
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, numberValue));
+};
+
 const resolveLegacyImagePath = (assetUrl) => {
   if (!assetUrl || typeof assetUrl !== 'string' || !assetUrl.startsWith('/img/')) {
     return null;
@@ -133,13 +147,20 @@ const normalizePageSetting = (pageName, content = {}, explicitLogoUrl = null) =>
     return null;
   }
 
+  const bannerUrl = sanitizeAssetReference(content.banner_url ?? defaults.banner_url ?? '');
+
   return {
     ...defaults,
     overline: sanitizeTextInput(content.overline ?? defaults.overline, { preserveNewlines: false }),
     title: sanitizeTextInput(content.title ?? defaults.title, { preserveNewlines: false }),
     description: sanitizeTextInput(content.description ?? defaults.description, { preserveNewlines: true }),
     logo_url: sanitizeAssetReference(explicitLogoUrl ?? content.logo_url ?? defaults.logo_url),
-    banner_url: sanitizeAssetReference(content.banner_url ?? defaults.banner_url ?? ''),
+    banner_url: pageName === 'assistencia-tecnica' && bannerUrl === LEGACY_TECHNICAL_ASSISTANCE_DEFAULT_BANNER
+      ? ''
+      : bannerUrl,
+    hero_content_x: clampNumber(content.hero_content_x ?? defaults.hero_content_x, defaults.hero_content_x ?? 50, 0, 100),
+    hero_content_y: clampNumber(content.hero_content_y ?? defaults.hero_content_y, defaults.hero_content_y ?? 45, 0, 100),
+    logo_width: clampNumber(content.logo_width ?? defaults.logo_width, defaults.logo_width ?? 238, 80, 520),
     hero_tagline: sanitizeTextInput(content.hero_tagline ?? defaults.hero_tagline ?? '', { preserveNewlines: false, maxLength: 240 }),
     card_title: sanitizeTextInput(content.card_title ?? defaults.card_title ?? '', { preserveNewlines: false, maxLength: 120 }),
     card_description: sanitizeTextInput(content.card_description ?? defaults.card_description ?? '', { preserveNewlines: true, maxLength: 700 }),
@@ -251,6 +272,9 @@ router.put('/:pageName', requireAdminSession, upload.any(), async (req, res, nex
       title: req.body.title,
       description: req.body.description,
       banner_url: nextBannerUrl,
+      hero_content_x: req.body.hero_content_x,
+      hero_content_y: req.body.hero_content_y,
+      logo_width: req.body.logo_width,
       hero_tagline: req.body.hero_tagline,
       card_title: req.body.card_title,
       card_description: req.body.card_description,

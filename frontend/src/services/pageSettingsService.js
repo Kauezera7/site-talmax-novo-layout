@@ -1,6 +1,8 @@
 import API_URL from './api';
 import { createAdminRequestOptions, ensureAdminResponse } from './adminRequest';
 
+const LEGACY_TECHNICAL_ASSISTANCE_DEFAULT_BANNER = '/img/assistenciatecnica-2.jpg.webp';
+
 export const DEFAULT_SPECIAL_PAGE_SETTINGS = {
   'talmax-digital': {
     page_name: 'talmax-digital',
@@ -41,7 +43,10 @@ export const DEFAULT_SPECIAL_PAGE_SETTINGS = {
     title: 'Assistencia Tecnica',
     description: 'Confianca em cada servico, com\npecas originais e alto\npadrao de qualidade.',
     logo_url: '',
-    banner_url: '/img/assistenciatecnica-2.jpg.webp',
+    banner_url: '',
+    hero_content_x: 50,
+    hero_content_y: 45,
+    logo_width: 238,
     hero_tagline: 'Confianca em cada servico, com pecas originais e alto padrao de qualidade.',
     card_title: 'Assistencia Tecnica',
     card_description: 'Um time altamente especializado em qualidade, pronto para entregar rapidez, precisao e seguranca na manutencao dos seus equipamentos.',
@@ -60,9 +65,18 @@ export const normalizeSpecialPageSettings = (items = []) => {
         return;
       }
 
+      const normalizedItem = { ...item };
+
+      if (
+        item.page_name === 'assistencia-tecnica'
+        && normalizedItem.banner_url === LEGACY_TECHNICAL_ASSISTANCE_DEFAULT_BANNER
+      ) {
+        normalizedItem.banner_url = '';
+      }
+
       normalizedMap[item.page_name] = {
         ...normalizedMap[item.page_name],
-        ...item
+        ...normalizedItem
       };
     });
   }
