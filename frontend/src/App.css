@@ -1172,10 +1172,11 @@ body[data-theme='dark'] .theme-toggle-button {
 .moby-footer-strip p {
   margin: 0;
   color: var(--moby-strip-text-color, #ffffff);
-  font-size: clamp(1.15rem, 2vw, 1.65rem);
+  font-size: clamp(1.05rem, 1.55vw, 1.42rem);
   font-weight: 400;
-  line-height: 1.2;
+  line-height: 1.12;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .moby-footer-strip__button {
@@ -1805,6 +1806,7 @@ body[data-theme='dark'] .theme-toggle-button {
 
   .moby-footer-strip p {
     font-size: 1.05rem;
+    white-space: normal;
   }
 
   .moby-footer-strip__button {

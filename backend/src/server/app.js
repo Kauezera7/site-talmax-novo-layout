@@ -33,6 +33,7 @@ const pageSettingsRoutes = require('./routes/pageSettingsRoutes');
 const customPageRoutes = require('./routes/customPageRoutes');
 const digitalGroupRoutes = require('./routes/digitalGroupRoutes');
 const technicalAssistanceRoutes = require('./routes/technicalAssistanceRoutes');
+const supportRoutes = require('./routes/supportRoutes');
 
 const INLINE_IMAGE_PLACEHOLDER = [
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Talmax">',
@@ -82,6 +83,7 @@ const createApp = () => {
   app.use('/api/home-services', homeServiceRoutes);
   app.use('/api/home-content-blocks', homeContentBlockRoutes);
   app.use('/api/technical-assistance', technicalAssistanceRoutes);
+  app.use('/api/support', supportRoutes);
   app.use('/api/page-settings', pageSettingsRoutes);
   app.use('/api/custom-pages', customPageRoutes);
   app.use('/api/digital-groups', digitalGroupRoutes);

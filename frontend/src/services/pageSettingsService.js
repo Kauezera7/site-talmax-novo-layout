@@ -2,6 +2,7 @@ import API_URL from './api';
 import { createAdminRequestOptions, ensureAdminResponse } from './adminRequest';
 
 const LEGACY_TECHNICAL_ASSISTANCE_DEFAULT_BANNER = '/img/assistenciatecnica-2.jpg.webp';
+const LEGACY_SUPPORT_DEFAULT_LOGO = '/img/logo-talmax-suporte.png.webp';
 
 export const DEFAULT_SPECIAL_PAGE_SETTINGS = {
   'talmax-digital': {
@@ -53,6 +54,26 @@ export const DEFAULT_SPECIAL_PAGE_SETTINGS = {
     card_description_secondary: 'Trabalhamos para reduzir o tempo de parada e garantir o maximo desempenho, levando mais confianca e excelencia a cada atendimento.',
     card_button_label: 'Abrir chamado',
     card_url: 'https://talmax.tomticket.com/'
+  },
+  support: {
+    page_name: 'support',
+    label: 'Suporte',
+    overline: '',
+    title: 'Suporte Talmax',
+    description: 'Estamos com voc\u00ea todos os dias, investindo em solu\u00e7\u00f5es, tecnologias e pessoas.',
+    logo_url: '',
+    banner_url: '',
+    hero_content_x: 72,
+    hero_content_y: 48,
+    logo_width: 225,
+    hero_tagline: 'Estamos com voc\u00ea todos os dias, investindo em solu\u00e7\u00f5es, tecnologias e pessoas.',
+    info_title: 'Ao seu lado em cada resultado',
+    info_subtitle: 'Atendimento especializado, \u00e1gil e conectado para impulsionar seus resultados todos os dias',
+    info_body: [
+      'Na Talmax, suporte vai al\u00e9m do atendimento. \u00c9 parceria no seu dia a dia. Investimos continuamente em tecnologia, processos e pessoas para entregar uma experi\u00eancia \u00e1gil, pr\u00f3xima e realmente eficiente.',
+      'Nosso time est\u00e1 preparado para entender suas demandas e transformar desafios em solu\u00e7\u00f5es, trazendo mais dinamismo, seguran\u00e7a e excel\u00eancia para a rotina de t\u00e9cnicos e dentistas em laborat\u00f3rios, cl\u00ednicas e dentais em todo o Brasil.',
+      'Com uma plataforma digital completa, voc\u00ea tem acesso a abertura de chamados, atendimento via chat, hist\u00f3rico integrado e um portal de conhecimento sempre dispon\u00edvel para apoiar sua opera\u00e7\u00e3o.'
+    ].join('\n\n')
   }
 };
 
@@ -72,6 +93,13 @@ export const normalizeSpecialPageSettings = (items = []) => {
         && normalizedItem.banner_url === LEGACY_TECHNICAL_ASSISTANCE_DEFAULT_BANNER
       ) {
         normalizedItem.banner_url = '';
+      }
+
+      if (
+        item.page_name === 'support'
+        && normalizedItem.logo_url === LEGACY_SUPPORT_DEFAULT_LOGO
+      ) {
+        normalizedItem.logo_url = '';
       }
 
       normalizedMap[item.page_name] = {

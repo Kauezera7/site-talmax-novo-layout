@@ -21,7 +21,8 @@ import {
   Menu,
   UserCog,
   Wrench,
-  Megaphone
+  Megaphone,
+  Headphones
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AdminProvider } from '../../context/AdminContext';
@@ -44,6 +45,7 @@ const AdminDigitalGroups = lazy(() => import('./AdminTalmaxDigital/AdminDigitalG
 const AdminCustomPages = lazy(() => import('./AdminCustomPages/AdminCustomPages'));
 const AdminUsers = lazy(() => import('./AdminUsers/AdminUsers'));
 const AdminTechnicalAssistance = lazy(() => import('./AdminTechnicalAssistance/AdminTechnicalAssistance'));
+const AdminSupport = lazy(() => import('./AdminSupport/AdminSupport'));
 
 const AdminLoadingScreen = ({ label = 'Carregando painel...' }) => (
   <div className="app-loader-overlay app-loader-overlay-admin" role="status" aria-live="polite" aria-label={label}>
@@ -138,6 +140,7 @@ const AdminDashboardContent = () => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+    { id: 'support', label: 'Suporte', icon: <Headphones size={20} /> },
     { id: 'technical-assistance', label: 'Assistencia Tecnica', icon: <Wrench size={20} /> },
     ...(isMasterAdmin ? [{ id: 'users', label: 'Usuarios Admin', icon: <UserCog size={20} /> }] : [])
   ];
@@ -219,6 +222,8 @@ const AdminDashboardContent = () => {
         return withAdminSectionLoader(<AdminPrinters />, 'Carregando pagina Impressoras 3D...');
       case 'technical-assistance':
         return withAdminSectionLoader(<AdminTechnicalAssistance />, 'Carregando assistencia tecnica...');
+      case 'support':
+        return withAdminSectionLoader(<AdminSupport />, 'Carregando suporte...');
       default:
         return <DashboardHome onOpenTab={setActiveTab} />;
     }

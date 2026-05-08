@@ -1,0 +1,24 @@
+.admin-support__info-fields {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.78);
+}
+
+.admin-support__info-body {
+  grid-column: 1 / -1;
+}
+
+body[data-theme='dark'] .admin-support__info-fields {
+  background: rgba(8, 17, 31, 0.7);
+}
+
+@media (max-width: 768px) {
+  .admin-support__info-fields {
+    grid-template-columns: 1fr;
+  }
+}
