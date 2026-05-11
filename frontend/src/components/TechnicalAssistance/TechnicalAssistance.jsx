@@ -10,9 +10,13 @@ import {
   Search,
   Wrench
 } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Navigation } from 'swiper/modules';
 import { apiAssetPath, assetPath } from '../../utils/assets';
 import pageSettingsService, { DEFAULT_SPECIAL_PAGE_SETTINGS, normalizeSpecialPageSettings } from '../../services/pageSettingsService';
 import technicalAssistanceService from '../../services/technicalAssistanceService';
+import 'swiper/css';
+import 'swiper/css/navigation';
 import './TechnicalAssistance.css';
 
 const detailIcons = {
@@ -261,6 +265,36 @@ const renderDetail = (detail, index) => {
   );
 };
 
+const TechnicalAssistanceInfoCard = ({ serviceCard }) => {
+  const CardTag = serviceCard.href ? 'a' : 'article';
+  const cardProps = serviceCard.href
+    ? { href: serviceCard.href, target: '_blank', rel: 'noopener noreferrer' }
+    : {};
+
+  return (
+    <CardTag
+      {...cardProps}
+      className={`technical-assistance-info-card${serviceCard.href ? '' : ' technical-assistance-info-card--static'}`}
+    >
+      <span className="technical-assistance-info-card__content">
+        <strong>{serviceCard.title}</strong>
+        {serviceCard.descriptionLines.map((line, index) => (
+          <span key={`${serviceCard.id}-line-${index}`}>{line}</span>
+        ))}
+      </span>
+
+      {serviceCard.href && (
+        <span className="technical-assistance-info-card__corner" aria-hidden="true">
+          <span className="technical-assistance-info-card__button">
+            {serviceCard.buttonLabel}
+            <ArrowRight size={18} strokeWidth={1.8} />
+          </span>
+        </span>
+      )}
+    </CardTag>
+  );
+};
+
 const TechnicalAssistance = () => {
   const [items, setItems] = useState([]);
   const [contentCards, setContentCards] = useState([]);
@@ -370,6 +404,7 @@ const TechnicalAssistance = () => {
       ]
     }];
   }, [contentCards, safePageSettings]);
+  const shouldUseCardsCarousel = serviceCards.length > 1;
 
   return (
     <div className="technical-assistance-page">
@@ -406,38 +441,48 @@ const TechnicalAssistance = () => {
       )}
 
       <section className="technical-assistance-service-banner">
-        <div className="technical-assistance-service-cards">
-          {serviceCards.map((serviceCard) => {
-            const CardTag = serviceCard.href ? 'a' : 'article';
-            const cardProps = serviceCard.href
-              ? { href: serviceCard.href, target: '_blank', rel: 'noopener noreferrer' }
-              : {};
+        {shouldUseCardsCarousel ? (
+          <div className="technical-assistance-service-cards technical-assistance-service-cards--carousel">
+            <button
+              type="button"
+              className="technical-assistance-service-cards__nav technical-assistance-service-cards__nav-prev"
+              aria-label="Card anterior"
+            />
+            <button
+              type="button"
+              className="technical-assistance-service-cards__nav technical-assistance-service-cards__nav-next"
+              aria-label="Proximo card"
+            />
 
-            return (
-              <CardTag
-                key={serviceCard.id}
-                {...cardProps}
-                className={`technical-assistance-info-card${serviceCard.href ? '' : ' technical-assistance-info-card--static'}`}
-              >
-                <span className="technical-assistance-info-card__content">
-                  <strong>{serviceCard.title}</strong>
-                  {serviceCard.descriptionLines.map((line, index) => (
-                    <span key={`${serviceCard.id}-line-${index}`}>{line}</span>
-                  ))}
-                </span>
-
-                {serviceCard.href && (
-                  <span className="technical-assistance-info-card__corner" aria-hidden="true">
-                    <span className="technical-assistance-info-card__button">
-                      {serviceCard.buttonLabel}
-                      <ArrowRight size={18} strokeWidth={1.8} />
-                    </span>
-                  </span>
-                )}
-              </CardTag>
-            );
-          })}
-        </div>
+            <Swiper
+              modules={[Autoplay, Navigation]}
+              spaceBetween={24}
+              slidesPerView={1}
+              loop={serviceCards.length > 1}
+              navigation={{
+                prevEl: '.technical-assistance-service-cards__nav-prev',
+                nextEl: '.technical-assistance-service-cards__nav-next'
+              }}
+              autoplay={{ delay: 3500, disableOnInteraction: false }}
+              breakpoints={{
+                760: { slidesPerView: 1 },
+                1180: { slidesPerView: 1 }
+              }}
+            >
+              {serviceCards.map((serviceCard) => (
+                <SwiperSlide key={serviceCard.id}>
+                  <TechnicalAssistanceInfoCard serviceCard={serviceCard} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        ) : (
+          <div className="technical-assistance-service-cards">
+            {serviceCards.map((serviceCard) => (
+              <TechnicalAssistanceInfoCard key={serviceCard.id} serviceCard={serviceCard} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="technical-assistance-directory">

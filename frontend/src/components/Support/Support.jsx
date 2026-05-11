@@ -1,9 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { animate, useInView } from 'framer-motion';
 import { ArrowRight, CalendarDays, Clock, Rocket } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Navigation } from 'swiper/modules';
 import { apiAssetPath } from '../../utils/assets';
 import pageSettingsService, { DEFAULT_SPECIAL_PAGE_SETTINGS, normalizeSpecialPageSettings } from '../../services/pageSettingsService';
 import supportService from '../../services/supportService';
+import 'swiper/css';
+import 'swiper/css/navigation';
 import './Support.css';
 
 const FOUNDATION_DATE = new Date('1994-08-01T00:00:00');
@@ -121,6 +125,36 @@ const Counter = ({ value, duration = 1.8 }) => {
   return <span ref={ref}>{displayValue}</span>;
 };
 
+const SupportServiceCard = ({ card }) => {
+  const CardTag = card.href ? 'a' : 'article';
+  const cardProps = card.href
+    ? { href: card.href, target: '_blank', rel: 'noopener noreferrer' }
+    : {};
+
+  return (
+    <CardTag
+      {...cardProps}
+      className={`support-service-card${card.href ? '' : ' support-service-card--static'}`}
+    >
+      <span className="support-service-card__content">
+        <strong>{card.title}</strong>
+        {card.descriptionLines.map((line, index) => (
+          <span key={`${card.id}-line-${index}`}>{line}</span>
+        ))}
+      </span>
+
+      {card.href && (
+        <span className="support-service-card__corner" aria-hidden="true">
+          <span className="support-service-card__button">
+            {card.buttonLabel}
+            <ArrowRight size={18} strokeWidth={1.8} />
+          </span>
+        </span>
+      )}
+    </CardTag>
+  );
+};
+
 const Support = () => {
   const [pageSettings, setPageSettings] = useState(null);
   const [contentCards, setContentCards] = useState([]);
@@ -202,6 +236,7 @@ const Support = () => {
   const infoTitle = safePageSettings.info_title || DEFAULT_SUPPORT_PAGE_SETTINGS.info_title;
   const infoSubtitle = safePageSettings.info_subtitle || DEFAULT_SUPPORT_PAGE_SETTINGS.info_subtitle;
   const infoParagraphs = splitInfoParagraphs(safePageSettings.info_body || DEFAULT_SUPPORT_PAGE_SETTINGS.info_body);
+  const shouldUseCardsCarousel = serviceCards.length > 2;
 
   return (
     <main className="support-page">
@@ -236,38 +271,48 @@ const Support = () => {
       )}
 
       <section className="support-service-section" aria-label="Canais de suporte">
-        <div className="support-service-grid">
-          {serviceCards.map((card) => {
-            const CardTag = card.href ? 'a' : 'article';
-            const cardProps = card.href
-              ? { href: card.href, target: '_blank', rel: 'noopener noreferrer' }
-              : {};
+        {shouldUseCardsCarousel ? (
+          <div className="support-service-grid support-service-grid--carousel">
+            <button
+              type="button"
+              className="support-service-grid__nav support-service-grid__nav-prev"
+              aria-label="Card anterior"
+            />
+            <button
+              type="button"
+              className="support-service-grid__nav support-service-grid__nav-next"
+              aria-label="Proximo card"
+            />
 
-            return (
-              <CardTag
-                key={card.id}
-                {...cardProps}
-                className={`support-service-card${card.href ? '' : ' support-service-card--static'}`}
-              >
-                <span className="support-service-card__content">
-                  <strong>{card.title}</strong>
-                  {card.descriptionLines.map((line, index) => (
-                    <span key={`${card.id}-line-${index}`}>{line}</span>
-                  ))}
-                </span>
-
-                {card.href && (
-                  <span className="support-service-card__corner" aria-hidden="true">
-                    <span className="support-service-card__button">
-                      {card.buttonLabel}
-                      <ArrowRight size={18} strokeWidth={1.8} />
-                    </span>
-                  </span>
-                )}
-              </CardTag>
-            );
-          })}
-        </div>
+            <Swiper
+              modules={[Autoplay, Navigation]}
+              spaceBetween={24}
+              slidesPerView={1}
+              loop={serviceCards.length > 1}
+              navigation={{
+                prevEl: '.support-service-grid__nav-prev',
+                nextEl: '.support-service-grid__nav-next'
+              }}
+              autoplay={{ delay: 3500, disableOnInteraction: false }}
+              breakpoints={{
+                760: { slidesPerView: 2 },
+                1180: { slidesPerView: 2 }
+              }}
+            >
+              {serviceCards.map((card) => (
+                <SwiperSlide key={card.id}>
+                  <SupportServiceCard card={card} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        ) : (
+          <div className="support-service-grid">
+            {serviceCards.map((card) => (
+              <SupportServiceCard key={card.id} card={card} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="support-info">
