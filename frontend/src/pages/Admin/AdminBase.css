@@ -1,6 +1,6 @@
 :root {
-  --admin-primary: #2563eb;
-  --admin-primary-dark: #1d4ed8;
+  --admin-primary: #374c92;
+  --admin-primary-dark: #2d3f78;
   --admin-secondary: #64748b;
   --admin-bg: #f1f4f9;
   --admin-card-bg: #ffffff;
@@ -19,8 +19,8 @@
 }
 
 body[data-theme='dark'] {
-  --admin-primary: #60a5fa;
-  --admin-primary-dark: #3b82f6;
+  --admin-primary: #374c92;
+  --admin-primary-dark: #2d3f78;
   --admin-secondary: #94a3b8;
   --admin-bg: #08111f;
   --admin-card-bg: #0f172a;
@@ -66,7 +66,7 @@ body[data-theme='dark'] .admin-sidebar {
 
 .sidebar-header {
   padding: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -81,19 +81,16 @@ body[data-theme='dark'] .admin-sidebar {
 
 .sidebar-logo-text .brand {
   font-weight: 800;
-  font-size: 1.25rem;
-  letter-spacing: -0.5px;
-  color: #2563eb;
-  background: linear-gradient(to right, #60a5fa, #2563eb);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-size: 1.2rem;
+  letter-spacing: 0;
+  line-height: 1;
+  color: #70a3ff;
 }
 
 .btn-toggle-sidebar {
-  background: rgba(255, 255, 255, 0.05);
-  border: none;
-  color: #94a3b8;
+  background: #18204a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #dbe6ff;
   cursor: pointer;
   width: 32px;
   height: 32px;
@@ -105,7 +102,8 @@ body[data-theme='dark'] .admin-sidebar {
 }
 
 .btn-toggle-sidebar:hover {
-  background: var(--admin-primary);
+  background: #374c92;
+  border-color: rgba(255, 255, 255, 0.16);
   color: white;
 }
 
@@ -158,9 +156,14 @@ body[data-theme='dark'] .admin-sidebar {
 }
 
 .nav-link.active {
-  background: var(--admin-primary);
+  background: #374c92;
   color: white;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 12px rgba(55, 76, 146, 0.3);
+}
+
+body[data-theme='dark'] .nav-link.active {
+  background: #374c92;
+  box-shadow: 0 4px 12px rgba(55, 76, 146, 0.3);
 }
 
 /* Dropdown Sidebar Styles */
@@ -485,7 +488,7 @@ body[data-theme='dark'] .admin-sidebar {
 
 .search-box:focus-within {
   border-color: var(--admin-primary);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 4px rgba(55, 76, 146, 0.1);
 }
 
 .search-box input {
@@ -622,7 +625,7 @@ body[data-theme='dark'] .admin-sidebar {
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
   outline: none;
   border-color: var(--admin-primary);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 4px rgba(55, 76, 146, 0.1);
 }
 
 .form-group textarea {
@@ -650,7 +653,7 @@ body[data-theme='dark'] .admin-sidebar {
 .btn-primary:hover {
   background: var(--admin-primary-dark);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 4px 12px rgba(55, 76, 146, 0.2);
 }
 
 .btn-secondary {
@@ -1019,7 +1022,7 @@ body[data-theme='dark'] .admin-sidebar {
 
 .multi-select-header:hover {
   border-color: var(--admin-primary);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.05);
+  box-shadow: 0 0 0 4px rgba(55, 76, 146, 0.05);
 }
 
 .selected-tags-container {
